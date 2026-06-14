@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Conteúdo — Gilson</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c26;
+    --border: #2a2a3a;
+    --text: #f0f0f5;
+    --text2: #8888aa;
+    --text3: #55556a;
+
+    --academia: #e7a308;
+    --academia-dim: rgba(231,163,8,0.12);
+    --sorveteria: #f472b6;
+    --sorveteria-dim: rgba(244,114,182,0.12);
+    --gympulse: #22d3ee;
+    --gympulse-dim: rgba(34,211,238,0.12);
+
+    --done: #22c55e;
+    --done-dim: rgba(34,197,94,0.1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+
+  .logo {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+
+  .logo span {
+    color: var(--text);
+  }
+
+  .date-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text3);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 6px;
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    padding: 16px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text3);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .tab:hover { color: var(--text2); }
+
+  .tab.active-academia {
+    color: var(--academia);
+    border-bottom-color: var(--academia);
+  }
+  .tab.active-sorveteria {
+    color: var(--sorveteria);
+    border-bottom-color: var(--sorveteria);
+  }
+  .tab.active-gympulse {
+    color: var(--gympulse);
+    border-bottom-color: var(--gympulse);
+  }
+  .tab.active-historico {
+    color: var(--text);
+    border-bottom-color: var(--text);
+  }
+
+  /* MAIN */
+  main {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+
+  /* SECTION HEADER */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .profile-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .section-title h2 {
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .progress-text {
+    font-size: 12px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* CARDS DE DATA */
+  .date-group {
+    margin-bottom: 40px;
+  }
+
+  .date-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* CARD DE CONTEÚDO */
+  .content-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .content-card.done {
+    opacity: 0.5;
+    background: var(--done-dim);
+    border-color: rgba(34,197,94,0.2);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .card-header:hover { background: var(--surface2); }
+
+  .check-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 2px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    font-size: 13px;
+  }
+
+  .check-btn:hover { border-color: var(--done); }
+  .done .check-btn {
+    background: var(--done);
+    border-color: var(--done);
+    color: white;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .time-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .format-tag {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text2);
+    background: var(--surface2);
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+  }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .expand-icon {
+    color: var(--text3);
+    font-size: 12px;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+  }
+
+  .content-card.expanded .expand-icon {
+    transform: rotate(180deg);
+  }
+
+  /* CARD BODY */
+  .card-body {
+    display: none;
+    padding: 0 16px 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .content-card.expanded .card-body {
+    display: block;
+  }
+
+  .section-block {
+    margin-top: 16px;
+  }
+
+  .block-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .block-label .icon { font-size: 12px; }
+
+  .text-content {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+    white-space: pre-wrap;
+  }
+
+  .prompt-content {
+    background: #0d1117;
+    border: 1px solid #2a3a2a;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #7ee787;
+    white-space: pre-wrap;
+  }
+
+  .canva-list {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+
+  .canva-list li {
+    font-size: 13px;
+    color: var(--text2);
+    padding: 4px 0;
+    padding-left: 16px;
+    position: relative;
+    line-height: 1.5;
+  }
+
+  .canva-list li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--text3);
+  }
+
+  /* ACADEMIA colors */
+  .academia .time-tag { background: var(--academia-dim); color: var(--academia); }
+  .academia.content-card { border-left: 3px solid var(--academia); }
+
+  /* SORVETERIA colors */
+  .sorveteria .time-tag { background: var(--sorveteria-dim); color: var(--sorveteria); }
+  .sorveteria.content-card { border-left: 3px solid var(--sorveteria); }
+
+  /* GYMPULSE colors */
+  .gympulse .time-tag { background: var(--gympulse-dim); color: var(--gympulse); }
+  .gympulse.content-card { border-left: 3px solid var(--gympulse); }
+
+  /* PANEL VIEWS */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* HISTÓRICO */
+  .historico-entry {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .historico-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .historico-info { flex: 1; min-width: 0; }
+  .historico-title { font-size: 13px; font-weight: 500; }
+  .historico-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  .historico-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--done-dim);
+    color: var(--done);
+    letter-spacing: 0.06em;
+  }
+
+  .historico-badge.pending {
+    background: rgba(255,255,255,0.05);
+    color: var(--text3);
+  }
+
+  /* EMPTY STATE */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text3);
+  }
+
+  .empty .icon { font-size: 32px; margin-bottom: 12px; }
+  .empty p { font-size: 14px; line-height: 1.6; }
+
+  /* COPY BUTTON */
+  .copy-btn {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    margin-left: auto;
+    display: block;
+    margin-top: 6px;
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+  .copy-btn:hover { color: var(--text); border-color: var(--text3); }
+
+  /* STATS BAR */
+  .stats-bar {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .stat-num {
+    font-size: 22px;
+    font-weight: 900;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  @media (max-width: 600px) {
+    main { padding: 20px 16px 80px; }
+    header { padding: 16px; }
+    .tabs { padding: 0 16px; }
+    .stat-num { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Painel <span>Gilson</span></div>
+  <div class="date-badge" id="current-date"></div>
+</header>
+
+<div class="tabs">
+  <button class="tab active-academia" onclick="switchTab('academia')">🏋️ Academia</button>
+  <button class="tab" onclick="switchTab('sorveteria')">🍦 Sorveteria</button>
+  <button class="tab" onclick="switchTab('gympulse')">🎮 GympulsePro</button>
+  <button class="tab" onclick="switchTab('historico')">📋 Histórico</button>
+</div>
+
+<main>
+
+  <!-- ACADEMIA -->
+  <div class="panel active" id="panel-academia">
+    <div class="stats-bar" id="stats-academia"></div>
+    <div id="cards-academia"></div>
+  </div>
+
+  <!-- SORVETERIA -->
+  <div class="panel" id="panel-sorveteria">
+    <div class="stats-bar" id="stats-sorveteria"></div>
+    <div id="cards-sorveteria"></div>
+  </div>
+
+  <!-- GYMPULSE -->
+  <div class="panel" id="panel-gympulse">
+    <div class="stats-bar" id="stats-gympulse"></div>
+    <div id="cards-gympulse"></div>
+  </div>
+
+  <!-- HISTÓRICO -->
+  <div class="panel" id="panel-historico">
+    <div id="historico-list"></div>
+  </div>
+
+</main>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+
+const DATA = {
+  academia: [
+    {
+      id: "ac-001",
+      date: "2025-06-16",
+      time: "08h",
+      format: "Story",
+      title: "Prova social — Segunda motivacional",
+      text: `🔥 Segunda-feira é dia de quem já decidiu!\n\nNossos alunos não esperam motivação — eles criam.\nVocê também pode começar hoje. 💪\n\n👇 Manda mensagem e garante sua aula experimental GRÁTIS!`,
+      prompt: `Photorealistic image of a determined Brazilian woman in her 30s, wearing black workout clothes, lifting dumbbells inside a modern gym. Dark atmosphere, warm amber lighting, sweat on skin, intense focused expression, strong and empowered posture. Cinematic style, vertical format 9:16, shallow depth of field, gym equipment slightly blurred in background. No text in image.`,
+      canva: [
+        "Formato: Story 1080×1920px",
+        "Imagem ao fundo com overlay escuro 40% opacidade",
+        "Texto em branco, fonte bold, centralizado",
+        "CTA em amarelo âmbar — cor Planeta Corpo",
+        "Logo no canto inferior direito"
+      ]
+    },
+    {
+      id: "ac-002",
+      date: "2025-06-16",
+      time: "12h",
+      format: "Story",
+      title: "Dica fitness — Constância vs quantidade",
+      text: `💡 DICA DO DIA\n\nVocê sabia que treinar 3x por semana já é suficiente para transformar seu corpo em 60 dias?\n\nO segredo não é quantidade — é constância.\n\nAqui na Planeta Corpo a gente te ajuda a manter o ritmo! 🏋️`,
+      prompt: `Flat design illustration of a simple weekly calendar showing 3 marked training days highlighted in amber/gold. Clean dark background (#0a0a0f), minimal modern style. The 3 marked days glow with golden light. Vertical 9:16 format. No text, no people, abstract and modern.`,
+      canva: [
+        "Formato: Story 1080×1920px",
+        "Fundo escuro com ilustração centralizada",
+        "Texto em branco acima e abaixo da imagem",
+        "Número '3x' em destaque âmbar grande",
+        "Fonte bold, sem serifa"
+      ]
+    },
+    {
+      id: "ac-003",
+      date: "2025-06-16",
+      time: "17h",
+      format: "Post feed",
+      title: "Chamada para matrícula",
+      text: `🎯 Sua transformação começa com UMA decisão.\n\nA academia que te acompanha do aquecimento ao resultado.\n\n✅ Musculação\n✅ Aulas coletivas\n✅ Profissionais qualificados\n\n📍 Guarapuava/PR\n👇 Manda mensagem e garante sua aula experimental GRÁTIS!\n\n#PlanetaCorpo #AcademiaGuarapuava #Musculação #VidaSaudável #Fitness`,
+      prompt: `Professional gym interior photo, modern equipment, warm amber and dark aesthetic, wide angle shot showing the full gym floor with dumbbells, machines and open space. No people. Cinematic lighting, golden hour feel inside. Square format 1:1. High end photography style.`,
+      canva: [
+        "Formato: Post 1080×1080px",
+        "Imagem com overlay degradê escuro na parte inferior",
+        "Logo Planeta Corpo no topo centralizado",
+        "Lista de benefícios com ícones em âmbar",
+        "CTA em destaque: botão âmbar na base"
+      ]
+    },
+    {
+      id: "ac-004",
+      date: "2025-06-16",
+      time: "20h",
+      format: "Story",
+      title: "Bastidores da academia",
+      text: `📸 Por trás de cada resultado tem uma equipe que acredita em você.\n\nIsso é Planeta Corpo Club+ 💛\n\n[Use foto real do espaço, equipamentos ou equipe]`,
+      prompt: `Warm behind-the-scenes photo of a gym at closing time, amber lights, equipment organized neatly, sense of community and care. Empty gym with personal touches, motivational atmosphere. Dark moody lighting with golden accents. Vertical 9:16 format.`,
+      canva: [
+        "Formato: Story 1080×1920px",
+        "Foto real do local preferencialmente",
+        "Texto simples no topo, fonte leve",
+        "Logo pequeno no canto",
+        "Tom caloroso e humano — sem muito design"
+      ]
+    }
+  ],
+
+  sorveteria: [
+    {
+      id: "so-001",
+      date: "2025-06-16",
+      time: "09h",
+      format: "Story",
+      title: "Produto do dia — Abertura",
+      text: `🍦 Bom dia, Turvo!\n\nComeça a semana com o sabor que todo mundo ama!\n\nHoje em destaque: [COLOQUE O SABOR DO DIA] 😍\n\nVem nos visitar!`,
+      prompt: `Bright and cheerful close-up photo of an ice cream scoop in a cone, pastel pink and white tones, soft natural light, fresh and appetizing look. Blurred colorful background suggesting a happy environment. Vertical 9:16 format. No text. Clean, delicious, Brazilian sorveteria vibe.`,
+      canva: [
+        "Formato: Story 1080×1920px",
+        "Fundo rosa claro ou branco com textura suave",
+        "Foto do produto grande e centralizada",
+        "Texto festivo com fonte arredondada",
+        "Nome do sabor em destaque colorido"
+      ]
+    },
+    {
+      id: "so-002",
+      date: "2025-06-16",
+      time: "11h30",
+      format: "Post feed",
+      title: "Foto produto — Construção de marca",
+      text: `Segunda-feira fica muito melhor com um sorvete na mão! 🍦☀️\n\nSabores que fazem a sua semana começar com alegria.\n\nVenha nos visitar em Turvo/PR!\n📍 [Seu endereço]\n\n#SorvetesGuri #Turvo #SorveteriaArtesanal #MomentoGuri #PedaçoDeFelicidade`,
+      prompt: `Beautiful overhead flat lay of colorful ice cream scoops in various flavors arranged artistically on a white marble surface with tropical flowers and pastel decorations. Vibrant, joyful, appetizing. Brazilian summer aesthetic. Square 1:1 format. No text. High quality food photography.`,
+      canva: [
+        "Formato: Post 1080×1080px",
+        "Foto do produto centralizada com bastante espaço",
+        "Logo Guri no canto superior",
+        "Paleta rosa, branco e amarelo",
+        "Estilo limpo — deixa o produto falar"
+      ]
+    },
+    {
+      id: "so-003",
+      date: "2025-06-16",
+      time: "15h",
+      format: "Story",
+      title: "Promoção da tarde",
+      text: `☀️ TARDE QUENTE = HORA DO SORVETE!\n\nCombo especial de segunda:\n🍦 2 casquinhas por R$ [VALOR]\n\nSó hoje! Corre lá 🏃`,
+      prompt: `Fun and energetic graphic design style image of two ice cream cones side by side on a sunny bright yellow background with playful geometric shapes and confetti. Bold colors, happy energy, promotional feel. Vertical 9:16 format. No text in image.`,
+      canva: [
+        "Formato: Story 1080×1920px",
+        "Fundo amarelo vibrante ou degradê ensolarado",
+        "Ícones de sorvete grandes e divertidos",
+        "Preço em destaque — fonte grande e bold",
+        "Urgência visual: 'só hoje' destacado"
+      ]
+    },
+    {
+      id: "so-004",
+      date: "2025-06-16",
+      time: "19h",
+      format: "Story",
+      title: "Encerramento do dia",
+      text: `Que semana boa comece assim — com doçura! 🍦💛\n\nAmanhã tem mais sabores e mais sorrisos esperando por você.\n\nBoa noite, Turvo! 😊`,
+      prompt: `Cozy evening ice cream shop exterior at dusk with warm lights glowing from inside, small Brazilian town feel, inviting and nostalgic atmosphere. Soft pink and golden hour tones. No people needed. Vertical 9:16. Warm, gentle, community feeling.`,
+      canva: [
+        "Formato: Story 1080×1920px",
+        "Tom quente e aconchegante — noite",
+        "Texto simples e afetivo centralizado",
+        "Emoji de sorvete como elemento visual",
+        "Logo pequeno — post é sobre sentimento, não produto"
+      ]
+    }
+  ],
+
+  gympulse: [
+    {
+      id: "gy-001",
+      date: "2025-06-16",
+      time: "07h",
+      format: "Story",
+      title: "Dado de mercado — Retenção",
+      text: `📊 VOCÊ SABIA?\n\n70% dos alunos de academia abandonam nos primeiros 3 meses.\n\nO motivo? Falta de engajamento e evolução visível.\n\nO GympulsePro resolve isso com gamificação em tempo real. 🎮\n\nQuer saber como? 👇`,
+      prompt: `Dark tech-style infographic visual with the number "70%" displayed in large glowing cyan text on a near-black background. Abstract data visualization elements, subtle grid lines, gaming HUD aesthetic. No additional text, just the number and supporting geometric elements. Vertical 9:16 format.`,
+      canva: [
+        "Formato: Story 1080×1920px",
+        "Fundo preto/zinc com elementos tech",
+        "Número 70% em ciano grande — impacto imediato",
+        "Fonte bold tech, sem serifa",
+        "CTA 'arrasta pra cima' ou link na bio"
+      ]
+    },
+    {
+      id: "gy-002",
+      date: "2025-06-16",
+      time: "10h",
+      format: "Post feed",
+      title: "Funcionalidade — Gamificação ao vivo",
+      text: `🏆 Imagine seus alunos COMPETINDO para treinar mais.\n\nCom o GympulsePro você transforma cada treino em pontos, rankings e conquistas.\n\n✅ Monitor ao vivo\n✅ Rankings por categoria\n✅ Engajamento real\n✅ Retenção comprovada\n\nSua academia merece isso. 🚀\n\n#GympulsePro #GamificaçãoFitness #TechFitness #AcademiaDigital #RetençãoDeAlunos`,
+      prompt: `Futuristic dark gym environment with holographic leaderboard displays showing rankings and points floating in the air. Cyan and amber glow, high-tech gaming aesthetic, empty gym with digital overlays. No real people. Cinematic wide angle. Square 1:1 format. Science fiction meets fitness.`,
+      canva: [
+        "Formato: Post 1080×1080px",
+        "Mockup da tela do GympulsePro se tiver screenshot",
+        "Fundo escuro com elementos ciano e âmbar",
+        "Lista de benefícios com checkmarks ciano",
+        "Logo GympulsePro no topo"
+      ]
+    },
+    {
+      id: "gy-003",
+      date: "2025-06-16",
+      time: "14h",
+      format: "Story",
+      title: "Caso de uso — Depoimento fictício",
+      text: `💬 "Meus alunos chegam na academia perguntando a posição deles no ranking."\n\nIsso é o GympulsePro em ação.\n\nAluno engajado é aluno que não cancela. ✅\n\nFala com a gente e agenda uma demo gratuita! 👊`,
+      prompt: `Dark background with a glowing quote bubble in cyan, professional and clean design. Abstract gym silhouette in background with dark blue/cyan tones. Gaming interface aesthetic. Text-ready space in center. Vertical 9:16 format. Modern SaaS product visual style.`,
+      canva: [
+        "Formato: Story 1080×1920px",
+        "Quote em destaque — fonte itálica grande",
+        "Nome fictício ou 'gestor de academia'",
+        "Barra inferior com CTA para demo",
+        "Estética profissional B2B"
+      ]
+    },
+    {
+      id: "gy-004",
+      date: "2025-06-16",
+      time: "18h",
+      format: "Carrossel",
+      title: "Demonstração — Ranking semanal",
+      text: `Slide 1: "Sua academia tem ranking de alunos?"\nSlide 2: "Com o GympulsePro tem — em tempo real"\nSlide 3: [Screenshot do ranking na plataforma]\nSlide 4: "Aluno que aparece no ranking, treina mais. Simples assim."\nSlide 5: "Quer ver funcionando? Agenda uma demonstração gratuita 👇"`,
+      prompt: `Series of dark tech UI screens showing a fitness gamification leaderboard app. Clean dark interface with cyan accents, showing user rankings, points, and badges. Minimalist SaaS product screenshots aesthetic. Multiple slides concept. Square 1:1 format per slide.`,
+      canva: [
+        "Formato: Carrossel 1080×1080px (5 slides)",
+        "Slide 1: pergunta impactante — texto grande",
+        "Slides 2-4: mockup ou screenshot da plataforma",
+        "Slide 5: CTA — fundo ciano, texto escuro",
+        "Consistência visual entre todos os slides"
+      ]
+    }
+  ]
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'gilson_painel_v1';
+let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function isChecked(id) { return !!state[id]; }
+
+function toggleCheck(id) {
+  state[id] = !state[id];
+  saveState();
+  render();
+  buildHistorico();
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function groupByDate(items) {
+  const groups = {};
+  items.forEach(item => {
+    if (!groups[item.date]) groups[item.date] = [];
+    groups[item.date].push(item);
+  });
+  return groups;
+}
+
+function formatDateLabel(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+  const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  return `${days[date.getDay()]}, ${d} de ${months[m-1]} de ${y}`;
+}
+
+function renderCards(items, containerId, profile) {
+  const container = document.getElementById(containerId);
+  const groups = groupByDate(items);
+
+  let html = '';
+  Object.keys(groups).sort().reverse().forEach(date => {
+    html += `<div class="date-group">
+      <div class="date-label">${formatDateLabel(date)}</div>`;
+
+    groups[date].forEach(item => {
+      const done = isChecked(item.id);
+      html += `
+      <div class="content-card ${profile} ${done ? 'done' : ''}" id="card-${item.id}">
+        <div class="card-header" onclick="toggleExpand('${item.id}')">
+          <button class="check-btn" onclick="event.stopPropagation(); toggleCheck('${item.id}')">${done ? '✓' : ''}</button>
+          <div class="card-meta">
+            <span class="time-tag">${item.time}</span>
+            <span class="format-tag">${item.format}</span>
+            <span class="card-title">${item.title}</span>
+          </div>
+          <span class="expand-icon">▼</span>
+        </div>
+        <div class="card-body">
+          <div class="section-block">
+            <div class="block-label" style="color: var(--text2)"><span class="icon">📝</span> Texto pronto</div>
+            <div class="text-content">${item.text}</div>
+            <button class="copy-btn" onclick="copyText('${item.id}-text')">Copiar texto</button>
+            <div style="display:none" id="${item.id}-text">${item.text}</div>
+          </div>
+          <div class="section-block">
+            <div class="block-label" style="color: #7ee787"><span class="icon">🎨</span> Prompt de imagem (IA)</div>
+            <div class="prompt-content">${item.prompt}</div>
+            <button class="copy-btn" onclick="copyText('${item.id}-prompt')">Copiar prompt</button>
+            <div style="display:none" id="${item.id}-prompt">${item.prompt}</div>
+          </div>
+          <div class="section-block">
+            <div class="block-label" style="color: #a78bfa"><span class="icon">🖼️</span> Como montar no Canva</div>
+            <ul class="canva-list">${item.canva.map(c => `<li>${c}</li>`).join('')}</ul>
+          </div>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+
+  container.innerHTML = html || '<div class="empty"><div class="icon">📭</div><p>Nenhum conteúdo ainda.<br>Peça ao Claude para gerar o conteúdo do dia!</p></div>';
+}
+
+function renderStats(items, statsId) {
+  const total = items.length;
+  const done = items.filter(i => isChecked(i.id)).length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  document.getElementById(statsId).innerHTML = `
+    <div class="stat"><div class="stat-num">${total}</div><div class="stat-label">Total</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--done)">${done}</div><div class="stat-label">Feito</div></div>
+    <div class="stat"><div class="stat-num">${total - done}</div><div class="stat-label">Pendente</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--academia)">${pct}%</div><div class="stat-label">Progresso</div></div>
+  `;
+}
+
+function render() {
+  renderCards(DATA.academia, 'cards-academia', 'academia');
+  renderStats(DATA.academia, 'stats-academia');
+  renderCards(DATA.sorveteria, 'cards-sorveteria', 'sorveteria');
+  renderStats(DATA.sorveteria, 'stats-sorveteria');
+  renderCards(DATA.gympulse, 'cards-gympulse', 'gympulse');
+  renderStats(DATA.gympulse, 'stats-gympulse');
+}
+
+function buildHistorico() {
+  const all = [
+    ...DATA.academia.map(i => ({...i, profile: 'academia', color: 'var(--academia)', label: 'Academia'})),
+    ...DATA.sorveteria.map(i => ({...i, profile: 'sorveteria', color: 'var(--sorveteria)', label: 'Sorveteria'})),
+    ...DATA.gympulse.map(i => ({...i, profile: 'gympulse', color: 'var(--gympulse)', label: 'GympulsePro'}))
+  ].sort((a, b) => {
+    const dateCompare = b.date.localeCompare(a.date);
+    if (dateCompare !== 0) return dateCompare;
+    return a.time.localeCompare(b.time);
+  });
+
+  const list = document.getElementById('historico-list');
+  list.innerHTML = all.map(item => `
+    <div class="historico-entry">
+      <div class="historico-dot" style="background:${item.color}"></div>
+      <div class="historico-info">
+        <div class="historico-title">${item.title}</div>
+        <div class="historico-sub">${item.label} · ${item.time} · ${item.format} · ${formatDateLabel(item.date)}</div>
+      </div>
+      <div class="historico-badge ${isChecked(item.id) ? '' : 'pending'}">${isChecked(item.id) ? 'FEITO' : 'PENDENTE'}</div>
+    </div>
+  `).join('');
+}
+
+// ─── UI INTERACTIONS ──────────────────────────────────────────────────────────
+function toggleExpand(id) {
+  const card = document.getElementById('card-' + id);
+  card.classList.toggle('expanded');
+}
+
+function copyText(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    const btn = el.previousElementSibling;
+    const orig = btn.textContent;
+    btn.textContent = 'Copiado! ✓';
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
+}
+
+let activeTab = 'academia';
+function switchTab(tab) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.className = 'tab';
+  });
+  const tabs = document.querySelectorAll('.tab');
+  const map = ['academia', 'sorveteria', 'gympulse', 'historico'];
+  tabs[map.indexOf(tab)].classList.add('active-' + tab);
+
+  activeTab = tab;
+  if (tab === 'historico') buildHistorico();
+}
+
+// ─── DATE ─────────────────────────────────────────────────────────────────────
+function updateDate() {
+  const now = new Date();
+  const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  document.getElementById('current-date').textContent =
+    `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+updateDate();
+render();
+</script>
+</body>
+</html>
