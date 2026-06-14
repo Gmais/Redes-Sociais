@@ -12,15 +12,12 @@
   --s1: #101018;
   --s2: #18181f;
   --border: #26262f;
-  --ac: #f5a623;
-  --ac2: #ff6b00;
-  --ac-g: linear-gradient(135deg, #f5a623, #ff6b00);
-  --so: #ff3fa4;
-  --so2: #c026d3;
-  --so-g: linear-gradient(135deg, #ff3fa4, #c026d3);
-  --gy: #00e5ff;
-  --gy2: #6200ea;
-  --gy-g: linear-gradient(135deg, #00e5ff, #6200ea);
+  --ac: #e63900;
+  --ac-g: linear-gradient(135deg, #e63900, #00b4b4);
+  --so: #f5c800;
+  --so-g: linear-gradient(135deg, #003f6b, #00b4d8);
+  --gy: #f5c200;
+  --gy-g: linear-gradient(135deg, #f5c200, #ffffff);
   --done: #00e676;
   --txt: #f5f5fa;
   --txt2: #9999bb;
@@ -33,8 +30,8 @@ body { background: var(--bg); color: var(--txt); font-family: 'Inter', sans-seri
 .hero { position: relative; padding: 28px 24px 0; overflow: hidden; }
 .hero-bg {
   position: absolute; inset: 0;
-  background: radial-gradient(ellipse 600px 300px at 80% -20%, rgba(245,166,35,0.15) 0%, transparent 70%),
-              radial-gradient(ellipse 400px 200px at -10% 50%, rgba(0,229,255,0.08) 0%, transparent 70%);
+  background: radial-gradient(ellipse 600px 300px at 80% -20%, rgba(230,57,0,0.15) 0%, transparent 70%),
+              radial-gradient(ellipse 400px 200px at -10% 50%, rgba(245,194,0,0.08) 0%, transparent 70%);
   pointer-events: none;
 }
 .hero-top { display: flex; align-items: center; justify-content: space-between; position: relative; }
@@ -50,14 +47,14 @@ body { background: var(--bg); color: var(--txt); font-family: 'Inter', sans-seri
 .tab { position:relative; padding:14px 18px 12px; font-size:13px; font-weight:700; letter-spacing:0.04em; color:var(--txt3); cursor:pointer; white-space:nowrap; background:none; border:none; font-family:'Inter',sans-serif; transition:color 0.2s; }
 .tab::after { content:''; position:absolute; bottom:-1px; left:0; right:0; height:2px; border-radius:2px 2px 0 0; opacity:0; transition:opacity 0.2s; }
 .tab:hover { color: var(--txt2); }
-.tab[data-p="academia"].on { color: var(--ac); }
-.tab[data-p="academia"].on::after { background: var(--ac-g); opacity:1; }
-.tab[data-p="sorveteria"].on { color: var(--so); }
-.tab[data-p="sorveteria"].on::after { background: var(--so-g); opacity:1; }
-.tab[data-p="gympulse"].on { color: var(--gy); }
-.tab[data-p="gympulse"].on::after { background: var(--gy-g); opacity:1; }
+.tab[data-p="academia"].on { color: #e63900; }
+.tab[data-p="academia"].on::after { background: linear-gradient(90deg,#e63900,#00b4b4); opacity:1; }
+.tab[data-p="sorveteria"].on { color: #f5c800; }
+.tab[data-p="sorveteria"].on::after { background: linear-gradient(90deg,#003f6b,#00b4d8,#f5c800); opacity:1; }
+.tab[data-p="gympulse"].on { color: #f5c200; }
+.tab[data-p="gympulse"].on::after { background: linear-gradient(90deg,#f5c200,#ffffff); opacity:1; }
 .tab[data-p="historico"].on { color: var(--txt); }
-.tab[data-p="historico"].on::after { background: linear-gradient(90deg,var(--ac),var(--so),var(--gy)); opacity:1; }
+.tab[data-p="historico"].on::after { background: linear-gradient(90deg,#e63900,#f5c800,#f5c200); opacity:1; }
 
 main { max-width:780px; margin:0 auto; padding:28px 20px 100px; }
 .panel { display:none; }
@@ -74,9 +71,9 @@ main { max-width:780px; margin:0 auto; padding:28px 20px 100px; }
 
 .card { background:var(--s1); border:1px solid var(--border); border-radius:14px; margin-bottom:10px; overflow:hidden; transition:border-color 0.2s, transform 0.15s; }
 .card:hover { transform:translateY(-1px); }
-.card[data-p="academia"] { border-left:3px solid var(--ac); }
-.card[data-p="sorveteria"] { border-left:3px solid var(--so); }
-.card[data-p="gympulse"] { border-left:3px solid var(--gy); }
+.card[data-p="academia"] { border-left:3px solid #e63900; }
+.card[data-p="sorveteria"] { border-left:3px solid #f5c800; }
+.card[data-p="gympulse"] { border-left:3px solid #f5c200; }
 .card.done { opacity:0.45; filter:saturate(0.3); }
 
 .chead { display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer; user-select:none; transition:background 0.15s; }
@@ -86,9 +83,9 @@ main { max-width:780px; margin:0 auto; padding:28px 20px 100px; }
 .card.done .chk { background:var(--done); border-color:var(--done); }
 .cmeta { flex:1; display:flex; align-items:center; gap:8px; min-width:0; }
 .ctag { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; padding:4px 9px; border-radius:5px; flex-shrink:0; }
-.card[data-p="academia"] .ctag { background:rgba(245,166,35,0.15); color:var(--ac); }
-.card[data-p="sorveteria"] .ctag { background:rgba(255,63,164,0.15); color:var(--so); }
-.card[data-p="gympulse"] .ctag { background:rgba(0,229,255,0.12); color:var(--gy); }
+.card[data-p="academia"] .ctag { background:rgba(230,57,0,0.15); color:#e63900; }
+.card[data-p="sorveteria"] .ctag { background:rgba(245,200,0,0.15); color:#f5c800; }
+.card[data-p="gympulse"] .ctag { background:rgba(245,194,0,0.15); color:#f5c200; }
 .cfmt { font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--txt3); background:var(--s2); padding:4px 8px; border-radius:4px; flex-shrink:0; }
 .ctitle { font-size:13px; font-weight:600; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .cchev { font-size:10px; color:var(--txt3); flex-shrink:0; transition:transform 0.2s; }
@@ -99,39 +96,37 @@ main { max-width:780px; margin:0 auto; padding:28px 20px 100px; }
 .block { margin-top:16px; }
 .blabel { font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
 
-/* Drive ref */
-.drive-ref { display:flex; align-items:center; gap:10px; background:rgba(0,229,255,0.06); border:1px solid rgba(0,229,255,0.15); border-radius:8px; padding:10px 12px; }
+.drive-ref { display:flex; align-items:center; gap:10px; background:rgba(0,180,216,0.06); border:1px solid rgba(0,180,216,0.15); border-radius:8px; padding:10px 12px; }
 .drive-icon { font-size:16px; flex-shrink:0; }
 .drive-info { flex:1; min-width:0; }
-.drive-name { font-size:12px; font-weight:600; color:var(--gy); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.drive-name { font-size:12px; font-weight:600; color:#00b4d8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .drive-hint { font-size:11px; color:var(--txt3); margin-top:2px; }
-.drive-link { font-size:10px; font-weight:700; letter-spacing:0.06em; color:var(--gy); text-decoration:none; background:rgba(0,229,255,0.1); padding:4px 8px; border-radius:4px; white-space:nowrap; flex-shrink:0; }
-.drive-link:hover { background:rgba(0,229,255,0.2); }
+.drive-link { font-size:10px; font-weight:700; letter-spacing:0.06em; color:#00b4d8; text-decoration:none; background:rgba(0,180,216,0.1); padding:4px 8px; border-radius:4px; white-space:nowrap; flex-shrink:0; }
+.drive-link:hover { background:rgba(0,180,216,0.2); }
 
-/* text */
 .tbox { background:var(--s2); border:1px solid var(--border); border-radius:9px; padding:13px 14px; font-size:13px; line-height:1.75; color:var(--txt); white-space:pre-wrap; }
 
-/* prompt ChatGPT */
 .pbox { background:#0a0d0a; border:1px solid #1e2e1e; border-radius:9px; padding:13px 14px; font-family:'JetBrains Mono',monospace; font-size:11.5px; line-height:1.7; color:#4ade80; white-space:pre-wrap; }
 .pbox-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
 .pbox-badge { font-size:9px; font-weight:800; letter-spacing:0.1em; background:rgba(74,222,128,0.12); color:#4ade80; border:1px solid rgba(74,222,128,0.2); padding:3px 8px; border-radius:4px; }
 
-/* canva steps */
+.palette-bar { display:flex; gap:6px; margin-bottom:10px; align-items:center; }
+.palette-chip { width:20px; height:20px; border-radius:4px; border:1px solid rgba(255,255,255,0.1); flex-shrink:0; }
+.palette-label { font-size:10px; font-family:'JetBrains Mono',monospace; color:var(--txt3); }
+
 .canva-steps { background:var(--s2); border:1px solid var(--border); border-radius:9px; overflow:hidden; }
 .canva-step { display:flex; align-items:flex-start; gap:12px; padding:11px 14px; border-bottom:1px solid var(--border); }
 .canva-step:last-child { border:none; }
 .step-num { width:20px; height:20px; border-radius:50%; background:rgba(167,139,250,0.15); color:#a78bfa; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
 .step-txt { font-size:12.5px; color:var(--txt2); line-height:1.5; flex:1; }
 .step-tag { font-size:10px; font-weight:700; padding:2px 6px; border-radius:3px; margin-right:4px; flex-shrink:0; }
-.tag-drive { background:rgba(0,229,255,0.1); color:var(--gy); }
+.tag-drive { background:rgba(0,180,216,0.1); color:#00b4d8; }
 .tag-chatgpt { background:rgba(74,222,128,0.1); color:#4ade80; }
 .tag-canva { background:rgba(167,139,250,0.1); color:#a78bfa; }
 
-/* copy */
 .copybtn { margin-top:7px; display:block; margin-left:auto; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--txt3); background:var(--s2); border:1px solid var(--border); border-radius:5px; padding:5px 10px; cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.15s; }
 .copybtn:hover { color:var(--txt); border-color:var(--txt3); }
 
-/* historico */
 .hentry { display:flex; align-items:center; gap:12px; background:var(--s1); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:8px; }
 .hdot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
 .hinfo { flex:1; min-width:0; }
@@ -181,10 +176,31 @@ main { max-width:780px; margin:0 auto; padding:28px 20px 100px; }
 </main>
 
 <script>
+const PALETTES = {
+  academia: [
+    {hex:'#e63900', label:'Laranja'},
+    {hex:'#00b4b4', label:'Teal'},
+    {hex:'#ffffff', label:'Branco'},
+    {hex:'#1a1a1a', label:'Preto'}
+  ],
+  sorveteria: [
+    {hex:'#003f6b', label:'Azul escuro'},
+    {hex:'#00b4d8', label:'Azul turquesa'},
+    {hex:'#f5c800', label:'Amarelo'},
+    {hex:'#ffffff', label:'Branco'}
+  ],
+  gympulse: [
+    {hex:'#f5c200', label:'Amarelo'},
+    {hex:'#ffffff', label:'Branco'},
+    {hex:'#0d0d0d', label:'Preto'},
+    {hex:'#1c1c1c', label:'Cinza escuro'}
+  ]
+};
+
 const CONTENT = {
   academia: [
     {
-      id:'ac1', date:'2025-06-16', time:'08h', format:'Story',
+      id:'ac1', date:'2026-06-16', time:'08h', format:'Story',
       title:'Prova social — Pequenas vitórias',
       driveFile:'Academia25.jpg',
       driveUrl:'https://drive.google.com/file/d/1_tYJHgSeLm7f9M1xyUjD70y-htknP4Ej/view',
@@ -196,19 +212,19 @@ Dormir melhor. Ter mais disposição. Carregar as compras sem cansar.
 Pequenas vitórias que mudam tudo.
 
 Vem descobrir isso também 👉 manda mensagem!`,
-      prompt:`Fotografia de uma mulher brasileira entre 30 e 40 anos, sorrindo de forma natural e relaxada dentro de uma academia pequena e acolhedora. Ela usa roupas simples de treino, sem apelo estético. A luz é suave e quente. O ambiente transmite aconchego e comunidade, não competição. Sem texto na imagem. Formato vertical 9:16.`,
+      prompt:`Fotografia de uma mulher brasileira entre 30 e 40 anos, sorrindo de forma natural dentro de uma academia pequena e acolhedora. Roupas simples de treino. Paleta de cores da imagem: laranja (#e63900) como cor de destaque, teal/verde-água (#00b4b4) como acento, fundo escuro (#1a1a1a), texto e elementos em branco (#ffffff). Luz quente e ambiente acolhedor. Sem texto na imagem. Formato vertical 9:16.`,
       canva:[
         {tag:'drive', txt:'Abra Academia25.jpg do Drive — use como camada de fundo'},
-        {tag:'chatgpt', txt:'Gere a imagem com o prompt no ChatGPT e importe como elemento sobreposto ou alternativo ao fundo'},
-        {tag:'canva', txt:'Overlay bege claro (não escuro!) sobre a foto — opacidade 25%'},
-        {tag:'canva', txt:'Texto em cor escura (#2d2d2d), fonte Inter 400, centralizado'},
-        {tag:'canva', txt:'Emojis 💛🌿 como únicos elementos decorativos — sem fogo ou raios'},
-        {tag:'canva', txt:'Logo Planeta Corpo pequeno e discreto no canto inferior'},
-        {tag:'canva', txt:'Sensação: conversa entre amigas, não anúncio de academia'}
+        {tag:'chatgpt', txt:'Gere imagem complementar com o prompt — sobreponha como elemento ou use como alternativa'},
+        {tag:'canva', txt:'Overlay escuro (#1a1a1a) suave sobre a foto — opacidade 35%'},
+        {tag:'canva', txt:'Texto em branco (#ffffff), fonte Inter 400, centralizado'},
+        {tag:'canva', txt:'Destaque em laranja (#e63900) para palavra-chave ou CTA'},
+        {tag:'canva', txt:'Acento em teal (#00b4b4) em elemento secundário — como linha ou ícone'},
+        {tag:'canva', txt:'Logo Planeta Corpo no canto inferior — pequeno e discreto'}
       ]
     },
     {
-      id:'ac2', date:'2025-06-16', time:'12h', format:'Story',
+      id:'ac2', date:'2026-06-16', time:'12h', format:'Story',
       title:'Dica de saúde — 3x por semana já basta',
       driveFile:'Academia24.jpg',
       driveUrl:'https://drive.google.com/file/d/1Ur7pNcZnnlYEGPQd63A3e-9tF0-x1Umi/view',
@@ -217,23 +233,23 @@ Vem descobrir isso também 👉 manda mensagem!`,
 
 3 vezes por semana, 1 hora, no seu ritmo — já é suficiente para:
 
-🌿 Dormir melhor
-🌿 Reduzir o estresse
-🌿 Ganhar disposição no dia a dia
+✅ Dormir melhor
+✅ Reduzir o estresse
+✅ Ganhar disposição no dia a dia
 
 A ciência confirma. A gente te ajuda a colocar em prática.`,
-      prompt:`Ilustração flat design minimalista de três ícones simples representando bem-estar: uma lua (sono), uma folha (tranquilidade) e um sol (energia). Paleta de cores suaves: verde sage, bege e branco. Fundo branco limpo. Estilo moderno e leve, sem pessoas. Sem texto na imagem. Formato vertical 9:16.`,
+      prompt:`Ilustração flat design minimalista com três ícones representando bem-estar: lua (sono), folha (tranquilidade), sol (energia). Paleta obrigatória: fundo preto (#1a1a1a), ícones em laranja (#e63900) e teal (#00b4b4), detalhes em branco (#ffffff). Estilo moderno, limpo, sem pessoas. Sem texto na imagem. Formato vertical 9:16.`,
       canva:[
         {tag:'drive', txt:'Importe Academia24.jpg como camada de fundo'},
-        {tag:'chatgpt', txt:'Gere os ícones de bem-estar com o prompt — coloque como elemento visual central sobre a foto'},
-        {tag:'canva', txt:'Overlay bege muito suave (15% opacidade) — a foto deve aparecer'},
-        {tag:'canva', txt:'3 benefícios com 🌿 em verde sage — fonte Inter 400, tamanho 26px'},
-        {tag:'canva', txt:'Título "3x por semana já basta" em destaque discreto, não gritado'},
-        {tag:'canva', txt:'Paleta: verde, bege e branco — transmite saúde, não esforço'}
+        {tag:'chatgpt', txt:'Gere os ícones flat com a paleta correta — sobreponha centralizados'},
+        {tag:'canva', txt:'Overlay preto (#1a1a1a) 40% sobre a foto'},
+        {tag:'canva', txt:'3 benefícios com ✅ laranja (#e63900) — fonte Inter 400, 26px'},
+        {tag:'canva', txt:'Linha divisória em teal (#00b4b4) entre o título e os benefícios'},
+        {tag:'canva', txt:'Título em branco (#ffffff) — discreto, não gritado'}
       ]
     },
     {
-      id:'ac3', date:'2025-06-16', time:'17h', format:'Post feed',
+      id:'ac3', date:'2026-06-16', time:'17h', format:'Post feed',
       title:'Convite à matrícula — 27 anos de história',
       driveFile:'Logo Academia Oficial.png',
       driveUrl:'https://drive.google.com/file/d/0B5StJJgxShxeSTNEYm93M1g0Qms/view',
@@ -250,45 +266,45 @@ Tudo por R$ 209/mês. Sem pegadinhas.
 📲 (42) 99922-2857
 
 #PlanetaCorpo #Turvo #SaúdeDeVerdade #QualidadeDeVida`,
-      prompt:`Layout clean para post de academia com fundo branco ou creme suave. Elementos gráficos simples representando diferentes modalidades de exercício: silhuetas leves de dança, musculação, spinning e funcional. Estilo minimalista e acolhedor, não esportivo agressivo. Paleta âmbar dourado, bege e branco. Espaço central para logo. Sem texto na imagem. Formato quadrado 1:1.`,
+      prompt:`Post para academia com layout clean. Paleta obrigatória: fundo preto (#1a1a1a), destaque principal em laranja (#e63900), acento em teal/verde-água (#00b4b4), texto em branco (#ffffff). Silhuetas minimalistas de pessoas praticando diferentes modalidades esportivas. Espaço central para logo. Sem texto na imagem. Formato quadrado 1:1.`,
       canva:[
-        {tag:'drive', txt:'Importe Logo Academia Oficial.png — posicione no centro superior'},
-        {tag:'chatgpt', txt:'Gere o layout com silhuetas de modalidades — use como fundo ou elemento decorativo'},
-        {tag:'canva', txt:'Fundo: branco ou creme (#faf8f4) — não escuro'},
-        {tag:'canva', txt:'"27 anos" em destaque âmbar — esse é o maior diferencial'},
-        {tag:'canva', txt:'Lista de modalidades em texto limpo, separadas por · (ponto médio)'},
-        {tag:'canva', txt:'Preço R$209 em tamanho médio — honesto, não promocional agressivo'},
-        {tag:'canva', txt:'Endereço e WhatsApp no rodapé — fonte pequena, cor cinza'}
+        {tag:'drive', txt:'Importe Logo Academia Oficial.png — posicione no topo centralizado'},
+        {tag:'chatgpt', txt:'Gere silhuetas de modalidades com paleta oficial — use como decoração'},
+        {tag:'canva', txt:'Fundo preto (#1a1a1a)'},
+        {tag:'canva', txt:'"27 anos" em laranja (#e63900) — destaque principal'},
+        {tag:'canva', txt:'Lista de modalidades em branco, separadas por · teal (#00b4b4)'},
+        {tag:'canva', txt:'Preço R$209 em branco, tamanho médio'},
+        {tag:'canva', txt:'Endereço e WhatsApp em cinza claro no rodapé'}
       ]
     },
     {
-      id:'ac4', date:'2025-06-16', time:'20h', format:'Story',
+      id:'ac4', date:'2026-06-16', time:'20h', format:'Story',
       title:'Humanização — Academia é pra todo mundo',
       driveFile:'Academia23.jpg',
       driveUrl:'https://drive.google.com/file/d/1tJwIyn_q134rkN3px66sYeFlUnpADIeG/view',
       driveHint:'Foto real do espaço — autenticidade é o diferencial aqui',
       text:`Tem gente que acha que academia é coisa de quem já é fitness.
 
-A gente pensa diferente. 🌿
+A gente pensa diferente. 🧡
 
 A Planeta Corpo existe para quem quer começar, para quem parou e quer voltar, e para quem só precisa de um lugar gostoso de treinar.
 
-Desde 1998 sendo esse lugar pra Turvo. 💛`,
-      prompt:`Fotografia acolhedora do interior de uma academia pequena e familiar em cidade do interior do Paraná. Luz quente e natural, equipamentos simples e bem cuidados, sensação de lugar seguro e sem julgamentos. Sem pessoas. Atmosfera de comunidade local. Sem texto na imagem. Formato vertical 9:16.`,
+Desde 1998 sendo esse lugar pra Turvo. 🧡`,
+      prompt:`Fotografia acolhedora de academia pequena em cidade do interior do Paraná. Paleta da imagem: tons escuros naturais (#1a1a1a), detalhes em laranja quente (#e63900) na iluminação, reflexos em teal (#00b4b4). Luz ambiente calorosa, equipamentos bem cuidados. Sem pessoas, sem texto. Formato vertical 9:16.`,
       canva:[
-        {tag:'drive', txt:'Use Academia23.jpg como fundo — foto real vale mais que arte produzida aqui'},
-        {tag:'chatgpt', txt:'Opcional: gere imagem alternativa se a foto não ficar boa como fundo'},
-        {tag:'canva', txt:'Overlay mínimo — 10% no máximo, só para o texto aparecer'},
-        {tag:'canva', txt:'Texto no topo, fonte Inter 400, cor branca ou escura conforme o fundo'},
-        {tag:'canva', txt:'Sem filtros pesados — autenticidade é o ponto forte desse story'},
-        {tag:'canva', txt:'Logo pequeníssimo no canto — esse post é sobre sentimento, não marca'}
+        {tag:'drive', txt:'Use Academia23.jpg como fundo — foto real é mais autêntica'},
+        {tag:'chatgpt', txt:'Opcional: gere imagem alternativa se a foto não funcionar como fundo'},
+        {tag:'canva', txt:'Overlay mínimo preto (#1a1a1a) 15% — só para o texto aparecer'},
+        {tag:'canva', txt:'Texto em branco (#ffffff), fonte Inter 400, tom leve e humano'},
+        {tag:'canva', txt:'Emoji 🧡 como único elemento decorativo — combina com o laranja da marca'},
+        {tag:'canva', txt:'Logo no canto inferior — pequeníssimo'}
       ]
     }
   ],
 
   sorveteria: [
     {
-      id:'so1', date:'2025-06-16', time:'09h', format:'Story',
+      id:'so1', date:'2026-06-16', time:'09h', format:'Story',
       title:'Produto do dia — Abertura energética',
       driveFile:'mascote3d_guri_pose01_sorvete_tamanho_grande.png',
       driveUrl:'https://drive.google.com/file/d/1Tb4fIXrE5vWurOTlJPjdfg3kxK9W8Olu/view',
@@ -300,22 +316,22 @@ Começa a semana com o sabor que todo mundo ama!
 Hoje em destaque: [COLOQUE O SABOR DO DIA] 😍
 
 Vem nos visitar!`,
-      prompt:`Fundo colorido e festivo para story de sorveteria brasileira em cidade do interior. Degradê diagonal de rosa vibrante (#ff3fa4) para roxo (#c026d3). Elementos decorativos: bolinhas coloridas, confetes e formas geométricas alegres. Espaço central em branco para posicionar mascote e texto. Sem texto na imagem. Formato vertical 9:16.`,
+      prompt:`Fundo festivo para story de sorveteria. Paleta obrigatória: azul escuro (#003f6b) como fundo principal, azul turquesa (#00b4d8) como acento e degradê, amarelo (#f5c800) para destaques e elementos alegres, branco (#ffffff) para texto. Elementos decorativos: bolinhas, confetes e formas geométricas. Espaço central para mascote. Sem texto na imagem. Formato vertical 9:16.`,
       canva:[
-        {tag:'chatgpt', txt:'Gere o fundo colorido com o prompt — base do story'},
-        {tag:'drive', txt:'Importe o mascote3d_guri_pose01 do Drive — posicione à direita, tamanho grande'},
-        {tag:'canva', txt:'"BOM DIA, TURVO!" no topo — fonte bold arredondada, branco'},
-        {tag:'canva', txt:'Nome do sabor em caixa amarela vibrante no centro'},
-        {tag:'canva', txt:'Logo Guri V2 pequeno no canto inferior'},
-        {tag:'canva', txt:'Energia: festiva, colorida, alegre — como a marca Guri'}
+        {tag:'chatgpt', txt:'Gere o fundo com degradê azul escuro (#003f6b) → turquesa (#00b4d8) e confetes amarelos (#f5c800)'},
+        {tag:'drive', txt:'Importe mascote3d_guri_pose01 do Drive — posicione à direita, tamanho grande'},
+        {tag:'canva', txt:'"BOM DIA, TURVO!" no topo — fonte bold, branco (#ffffff)'},
+        {tag:'canva', txt:'Nome do sabor em caixa amarela (#f5c800) com texto azul escuro (#003f6b)'},
+        {tag:'canva', txt:'Logo Guri V2 no canto inferior em branco'},
+        {tag:'canva', txt:'Energia festiva — azul, amarelo e branco são as cores oficiais'}
       ]
     },
     {
-      id:'so2', date:'2025-06-16', time:'11h30', format:'Post feed',
+      id:'so2', date:'2026-06-16', time:'11h30', format:'Post feed',
       title:'Foto produto — Construção de marca',
       driveFile:'11.08 - Sabores Guri Mini BomBom de Açaí.png',
       driveUrl:'https://drive.google.com/file/d/1as6g-9NsXdkpm2Yrh-p__w3SCZ73NTNv/view',
-      driveHint:'Post de sabores já produzido — pode repostar diretamente ou usar como referência',
+      driveHint:'Post de sabores já produzido — pode repostar ou usar como referência',
       text:`Segunda-feira fica muito melhor com um sorvete na mão! 🍦☀️
 
 Sabores que fazem a sua semana começar com alegria.
@@ -323,18 +339,18 @@ Sabores que fazem a sua semana começar com alegria.
 Venha nos visitar em Turvo/PR!
 
 #SorvetesGuri #Turvo #SorveteriaArtesanal #MomentoGuri`,
-      prompt:`Fotografia flat lay de cima de bolas de sorvete coloridas e apetitosas em diferentes sabores sobre superfície de mármore branco. Flores tropicais e frutas frescas decorando ao redor. Luz natural suave. Cores vibrantes e apetitosas. Estilo food photography profissional brasileiro. Sem texto na imagem. Formato quadrado 1:1.`,
+      prompt:`Flat lay fotográfico de sorvetes coloridos sobre superfície com fundo azul turquesa (#00b4d8). Elementos decorativos em amarelo (#f5c800) e branco (#ffffff). Paleta obrigatória: azul turquesa (#00b4d8), azul escuro (#003f6b), amarelo (#f5c800), branco (#ffffff). Estilo food photography profissional e apetitoso. Sem texto na imagem. Formato quadrado 1:1.`,
       canva:[
         {tag:'drive', txt:'Opção A: reposte o arquivo "11.08 - Sabores Guri" diretamente — já está pronto'},
-        {tag:'chatgpt', txt:'Opção B: gere nova foto de produto com o prompt e monte post novo'},
-        {tag:'drive', txt:'Importe LOGO-GURI-V2.png — posicione no canto superior'},
-        {tag:'canva', txt:'Fundo branco limpo se montar do zero'},
-        {tag:'canva', txt:'Paleta da marca: rosa, branco e amarelo'},
-        {tag:'canva', txt:'Deixa o produto ser o protagonista — design discreto'}
+        {tag:'chatgpt', txt:'Opção B: gere nova foto com paleta oficial e monte post novo'},
+        {tag:'drive', txt:'Importe LOGO-GURI-V2.png — canto superior em branco (#ffffff)'},
+        {tag:'canva', txt:'Fundo azul turquesa (#00b4d8) se montar do zero'},
+        {tag:'canva', txt:'Elementos decorativos em amarelo (#f5c800)'},
+        {tag:'canva', txt:'Produto no centro — protagonista da imagem'}
       ]
     },
     {
-      id:'so3', date:'2025-06-16', time:'15h', format:'Story',
+      id:'so3', date:'2026-06-16', time:'15h', format:'Story',
       title:'Promoção da tarde — Urgência e calor',
       driveFile:'mascote3d_guri_pose02_apresentando_tamanho_grande.png',
       driveUrl:'https://drive.google.com/file/d/1saHs8AqxRT27bXp_AMtPw8UjThvDvp7f/view',
@@ -345,18 +361,18 @@ Combo especial de segunda:
 🍦 2 casquinhas por R$ [VALOR]
 
 Só hoje! Corre lá 🏃`,
-      prompt:`Fundo amarelo sol vibrante e quente (#fbbf24) com elementos gráficos de verão: raios de sol, estrelinhas e formas dinâmicas. Espaço à esquerda para posicionar mascote, espaço à direita para caixa de preço. Energia promocional, alegre e urgente. Sem texto na imagem. Formato vertical 9:16.`,
+      prompt:`Fundo promocional vibrante. Paleta obrigatória: amarelo (#f5c800) como cor dominante de fundo, azul escuro (#003f6b) para texto e caixas de destaque, azul turquesa (#00b4d8) como acento, branco (#ffffff) para elementos secundários. Raios de sol e formas dinâmicas. Espaço à esquerda para mascote e à direita para preço. Sem texto na imagem. Formato vertical 9:16.`,
       canva:[
-        {tag:'chatgpt', txt:'Gere o fundo amarelo vibrante com elementos de verão'},
+        {tag:'chatgpt', txt:'Gere fundo amarelo (#f5c800) com raios de sol e formas dinâmicas'},
         {tag:'drive', txt:'Importe mascote3d_guri_pose02 do Drive — posicione à esquerda, grande'},
-        {tag:'canva', txt:'Caixa de preço à direita — fonte Bebas Neue grande, branca'},
-        {tag:'canva', txt:'"SÓ HOJE!" em vermelho/laranja — urgência visual'},
-        {tag:'canva', txt:'Seta apontando para o preço como elemento gráfico'},
-        {tag:'canva', txt:'Logo Guri no topo — pequeno, não disputa com o preço'}
+        {tag:'canva', txt:'Caixa de preço à direita — fundo azul escuro (#003f6b), texto branco'},
+        {tag:'canva', txt:'"SÓ HOJE!" em azul escuro (#003f6b) com borda branca — urgência'},
+        {tag:'canva', txt:'Seta em branco apontando para o preço'},
+        {tag:'canva', txt:'Logo Guri no topo em azul escuro (#003f6b)'}
       ]
     },
     {
-      id:'so4', date:'2025-06-16', time:'19h', format:'Story',
+      id:'so4', date:'2026-06-16', time:'19h', format:'Story',
       title:'Encerramento — Boa noite Turvo',
       driveFile:'LOGO-GURI-V2.png',
       driveUrl:'https://drive.google.com/file/d/1fO9HP4JSSYFfboE_jDGbNUFoRP38xcBk/view',
@@ -366,24 +382,24 @@ Só hoje! Corre lá 🏃`,
 Amanhã tem mais sabores e mais sorrisos esperando por você.
 
 Boa noite, Turvo! 😊`,
-      prompt:`Fundo degradê suave e aconchegante de fim de dia: roxo escuro (#1e0a2e) suavemente transicionando para rosa (#ff3fa4) no topo. Estrelinhas delicadas e lua crescente como elementos decorativos sutis. Atmosfera noturna e calorosa de cidade do interior. Sem texto na imagem. Formato vertical 9:16.`,
+      prompt:`Fundo noturno aconchegante. Paleta obrigatória: azul escuro (#003f6b) como fundo principal, azul turquesa (#00b4d8) em degradê suave, estrelinhas e lua em amarelo (#f5c800), texto em branco (#ffffff). Atmosfera tranquila de fim de dia em cidade do interior. Sem texto na imagem. Formato vertical 9:16.`,
       canva:[
-        {tag:'chatgpt', txt:'Gere o fundo noturno degradê com estrelinhas — atmosfera aconchegante'},
-        {tag:'drive', txt:'Importe LOGO-GURI-V2.png — centralizado com efeito de brilho suave'},
-        {tag:'canva', txt:'Texto em branco, fonte Inter leve (peso 300-400)'},
-        {tag:'canva', txt:'Emojis 🍦💛😊 como elementos decorativos'},
-        {tag:'canva', txt:'Tom: afetivo, comunidade, fim de dia — não é post de venda'}
+        {tag:'chatgpt', txt:'Gere fundo azul escuro (#003f6b) com degradê turquesa (#00b4d8) e estrelinhas amarelas (#f5c800)'},
+        {tag:'drive', txt:'Importe LOGO-GURI-V2.png centralizado com brilho suave'},
+        {tag:'canva', txt:'Texto em branco (#ffffff), fonte Inter leve (300-400)'},
+        {tag:'canva', txt:'Lua e estrelinhas em amarelo (#f5c800) como decoração'},
+        {tag:'canva', txt:'Tom afetivo — não é post de venda, é comunidade'}
       ]
     }
   ],
 
   gympulse: [
     {
-      id:'gy1', date:'2025-06-16', time:'07h', format:'Story',
+      id:'gy1', date:'2026-06-16', time:'07h', format:'Story',
       title:'Dado impactante — 70% abandonam',
       driveFile:'WhatsApp Image 2026-05-20 at 11.13.27.jpeg',
       driveUrl:'https://drive.google.com/file/d/1O2WQFEl1ELDwTuq3tiGKP-RGuAPhLrES/view',
-      driveHint:'Screenshot real do GympulsePro no Planeta Corpo — prova visual da plataforma',
+      driveHint:'Screenshot real do GympulsePro no Planeta Corpo — prova visual',
       text:`📊 VOCÊ SABIA?
 
 70% dos alunos de academia abandonam nos primeiros 3 meses.
@@ -393,22 +409,22 @@ O motivo? Falta de engajamento e evolução visível.
 O GympulsePro resolve isso com gamificação em tempo real. 🎮
 
 Quer saber como? 👇`,
-      prompt:`Fundo tecnológico preto profundo (#08080d) com grade digital sutil em ciano. Número "70%" em tipografia gigante com efeito de brilho neon ciano elétrico (#00e5ff). Elementos gráficos de dados: linhas, pontos e gráficos abstratos ao redor. Estética de game HUD, dark e premium. Sem texto adicional na imagem. Formato vertical 9:16.`,
+      prompt:`Fundo tech e impactante. Paleta obrigatória: fundo preto (#0d0d0d), número "70%" em amarelo vibrante (#f5c200) com efeito de brilho, elementos gráficos de dados em cinza escuro (#1c1c1c) e branco (#ffffff). Grade digital sutil no fundo. Estética de dashboard premium e gaming. Sem texto adicional. Formato vertical 9:16.`,
       canva:[
-        {tag:'chatgpt', txt:'Gere o fundo tech com o "70%" neon — impacto visual máximo'},
-        {tag:'drive', txt:'Importe o screenshot do GympulsePro do Drive — posicione no canto inferior como prova real'},
-        {tag:'canva', txt:'Texto explicativo em branco sobre o fundo escuro'},
-        {tag:'canva', txt:'CTA "Quer saber como?" + seta para baixo na base'},
-        {tag:'canva', txt:'Logo GympulsePro no topo em ciano'},
-        {tag:'canva', txt:'Borda sutil ciano ao redor do screenshot para destacá-lo'}
+        {tag:'chatgpt', txt:'Gere fundo preto (#0d0d0d) com "70%" em amarelo (#f5c200) neon — impacto máximo'},
+        {tag:'drive', txt:'Importe screenshot GympulsePro do Drive — canto inferior, pequeno, como prova real'},
+        {tag:'canva', txt:'Texto explicativo em branco (#ffffff) sobre o fundo escuro'},
+        {tag:'canva', txt:'CTA "Quer saber como?" em amarelo (#f5c200) na base'},
+        {tag:'canva', txt:'Logo GympulsePro no topo em amarelo (#f5c200)'},
+        {tag:'canva', txt:'Borda sutil amarela (#f5c200) ao redor do screenshot'}
       ]
     },
     {
-      id:'gy2', date:'2025-06-16', time:'10h', format:'Post feed',
+      id:'gy2', date:'2026-06-16', time:'10h', format:'Post feed',
       title:'Funcionalidade — Monitor ao vivo',
       driveFile:'WhatsApp Image 2026-05-18 at 12.44.24.jpeg',
       driveUrl:'https://drive.google.com/file/d/17FVjyP_F1FcTo_zSI3jtay3D0dsasOJe/view',
-      driveHint:'Screenshot real do monitor GympulsePro em Academia Life — hero visual do post',
+      driveHint:'Screenshot real do monitor GympulsePro em Academia Life — hero visual',
       text:`🏆 Imagine seus alunos COMPETINDO para treinar mais.
 
 Com o GympulsePro você transforma cada treino em pontos, rankings e conquistas.
@@ -421,18 +437,18 @@ Com o GympulsePro você transforma cada treino em pontos, rankings e conquistas.
 Sua academia merece isso. 🚀
 
 #GympulsePro #GamificaçãoFitness #TechFitness #RetençãoDeAlunos`,
-      prompt:`Interface de aplicativo fitness gamificado em tela escura com elementos de leaderboard e ranking em ciano e âmbar. Estética de videogame: badges, pontos, medalhas e barras de progresso. Fundo zinc escuro (#09090b). Design de SaaS moderno e premium. Sem texto legível na imagem. Formato quadrado 1:1.`,
+      prompt:`Post para SaaS fitness premium. Paleta obrigatória: fundo preto (#0d0d0d), destaques em amarelo (#f5c200), elementos secundários em cinza escuro (#1c1c1c), texto em branco (#ffffff). Interface de gamificação com badges, rankings e barras de progresso na paleta oficial. Sem texto legível. Formato quadrado 1:1.`,
       canva:[
-        {tag:'drive', txt:'Importe o screenshot do monitor Academia Life do Drive — destaque central'},
-        {tag:'chatgpt', txt:'Gere elementos de UI gamificada — use como moldura ou decoração ao redor do screenshot'},
-        {tag:'canva', txt:'Frame/borda ciano (#00e5ff) ao redor do screenshot real'},
-        {tag:'canva', txt:'4 benefícios com ✅ ciano — Inter 600, 22px'},
-        {tag:'canva', txt:'Fundo zinc escuro (#09090b) para todo o post'},
-        {tag:'canva', txt:'Logo GympulsePro no topo — ciano sobre preto'}
+        {tag:'drive', txt:'Importe screenshot do monitor Academia Life — destaque central do post'},
+        {tag:'chatgpt', txt:'Gere elementos de UI gamificada na paleta oficial — moldura ao redor do screenshot'},
+        {tag:'canva', txt:'Frame/borda amarela (#f5c200) ao redor do screenshot real'},
+        {tag:'canva', txt:'4 benefícios com ✅ amarelo (#f5c200) — Inter 600, 22px, branco'},
+        {tag:'canva', txt:'Fundo preto (#0d0d0d) em todo o post'},
+        {tag:'canva', txt:'Logo GympulsePro no topo em amarelo (#f5c200)'}
       ]
     },
     {
-      id:'gy3', date:'2025-06-16', time:'14h', format:'Story',
+      id:'gy3', date:'2026-06-16', time:'14h', format:'Story',
       title:'Prova social — Aluno no ranking',
       driveFile:'WhatsApp Image 2026-05-20 at 11.13.27.jpeg',
       driveUrl:'https://drive.google.com/file/d/1O2WQFEl1ELDwTuq3tiGKP-RGuAPhLrES/view',
@@ -444,41 +460,41 @@ Isso é o GympulsePro em ação.
 Aluno engajado é aluno que não cancela. ✅
 
 Fala com a gente e agenda uma demo gratuita! 👊`,
-      prompt:`Balão de citação estilizado em design dark tech. Fundo preto com elementos de interface digital em ciano (#00e5ff). Balão de fala com bordas ciano brilhantes no centro da imagem. Silhueta abstrata de academia ao fundo em azul escuro. Estética profissional B2B de SaaS fitness. Sem texto na imagem. Formato vertical 9:16.`,
+      prompt:`Design dark premium para citação. Paleta obrigatória: fundo preto (#0d0d0d), balão de citação com borda amarela (#f5c200), texto branco (#ffffff), detalhes em cinza escuro (#1c1c1c). Silhueta abstrata de academia ao fundo em cinza muito escuro. Estética profissional B2B. Sem texto na imagem. Formato vertical 9:16.`,
       canva:[
-        {tag:'chatgpt', txt:'Gere o fundo dark com balão de citação estilizado'},
-        {tag:'drive', txt:'Importe screenshot GympulsePro do Drive — posicione abaixo da citação como prova'},
-        {tag:'canva', txt:'Texto da citação dentro do balão — fonte itálica, branca'},
-        {tag:'canva', txt:'"GympulsePro em ação" em ciano bold abaixo'},
-        {tag:'canva', txt:'CTA: "DEMO GRATUITA" em botão degradê ciano→roxo na base'},
-        {tag:'canva', txt:'Borda ciano ao redor do screenshot para credibilidade'}
+        {tag:'chatgpt', txt:'Gere fundo preto com balão de citação com borda amarela (#f5c200)'},
+        {tag:'drive', txt:'Importe screenshot do Drive — posicione abaixo da citação como prova'},
+        {tag:'canva', txt:'Texto da citação dentro do balão — fonte itálica, branca (#ffffff)'},
+        {tag:'canva', txt:'"GympulsePro em ação" em amarelo (#f5c200) bold abaixo'},
+        {tag:'canva', txt:'CTA: botão "DEMO GRATUITA" — fundo amarelo (#f5c200), texto preto (#0d0d0d)'},
+        {tag:'canva', txt:'Borda amarela ao redor do screenshot para credibilidade'}
       ]
     },
     {
-      id:'gy4', date:'2025-06-16', time:'18h', format:'Carrossel',
+      id:'gy4', date:'2026-06-16', time:'18h', format:'Carrossel',
       title:'Demo — Ranking semanal ao vivo',
       driveFile:'WhatsApp Image 2026-05-18 at 12.44.24.jpeg',
       driveUrl:'https://drive.google.com/file/d/17FVjyP_F1FcTo_zSI3jtay3D0dsasOJe/view',
-      driveHint:'Screenshot monitor Academia Life — use nos slides intermediários',
+      driveHint:'Screenshot monitor Academia Life — slides intermediários do carrossel',
       text:`Slide 1: "Sua academia tem ranking de alunos?"
 Slide 2: "Com o GympulsePro tem — em tempo real"
-Slide 3: [Screenshot real do monitor/ranking do Drive]
+Slide 3: [Screenshot real do monitor do Drive]
 Slide 4: "Aluno que aparece no ranking, treina mais."
 Slide 5: "Demo gratuita? Manda mensagem! 👇"`,
-      prompt:`Série de slides para carrossel de Instagram com tema dark tech consistente. Fundo zinc escuro (#09090b), tipografia ciano elétrico (#00e5ff), elementos de interface de gamificação fitness. Estilo minimalista e impactante. Cada slide com uma pergunta ou afirmação central. Sem texto na imagem. Formato quadrado 1:1.`,
+      prompt:`Template de carrossel para SaaS fitness. Paleta obrigatória em todos os slides: fundo preto (#0d0d0d), tipografia principal em amarelo (#f5c200), texto de apoio em branco (#ffffff), elementos secundários em cinza escuro (#1c1c1c). Estilo dark premium e consistente entre slides. Sem texto nos elementos visuais. Formato quadrado 1:1.`,
       canva:[
-        {tag:'chatgpt', txt:'Gere o template base do carrossel — fundo e elementos visuais consistentes'},
-        {tag:'canva', txt:'Slide 1: "SUA ACADEMIA TEM RANKING?" — texto ciano, Bebas Neue, fundo preto'},
-        {tag:'canva', txt:'Slide 2: resposta em texto branco sobre fundo escuro'},
-        {tag:'drive', txt:'Slide 3: screenshot real do Drive com borda ciano — prova visual'},
-        {tag:'canva', txt:'Slide 4: dado de impacto em ciano grande'},
-        {tag:'canva', txt:'Slide 5: fundo ciano sólido (#00e5ff), texto PRETO — máximo contraste no CTA'}
+        {tag:'chatgpt', txt:'Gere template base: fundo preto (#0d0d0d) com elementos em amarelo (#f5c200) e branco'},
+        {tag:'canva', txt:'Slide 1: "SUA ACADEMIA TEM RANKING?" — amarelo (#f5c200), Bebas Neue, fundo preto'},
+        {tag:'canva', txt:'Slide 2: resposta em branco (#ffffff) sobre fundo preto'},
+        {tag:'drive', txt:'Slide 3: screenshot real com borda amarela (#f5c200) — prova visual'},
+        {tag:'canva', txt:'Slide 4: dado impactante em amarelo (#f5c200) grande'},
+        {tag:'canva', txt:'Slide 5: fundo amarelo (#f5c200), texto PRETO (#0d0d0d) — CTA máximo contraste'}
       ]
     }
   ]
 };
 
-const SK='gilson_v3';
+const SK='gilson_v4';
 let S=JSON.parse(localStorage.getItem(SK)||'{}');
 const save=()=>localStorage.setItem(SK,JSON.stringify(S));
 const done=id=>!!S[id];
@@ -498,6 +514,13 @@ function tagHTML(tag){
   const map={drive:'DRIVE',chatgpt:'CHATGPT',canva:'CANVA'};
   const cls={drive:'tag-drive',chatgpt:'tag-chatgpt',canva:'tag-canva'};
   return `<span class="step-tag ${cls[tag]}">${map[tag]}</span>`;
+}
+
+function paletteHTML(profile){
+  return PALETTES[profile].map(c=>
+    `<div class="palette-chip" style="background:${c.hex}" title="${c.label} ${c.hex}"></div>
+     <span class="palette-label">${c.hex}</span>`
+  ).join('');
 }
 
 function cardHTML(item,profile){
@@ -520,7 +543,7 @@ function cardHTML(item,profile){
   </div>
   <div class="cbody">
     <div class="block">
-      <div class="blabel" style="color:var(--gy)">📁 Foto real — Google Drive</div>
+      <div class="blabel" style="color:#00b4d8">📁 Foto real — Google Drive</div>
       <div class="drive-ref">
         <span class="drive-icon">🖼️</span>
         <div class="drive-info">
@@ -537,9 +560,10 @@ function cardHTML(item,profile){
     </div>
     <div class="block">
       <div class="pbox-header">
-        <div class="blabel" style="color:#4ade80;margin:0">🤖 Prompt para ChatGPT / DALL-E</div>
+        <div class="blabel" style="color:#4ade80;margin:0">🤖 Prompt para ChatGPT / DALL-E 3</div>
         <span class="pbox-badge">DALL-E 3</span>
       </div>
+      <div class="palette-bar">${paletteHTML(profile)}</div>
       <div class="pbox" id="p-${item.id}">${item.prompt}</div>
       <button class="copybtn" onclick="cp('p-${item.id}',this)">Copiar prompt</button>
     </div>
@@ -557,7 +581,7 @@ function renderPanel(profile){
   const total=items.length;
   const doneN=items.filter(i=>done(i.id)).length;
   const pct=total>0?Math.round(doneN/total*100):0;
-  const colors={academia:'var(--ac)',sorveteria:'var(--so)',gympulse:'var(--gy)'};
+  const colors={academia:'#e63900',sorveteria:'#f5c800',gympulse:'#f5c200'};
   const c=colors[profile];
   const groups=groupBy(items,'date');
   let html='';
@@ -579,9 +603,9 @@ function renderAll(){['academia','sorveteria','gympulse'].forEach(renderPanel);}
 
 function buildHist(){
   const all=[
-    ...CONTENT.academia.map(i=>({...i,profile:'academia',color:'var(--ac)',label:'Academia'})),
-    ...CONTENT.sorveteria.map(i=>({...i,profile:'sorveteria',color:'var(--so)',label:'Sorveteria'})),
-    ...CONTENT.gympulse.map(i=>({...i,profile:'gympulse',color:'var(--gy)',label:'GympulsePro'}))
+    ...CONTENT.academia.map(i=>({...i,profile:'academia',color:'#e63900',label:'Academia'})),
+    ...CONTENT.sorveteria.map(i=>({...i,profile:'sorveteria',color:'#f5c800',label:'Sorveteria'})),
+    ...CONTENT.gympulse.map(i=>({...i,profile:'gympulse',color:'#f5c200',label:'GympulsePro'}))
   ].sort((a,b)=>b.date.localeCompare(a.date)||a.time.localeCompare(b.time));
   document.getElementById('p-historico').innerHTML=all.map(item=>`
     <div class="hentry">
