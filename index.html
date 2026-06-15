@@ -48,8 +48,6 @@ body { background: var(--bg); color: var(--txt); font-family: 'Inter', sans-seri
 .tab[data-p="gympulse"].on::after { background:linear-gradient(90deg,#f5c200,#fff); opacity:1; }
 .tab[data-p="historico"].on { color:var(--txt); }
 .tab[data-p="historico"].on::after { background:linear-gradient(90deg,#e63900,#f5c800,#f5c200); opacity:1; }
-.tab[data-p="estrategia"].on { color:#a78bfa; }
-.tab[data-p="estrategia"].on::after { background:linear-gradient(90deg,#a78bfa,#e63900,#f5c800,#f5c200); opacity:1; }
 
 main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .panel { display:none; }
@@ -244,7 +242,9 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 @media(max-width:500px) { .field-row { grid-template-columns:1fr; } }
 
 /* ── ESTRATÉGIA ── */
-.strat-profile { margin-bottom:40px; }
+.strat-toggle-wrap { display:flex; justify-content:flex-end; margin:14px 0 4px; }
+.strat-wrap { margin-bottom:20px; }
+.strat-profile { margin-bottom:0; }
 
 .strat-profile-header {
   display:flex; align-items:center; gap:12px;
@@ -338,10 +338,6 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   font-size:10px; font-weight:800;
 }
 
-.strat-divider {
-  height:1px; background:var(--border); margin:32px 0;
-}
-
 @media(max-width:500px) { .strat-grid { grid-template-columns:1fr; } }
 </style>
 </head>
@@ -364,7 +360,6 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
     <button class="tab" data-p="sorveteria" onclick="go('sorveteria',this)">🍦 Sorveteria</button>
     <button class="tab" data-p="gympulse" onclick="go('gympulse',this)">🎮 GympulsePro</button>
     <button class="tab" data-p="historico" onclick="go('historico',this)">📋 Histórico</button>
-    <button class="tab" data-p="estrategia" onclick="go('estrategia',this)">📈 Estratégia</button>
   </div>
 </div>
 
@@ -373,7 +368,6 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   <div class="panel" id="p-sorveteria"></div>
   <div class="panel" id="p-gympulse"></div>
   <div class="panel" id="p-historico"></div>
-  <div class="panel" id="p-estrategia"></div>
 </main>
 
 <div class="modal-overlay" id="editModal" onclick="closeModal(event)">
@@ -1865,7 +1859,12 @@ function renderPanel(profile){
       <div class="stat"><div class="stat-n" style="color:${c}">${doneN}</div><div class="stat-l">Feito</div></div>
       <div class="stat"><div class="stat-n">${total-doneN}</div><div class="stat-l">Pendente</div></div>
       <div class="stat"><div class="stat-n" style="color:${c}">${pct}%</div><div class="stat-l">Progresso</div></div>
-    </div>${html||'<div class="empty"><div class="eico">📭</div><p>Sem conteúdo ainda.</p></div>'}`;
+    </div>
+    <div class="strat-toggle-wrap">
+      <button class="edit-btn" onclick="toggleStrat('${profile}',this)">📈 Estratégia</button>
+    </div>
+    <div class="strat-wrap" id="strat-${profile}" style="display:none">${stratHTML(profile)}</div>
+    ${html||'<div class="empty"><div class="eico">📭</div><p>Sem conteúdo ainda.</p></div>'}`;
 }
 
 function renderAll(){['academia','sorveteria','gympulse'].forEach(renderPanel);}
@@ -1984,9 +1983,7 @@ function cpText(txt, btn){
   });
 }
 
-function buildEstrategia(){
-  const profiles=['academia','sorveteria','gympulse'];
-  document.getElementById('p-estrategia').innerHTML = profiles.map((p,i)=>{
+function stratHTML(p){
     const e=ESTRATEGIA[p];
     return `
     <div class="strat-profile">
@@ -2049,9 +2046,15 @@ function buildEstrategia(){
           </div>`).join('')}
         </div>
       </div>
-    </div>
-    ${i<profiles.length-1?'<div class="strat-divider"></div>':''}`;
-  }).join('');
+    </div>`;
+}
+
+let stratOpen={academia:false,sorveteria:false,gympulse:false};
+function toggleStrat(profile,btn){
+  stratOpen[profile]=!stratOpen[profile];
+  const wrap=document.getElementById('strat-'+profile);
+  wrap.style.display=stratOpen[profile]?'block':'none';
+  if(btn)btn.textContent=stratOpen[profile]?'📈 Ocultar estratégia':'📈 Estratégia';
 }
 
 function buildHist(){
@@ -2089,7 +2092,6 @@ function go(tab,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   el.classList.add('on');
   if(tab==='historico')buildHist();
-  if(tab==='estrategia')buildEstrategia();
 }
 
 (function(){
