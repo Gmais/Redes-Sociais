@@ -48,6 +48,8 @@ body { background: var(--bg); color: var(--txt); font-family: 'Inter', sans-seri
 .tab[data-p="gympulse"].on::after { background:linear-gradient(90deg,#f5c200,#fff); opacity:1; }
 .tab[data-p="historico"].on { color:var(--txt); }
 .tab[data-p="historico"].on::after { background:linear-gradient(90deg,#e63900,#f5c800,#f5c200); opacity:1; }
+.tab[data-p="estrategia"].on { color:#a78bfa; }
+.tab[data-p="estrategia"].on::after { background:linear-gradient(90deg,#a78bfa,#e63900,#f5c800,#f5c200); opacity:1; }
 
 main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .panel { display:none; }
@@ -240,6 +242,107 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 
 .field-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 @media(max-width:500px) { .field-row { grid-template-columns:1fr; } }
+
+/* ── ESTRATÉGIA ── */
+.strat-profile { margin-bottom:40px; }
+
+.strat-profile-header {
+  display:flex; align-items:center; gap:12px;
+  margin-bottom:20px; padding-bottom:12px;
+  border-bottom:2px solid var(--border);
+}
+
+.strat-profile-dot {
+  width:12px; height:12px; border-radius:50%; flex-shrink:0;
+}
+
+.strat-profile-name {
+  font-family:'Bebas Neue',sans-serif; font-size:22px;
+  letter-spacing:0.06em;
+}
+
+.strat-profile-handle {
+  font-size:12px; color:var(--txt3); font-family:'JetBrains Mono',monospace;
+}
+
+.strat-section { margin-bottom:16px; }
+
+.strat-label {
+  font-size:10px; font-weight:700; letter-spacing:0.12em;
+  text-transform:uppercase; margin-bottom:8px;
+  display:flex; align-items:center; gap:6px;
+}
+
+.strat-box {
+  background:var(--s2); border:1px solid var(--border);
+  border-radius:9px; padding:14px;
+  font-size:13px; line-height:1.75; color:var(--txt);
+  white-space:pre-wrap;
+}
+
+.strat-box.bio {
+  font-family:'JetBrains Mono',monospace; font-size:12px;
+  color:#4ade80; background:#080c08; border-color:#1a281a;
+}
+
+.strat-box.hashtags {
+  font-size:12px; color:var(--txt2); line-height:2;
+}
+
+.strat-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+.strat-card {
+  background:var(--s2); border:1px solid var(--border);
+  border-radius:9px; padding:14px;
+}
+
+.strat-card-label {
+  font-size:10px; font-weight:700; letter-spacing:0.1em;
+  text-transform:uppercase; color:var(--txt3); margin-bottom:8px;
+}
+
+.strat-card-value {
+  font-family:'Bebas Neue',sans-serif; font-size:28px;
+  line-height:1; margin-bottom:4px;
+}
+
+.strat-card-sub { font-size:11px; color:var(--txt3); }
+
+.strat-cta-list { display:flex; flex-direction:column; gap:6px; }
+
+.strat-cta-item {
+  display:flex; align-items:flex-start; gap:10px;
+  background:var(--s2); border:1px solid var(--border);
+  border-radius:8px; padding:10px 12px;
+}
+
+.strat-cta-type {
+  font-size:9px; font-weight:800; letter-spacing:0.08em;
+  padding:3px 7px; border-radius:4px; flex-shrink:0; margin-top:1px;
+}
+
+.strat-cta-text { font-size:12.5px; color:var(--txt2); line-height:1.4; }
+
+.strat-action-list { display:flex; flex-direction:column; gap:6px; }
+
+.strat-action {
+  display:flex; align-items:center; gap:10px;
+  background:var(--s2); border:1px solid var(--border);
+  border-radius:8px; padding:10px 14px;
+  font-size:13px; color:var(--txt);
+}
+
+.strat-action-num {
+  width:22px; height:22px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; font-weight:800;
+}
+
+.strat-divider {
+  height:1px; background:var(--border); margin:32px 0;
+}
+
+@media(max-width:500px) { .strat-grid { grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
@@ -261,6 +364,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
     <button class="tab" data-p="sorveteria" onclick="go('sorveteria',this)">🍦 Sorveteria</button>
     <button class="tab" data-p="gympulse" onclick="go('gympulse',this)">🎮 GympulsePro</button>
     <button class="tab" data-p="historico" onclick="go('historico',this)">📋 Histórico</button>
+    <button class="tab" data-p="estrategia" onclick="go('estrategia',this)">📈 Estratégia</button>
   </div>
 </div>
 
@@ -269,6 +373,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   <div class="panel" id="p-sorveteria"></div>
   <div class="panel" id="p-gympulse"></div>
   <div class="panel" id="p-historico"></div>
+  <div class="panel" id="p-estrategia"></div>
 </main>
 
 <div class="modal-overlay" id="editModal" onclick="closeModal(event)">
@@ -1765,6 +1870,190 @@ function renderPanel(profile){
 
 function renderAll(){['academia','sorveteria','gympulse'].forEach(renderPanel);}
 
+const ESTRATEGIA = {
+  academia: {
+    name:'Planeta Corpo Club+', handle:'@planetacorpoclubmais', color:'#e63900',
+    bio:`Academia em Turvo/PR há 27 anos 🧡
+Saúde, bem-estar e qualidade de vida — sem fórmula de estética
+Musculação · Dança · Spinning · Funcional · Jump · HIIT
+📍 Av. Maria Bettega, 360, Centro
+💬 (42) 99922-2857 | Aula experimental grátis 👇`,
+    engajamento:[
+      'Responder todos os comentários e DMs em até 2h, em tom acolhedor (conversa entre amigas)',
+      'Curtir e responder Stories de alunas que marcarem a academia',
+      'Repostar nos Stories sempre que uma aluna compartilhar um treino ou resultado',
+      'Usar caixinha de perguntas/enquetes pelo menos 2x por semana para gerar interação',
+      'Nunca usar linguagem fitness agressiva, "GRÁTIS!!!" gritado ou emojis de fogo/músculo'
+    ],
+    ctas:[
+      {tipo:'Prova Social', txt:'Quer chegar lá também? Manda mensagem! 📲'},
+      {tipo:'Dica de Saúde', txt:'Comenta aqui: qual desses benefícios você mais quer? 🧡'},
+      {tipo:'Matrícula', txt:'Aula experimental GRÁTIS — link na bio ou chama no WhatsApp 💪'},
+      {tipo:'Humanização', txt:'Marque aqui alguém que precisa conhecer esse lugar 🌿'},
+      {tipo:'Reel', txt:'Salva esse vídeo para não esquecer! ⭐'}
+    ],
+    hashtags:'#fitness #academia #musculação #saudeebemestar #vidafitness #academiaparana #treinodiario #qualidadevida #mulheresativa #saudeemdia #treinofeminino #vidaativa #emagrecimento #treinofuncional #hiit #jump #musculacaofeminina #bemestarsaude #treinando #exerciciofisico #academiaturvoPR #turvoPR #planetacorpo #planetacorpoclubmais #academialocal #treinoturvo #guarapuava #guarapuavafit #interiorpr #cidadeinterior',
+    formatos:[
+      {tipo:'Stories', pct:'40%', desc:'Bastidores, prova social e engajamento rápido'},
+      {tipo:'Post Feed', pct:'35%', desc:'Dicas de saúde e construção de marca'},
+      {tipo:'Carrossel', pct:'15%', desc:'Educação — benefícios, modalidades, mitos'},
+      {tipo:'Reels', pct:'10%', desc:'Crescimento de alcance e novos seguidores'}
+    ],
+    acoes:[
+      'Reativar as 107 alunas inativas (108/215 ativas) com conteúdo de humanização + convite direto',
+      'Divulgar o catálogo de Fitcoins (Açaí com Whey, Squeeze, Copo Stanley, Camiseta) — 157 pontos ganhos, 0 resgatados',
+      'Postar prova social semanal (aluna no ranking do GympulsePro) para reforçar engajamento',
+      'Manter funil: Prova social → Dica de saúde → Convite direto → Humanização'
+    ]
+  },
+  sorveteria:{
+    name:'Sorvetes Guri', handle:'@sorvetesguriturvo', color:'#00b4d8',
+    bio:`Sorveteria com buffet e loja de fábrica 🍦
+Sorvetes gourmet, açaí, milkshake e muito mais
+Turvo/PR — feito com carinho para sua família
+📍 Turvo/PR | Vem provar! 💙`,
+    engajamento:[
+      'Responder comentários e DMs no mesmo dia, com tom leve e alegre ("vizinho querido")',
+      'Repostar fotos/Stories de clientes saboreando os produtos',
+      'Usar enquetes de sabores ("Qual você prefere?") para gerar comentários',
+      'Avisar promoções do dia sempre nos Stories até as 15h (horário de maior movimento)',
+      'Marcar e agradecer publicamente clientes que citarem a sorveteria'
+    ],
+    ctas:[
+      {tipo:'Produto do Dia', txt:'Peça agora! Vem na loja ou chama no WhatsApp 📱'},
+      {tipo:'Promoção', txt:'Só hoje! Corre lá ou chama no WhatsApp 🏃'},
+      {tipo:'Lançamento', txt:'Qual você provaria primeiro? Comenta aí! 🍦'},
+      {tipo:'Bastidores', txt:'Marque aqui alguém que ama sorvete! 💙'},
+      {tipo:'Enquete', txt:'Qual sabor a gente devia trazer de volta? Comenta!'}
+    ],
+    hashtags:'#sorvete #sorveteria #gelato #frozen #sorvetegourmet #turvo #turvopr #parana #sorveteparana #sorveteriaturvo #interiordoparana #sorvetesguriturvo #guriturvo #sorveteprofissional #buffetsorvete #sorvetesartesanais #sorvetesabores #acai #milkshake #picolé #sorvetederua #sorveterialocal #comidaboa #foodporn #reelsinstagram #foodlovers #saboreie #experimenteaqui #sorvetedodia #temsorvete',
+    formatos:[
+      {tipo:'Stories', pct:'50%', desc:'Produto do dia, promoções e urgência'},
+      {tipo:'Post Feed', pct:'30%', desc:'Construção de marca e novos sabores'},
+      {tipo:'Reels', pct:'15%', desc:'Bastidores e mascote — alcance e diversão'},
+      {tipo:'Carrossel', pct:'5%', desc:'Cardápio, combos e ocasiões especiais'}
+    ],
+    acoes:[
+      'Manter rotina diária: 09h produto do dia (story+mascote), 11h30 post de produto, 15h promoção da tarde, 19h boa noite',
+      'Usar os mascotes 3D do Guri (pose com sorvete / apresentando) para promoções',
+      'Criar enquetes semanais de sabor para engajar a comunidade local',
+      'Reforçar recorrência com combos de fim de semana e datas comemorativas'
+    ]
+  },
+  gympulse:{
+    name:'GympulsePro', handle:'@gympulsepro', color:'#f5c200',
+    bio:`Gamificação para academias 🎮
+Monitoramento em tempo real, rankings, fitcoins e desafios
+Mais retenção, mais engajamento, mais resultado
+👉 Agende uma demo gratuita`,
+    engajamento:[
+      'Responder dúvidas técnicas de gestores/professores com dados e exemplos reais (tom B2B, profissional)',
+      'Comentar e curtir posts de academias parceiras (Planeta Corpo, Academia Life, Personal Altair)',
+      'Compartilhar prints reais do dashboard (sempre anonimizados) para gerar prova social',
+      'Responder perguntas de "Comenta aí 👇" em até 2h para alimentar o algoritmo',
+      'Evitar linguagem fitness genérica — falar sempre de ROI, retenção e dados'
+    ],
+    ctas:[
+      {tipo:'Dado de Mercado', txt:'Isso está acontecendo na sua academia? Comenta aí 👇'},
+      {tipo:'Funcionalidade', txt:'Quer ver isso funcionando ao vivo? Manda mensagem! 🎮'},
+      {tipo:'Prova Social', txt:'Quer esse resultado na sua academia? Agenda uma demo gratuita — link na bio 🎯'},
+      {tipo:'Demo', txt:'Salva esse vídeo e manda pro dono da sua academia! 💪'},
+      {tipo:'Educativo', txt:'Seu negócio já usa gamificação? Comenta aí 👇'}
+    ],
+    hashtags:'#gympulse #gympulsepro #gamificacaofitness #gamificacaoacademia #academiagamificada #fittech #gestaodeacademia #plataformaacademia #academia #treinomotivacao #musculacao #fitness #vidasaudavel #transformacaofisica #desafiofitness #academiamoderna #saas #empreendedor #negociodigital #software #inovacao #startup #growthhacking #leadgeneration #techforgym #academiadigital #tecnologiaesportiva #retencaodealunos #engajamentofitness #rankingacademia',
+    formatos:[
+      {tipo:'Post Feed', pct:'40%', desc:'Dados de mercado e funcionalidades (10h)'},
+      {tipo:'Carrossel', pct:'30%', desc:'Demos, cases e fluxos do produto (18h)'},
+      {tipo:'Reels', pct:'20%', desc:'Demonstrações rápidas para crescimento'},
+      {tipo:'Stories', pct:'10%', desc:'Bastidores de desenvolvimento e prova social'}
+    ],
+    acoes:[
+      'Converter Academia Life (trial, 6 alunos, 108 aulas) para plano pago — maior prioridade de conversão',
+      'Reativar Personal Altair (5 alunos, 6 aulas) — risco de churn',
+      'Lançar conteúdo sobre Fitcoins/recompensas para estimular resgates no Planeta Corpo (157 ganhos, 0 resgatados)',
+      'Criar e divulgar competições/desafios — atualmente 0 ativas',
+      'Manter funil: Dado de mercado → Funcionalidade → Prova social → Demo'
+    ]
+  }
+};
+
+function cpText(txt, btn){
+  navigator.clipboard.writeText(txt).then(()=>{
+    const o=btn.textContent; btn.textContent='✓ Copiado!';
+    setTimeout(()=>btn.textContent=o,1500);
+  });
+}
+
+function buildEstrategia(){
+  const profiles=['academia','sorveteria','gympulse'];
+  document.getElementById('p-estrategia').innerHTML = profiles.map((p,i)=>{
+    const e=ESTRATEGIA[p];
+    return `
+    <div class="strat-profile">
+      <div class="strat-profile-header">
+        <div class="strat-profile-dot" style="background:${e.color}"></div>
+        <div>
+          <div class="strat-profile-name">${e.name}</div>
+          <div class="strat-profile-handle">${e.handle}</div>
+        </div>
+      </div>
+
+      <div class="strat-section">
+        <div class="strat-label">📝 Bio</div>
+        <div class="strat-box bio">${e.bio}</div>
+      </div>
+
+      <div class="strat-section">
+        <div class="strat-label">🤝 Regras de Engajamento</div>
+        <div class="strat-box">${e.engajamento.map(r=>'· '+r).join('\n')}</div>
+      </div>
+
+      <div class="strat-section">
+        <div class="strat-label">📣 CTA por Tipo de Post</div>
+        <div class="strat-cta-list">
+          ${e.ctas.map(c=>`
+          <div class="strat-cta-item">
+            <span class="strat-cta-type" style="background:${e.color}22;color:${e.color}">${c.tipo}</span>
+            <span class="strat-cta-text">${c.txt}</span>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="strat-section">
+        <div class="strat-label">🎯 Mix de Formatos</div>
+        <div class="strat-grid">
+          ${e.formatos.map(f=>`
+          <div class="strat-card">
+            <div class="strat-card-label">${f.tipo}</div>
+            <div class="strat-card-value" style="color:${e.color}">${f.pct}</div>
+            <div class="strat-card-sub">${f.desc}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="strat-section">
+        <div class="strat-label">#️⃣ Hashtags Estruturadas</div>
+        <div class="strat-box hashtags" id="strat-hash-${p}">${e.hashtags}</div>
+        <div style="margin-top:8px;text-align:right;">
+          <button class="edit-btn" onclick="cpText(ESTRATEGIA.${p}.hashtags,this)">📋 Copiar hashtags</button>
+        </div>
+      </div>
+
+      <div class="strat-section">
+        <div class="strat-label">✅ Próximas Ações</div>
+        <div class="strat-action-list">
+          ${e.acoes.map((a,idx)=>`
+          <div class="strat-action">
+            <div class="strat-action-num" style="background:${e.color}22;color:${e.color}">${idx+1}</div>
+            <div>${a}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+    ${i<profiles.length-1?'<div class="strat-divider"></div>':''}`;
+  }).join('');
+}
+
 function buildHist(){
   const all=[
     ...CONTENT.academia.map(i=>({...i,color:'#e63900',label:'Academia'})),
@@ -1800,6 +2089,7 @@ function go(tab,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   el.classList.add('on');
   if(tab==='historico')buildHist();
+  if(tab==='estrategia')buildEstrategia();
 }
 
 (function(){
