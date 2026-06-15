@@ -147,6 +147,99 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   .stats { grid-template-columns:repeat(2,1fr); }
   main { padding:20px 14px 80px; }
 }
+
+/* ── EDITOR MODAL ── */
+.edit-btn {
+  font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--txt3); background:var(--s2); border:1px solid var(--border);
+  border-radius:5px; padding:5px 10px; cursor:pointer; font-family:'Inter',sans-serif;
+  transition:all 0.15s; display:inline-flex; align-items:center; gap:5px;
+  margin-top:8px;
+}
+.edit-btn:hover { color:#f5c200; border-color:#f5c200; }
+.edit-btn-primary {
+  color:#0d0d0d; background:#f5c200; border-color:#f5c200;
+}
+.edit-btn-primary:hover { background:#ffd700; border-color:#ffd700; }
+
+.modal-overlay {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
+  z-index:1000; align-items:flex-start; justify-content:center;
+  padding:20px; overflow-y:auto;
+}
+.modal-overlay.on { display:flex; }
+
+.modal {
+  background:var(--s1); border:1px solid var(--border); border-radius:16px;
+  width:100%; max-width:700px; margin:auto;
+  animation: modalIn 0.2s ease;
+}
+
+@keyframes modalIn {
+  from { opacity:0; transform:translateY(-16px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.modal-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:18px 20px; border-bottom:1px solid var(--border);
+  position:sticky; top:0; background:var(--s1); border-radius:16px 16px 0 0; z-index:1;
+}
+
+.modal-title {
+  font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:0.06em;
+}
+
+.modal-close {
+  width:32px; height:32px; border-radius:8px; border:1px solid var(--border);
+  background:var(--s2); color:var(--txt2); cursor:pointer; font-size:16px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Inter',sans-serif; transition:all 0.15s;
+}
+.modal-close:hover { color:var(--txt); border-color:var(--txt3); }
+
+.modal-body { padding:20px; display:flex; flex-direction:column; gap:18px; }
+
+.modal-footer {
+  display:flex; gap:10px; justify-content:flex-end;
+  padding:16px 20px; border-top:1px solid var(--border);
+  position:sticky; bottom:0; background:var(--s1);
+  border-radius:0 0 16px 16px;
+}
+
+.field-group { display:flex; flex-direction:column; gap:6px; }
+
+.field-label {
+  font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
+  display:flex; align-items:center; gap:6px;
+}
+
+.field-input {
+  background:var(--s2); border:1px solid var(--border); border-radius:8px;
+  color:var(--txt); font-family:'Inter',sans-serif; font-size:13px;
+  padding:10px 12px; width:100%; line-height:1.6; resize:vertical;
+  transition:border-color 0.15s;
+}
+.field-input:focus { outline:none; border-color:#f5c200; }
+
+.field-input.mono {
+  font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#4ade80;
+  background:#080c08; border-color:#1a281a;
+}
+.field-input.mono:focus { border-color:#4ade80; }
+
+.field-hint { font-size:11px; color:var(--txt3); }
+
+.saved-toast {
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:#f5c200; color:#0d0d0d; font-weight:700; font-size:13px;
+  padding:10px 20px; border-radius:8px; z-index:2000;
+  opacity:0; transition:all 0.3s; pointer-events:none; white-space:nowrap;
+}
+.saved-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+@media(max-width:500px) { .field-row { grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
@@ -177,6 +270,58 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   <div class="panel" id="p-gympulse"></div>
   <div class="panel" id="p-historico"></div>
 </main>
+
+<div class="modal-overlay" id="editModal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">EDITAR CARD</div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">Horário</label>
+          <input class="field-input" id="edit-time" type="text">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Formato</label>
+          <select class="field-input" id="edit-format">
+            <option value="Story">Story</option>
+            <option value="Post">Post</option>
+            <option value="Carrossel">Carrossel</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Título</label>
+        <input class="field-input" id="edit-title" type="text">
+      </div>
+      <div class="field-group">
+        <label class="field-label">📝 Texto da postagem</label>
+        <textarea class="field-input" id="edit-texto" rows="6"></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label" style="color:#e63900">01 · Formato e especificações</label>
+        <textarea class="field-input mono" id="edit-sec01" rows="5"></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label" style="color:#f5a623">02 · Intenção da postagem</label>
+        <textarea class="field-input mono" id="edit-sec02" rows="5"></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label" style="color:#4ade80">03 · Briefing criativo detalhado</label>
+        <textarea class="field-input mono" id="edit-sec03" rows="10"></textarea>
+      </div>
+      <div class="field-hint">As alterações são salvas neste navegador e aplicadas automaticamente neste dispositivo.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="edit-btn" onclick="closeModalDirect()">Cancelar</button>
+      <button class="edit-btn edit-btn-primary" onclick="saveEdit()">💾 Salvar alterações</button>
+    </div>
+  </div>
+</div>
+
+<div class="saved-toast" id="savedToast">✓ Alterações salvas!</div>
 
 <script>
 const PALETTES = {
@@ -1564,6 +1709,9 @@ function cardHTML(item,profile){
   </div>
   <div class="cbody">
 
+    <div class="block" style="display:flex;justify-content:flex-end;margin-top:12px;">
+      <button class="edit-btn" onclick="event.stopPropagation();openEdit('${item.id}')">✏️ Editar card</button>
+    </div>
     <div class="block">
       <div class="blabel" style="color:#00b4d8">📁 Arquivo do Google Drive</div>
       <div class="drive-ref">
@@ -1660,6 +1808,95 @@ function go(tab,el){
   const mn=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   document.getElementById('datepill').textContent=`${dn[n.getDay()]} ${n.getDate()} ${mn[n.getMonth()]}`;
 })();
+
+// ── EDITOR ────────────────────────────────────────────────────────────────
+let editingId = null;
+let editingProfile = null;
+
+function findItem(id) {
+  for (const profile of ['academia','sorveteria','gympulse']) {
+    const item = CONTENT[profile].find(i => i.id === id);
+    if (item) return { item, profile };
+  }
+  return null;
+}
+
+// Aplica edições salvas localmente antes da primeira renderização
+['academia','sorveteria','gympulse'].forEach(profile=>{
+  CONTENT[profile].forEach(item=>{
+    const saved = JSON.parse(localStorage.getItem('edits_' + item.id) || 'null');
+    if (saved) Object.assign(item, saved);
+  });
+});
+
+function openEdit(id) {
+  const found = findItem(id);
+  if (!found) return;
+  const { item, profile } = found;
+  editingId = id;
+  editingProfile = profile;
+
+  document.getElementById('modalTitle').textContent = 'EDITAR — ' + item.title;
+  document.getElementById('edit-time').value = item.time || '';
+  document.getElementById('edit-format').value = item.format || 'Story';
+  document.getElementById('edit-title').value = item.title || '';
+  document.getElementById('edit-texto').value = item.texto || '';
+
+  const secs = item.secoes || [];
+  document.getElementById('edit-sec01').value = secs[0] ? secs[0].conteudo : '';
+  document.getElementById('edit-sec02').value = secs[1] ? secs[1].conteudo : '';
+  document.getElementById('edit-sec03').value = secs[2] ? secs[2].conteudo : '';
+
+  document.getElementById('editModal').classList.add('on');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('editModal')) closeModalDirect();
+}
+
+function closeModalDirect() {
+  document.getElementById('editModal').classList.remove('on');
+  document.body.style.overflow = '';
+  editingId = null;
+  editingProfile = null;
+}
+
+function saveEdit() {
+  if (!editingId || !editingProfile) return;
+
+  const found = findItem(editingId);
+  if (!found) return;
+  const { item } = found;
+
+  const fields = [
+    document.getElementById('edit-sec01'),
+    document.getElementById('edit-sec02'),
+    document.getElementById('edit-sec03')
+  ];
+  const updatedSecs = (item.secoes || []).map((s, i) => ({
+    ...s, conteudo: fields[i] ? fields[i].value : s.conteudo
+  }));
+
+  const edits = {
+    time:   document.getElementById('edit-time').value,
+    format: document.getElementById('edit-format').value,
+    title:  document.getElementById('edit-title').value,
+    texto:  document.getElementById('edit-texto').value,
+    secoes: updatedSecs
+  };
+
+  localStorage.setItem('edits_' + editingId, JSON.stringify(edits));
+  Object.assign(item, edits);
+
+  renderAll();
+  buildHist();
+  closeModalDirect();
+
+  const toast = document.getElementById('savedToast');
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'), 2000);
+}
 
 renderAll();
 </script>
