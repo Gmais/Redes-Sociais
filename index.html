@@ -12,12 +12,6 @@
   --s1: #101018;
   --s2: #18181f;
   --border: #26262f;
-  --ac: #e63900;
-  --ac-g: linear-gradient(135deg, #e63900, #00b4b4);
-  --so: #f5c800;
-  --so-g: linear-gradient(135deg, #003f6b, #00b4d8);
-  --gy: #f5c200;
-  --gy-g: linear-gradient(135deg, #f5c200, #ffffff);
   --done: #00e676;
   --txt: #f5f5fa;
   --txt2: #9999bb;
@@ -36,40 +30,39 @@ body { background: var(--bg); color: var(--txt); font-family: 'Inter', sans-seri
 }
 .hero-top { display: flex; align-items: center; justify-content: space-between; position: relative; }
 .brand { display: flex; align-items: center; gap: 10px; }
-.brand-icon { width:36px; height:36px; background: var(--ac-g); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+.brand-icon { width:36px; height:36px; background: linear-gradient(135deg,#e63900,#003f6b); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; }
 .brand-text { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:0.08em; line-height:1; }
-.brand-text span { color: var(--ac); }
-.date-pill { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:var(--txt3); background:var(--s2); border:1px solid var(--border); padding:6px 12px; border-radius:20px; letter-spacing:0.05em; }
+.brand-text span { color: #e63900; }
+.date-pill { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:var(--txt3); background:var(--s2); border:1px solid var(--border); padding:6px 12px; border-radius:20px; }
 
 .tabs-wrap { position:sticky; top:0; z-index:50; background:var(--bg); border-bottom:1px solid var(--border); margin-top:20px; }
 .tabs { display:flex; overflow-x:auto; scrollbar-width:none; padding:0 24px; gap:4px; }
 .tabs::-webkit-scrollbar { display:none; }
-.tab { position:relative; padding:14px 18px 12px; font-size:13px; font-weight:700; letter-spacing:0.04em; color:var(--txt3); cursor:pointer; white-space:nowrap; background:none; border:none; font-family:'Inter',sans-serif; transition:color 0.2s; }
+.tab { position:relative; padding:14px 18px 12px; font-size:13px; font-weight:700; color:var(--txt3); cursor:pointer; white-space:nowrap; background:none; border:none; font-family:'Inter',sans-serif; transition:color 0.2s; }
 .tab::after { content:''; position:absolute; bottom:-1px; left:0; right:0; height:2px; border-radius:2px 2px 0 0; opacity:0; transition:opacity 0.2s; }
-.tab:hover { color: var(--txt2); }
-.tab[data-p="academia"].on { color: #e63900; }
-.tab[data-p="academia"].on::after { background: linear-gradient(90deg,#e63900,#00b4b4); opacity:1; }
-.tab[data-p="sorveteria"].on { color: #f5c800; }
-.tab[data-p="sorveteria"].on::after { background: linear-gradient(90deg,#003f6b,#00b4d8,#f5c800); opacity:1; }
-.tab[data-p="gympulse"].on { color: #f5c200; }
-.tab[data-p="gympulse"].on::after { background: linear-gradient(90deg,#f5c200,#ffffff); opacity:1; }
-.tab[data-p="historico"].on { color: var(--txt); }
-.tab[data-p="historico"].on::after { background: linear-gradient(90deg,#e63900,#f5c800,#f5c200); opacity:1; }
+.tab[data-p="academia"].on { color:#e63900; }
+.tab[data-p="academia"].on::after { background:linear-gradient(90deg,#e63900,#003f6b); opacity:1; }
+.tab[data-p="sorveteria"].on { color:#f5c800; }
+.tab[data-p="sorveteria"].on::after { background:linear-gradient(90deg,#003f6b,#00b4d8,#f5c800); opacity:1; }
+.tab[data-p="gympulse"].on { color:#f5c200; }
+.tab[data-p="gympulse"].on::after { background:linear-gradient(90deg,#f5c200,#fff); opacity:1; }
+.tab[data-p="historico"].on { color:var(--txt); }
+.tab[data-p="historico"].on::after { background:linear-gradient(90deg,#e63900,#f5c800,#f5c200); opacity:1; }
 
-main { max-width:780px; margin:0 auto; padding:28px 20px 100px; }
+main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .panel { display:none; }
 .panel.on { display:block; }
 
 .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:28px; }
 .stat { background:var(--s1); border:1px solid var(--border); border-radius:10px; padding:14px 12px; text-align:center; }
-.stat-n { font-family:'Bebas Neue',sans-serif; font-size:30px; line-height:1; letter-spacing:0.04em; }
+.stat-n { font-family:'Bebas Neue',sans-serif; font-size:30px; line-height:1; }
 .stat-l { font-size:9px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--txt3); margin-top:4px; }
 
 .dgroup { margin-bottom:36px; }
 .dlabel { font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--txt3); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
 .dlabel::after { content:''; flex:1; height:1px; background:var(--border); }
 
-.card { background:var(--s1); border:1px solid var(--border); border-radius:14px; margin-bottom:10px; overflow:hidden; transition:border-color 0.2s, transform 0.15s; }
+.card { background:var(--s1); border:1px solid var(--border); border-radius:14px; margin-bottom:10px; overflow:hidden; transition:transform 0.15s; }
 .card:hover { transform:translateY(-1px); }
 .card[data-p="academia"] { border-left:3px solid #e63900; }
 .card[data-p="sorveteria"] { border-left:3px solid #f5c800; }
@@ -93,40 +86,51 @@ main { max-width:780px; margin:0 auto; padding:28px 20px 100px; }
 
 .cbody { display:none; padding:0 16px 18px; border-top:1px solid var(--border); }
 .card.open .cbody { display:block; }
+
+/* BLOCOS */
 .block { margin-top:16px; }
 .blabel { font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
 
+/* Drive */
 .drive-ref { display:flex; align-items:center; gap:10px; background:rgba(0,180,216,0.06); border:1px solid rgba(0,180,216,0.15); border-radius:8px; padding:10px 12px; }
-.drive-icon { font-size:16px; flex-shrink:0; }
-.drive-info { flex:1; min-width:0; }
-.drive-name { font-size:12px; font-weight:600; color:#00b4d8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.drive-name { font-size:12px; font-weight:600; color:#00b4d8; }
 .drive-hint { font-size:11px; color:var(--txt3); margin-top:2px; }
-.drive-link { font-size:10px; font-weight:700; letter-spacing:0.06em; color:#00b4d8; text-decoration:none; background:rgba(0,180,216,0.1); padding:4px 8px; border-radius:4px; white-space:nowrap; flex-shrink:0; }
-.drive-link:hover { background:rgba(0,180,216,0.2); }
+.drive-link { font-size:10px; font-weight:700; color:#00b4d8; text-decoration:none; background:rgba(0,180,216,0.1); padding:4px 8px; border-radius:4px; white-space:nowrap; flex-shrink:0; }
 
+/* Texto */
 .tbox { background:var(--s2); border:1px solid var(--border); border-radius:9px; padding:13px 14px; font-size:13px; line-height:1.75; color:var(--txt); white-space:pre-wrap; }
 
-.pbox { background:#0a0d0a; border:1px solid #1e2e1e; border-radius:9px; padding:13px 14px; font-family:'JetBrains Mono',monospace; font-size:11.5px; line-height:1.7; color:#4ade80; white-space:pre-wrap; }
-.pbox-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
-.pbox-badge { font-size:9px; font-weight:800; letter-spacing:0.1em; background:rgba(74,222,128,0.12); color:#4ade80; border:1px solid rgba(74,222,128,0.2); padding:3px 8px; border-radius:4px; }
+/* Prompt sections */
+.prompt-wrap { background:#080c08; border:1px solid #1a281a; border-radius:12px; overflow:hidden; }
 
-.palette-bar { display:flex; gap:6px; margin-bottom:10px; align-items:center; }
-.palette-chip { width:20px; height:20px; border-radius:4px; border:1px solid rgba(255,255,255,0.1); flex-shrink:0; }
-.palette-label { font-size:10px; font-family:'JetBrains Mono',monospace; color:var(--txt3); }
+.prompt-section { border-bottom:1px solid #1a281a; }
+.prompt-section:last-child { border:none; }
 
-.canva-steps { background:var(--s2); border:1px solid var(--border); border-radius:9px; overflow:hidden; }
-.canva-step { display:flex; align-items:flex-start; gap:12px; padding:11px 14px; border-bottom:1px solid var(--border); }
-.canva-step:last-child { border:none; }
-.step-num { width:20px; height:20px; border-radius:50%; background:rgba(167,139,250,0.15); color:#a78bfa; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
-.step-txt { font-size:12.5px; color:var(--txt2); line-height:1.5; flex:1; }
-.step-tag { font-size:10px; font-weight:700; padding:2px 6px; border-radius:3px; margin-right:4px; flex-shrink:0; }
-.tag-drive { background:rgba(0,180,216,0.1); color:#00b4d8; }
-.tag-chatgpt { background:rgba(74,222,128,0.1); color:#4ade80; }
-.tag-canva { background:rgba(167,139,250,0.1); color:#a78bfa; }
+.psec-header { display:flex; align-items:center; gap:8px; padding:10px 14px; background:#0a0f0a; cursor:pointer; user-select:none; }
+.psec-header:hover { background:#0d130d; }
+.psec-num { width:22px; height:22px; border-radius:50%; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.psec-title { font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; flex:1; }
+.psec-chev { font-size:9px; color:#2a4a2a; transition:transform 0.2s; }
+.prompt-section.open .psec-chev { transform:rotate(180deg); }
 
-.copybtn { margin-top:7px; display:block; margin-left:auto; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--txt3); background:var(--s2); border:1px solid var(--border); border-radius:5px; padding:5px 10px; cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.15s; }
+.psec-body { display:none; padding:12px 14px; }
+.prompt-section.open .psec-body { display:block; }
+
+.psec-content { font-family:'JetBrains Mono',monospace; font-size:11.5px; line-height:1.75; color:#4ade80; white-space:pre-wrap; }
+
+/* Paleta */
+.palette-bar { display:flex; gap:6px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
+.pchip { display:flex; align-items:center; gap:5px; background:var(--s2); border:1px solid var(--border); border-radius:5px; padding:4px 8px; }
+.pchip-dot { width:14px; height:14px; border-radius:3px; flex-shrink:0; }
+.pchip-hex { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--txt3); }
+.pchip-name { font-size:10px; color:var(--txt2); }
+
+
+
+.copybtn { margin-top:8px; display:block; margin-left:auto; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--txt3); background:var(--s2); border:1px solid var(--border); border-radius:5px; padding:5px 10px; cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.15s; }
 .copybtn:hover { color:var(--txt); border-color:var(--txt3); }
 
+/* Histórico */
 .hentry { display:flex; align-items:center; gap:12px; background:var(--s1); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:8px; }
 .hdot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
 .hinfo { flex:1; min-width:0; }
@@ -138,7 +142,6 @@ main { max-width:780px; margin:0 auto; padding:28px 20px 100px; }
 
 .empty { text-align:center; padding:70px 20px; color:var(--txt3); }
 .empty .eico { font-size:40px; margin-bottom:14px; }
-.empty p { font-size:14px; line-height:1.7; }
 
 @media(max-width:600px) {
   .stats { grid-template-columns:repeat(2,1fr); }
@@ -162,74 +165,112 @@ main { max-width:780px; margin:0 auto; padding:28px 20px 100px; }
 <div class="tabs-wrap">
   <div class="tabs">
     <button class="tab on" data-p="academia" onclick="go('academia',this)">🏋️ Academia</button>
-    <button class="tab"    data-p="sorveteria" onclick="go('sorveteria',this)">🍦 Sorveteria</button>
-    <button class="tab"    data-p="gympulse" onclick="go('gympulse',this)">🎮 GympulsePro</button>
-    <button class="tab"    data-p="historico" onclick="go('historico',this)">📋 Histórico</button>
+    <button class="tab" data-p="sorveteria" onclick="go('sorveteria',this)">🍦 Sorveteria</button>
+    <button class="tab" data-p="gympulse" onclick="go('gympulse',this)">🎮 GympulsePro</button>
+    <button class="tab" data-p="historico" onclick="go('historico',this)">📋 Histórico</button>
   </div>
 </div>
 
 <main>
   <div class="panel on" id="p-academia"></div>
-  <div class="panel"    id="p-sorveteria"></div>
-  <div class="panel"    id="p-gympulse"></div>
-  <div class="panel"    id="p-historico"></div>
+  <div class="panel" id="p-sorveteria"></div>
+  <div class="panel" id="p-gympulse"></div>
+  <div class="panel" id="p-historico"></div>
 </main>
 
 <script>
 const PALETTES = {
-  academia: [
-    {hex:'#e63900', label:'Laranja'},
-    {hex:'#00b4b4', label:'Teal'},
-    {hex:'#ffffff', label:'Branco'},
-    {hex:'#1a1a1a', label:'Preto'}
+  academia:[
+    {hex:'#e63900',name:'Laranja principal'},
+    {hex:'#003f6b',name:'Teal acento'},
+    {hex:'#1a1a1a',name:'Preto fundo'},
+    {hex:'#ffffff',name:'Branco texto'}
   ],
-  sorveteria: [
-    {hex:'#003f6b', label:'Azul escuro'},
-    {hex:'#00b4d8', label:'Azul turquesa'},
-    {hex:'#f5c800', label:'Amarelo'},
-    {hex:'#ffffff', label:'Branco'}
+  sorveteria:[
+    {hex:'#003f6b',name:'Azul escuro'},
+    {hex:'#00b4d8',name:'Azul turquesa'},
+    {hex:'#f5c800',name:'Amarelo'},
+    {hex:'#ffffff',name:'Branco'}
   ],
-  gympulse: [
-    {hex:'#f5c200', label:'Amarelo'},
-    {hex:'#ffffff', label:'Branco'},
-    {hex:'#0d0d0d', label:'Preto'},
-    {hex:'#1c1c1c', label:'Cinza escuro'}
+  gympulse:[
+    {hex:'#f5c200',name:'Amarelo'},
+    {hex:'#ffffff',name:'Branco'},
+    {hex:'#0d0d0d',name:'Preto'},
+    {hex:'#1c1c1c',name:'Cinza escuro'}
   ]
 };
 
 const CONTENT = {
-  academia: [
+  academia:[
     {
       id:'ac1', date:'2026-06-16', time:'08h', format:'Story',
-      title:'Prova social — Pequenas vitórias',
+      title:'Prova Social — Pequenas vitórias reais',
       driveFile:'Academia25.jpg',
       driveUrl:'https://drive.google.com/file/d/1_tYJHgSeLm7f9M1xyUjD70y-htknP4Ej/view',
-      driveHint:'Foto real da academia — base do story',
-      text:`Mais um aluno que descobriu que academia não é só sobre aparência — é sobre se sentir bem de verdade. 💛
+      driveHint:'Foto real da academia — base principal do story',
+      texto:`Mais um dia que valeu a pena. 💛
 
-Dormir melhor. Ter mais disposição. Carregar as compras sem cansar.
+Não precisa ser perfeito — precisa ser constante.
 
-Pequenas vitórias que mudam tudo.
+Nossas alunas não vieram buscar um corpo diferente.
+Vieram buscar mais disposição, mais sono, mais saúde.
 
-Vem descobrir isso também 👉 manda mensagem!`,
-      prompt:`Fotografia de uma mulher brasileira entre 30 e 40 anos, sorrindo de forma natural dentro de uma academia pequena e acolhedora. Roupas simples de treino. Paleta de cores da imagem: laranja (#e63900) como cor de destaque, teal/verde-água (#00b4b4) como acento, fundo escuro (#1a1a1a), texto e elementos em branco (#ffffff). Luz quente e ambiente acolhedor. Sem texto na imagem. Formato vertical 9:16.`,
-      canva:[
-        {tag:'drive', txt:'Abra Academia25.jpg do Drive — use como camada de fundo'},
-        {tag:'chatgpt', txt:'Gere imagem complementar com o prompt — sobreponha como elemento ou use como alternativa'},
-        {tag:'canva', txt:'Overlay escuro (#1a1a1a) suave sobre a foto — opacidade 35%'},
-        {tag:'canva', txt:'Texto em branco (#ffffff), fonte Inter 400, centralizado'},
-        {tag:'canva', txt:'Destaque em laranja (#e63900) para palavra-chave ou CTA'},
-        {tag:'canva', txt:'Acento em teal (#00b4b4) em elemento secundário — como linha ou ícone'},
-        {tag:'canva', txt:'Logo Planeta Corpo no canto inferior — pequeno e discreto'}
+E encontraram tudo isso aqui. 🧡
+
+👉 Manda mensagem e garante sua aula experimental!`,
+      secoes:[
+        {
+          num:'01', cor:'#e63900', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Story Instagram
+Dimensões: 1080 × 1920px (proporção 9:16)
+Resolução: 72 DPI
+Zona segura: manter elementos entre 150px das bordas superior e inferior
+Duração recomendada: 7 segundos`
+        },
+        {
+          num:'02', cor:'#f5a623', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Prova Social
+Objetivo: Gerar identificação emocional com mulheres de 30-40 anos mostrando que pessoas comuns como elas já se beneficiam da academia — sem apelo atlético ou estético.
+Funil: Topo — despertar interesse e criar conexão emocional
+Ação esperada: Comentário, compartilhamento ou DM solicitando informações`
+        },
+        {
+          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
+          conteudo:`CONCEITO CENTRAL:
+Uma mulher brasileira comum, entre 30-40 anos, em momento de satisfação pós-treino — não de esforço máximo. A sensação deve ser de conquista leve e bem-estar, não de superação atlética.
+
+COMPOSIÇÃO DA IMAGEM:
+• Personagem: mulher sorrindo de forma natural e relaxada, roupas simples de treino (sem marca ou apelo fitness)
+• Expressão: alívio, satisfação, disposição — não força ou competição
+• Ambiente: academia pequena e acolhedora, iluminação quente, equipamentos ao fundo levemente desfocados
+• Ângulo: plano médio (da cintura para cima), câmera na altura dos olhos
+• Profundidade de campo: rasa — foco no rosto e expressão
+
+PALETA OBRIGATÓRIA:
+• Laranja #e63900 — destaque e CTA
+• Teal #003f6b — acento secundário
+• Preto #1a1a1a — overlay e fundo
+• Branco #ffffff — texto principal
+
+ESTILO VISUAL:
+Fotografia realista com luz natural quente. Sensação de "foto tirada por alguém da academia" — autenticidade supera produção excessiva. Sem filtros pesados ou edição exagerada.
+
+RESTRIÇÕES OBRIGATÓRIAS:
+• Sem texto visível na imagem gerada
+• Sem corpos irreais, malhados ou com apelo estético exagerado
+• Sem equipamentos de academia grande ou profissional
+• Sem poses de musculação forçadas ou expressões de esforço extremo
+• Sem roupas de marca ou elementos aspiracionais`
+        }
       ]
     },
     {
       id:'ac2', date:'2026-06-16', time:'12h', format:'Story',
-      title:'Dica de saúde — 3x por semana já basta',
+      title:'Dica de Saúde — 3x por semana já basta',
       driveFile:'Academia24.jpg',
       driveUrl:'https://drive.google.com/file/d/1Ur7pNcZnnlYEGPQd63A3e-9tF0-x1Umi/view',
-      driveHint:'Foto da academia — fundo da dica de saúde',
-      text:`Você não precisa malhar 2 horas por dia para ter saúde.
+      driveHint:'Foto da academia — fundo para a dica',
+      texto:`Você não precisa malhar 2 horas por dia para ter saúde.
 
 3 vezes por semana, 1 hora, no seu ritmo — já é suficiente para:
 
@@ -238,23 +279,59 @@ Vem descobrir isso também 👉 manda mensagem!`,
 ✅ Ganhar disposição no dia a dia
 
 A ciência confirma. A gente te ajuda a colocar em prática.`,
-      prompt:`Ilustração flat design minimalista com três ícones representando bem-estar: lua (sono), folha (tranquilidade), sol (energia). Paleta obrigatória: fundo preto (#1a1a1a), ícones em laranja (#e63900) e teal (#00b4b4), detalhes em branco (#ffffff). Estilo moderno, limpo, sem pessoas. Sem texto na imagem. Formato vertical 9:16.`,
-      canva:[
-        {tag:'drive', txt:'Importe Academia24.jpg como camada de fundo'},
-        {tag:'chatgpt', txt:'Gere os ícones flat com a paleta correta — sobreponha centralizados'},
-        {tag:'canva', txt:'Overlay preto (#1a1a1a) 40% sobre a foto'},
-        {tag:'canva', txt:'3 benefícios com ✅ laranja (#e63900) — fonte Inter 400, 26px'},
-        {tag:'canva', txt:'Linha divisória em teal (#00b4b4) entre o título e os benefícios'},
-        {tag:'canva', txt:'Título em branco (#ffffff) — discreto, não gritado'}
+      secoes:[
+        {
+          num:'01', cor:'#e63900', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Story Instagram
+Dimensões: 1080 × 1920px (proporção 9:16)
+Resolução: 72 DPI
+Zona segura: 150px das bordas
+Estilo visual: Informativo com elementos gráficos`
+        },
+        {
+          num:'02', cor:'#f5a623', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Dica de Saúde / Educativo
+Objetivo: Quebrar a objeção de "não tenho tempo" e "academia é muito puxado" — principal barreira do público feminino 30-40 anos para iniciar.
+Funil: Topo — educar e remover barreiras de entrada
+Ação esperada: Salvamento do story e consideração de matrícula`
+        },
+        {
+          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
+          conteudo:`CONCEITO CENTRAL:
+Quebrar o mito de que academia exige muito tempo e esforço. Apresentar 3 benefícios reais e cotidianos de forma visual, limpa e fácil de consumir.
+
+COMPOSIÇÃO DA IMAGEM:
+• Estilo: Flat design minimalista — 3 ícones empilhados verticalmente
+• Ícone 1: Lua crescente — representa melhora do sono
+• Ícone 2: Folha ou planta — representa redução do estresse
+• Ícone 3: Sol ou raio de luz — representa disposição e energia
+• Cada ícone acompanhado de espaço vazio para texto ser adicionado no Canva
+• Fundo limpo sem elementos distrativos
+
+PALETA OBRIGATÓRIA:
+• Preto #1a1a1a — fundo principal
+• Laranja #e63900 — ícones e destaques
+• Teal #003f6b — acento nos ícones secundários
+• Branco #ffffff — área de texto
+
+ESTILO VISUAL:
+Flat design moderno, linhas limpas, sem sombras excessivas. Ícones simples e universalmente reconhecíveis. Estética de infográfico de saúde e bem-estar.
+
+RESTRIÇÕES OBRIGATÓRIAS:
+• Sem texto na imagem gerada
+• Sem pessoas ou corpos na ilustração
+• Sem elementos médicos (seringa, termômetro, etc.)
+• Sem cores além da paleta definida`
+        }
       ]
     },
     {
-      id:'ac3', date:'2026-06-16', time:'17h', format:'Post feed',
-      title:'Convite à matrícula — 27 anos de história',
+      id:'ac3', date:'2026-06-16', time:'17h', format:'Post',
+      title:'Matrícula — 27 anos de história',
       driveFile:'Logo Academia Oficial.png',
       driveUrl:'https://drive.google.com/file/d/0B5StJJgxShxeSTNEYm93M1g0Qms/view',
       driveHint:'Logo oficial — elemento central do post',
-      text:`27 anos cuidando da saúde de Turvo. 💛
+      texto:`27 anos cuidando da saúde de Turvo. 💛
 
 Na Planeta Corpo Club+ você treina com liberdade — qualquer dia, qualquer horário, todas as modalidades no mesmo plano.
 
@@ -266,15 +343,51 @@ Tudo por R$ 209/mês. Sem pegadinhas.
 📲 (42) 99922-2857
 
 #PlanetaCorpo #Turvo #SaúdeDeVerdade #QualidadeDeVida`,
-      prompt:`Post para academia com layout clean. Paleta obrigatória: fundo preto (#1a1a1a), destaque principal em laranja (#e63900), acento em teal/verde-água (#00b4b4), texto em branco (#ffffff). Silhuetas minimalistas de pessoas praticando diferentes modalidades esportivas. Espaço central para logo. Sem texto na imagem. Formato quadrado 1:1.`,
-      canva:[
-        {tag:'drive', txt:'Importe Logo Academia Oficial.png — posicione no topo centralizado'},
-        {tag:'chatgpt', txt:'Gere silhuetas de modalidades com paleta oficial — use como decoração'},
-        {tag:'canva', txt:'Fundo preto (#1a1a1a)'},
-        {tag:'canva', txt:'"27 anos" em laranja (#e63900) — destaque principal'},
-        {tag:'canva', txt:'Lista de modalidades em branco, separadas por · teal (#00b4b4)'},
-        {tag:'canva', txt:'Preço R$209 em branco, tamanho médio'},
-        {tag:'canva', txt:'Endereço e WhatsApp em cinza claro no rodapé'}
+      secoes:[
+        {
+          num:'01', cor:'#e63900', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Post Feed Instagram
+Dimensões: 1080 × 1080px (proporção 1:1)
+Resolução: 72 DPI
+Margem de segurança: 80px em todas as bordas
+Estilo: Institucional com CTA direto`
+        },
+        {
+          num:'02', cor:'#f5a623', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Conversão / Chamada para Matrícula
+Objetivo: Apresentar a Planeta Corpo como academia confiável, completa e acessível para a comunidade de Turvo — usando os 27 anos de história como principal argumento de autoridade.
+Funil: Meio/Fundo — converter interesse em ação (contato ou visita)
+Ação esperada: Clique no WhatsApp, visita à academia ou DM`
+        },
+        {
+          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
+          conteudo:`CONCEITO CENTRAL:
+Post institucional que comunica tradição, completude e acessibilidade. O número "27 anos" é o âncora principal — transmite confiança em uma cidade pequena onde reputação vale muito.
+
+COMPOSIÇÃO DA IMAGEM:
+• Layout dividido: parte superior com logo e "27 anos", parte inferior com lista de modalidades
+• Fundo escuro com textura sutil (grade fina ou ruído leve)
+• Silhuetas minimalistas de 4-5 modalidades diferentes ao redor do logo
+• Silhuetas em laranja (#e63900) e teal (#003f6b) alternando
+• Espaço central limpo para o logo Planeta Corpo
+
+PALETA OBRIGATÓRIA:
+• Preto #1a1a1a — fundo principal
+• Laranja #e63900 — "27 anos" e CTA
+• Teal #003f6b — separadores e acentos
+• Branco #ffffff — texto e logo
+
+HIERARQUIA VISUAL:
+1. Logo Planeta Corpo — topo, centralizado
+2. "27 ANOS" em laranja — maior elemento tipográfico
+3. Lista de modalidades — meio, fonte média
+4. Preço e contato — base, fonte menor mas visível
+
+RESTRIÇÕES OBRIGATÓRIAS:
+• Sem texto na imagem gerada pelo ChatGPT
+• Silhuetas apenas — sem rostos ou pessoas identificáveis
+• Sem elementos de academia genérica ou concorrente`
+        }
       ]
     },
     {
@@ -282,191 +395,230 @@ Tudo por R$ 209/mês. Sem pegadinhas.
       title:'Humanização — Academia é pra todo mundo',
       driveFile:'Academia23.jpg',
       driveUrl:'https://drive.google.com/file/d/1tJwIyn_q134rkN3px66sYeFlUnpADIeG/view',
-      driveHint:'Foto real do espaço — autenticidade é o diferencial aqui',
-      text:`Tem gente que acha que academia é coisa de quem já é fitness.
+      driveHint:'Foto real do espaço — autenticidade é o ponto forte aqui',
+      texto:`Tem gente que acha que academia é coisa de quem já é fitness.
 
 A gente pensa diferente. 🧡
 
 A Planeta Corpo existe para quem quer começar, para quem parou e quer voltar, e para quem só precisa de um lugar gostoso de treinar.
 
 Desde 1998 sendo esse lugar pra Turvo. 🧡`,
-      prompt:`Fotografia acolhedora de academia pequena em cidade do interior do Paraná. Paleta da imagem: tons escuros naturais (#1a1a1a), detalhes em laranja quente (#e63900) na iluminação, reflexos em teal (#00b4b4). Luz ambiente calorosa, equipamentos bem cuidados. Sem pessoas, sem texto. Formato vertical 9:16.`,
-      canva:[
-        {tag:'drive', txt:'Use Academia23.jpg como fundo — foto real é mais autêntica'},
-        {tag:'chatgpt', txt:'Opcional: gere imagem alternativa se a foto não funcionar como fundo'},
-        {tag:'canva', txt:'Overlay mínimo preto (#1a1a1a) 15% — só para o texto aparecer'},
-        {tag:'canva', txt:'Texto em branco (#ffffff), fonte Inter 400, tom leve e humano'},
-        {tag:'canva', txt:'Emoji 🧡 como único elemento decorativo — combina com o laranja da marca'},
-        {tag:'canva', txt:'Logo no canto inferior — pequeníssimo'}
-      ]
-    },
-    {
-      id:'ac5', date:'2026-06-17', time:'08h', format:'Story',
-      title:'Dica de saúde — Voltar não é fracasso',
-      driveFile:'Academia24.jpg',
-      driveUrl:'https://drive.google.com/file/d/1Ur7pNcZnnlYEGPQd63A3e-9tF0-x1Umi/view',
-      driveHint:'Foto da academia — fundo da dica de saúde',
-      text:`Parou de treinar e ficou com aquela sensação de "será que ainda dá tempo"?
+      secoes:[
+        {
+          num:'01', cor:'#e63900', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Story Instagram
+Dimensões: 1080 × 1920px (proporção 9:16)
+Resolução: 72 DPI
+Zona segura: 150px das bordas
+Estilo: Autêntico, minimal — foto real prevalece`
+        },
+        {
+          num:'02', cor:'#f5a623', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Humanização da Marca
+Objetivo: Quebrar barreiras psicológicas de quem nunca foi à academia ou parou. Posicionar a Planeta Corpo como lugar acolhedor, sem julgamentos, para pessoas reais.
+Funil: Topo — criar conexão emocional com não-alunos
+Ação esperada: Compartilhamento ("isso é pra mim") e lembrança de marca`
+        },
+        {
+          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
+          conteudo:`CONCEITO CENTRAL:
+Desfazer o mito de que academia é lugar de pessoas já em forma. Tom de conversa sincera, como se fosse uma mensagem direta do professor Gilson para alguém que tem vontade mas tem medo de começar.
 
-Dá sim. 🧡
+COMPOSIÇÃO DA IMAGEM:
+• Foto real da academia (Academia23.jpg do Drive) como fundo
+• Overlay mínimo — a foto deve respirar e aparecer com clareza
+• Sem elementos gráficos pesados — o espaço real comunica mais que qualquer arte
+• Iluminação: quente e acolhedora — se a foto tiver isso, não mexa
+• Sem pessoas na foto — o espaço vazio convida o espectador a se imaginar ali
 
-Seu corpo não esquece o que você já construiu — ele só está esperando você voltar.
+PALETA OBRIGATÓRIA:
+• Preto #1a1a1a — overlay mínimo (máx 15% opacidade)
+• Laranja #e63900 — emoji e palavra-chave ocasional
+• Branco #ffffff — texto principal
 
-Sem cobrança, sem julgamento. No seu ritmo, como sempre foi aqui.
+ESTILO VISUAL:
+Zero produção excessiva. A foto real vale mais que qualquer arte produzida nesse contexto. Autenticidade é o diferencial desse story.
 
-Bora retomar essa semana?`,
-      prompt:`Ilustração flat design minimalista de um caminho ou trilha de pegadas levando a um sol nascente, simbolizando retomada e novo começo. Paleta obrigatória: fundo preto (#1a1a1a), elementos em laranja (#e63900), acentos em teal (#00b4b4), detalhes em branco (#ffffff). Estilo moderno, acolhedor, sem pessoas. Sem texto na imagem. Formato vertical 9:16.`,
-      canva:[
-        {tag:'drive', txt:'Importe Academia24.jpg como camada de fundo'},
-        {tag:'chatgpt', txt:'Gere a ilustração do caminho/sol nascente com a paleta oficial — sobreponha como elemento central'},
-        {tag:'canva', txt:'Overlay preto (#1a1a1a) 35% sobre a foto'},
-        {tag:'canva', txt:'Texto em branco (#ffffff), fonte Inter 400, tom acolhedor e sem pressa'},
-        {tag:'canva', txt:'Destaque "Bora retomar essa semana?" em laranja (#e63900)'},
-        {tag:'canva', txt:'Acento em teal (#00b4b4) — linha ou ícone discreto'},
-        {tag:'canva', txt:'Logo Planeta Corpo no canto inferior — pequeno'}
-      ]
-    },
-    {
-      id:'ac6', date:'2026-06-17', time:'12h', format:'Story',
-      title:'Humanização — Cada um no seu ritmo',
-      driveFile:'Academia23.jpg',
-      driveUrl:'https://drive.google.com/file/d/1tJwIyn_q134rkN3px66sYeFlUnpADIeG/view',
-      driveHint:'Foto real do espaço — clima tranquilo, sem comparação',
-      text:`Aqui não tem ranking de quem levanta mais peso. 😊
-
-Tem gente que vem pra suar, gente que vem pra desligar a cabeça, gente que vem só pra não ficar em casa.
-
-Todo motivo é motivo válido.
-
-A Planeta Corpo é desse jeito desde 1998 — um espaço pra você ser quem você é. 🧡`,
-      prompt:`Fotografia acolhedora do interior de uma academia pequena e tranquila, sem pessoas, com luz natural suave entrando pela janela. Paleta da imagem: tons escuros naturais (#1a1a1a), reflexos quentes em laranja (#e63900), detalhes em teal (#00b4b4) e branco (#ffffff). Atmosfera calma, sem comparação ou competição. Sem texto na imagem. Formato vertical 9:16.`,
-      canva:[
-        {tag:'drive', txt:'Use Academia23.jpg como fundo — foto real transmite mais acolhimento'},
-        {tag:'chatgpt', txt:'Opcional: gere imagem alternativa se a foto não funcionar como fundo'},
-        {tag:'canva', txt:'Overlay mínimo preto (#1a1a1a) 15% — só para o texto aparecer'},
-        {tag:'canva', txt:'Texto em branco (#ffffff), fonte Inter 400, tom leve e humano'},
-        {tag:'canva', txt:'Emoji 😊🧡 como elementos decorativos'},
-        {tag:'canva', txt:'Logo pequeníssimo no canto inferior'}
-      ]
-    },
-    {
-      id:'ac7', date:'2026-06-17', time:'17h', format:'Post feed',
-      title:'Convite à matrícula — Treine sem compromisso engessado',
-      driveFile:'Logo Academia Oficial.png',
-      driveUrl:'https://drive.google.com/file/d/0B5StJJgxShxeSTNEYm93M1g0Qms/view',
-      driveHint:'Logo oficial — elemento central do post',
-      text:`Treinar 1x ou 5x por semana. De manhã, de tarde ou de noite. Você escolhe. 🧡
-
-Na Planeta Corpo Club+ é assim: um plano só, liberdade total — Musculação, Dança, Spinning, Funcional, Jump, HIIT e aulas com o Prof. Wellinton.
-
-R$ 209/mês. Sem fidelidade chata, sem letra miúda.
-
-📍 Av. Maria Bettega, 360 — Centro, Turvo/PR
-📲 (42) 99922-2857
-
-#PlanetaCorpo #Turvo #SaúdeDeVerdade #QualidadeDeVida`,
-      prompt:`Post para academia com layout clean e organizado. Paleta obrigatória: fundo preto (#1a1a1a), destaque principal em laranja (#e63900), acento em teal/verde-água (#00b4b4), texto em branco (#ffffff). Ícones minimalistas representando liberdade de horário: relógio, calendário, sol e lua. Espaço central para logo. Sem texto na imagem. Formato quadrado 1:1.`,
-      canva:[
-        {tag:'drive', txt:'Importe Logo Academia Oficial.png — posicione no topo centralizado'},
-        {tag:'chatgpt', txt:'Gere ícones de liberdade de horário (relógio, calendário, sol, lua) com a paleta oficial'},
-        {tag:'canva', txt:'Fundo preto (#1a1a1a)'},
-        {tag:'canva', txt:'"Você escolhe" em laranja (#e63900) — destaque principal'},
-        {tag:'canva', txt:'Lista de modalidades em branco, separadas por · teal (#00b4b4)'},
-        {tag:'canva', txt:'Preço R$209 em branco, tamanho médio'},
-        {tag:'canva', txt:'Endereço e WhatsApp em cinza claro no rodapé'}
-      ]
-    },
-    {
-      id:'ac8', date:'2026-06-17', time:'20h', format:'Story',
-      title:'Prova social — Histórias que inspiram',
-      driveFile:'Academia25.jpg',
-      driveUrl:'https://drive.google.com/file/d/1_tYJHgSeLm7f9M1xyUjD70y-htknP4Ej/view',
-      driveHint:'Foto real da academia — base do story',
-      text:`"Eu entrei pra emagrecer, mas o que eu ganhei foi disposição pra brincar com meus filhos de novo." 💬🧡
-
-Histórias assim são o motivo de a gente continuar.
-
-A sua pode ser a próxima. Vem treinar com a gente.`,
-      prompt:`Fotografia de uma mulher brasileira entre 30 e 40 anos, em momento de descanso pós-treino, expressão tranquila e satisfeita, dentro de uma academia pequena e acolhedora. Paleta de cores: laranja (#e63900) como destaque, teal (#00b4b4) como acento, fundo escuro (#1a1a1a), branco (#ffffff) para texto. Luz quente. Sem texto na imagem. Formato vertical 9:16.`,
-      canva:[
-        {tag:'drive', txt:'Abra Academia25.jpg do Drive — use como camada de fundo'},
-        {tag:'chatgpt', txt:'Gere imagem complementar com o prompt — sobreponha ou use como alternativa'},
-        {tag:'canva', txt:'Overlay escuro (#1a1a1a) 35% sobre a foto'},
-        {tag:'canva', txt:'Citação em formato de balão de fala, texto branco (#ffffff), fonte Inter itálica'},
-        {tag:'canva', txt:'Borda do balão em laranja (#e63900)'},
-        {tag:'canva', txt:'Acento em teal (#00b4b4) em elemento secundário'},
-        {tag:'canva', txt:'Logo Planeta Corpo no canto inferior — pequeno e discreto'}
+RESTRIÇÕES OBRIGATÓRIAS:
+• Não adicione filtros pesados na foto
+• Sem elementos gráficos além do texto e logo
+• Sem emojis de músculo, fogo ou performance
+• Use apenas 🧡 como emoji — combina com o laranja da marca`
+        }
       ]
     }
   ],
 
-  sorveteria: [
+  sorveteria:[
     {
       id:'so1', date:'2026-06-16', time:'09h', format:'Story',
-      title:'Produto do dia — Abertura energética',
+      title:'Produto do Dia — Abertura de semana',
       driveFile:'mascote3d_guri_pose01_sorvete_tamanho_grande.png',
       driveUrl:'https://drive.google.com/file/d/1Tb4fIXrE5vWurOTlJPjdfg3kxK9W8Olu/view',
       driveHint:'Mascote 3D Guri com sorvete — protagonista do story',
-      text:`🍦 Bom dia, Turvo!
+      texto:`🍦 Bom dia, Turvo!
 
 Começa a semana com o sabor que todo mundo ama!
 
 Hoje em destaque: [COLOQUE O SABOR DO DIA] 😍
 
 Vem nos visitar!`,
-      prompt:`Fundo festivo para story de sorveteria. Paleta obrigatória: azul escuro (#003f6b) como fundo principal, azul turquesa (#00b4d8) como acento e degradê, amarelo (#f5c800) para destaques e elementos alegres, branco (#ffffff) para texto. Elementos decorativos: bolinhas, confetes e formas geométricas. Espaço central para mascote. Sem texto na imagem. Formato vertical 9:16.`,
-      canva:[
-        {tag:'chatgpt', txt:'Gere o fundo com degradê azul escuro (#003f6b) → turquesa (#00b4d8) e confetes amarelos (#f5c800)'},
-        {tag:'drive', txt:'Importe mascote3d_guri_pose01 do Drive — posicione à direita, tamanho grande'},
-        {tag:'canva', txt:'"BOM DIA, TURVO!" no topo — fonte bold, branco (#ffffff)'},
-        {tag:'canva', txt:'Nome do sabor em caixa amarela (#f5c800) com texto azul escuro (#003f6b)'},
-        {tag:'canva', txt:'Logo Guri V2 no canto inferior em branco'},
-        {tag:'canva', txt:'Energia festiva — azul, amarelo e branco são as cores oficiais'}
+      secoes:[
+        {
+          num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Story Instagram
+Dimensões: 1080 × 1920px (proporção 9:16)
+Resolução: 72 DPI
+Zona segura: 150px das bordas
+Estilo: Festivo, colorido, energético`
+        },
+        {
+          num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Produto do Dia / Divulgação
+Objetivo: Criar hábito diário de acompanhamento do perfil — o público espera saber qual é o sabor do dia. Gera visita à loja no mesmo dia.
+Funil: Fundo — conversão imediata (visita física)
+Ação esperada: Visita à sorveteria no dia`
+        },
+        {
+          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
+          conteudo:`CONCEITO CENTRAL:
+Story diário recorrente com identidade visual consistente. O público deve reconhecer esse formato toda manhã. O mascote 3D Guri é o comunicador oficial — transmite alegria e personalidade da marca.
+
+COMPOSIÇÃO DA IMAGEM:
+• Fundo: degradê diagonal de azul escuro (#003f6b) para azul turquesa (#00b4d8)
+• Elementos decorativos: bolinhas coloridas, confetes e formas geométricas simples em amarelo (#f5c800) e branco
+• Mascote Guri (importado do Drive) posicionado à direita, ocupando 60% da altura
+• Espaço à esquerda/topo para texto do sabor do dia
+• Caixa destacada em amarelo (#f5c800) com borda arredondada para nome do sabor
+
+PALETA OBRIGATÓRIA:
+• Azul escuro #003f6b — fundo principal
+• Azul turquesa #00b4d8 — degradê e acentos
+• Amarelo #f5c800 — caixa do sabor e confetes
+• Branco #ffffff — texto e logo
+
+ESTILO VISUAL:
+Festivo e alegre como a marca Guri. Alta energia visual, cores saturadas mas harmônicas. Mascote 3D é o centro emocional da composição.
+
+RESTRIÇÕES OBRIGATÓRIAS:
+• Sem texto na imagem gerada pelo ChatGPT
+• Manter espaço para o mascote do Drive ser adicionado no Canva
+• Cores exclusivamente da paleta oficial`
+        }
       ]
     },
     {
-      id:'so2', date:'2026-06-16', time:'11h30', format:'Post feed',
-      title:'Foto produto — Construção de marca',
+      id:'so2', date:'2026-06-16', time:'11h30', format:'Post',
+      title:'Construção de Marca — Foto produto',
       driveFile:'11.08 - Sabores Guri Mini BomBom de Açaí.png',
       driveUrl:'https://drive.google.com/file/d/1as6g-9NsXdkpm2Yrh-p__w3SCZ73NTNv/view',
       driveHint:'Post de sabores já produzido — pode repostar ou usar como referência',
-      text:`Segunda-feira fica muito melhor com um sorvete na mão! 🍦☀️
+      texto:`Segunda-feira fica muito melhor com um sorvete na mão! 🍦☀️
 
 Sabores que fazem a sua semana começar com alegria.
 
 Venha nos visitar em Turvo/PR!
 
 #SorvetesGuri #Turvo #SorveteriaArtesanal #MomentoGuri`,
-      prompt:`Flat lay fotográfico de sorvetes coloridos sobre superfície com fundo azul turquesa (#00b4d8). Elementos decorativos em amarelo (#f5c800) e branco (#ffffff). Paleta obrigatória: azul turquesa (#00b4d8), azul escuro (#003f6b), amarelo (#f5c800), branco (#ffffff). Estilo food photography profissional e apetitoso. Sem texto na imagem. Formato quadrado 1:1.`,
-      canva:[
-        {tag:'drive', txt:'Opção A: reposte o arquivo "11.08 - Sabores Guri" diretamente — já está pronto'},
-        {tag:'chatgpt', txt:'Opção B: gere nova foto com paleta oficial e monte post novo'},
-        {tag:'drive', txt:'Importe LOGO-GURI-V2.png — canto superior em branco (#ffffff)'},
-        {tag:'canva', txt:'Fundo azul turquesa (#00b4d8) se montar do zero'},
-        {tag:'canva', txt:'Elementos decorativos em amarelo (#f5c800)'},
-        {tag:'canva', txt:'Produto no centro — protagonista da imagem'}
+      secoes:[
+        {
+          num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Post Feed Instagram
+Dimensões: 1080 × 1080px (proporção 1:1)
+Resolução: 72 DPI
+Margem: 80px nas bordas
+Estilo: Food photography — produto como protagonista`
+        },
+        {
+          num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Construção de Marca / Brand Awareness
+Objetivo: Consolidar a identidade visual da Sorveteria Guri no feed — post permanente que comunica qualidade e alegria do produto. Não é promocional, é de posicionamento.
+Funil: Topo — reconhecimento e desejo
+Ação esperada: Curtida, salvamento e visita futura`
+        },
+        {
+          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
+          conteudo:`CONCEITO CENTRAL:
+Post de produto limpo e apetitoso. O sorvete deve ser o protagonista absoluto. Menos é mais — design serve ao produto, não compete com ele.
+
+COMPOSIÇÃO DA IMAGEM:
+• Ângulo: flat lay (vista de cima 90°) ou 3/4 levemente elevado
+• Produto: sorvete ou picolé em destaque central, bem iluminado
+• Superfície: azul turquesa (#00b4d8) ou mármore branco com toques azuis
+• Elementos decorativos: frutas frescas relacionadas ao sabor, flores simples em amarelo
+• Espaço superior/inferior para logo e texto no Canva
+• Luz: natural e suave, sem sombras duras
+
+PALETA OBRIGATÓRIA:
+• Azul turquesa #00b4d8 — fundo/superfície
+• Amarelo #f5c800 — elementos decorativos
+• Azul escuro #003f6b — texto e logo
+• Branco #ffffff — espaço limpo ao redor do produto
+
+ESTILO VISUAL:
+Food photography profissional. Apetitoso, fresco e alegre. A imagem deve dar vontade de comer imediatamente.
+
+RESTRIÇÕES OBRIGATÓRIAS:
+• Sem texto na imagem gerada
+• Produto deve ocupar no mínimo 50% do frame
+• Sem elementos genéricos de stock photo — deve parecer da Guri`
+        }
       ]
     },
     {
       id:'so3', date:'2026-06-16', time:'15h', format:'Story',
-      title:'Promoção da tarde — Urgência e calor',
+      title:'Promoção do Dia — Combo da tarde',
       driveFile:'mascote3d_guri_pose02_apresentando_tamanho_grande.png',
       driveUrl:'https://drive.google.com/file/d/1saHs8AqxRT27bXp_AMtPw8UjThvDvp7f/view',
       driveHint:'Mascote pose 02 "apresentando" — perfeito para anunciar promoção',
-      text:`☀️ TARDE QUENTE = HORA DO SORVETE!
+      texto:`☀️ TARDE QUENTE = HORA DO SORVETE!
 
 Combo especial de segunda:
 🍦 2 casquinhas por R$ [VALOR]
 
 Só hoje! Corre lá 🏃`,
-      prompt:`Fundo promocional vibrante. Paleta obrigatória: amarelo (#f5c800) como cor dominante de fundo, azul escuro (#003f6b) para texto e caixas de destaque, azul turquesa (#00b4d8) como acento, branco (#ffffff) para elementos secundários. Raios de sol e formas dinâmicas. Espaço à esquerda para mascote e à direita para preço. Sem texto na imagem. Formato vertical 9:16.`,
-      canva:[
-        {tag:'chatgpt', txt:'Gere fundo amarelo (#f5c800) com raios de sol e formas dinâmicas'},
-        {tag:'drive', txt:'Importe mascote3d_guri_pose02 do Drive — posicione à esquerda, grande'},
-        {tag:'canva', txt:'Caixa de preço à direita — fundo azul escuro (#003f6b), texto branco'},
-        {tag:'canva', txt:'"SÓ HOJE!" em azul escuro (#003f6b) com borda branca — urgência'},
-        {tag:'canva', txt:'Seta em branco apontando para o preço'},
-        {tag:'canva', txt:'Logo Guri no topo em azul escuro (#003f6b)'}
+      secoes:[
+        {
+          num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Story Instagram
+Dimensões: 1080 × 1920px (proporção 9:16)
+Resolução: 72 DPI
+Zona segura: 150px das bordas
+Estilo: Promocional com urgência visual`
+        },
+        {
+          num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Promoção do Dia / Oferta com Urgência
+Objetivo: Gerar visita imediata à loja no período da tarde — horário de calor e maior fluxo em sorveterias. O "só hoje" cria urgência real.
+Funil: Fundo — conversão imediata
+Ação esperada: Visita à loja ainda no mesmo dia`
+        },
+        {
+          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
+          conteudo:`CONCEITO CENTRAL:
+Story de promoção com alta energia visual. O mascote Guri em pose de "apresentando" é o vendedor da oferta — aponta para o preço e convida a visita. Urgência comunicada visualmente pelo amarelo dominante.
+
+COMPOSIÇÃO DA IMAGEM:
+• Fundo: amarelo vibrante (#f5c800) como cor dominante — transmite calor, sol e urgência
+• Elementos: raios de sol estilizados, estrelas e formas dinâmicas em azul escuro (#003f6b)
+• Mascote Guri pose 02 (Drive) posicionado à esquerda, gesticulando para a direita
+• Área direita: caixa de preço em azul escuro (#003f6b) com texto branco
+• Topo: banner "SÓ HOJE!" em azul escuro com borda branca
+
+PALETA OBRIGATÓRIA:
+• Amarelo #f5c800 — fundo dominante (urgência e calor)
+• Azul escuro #003f6b — caixas de texto e "SÓ HOJE"
+• Azul turquesa #00b4d8 — acentos e setas
+• Branco #ffffff — texto sobre fundo escuro
+
+ESTILO VISUAL:
+Alta energia, impacto visual imediato. O olho do espectador deve ser atraído pela sequência: mascote → preço → CTA. Dinâmico como um cartaz de promoção de loja.
+
+RESTRIÇÕES OBRIGATÓRIAS:
+• Sem texto na imagem gerada pelo ChatGPT
+• Reservar espaço para o mascote do Drive
+• Não use rosa ou roxo — essas NÃO são cores da Guri`
+        }
       ]
     },
     {
@@ -474,121 +626,65 @@ Só hoje! Corre lá 🏃`,
       title:'Encerramento — Boa noite Turvo',
       driveFile:'LOGO-GURI-V2.png',
       driveUrl:'https://drive.google.com/file/d/1fO9HP4JSSYFfboE_jDGbNUFoRP38xcBk/view',
-      driveHint:'Logo Guri V2 — elemento central do story de encerramento',
-      text:`Que semana boa comece assim — com doçura! 🍦💛
+      driveHint:'Logo Guri V2 — elemento central do encerramento',
+      texto:`Que semana boa comece assim — com doçura! 🍦💛
 
 Amanhã tem mais sabores e mais sorrisos esperando por você.
 
 Boa noite, Turvo! 😊`,
-      prompt:`Fundo noturno aconchegante. Paleta obrigatória: azul escuro (#003f6b) como fundo principal, azul turquesa (#00b4d8) em degradê suave, estrelinhas e lua em amarelo (#f5c800), texto em branco (#ffffff). Atmosfera tranquila de fim de dia em cidade do interior. Sem texto na imagem. Formato vertical 9:16.`,
-      canva:[
-        {tag:'chatgpt', txt:'Gere fundo azul escuro (#003f6b) com degradê turquesa (#00b4d8) e estrelinhas amarelas (#f5c800)'},
-        {tag:'drive', txt:'Importe LOGO-GURI-V2.png centralizado com brilho suave'},
-        {tag:'canva', txt:'Texto em branco (#ffffff), fonte Inter leve (300-400)'},
-        {tag:'canva', txt:'Lua e estrelinhas em amarelo (#f5c800) como decoração'},
-        {tag:'canva', txt:'Tom afetivo — não é post de venda, é comunidade'}
-      ]
-    },
-    {
-      id:'so5', date:'2026-06-17', time:'09h', format:'Story',
-      title:'Produto do dia — Terça tem sabor especial',
-      driveFile:'mascote3d_guri_pose01_sorvete_tamanho_grande.png',
-      driveUrl:'https://drive.google.com/file/d/1Tb4fIXrE5vWurOTlJPjdfg3kxK9W8Olu/view',
-      driveHint:'Mascote 3D Guri com sorvete — protagonista do story',
-      text:`🍦 Bom dia, Turvo!
+      secoes:[
+        {
+          num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Story Instagram
+Dimensões: 1080 × 1920px (proporção 9:16)
+Resolução: 72 DPI
+Zona segura: 150px das bordas
+Estilo: Aconchegante, emocional, comunidade`
+        },
+        {
+          num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Relacionamento / Comunidade
+Objetivo: Fechar o dia reforçando o vínculo afetivo com a comunidade de Turvo. Não é post de venda — é presença de marca no fim do dia, como um "boa noite" de um amigo.
+Funil: Topo — fidelização e lembrança de marca
+Ação esperada: Resposta ao story, emoji ou compartilhamento`
+        },
+        {
+          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
+          conteudo:`CONCEITO CENTRAL:
+Post de encerramento do dia com tom caloroso e afetivo. A marca Guri se posiciona como parte do cotidiano de Turvo — como um vizinho querido que diz boa noite.
 
-Terça-feira também merece um sorvetinho, né?
+COMPOSIÇÃO DA IMAGEM:
+• Fundo: degradê noturno de azul escuro (#003f6b) suavizando para azul turquesa (#00b4d8) no topo
+• Elementos: lua crescente e estrelinhas em amarelo (#f5c800) delicadas e espalhadas
+• Centro: espaço limpo para o logo Guri com efeito de brilho suave ao redor
+• Atmosfera: tranquila, fim de dia em cidade do interior, sem agitação
 
-Hoje em destaque: [COLOQUE O SABOR DO DIA] 😍
+PALETA OBRIGATÓRIA:
+• Azul escuro #003f6b — fundo principal noturno
+• Azul turquesa #00b4d8 — degradê superior
+• Amarelo #f5c800 — lua, estrelas e detalhes quentes
+• Branco #ffffff — logo e texto
 
-Passa lá na loja!`,
-      prompt:`Fundo festivo para story de sorveteria. Paleta obrigatória: azul escuro (#003f6b) como fundo principal, azul turquesa (#00b4d8) como acento e degradê, amarelo (#f5c800) para destaques e elementos alegres, branco (#ffffff) para texto. Elementos decorativos: bolinhas, confetes e formas geométricas. Espaço central para mascote. Sem texto na imagem. Formato vertical 9:16.`,
-      canva:[
-        {tag:'chatgpt', txt:'Gere o fundo com degradê azul escuro (#003f6b) → turquesa (#00b4d8) e confetes amarelos (#f5c800)'},
-        {tag:'drive', txt:'Importe mascote3d_guri_pose01 do Drive — posicione à direita, tamanho grande'},
-        {tag:'canva', txt:'"BOM DIA, TURVO!" no topo — fonte bold, branco (#ffffff)'},
-        {tag:'canva', txt:'Nome do sabor em caixa amarela (#f5c800) com texto azul escuro (#003f6b)'},
-        {tag:'canva', txt:'Logo Guri V2 no canto inferior em branco'},
-        {tag:'canva', txt:'Energia festiva — azul, amarelo e branco são as cores oficiais'}
-      ]
-    },
-    {
-      id:'so6', date:'2026-06-17', time:'11h30', format:'Post feed',
-      title:'Foto produto — Sabor em destaque',
-      driveFile:'11.08 - Sabores Guri Mini BomBom de Açaí.png',
-      driveUrl:'https://drive.google.com/file/d/1as6g-9NsXdkpm2Yrh-p__w3SCZ73NTNv/view',
-      driveHint:'Post de sabores já produzido — pode repostar ou usar como referência',
-      text:`Bombom de açaí, casquinha cremosa ou copão pra dividir? 🍦
+ESTILO VISUAL:
+Suave e contemplativo. Contraste com os stories diurnos enérgicos — esse é o momento de descanso da marca. Menos elementos, mais espaço vazio e respiro visual.
 
-Na Sorveteria Guri tem sabor pra cada vontade — e pra cada momento do seu dia.
-
-Vem provar em Turvo/PR!
-
-#SorvetesGuri #Turvo #SorveteriaArtesanal #MomentoGuri`,
-      prompt:`Flat lay fotográfico de sorvetes coloridos e variados sobre superfície com fundo azul turquesa (#00b4d8). Elementos decorativos em amarelo (#f5c800) e branco (#ffffff). Paleta obrigatória: azul turquesa (#00b4d8), azul escuro (#003f6b), amarelo (#f5c800), branco (#ffffff). Estilo food photography profissional e apetitoso. Sem texto na imagem. Formato quadrado 1:1.`,
-      canva:[
-        {tag:'drive', txt:'Opção A: reposte o arquivo "11.08 - Sabores Guri" diretamente — já está pronto'},
-        {tag:'chatgpt', txt:'Opção B: gere nova foto com paleta oficial e monte post novo'},
-        {tag:'drive', txt:'Importe LOGO-GURI-V2.png — canto superior em branco (#ffffff)'},
-        {tag:'canva', txt:'Fundo azul turquesa (#00b4d8) se montar do zero'},
-        {tag:'canva', txt:'Elementos decorativos em amarelo (#f5c800)'},
-        {tag:'canva', txt:'Produto no centro — protagonista da imagem'}
-      ]
-    },
-    {
-      id:'so7', date:'2026-06-17', time:'15h', format:'Story',
-      title:'Promoção da tarde — Terça é dia de combo',
-      driveFile:'mascote3d_guri_pose02_apresentando_tamanho_grande.png',
-      driveUrl:'https://drive.google.com/file/d/1saHs8AqxRT27bXp_AMtPw8UjThvDvp7f/view',
-      driveHint:'Mascote pose 02 "apresentando" — perfeito para anunciar promoção',
-      text:`☀️ TERÇA TAMBÉM TEM PROMOÇÃO!
-
-Combo da tarde:
-🍦 [DESCREVA O COMBO] por R$ [VALOR]
-
-Válido só hoje! Vem antes que acabe 🏃`,
-      prompt:`Fundo promocional vibrante. Paleta obrigatória: amarelo (#f5c800) como cor dominante de fundo, azul escuro (#003f6b) para texto e caixas de destaque, azul turquesa (#00b4d8) como acento, branco (#ffffff) para elementos secundários. Raios de sol e formas dinâmicas. Espaço à esquerda para mascote e à direita para preço. Sem texto na imagem. Formato vertical 9:16.`,
-      canva:[
-        {tag:'chatgpt', txt:'Gere fundo amarelo (#f5c800) com raios de sol e formas dinâmicas'},
-        {tag:'drive', txt:'Importe mascote3d_guri_pose02 do Drive — posicione à esquerda, grande'},
-        {tag:'canva', txt:'Caixa de preço à direita — fundo azul escuro (#003f6b), texto branco'},
-        {tag:'canva', txt:'"SÓ HOJE!" em azul escuro (#003f6b) com borda branca — urgência'},
-        {tag:'canva', txt:'Seta em branco apontando para o preço'},
-        {tag:'canva', txt:'Logo Guri no topo em azul escuro (#003f6b)'}
-      ]
-    },
-    {
-      id:'so8', date:'2026-06-17', time:'19h', format:'Story',
-      title:'Encerramento — Até amanhã, Turvo',
-      driveFile:'LOGO-GURI-V2.png',
-      driveUrl:'https://drive.google.com/file/d/1fO9HP4JSSYFfboE_jDGbNUFoRP38xcBk/view',
-      driveHint:'Logo Guri V2 — elemento central do story de encerramento',
-      text:`Mais um dia gostoso chegando ao fim. 🍦💙
-
-Obrigado por fazer parte da nossa terça!
-
-Amanhã a gente tem mais sabor esperando por você.
-
-Boa noite, Turvo! 😊`,
-      prompt:`Fundo noturno aconchegante. Paleta obrigatória: azul escuro (#003f6b) como fundo principal, azul turquesa (#00b4d8) em degradê suave, estrelinhas e lua em amarelo (#f5c800), texto em branco (#ffffff). Atmosfera tranquila de fim de dia em cidade do interior. Sem texto na imagem. Formato vertical 9:16.`,
-      canva:[
-        {tag:'chatgpt', txt:'Gere fundo azul escuro (#003f6b) com degradê turquesa (#00b4d8) e estrelinhas amarelas (#f5c800)'},
-        {tag:'drive', txt:'Importe LOGO-GURI-V2.png centralizado com brilho suave'},
-        {tag:'canva', txt:'Texto em branco (#ffffff), fonte Inter leve (300-400)'},
-        {tag:'canva', txt:'Lua e estrelinhas em amarelo (#f5c800) como decoração'},
-        {tag:'canva', txt:'Tom afetivo — não é post de venda, é comunidade'}
+RESTRIÇÕES OBRIGATÓRIAS:
+• Sem mascote nesse story — o logo sozinho é suficiente
+• Sem elementos promocionais ou preços
+• Sem cores além da paleta — especialmente sem rosa ou laranja`
+        }
       ]
     }
   ],
 
-  gympulse: [
+  gympulse:[
     {
       id:'gy1', date:'2026-06-16', time:'07h', format:'Story',
-      title:'Dado impactante — 70% abandonam',
+      title:'Dado de Mercado — 70% abandonam',
       driveFile:'WhatsApp Image 2026-05-20 at 11.13.27.jpeg',
       driveUrl:'https://drive.google.com/file/d/1O2WQFEl1ELDwTuq3tiGKP-RGuAPhLrES/view',
       driveHint:'Screenshot real do GympulsePro no Planeta Corpo — prova visual',
-      text:`📊 VOCÊ SABIA?
+      texto:`📊 VOCÊ SABIA?
 
 70% dos alunos de academia abandonam nos primeiros 3 meses.
 
@@ -597,23 +693,57 @@ O motivo? Falta de engajamento e evolução visível.
 O GympulsePro resolve isso com gamificação em tempo real. 🎮
 
 Quer saber como? 👇`,
-      prompt:`Fundo tech e impactante. Paleta obrigatória: fundo preto (#0d0d0d), número "70%" em amarelo vibrante (#f5c200) com efeito de brilho, elementos gráficos de dados em cinza escuro (#1c1c1c) e branco (#ffffff). Grade digital sutil no fundo. Estética de dashboard premium e gaming. Sem texto adicional. Formato vertical 9:16.`,
-      canva:[
-        {tag:'chatgpt', txt:'Gere fundo preto (#0d0d0d) com "70%" em amarelo (#f5c200) neon — impacto máximo'},
-        {tag:'drive', txt:'Importe screenshot GympulsePro do Drive — canto inferior, pequeno, como prova real'},
-        {tag:'canva', txt:'Texto explicativo em branco (#ffffff) sobre o fundo escuro'},
-        {tag:'canva', txt:'CTA "Quer saber como?" em amarelo (#f5c200) na base'},
-        {tag:'canva', txt:'Logo GympulsePro no topo em amarelo (#f5c200)'},
-        {tag:'canva', txt:'Borda sutil amarela (#f5c200) ao redor do screenshot'}
+      secoes:[
+        {
+          num:'01', cor:'#f5c200', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Story Instagram
+Dimensões: 1080 × 1920px (proporção 9:16)
+Resolução: 72 DPI
+Zona segura: 150px das bordas superior e inferior
+Estilo: Dado de impacto, dark premium`
+        },
+        {
+          num:'02', cor:'#ffffff', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Dado de Mercado
+Objetivo: Capturar a atenção de gestores de academia com uma estatística de impacto sobre abandono, criando consciência do problema antes de apresentar a solução.
+Funil: Topo — despertar consciência do problema
+Ação esperada: Parada no story e interesse em saber a solução`
+        },
+        {
+          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
+          conteudo:`CONCEITO CENTRAL:
+O número "70%" deve ser o elemento visual dominante — grande, impactante, quase chocante. Tudo no design serve para destacar esse dado e criar o gancho "como o GympulsePro resolve isso".
+
+COMPOSIÇÃO DA IMAGEM:
+• "70%" centralizado, ocupando a maior parte vertical da composição
+• Efeito de brilho/glow em amarelo (#f5c200) ao redor do número
+• Fundo preto (#0d0d0d) com grade digital sutil (linhas finas em cinza escuro #1c1c1c)
+• Espaço inferior reservado para o screenshot real do Drive, com borda amarela
+• Espaço superior para o texto explicativo
+
+PALETA OBRIGATÓRIA:
+• Preto #0d0d0d — fundo principal
+• Amarelo #f5c200 — número "70%" e destaques
+• Cinza escuro #1c1c1c — grade digital e elementos secundários
+• Branco #ffffff — texto de apoio
+
+ESTILO VISUAL:
+Dashboard premium, dark gaming. Sensação de dado real extraído de um painel de gestão — sério, direto, sem clichês de fitness motivacional.
+
+RESTRIÇÕES OBRIGATÓRIAS:
+• Sem texto na imagem gerada pelo ChatGPT (o "70%" será adicionado no Canva)
+• Screenshot real do Drive deve ser incluído na composição final
+• Sem ícones de fitness genéricos (halteres, tênis, etc.)`
+        }
       ]
     },
     {
-      id:'gy2', date:'2026-06-16', time:'10h', format:'Post feed',
+      id:'gy2', date:'2026-06-16', time:'10h', format:'Post',
       title:'Funcionalidade — Monitor ao vivo',
       driveFile:'WhatsApp Image 2026-05-18 at 12.44.24.jpeg',
       driveUrl:'https://drive.google.com/file/d/17FVjyP_F1FcTo_zSI3jtay3D0dsasOJe/view',
-      driveHint:'Screenshot real do monitor GympulsePro em Academia Life — hero visual',
-      text:`🏆 Imagine seus alunos COMPETINDO para treinar mais.
+      driveHint:'Screenshot real do monitor GympulsePro em Academia Life — hero visual do post',
+      texto:`🏆 Imagine seus alunos COMPETINDO para treinar mais.
 
 Com o GympulsePro você transforma cada treino em pontos, rankings e conquistas.
 
@@ -625,37 +755,108 @@ Com o GympulsePro você transforma cada treino em pontos, rankings e conquistas.
 Sua academia merece isso. 🚀
 
 #GympulsePro #GamificaçãoFitness #TechFitness #RetençãoDeAlunos`,
-      prompt:`Post para SaaS fitness premium. Paleta obrigatória: fundo preto (#0d0d0d), destaques em amarelo (#f5c200), elementos secundários em cinza escuro (#1c1c1c), texto em branco (#ffffff). Interface de gamificação com badges, rankings e barras de progresso na paleta oficial. Sem texto legível. Formato quadrado 1:1.`,
-      canva:[
-        {tag:'drive', txt:'Importe screenshot do monitor Academia Life — destaque central do post'},
-        {tag:'chatgpt', txt:'Gere elementos de UI gamificada na paleta oficial — moldura ao redor do screenshot'},
-        {tag:'canva', txt:'Frame/borda amarela (#f5c200) ao redor do screenshot real'},
-        {tag:'canva', txt:'4 benefícios com ✅ amarelo (#f5c200) — Inter 600, 22px, branco'},
-        {tag:'canva', txt:'Fundo preto (#0d0d0d) em todo o post'},
-        {tag:'canva', txt:'Logo GympulsePro no topo em amarelo (#f5c200)'}
+      secoes:[
+        {
+          num:'01', cor:'#f5c200', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Post Feed Instagram
+Dimensões: 1080 × 1080px (proporção 1:1)
+Resolução: 72 DPI
+Margem: 80px nas bordas
+Estilo: SaaS premium, tech, B2B`
+        },
+        {
+          num:'02', cor:'#ffffff', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Funcionalidade do Produto
+Objetivo: Mostrar o monitor ao vivo como diferencial competitivo do GympulsePro — a funcionalidade mais visual e impactante do sistema. Usar screenshot real para credibilidade máxima.
+Funil: Meio — consideração e avaliação (gestor já consciente do problema de retenção)
+Ação esperada: Clique no link da bio, salvamento ou DM solicitando demo`
+        },
+        {
+          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
+          conteudo:`CONCEITO CENTRAL:
+O screenshot real do monitor GympulsePro é a prova mais poderosa. O gestor precisa VER o produto funcionando em outra academia real. Todo o design serve para destacar esse screenshot.
+
+COMPOSIÇÃO DA IMAGEM:
+• Layout: screenshot do monitor ocupa 60% do espaço central do post
+• Frame/moldura: borda amarela (#f5c200) ao redor do screenshot — destaca e dá acabamento premium
+• Fundo: preto (#0d0d0d) com elementos de interface tech em cinza escuro (#1c1c1c)
+• Elementos decorativos ao redor: ícones de badge, troféu e pontos em amarelo (#f5c200)
+• Logo GympulsePro no topo centralizado
+• Lista de 4 benefícios na parte inferior
+
+PALETA OBRIGATÓRIA:
+• Preto #0d0d0d — fundo total
+• Amarelo #f5c200 — frame do screenshot, ícones e destaques
+• Cinza escuro #1c1c1c — elementos de interface decorativos
+• Branco #ffffff — texto dos benefícios
+
+HIERARQUIA VISUAL:
+1. Screenshot real com frame amarelo — elemento hero
+2. Logo GympulsePro no topo
+3. 4 benefícios com ✅ amarelo na base
+4. CTA implícito na legenda
+
+RESTRIÇÕES OBRIGATÓRIAS:
+• Sem texto na imagem gerada pelo ChatGPT
+• O screenshot real do Drive deve ser obrigatoriamente incluído
+• Sem cores além da paleta oficial`
+        }
       ]
     },
     {
       id:'gy3', date:'2026-06-16', time:'14h', format:'Story',
-      title:'Prova social — Aluno no ranking',
+      title:'Prova Social — Aluno no ranking',
       driveFile:'WhatsApp Image 2026-05-20 at 11.13.27.jpeg',
       driveUrl:'https://drive.google.com/file/d/1O2WQFEl1ELDwTuq3tiGKP-RGuAPhLrES/view',
       driveHint:'Screenshot GympulsePro Planeta Corpo — plataforma real em uso',
-      text:`💬 "Meus alunos chegam na academia perguntando a posição deles no ranking."
+      texto:`💬 "Meus alunos chegam na academia perguntando a posição deles no ranking."
 
 Isso é o GympulsePro em ação.
 
 Aluno engajado é aluno que não cancela. ✅
 
 Fala com a gente e agenda uma demo gratuita! 👊`,
-      prompt:`Design dark premium para citação. Paleta obrigatória: fundo preto (#0d0d0d), balão de citação com borda amarela (#f5c200), texto branco (#ffffff), detalhes em cinza escuro (#1c1c1c). Silhueta abstrata de academia ao fundo em cinza muito escuro. Estética profissional B2B. Sem texto na imagem. Formato vertical 9:16.`,
-      canva:[
-        {tag:'chatgpt', txt:'Gere fundo preto com balão de citação com borda amarela (#f5c200)'},
-        {tag:'drive', txt:'Importe screenshot do Drive — posicione abaixo da citação como prova'},
-        {tag:'canva', txt:'Texto da citação dentro do balão — fonte itálica, branca (#ffffff)'},
-        {tag:'canva', txt:'"GympulsePro em ação" em amarelo (#f5c200) bold abaixo'},
-        {tag:'canva', txt:'CTA: botão "DEMO GRATUITA" — fundo amarelo (#f5c200), texto preto (#0d0d0d)'},
-        {tag:'canva', txt:'Borda amarela ao redor do screenshot para credibilidade'}
+      secoes:[
+        {
+          num:'01', cor:'#f5c200', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Story Instagram
+Dimensões: 1080 × 1920px (proporção 9:16)
+Resolução: 72 DPI
+Zona segura: 150px das bordas
+Estilo: Citação/testemunho, dark premium`
+        },
+        {
+          num:'02', cor:'#ffffff', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Prova Social
+Objetivo: Usar um relato real (parafraseado) de gestor de academia sobre o impacto do GympulsePro no engajamento dos alunos, gerando confiança em quem ainda está decidindo.
+Funil: Meio — construir confiança e reduzir objeções
+Ação esperada: DM solicitando demo gratuita`
+        },
+        {
+          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
+          conteudo:`CONCEITO CENTRAL:
+Citação em destaque dentro de um balão de fala estilizado, com o screenshot real do produto como prova abaixo. A combinação "depoimento + prova visual" é o que gera confiança em decisores B2B.
+
+COMPOSIÇÃO DA IMAGEM:
+• Fundo preto (#0d0d0d) com silhueta abstrata muito sutil de equipamentos de academia em cinza escuro (#1c1c1c)
+• Balão de citação centralizado, com borda amarela (#f5c200)
+• Espaço inferior para o screenshot real do Drive, com borda amarela
+• Logo GympulsePro discreto no topo
+
+PALETA OBRIGATÓRIA:
+• Preto #0d0d0d — fundo principal
+• Amarelo #f5c200 — borda do balão e CTA
+• Cinza escuro #1c1c1c — silhuetas e elementos secundários
+• Branco #ffffff — texto da citação
+
+ESTILO VISUAL:
+Profissional B2B, dark premium. O balão de citação deve parecer um elemento de UI moderno, não um desenho informal.
+
+RESTRIÇÕES OBRIGATÓRIAS:
+• Sem texto na imagem gerada pelo ChatGPT (a citação será adicionada no Canva)
+• Screenshot real do Drive obrigatório na composição final
+• Sem rostos ou pessoas identificáveis`
+        }
       ]
     },
     {
@@ -663,83 +864,80 @@ Fala com a gente e agenda uma demo gratuita! 👊`,
       title:'Demo — Ranking semanal ao vivo',
       driveFile:'WhatsApp Image 2026-05-18 at 12.44.24.jpeg',
       driveUrl:'https://drive.google.com/file/d/17FVjyP_F1FcTo_zSI3jtay3D0dsasOJe/view',
-      driveHint:'Screenshot monitor Academia Life — slides intermediários do carrossel',
-      text:`Slide 1: "Sua academia tem ranking de alunos?"
+      driveHint:'Screenshot monitor Academia Life — use nos slides intermediários',
+      texto:`Slide 1: "Sua academia tem ranking de alunos?"
 Slide 2: "Com o GympulsePro tem — em tempo real"
 Slide 3: [Screenshot real do monitor do Drive]
 Slide 4: "Aluno que aparece no ranking, treina mais."
 Slide 5: "Demo gratuita? Manda mensagem! 👇"`,
-      prompt:`Template de carrossel para SaaS fitness. Paleta obrigatória em todos os slides: fundo preto (#0d0d0d), tipografia principal em amarelo (#f5c200), texto de apoio em branco (#ffffff), elementos secundários em cinza escuro (#1c1c1c). Estilo dark premium e consistente entre slides. Sem texto nos elementos visuais. Formato quadrado 1:1.`,
-      canva:[
-        {tag:'chatgpt', txt:'Gere template base: fundo preto (#0d0d0d) com elementos em amarelo (#f5c200) e branco'},
-        {tag:'canva', txt:'Slide 1: "SUA ACADEMIA TEM RANKING?" — amarelo (#f5c200), Bebas Neue, fundo preto'},
-        {tag:'canva', txt:'Slide 2: resposta em branco (#ffffff) sobre fundo preto'},
-        {tag:'drive', txt:'Slide 3: screenshot real com borda amarela (#f5c200) — prova visual'},
-        {tag:'canva', txt:'Slide 4: dado impactante em amarelo (#f5c200) grande'},
-        {tag:'canva', txt:'Slide 5: fundo amarelo (#f5c200), texto PRETO (#0d0d0d) — CTA máximo contraste'}
-      ]
-    },
-    {
-      id:'gy5', date:'2026-06-17', time:'10h', format:'Post feed',
-      title:'Funcionalidade — Recompensas que viram hábito',
-      driveFile:'WhatsApp Image 2026-05-20 at 11.13.27.jpeg',
-      driveUrl:'https://drive.google.com/file/d/1O2WQFEl1ELDwTuq3tiGKP-RGuAPhLrES/view',
-      driveHint:'Screenshot real do GympulsePro no Planeta Corpo — prova visual',
-      text:`🎁 Seus alunos treinam, ganham pontos... e depois?
+      secoes:[
+        {
+          num:'01', cor:'#f5c200', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Carrossel Instagram
+Dimensões: 1080 × 1080px por slide (proporção 1:1)
+Total de slides: 5
+Resolução: 72 DPI
+Seta de navegação: visível nos slides 1 a 4
+Estilo: Sequência narrativa — pergunta → resposta → prova → dado → CTA`
+        },
+        {
+          num:'02', cor:'#ffffff', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Demonstração de Produto / Demo
+Objetivo: Conduzir o gestor de academia por uma narrativa de 5 slides que vai do problema (sem ranking) à solução (GympulsePro) com prova real no meio. O último slide é o CTA mais direto da semana.
+Funil: Fundo — conversão direta para demo
+Ação esperada: DM com "quero a demo" após o slide 5`
+        },
+        {
+          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
+          conteudo:`CONCEITO CENTRAL:
+Carrossel narrativo que funciona como um mini funil de vendas. Cada slide tem uma função específica. A consistência visual entre os slides é fundamental — o gestor deve sentir que está dentro de um sistema coeso.
 
-No GympulsePro, cada treino vira Fitcoins — moeda interna que o aluno troca por recompensas reais: squeeze, copo térmico, camiseta, açaí com whey.
+ESTRUTURA DOS 5 SLIDES:
+• Slide 1 — Gancho/Pergunta
+  Layout: Texto centralizado gigante. Fundo preto. Pergunta em amarelo. Seta de "arraste" visível.
+  Mensagem: "SUA ACADEMIA TEM RANKING DE ALUNOS?"
 
-Engajamento que não fica só na tela. Vira retenção.
+• Slide 2 — Resposta/Solução
+  Layout: Texto de resposta em branco sobre preto. Logo GympulsePro em amarelo no topo.
+  Mensagem: "Com o GympulsePro tem — em tempo real"
 
-Quer ativar isso na sua academia? 👇
+• Slide 3 — Prova Visual (screenshot real)
+  Layout: Screenshot do Drive ocupando 80% do slide. Frame amarelo ao redor.
+  Mensagem: Caption "Isso é o ranking ao vivo na sua academia"
 
-#GympulsePro #GamificaçãoFitness #TechFitness #RetençãoDeAlunos`,
-      prompt:`Post para SaaS fitness premium. Paleta obrigatória: fundo preto (#0d0d0d), destaques em amarelo (#f5c200), elementos secundários em cinza escuro (#1c1c1c), texto em branco (#ffffff). Ícones de recompensas (squeeze, camiseta, copo térmico, medalha) em estilo flat na paleta oficial, organizados como vitrine. Sem texto legível. Formato quadrado 1:1.`,
-      canva:[
-        {tag:'drive', txt:'Importe screenshot GympulsePro do Drive — destaque central como prova real'},
-        {tag:'chatgpt', txt:'Gere ícones de recompensas (squeeze, camiseta, copo, medalha) na paleta oficial — vitrine ao redor do screenshot'},
-        {tag:'canva', txt:'Frame/borda amarela (#f5c200) ao redor do screenshot real'},
-        {tag:'canva', txt:'Texto explicativo em branco (#ffffff) — Inter 600'},
-        {tag:'canva', txt:'Fundo preto (#0d0d0d) em todo o post'},
-        {tag:'canva', txt:'Logo GympulsePro no topo em amarelo (#f5c200)'}
-      ]
-    },
-    {
-      id:'gy6', date:'2026-06-17', time:'18h', format:'Story',
-      title:'Demo — De curiosidade a hábito',
-      driveFile:'WhatsApp Image 2026-05-18 at 12.44.24.jpeg',
-      driveUrl:'https://drive.google.com/file/d/17FVjyP_F1FcTo_zSI3jtay3D0dsasOJe/view',
-      driveHint:'Screenshot monitor Academia Life — exemplo real de academia testando a plataforma',
-      text:`💡 Tem academia que começou só pra "ver como funciona"...
+• Slide 4 — Dado/Resultado
+  Layout: Número ou afirmação em amarelo grande. Texto de apoio em branco.
+  Mensagem: "Aluno que aparece no ranking treina mais. Simples assim."
 
-...e hoje já tem mais de 100 aulas registradas no GympulsePro. 📈
+• Slide 5 — CTA
+  Layout: Fundo AMARELO (#f5c200). Texto em PRETO (#0d0d0d). Máximo contraste.
+  Mensagem: "DEMO GRATUITA? MANDA MENSAGEM! 👇"
 
-Quando os alunos veem o ranking em tempo real, eles voltam — e voltam com mais frequência.
+PALETA OBRIGATÓRIA (todos os slides):
+• Preto #0d0d0d — fundo slides 1, 2, 3, 4
+• Amarelo #f5c200 — destaques e fundo slide 5
+• Cinza escuro #1c1c1c — elementos secundários
+• Branco #ffffff — textos sobre fundo escuro / preto #0d0d0d no slide 5
 
-Sua academia também pode testar gratuitamente.
-
-Manda mensagem e agenda sua demo! 👊`,
-      prompt:`Design dark premium estilo dashboard, com gráfico de crescimento ascendente estilizado. Paleta obrigatória: fundo preto (#0d0d0d), linha do gráfico e destaques em amarelo (#f5c200), grid e elementos secundários em cinza escuro (#1c1c1c), texto em branco (#ffffff). Estética B2B tech, confiável e premium. Sem texto na imagem. Formato vertical 9:16.`,
-      canva:[
-        {tag:'chatgpt', txt:'Gere o fundo com gráfico de crescimento ascendente em amarelo (#f5c200) sobre preto (#0d0d0d)'},
-        {tag:'drive', txt:'Importe screenshot do monitor Academia Life do Drive — posicione como prova real abaixo do gráfico'},
-        {tag:'canva', txt:'Texto em branco (#ffffff), fonte Inter, tom de descoberta'},
-        {tag:'canva', txt:'"+100 aulas registradas" em amarelo (#f5c200) bold — dado de impacto'},
-        {tag:'canva', txt:'CTA "Agende sua demo" em botão amarelo (#f5c200), texto preto (#0d0d0d)'},
-        {tag:'canva', txt:'Borda amarela ao redor do screenshot para credibilidade'}
+RESTRIÇÕES OBRIGATÓRIAS:
+• Sem texto nas imagens geradas pelo ChatGPT
+• Screenshot real do Drive obrigatório no slide 3
+• Identidade visual 100% consistente entre slides`
+        }
       ]
     }
   ]
 };
 
-const SK='gilson_v4';
+// STATE
+const SK='gilson_v5';
 let S=JSON.parse(localStorage.getItem(SK)||'{}');
 const save=()=>localStorage.setItem(SK,JSON.stringify(S));
 const done=id=>!!S[id];
 const toggle=id=>{S[id]=!S[id];save();renderAll();buildHist();};
 
 function fmtDate(ds){
-  const [y,m,d]=ds.split('-').map(Number);
+  const[y,m,d]=ds.split('-').map(Number);
   const dt=new Date(y,m-1,d);
   const dn=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   const mn=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
@@ -748,26 +946,39 @@ function fmtDate(ds){
 
 function groupBy(arr,key){return arr.reduce((g,x)=>{(g[x[key]]=g[x[key]]||[]).push(x);return g;},{});}
 
-function tagHTML(tag){
-  const map={drive:'DRIVE',chatgpt:'CHATGPT',canva:'CANVA'};
-  const cls={drive:'tag-drive',chatgpt:'tag-chatgpt',canva:'tag-canva'};
-  return `<span class="step-tag ${cls[tag]}">${map[tag]}</span>`;
+function paletteHTML(profile){
+  return `<div class="palette-bar">${PALETTES[profile].map(c=>`
+    <div class="pchip">
+      <div class="pchip-dot" style="background:${c.hex};${c.hex==='#ffffff'?'border:1px solid #333':''}"></div>
+      <span class="pchip-hex">${c.hex}</span>
+      <span class="pchip-name">${c.name}</span>
+    </div>`).join('')}</div>`;
 }
 
-function paletteHTML(profile){
-  return PALETTES[profile].map(c=>
-    `<div class="palette-chip" style="background:${c.hex}" title="${c.label} ${c.hex}"></div>
-     <span class="palette-label">${c.hex}</span>`
-  ).join('');
+function secColors(profile){
+  const m={academia:['#e63900','#f5a623','#4ade80','#a78bfa'],sorveteria:['#f5c800','#00b4d8','#4ade80','#a78bfa'],gympulse:['#f5c200','#cccccc','#4ade80','#a78bfa']};
+  return m[profile];
 }
 
 function cardHTML(item,profile){
   const d=done(item.id);
-  const steps=item.canva.map((s,i)=>`
-    <div class="canva-step">
-      <div class="step-num">${i+1}</div>
-      <div class="step-txt">${tagHTML(s.tag)}${s.txt}</div>
+  const sc=secColors(profile);
+  const secs=item.secoes.map((s,i)=>`
+    <div class="prompt-section" id="ps-${item.id}-${i}">
+      <div class="psec-header" onclick="toggleSec('${item.id}',${i})">
+        <div class="psec-num" style="background:${s.cor}22;color:${s.cor}">${s.num}</div>
+        <span class="psec-title" style="color:${s.cor}">${s.titulo}</span>
+        <span class="psec-chev">▼</span>
+      </div>
+      <div class="psec-body">
+        <div class="psec-content">${s.conteudo}</div>
+        <button class="copybtn" onclick="cp('ps-content-${item.id}-${i}',this)">Copiar</button>
+        <div style="display:none" id="ps-content-${item.id}-${i}">${s.conteudo}</div>
+      </div>
     </div>`).join('');
+
+  const acColor={academia:'#e63900',sorveteria:'#f5c800',gympulse:'#f5c200'}[profile];
+
   return `
 <div class="card ${d?'done':''}" data-p="${profile}" id="card-${item.id}">
   <div class="chead" onclick="expand('${item.id}')">
@@ -780,35 +991,31 @@ function cardHTML(item,profile){
     <span class="cchev">▼</span>
   </div>
   <div class="cbody">
+
     <div class="block">
-      <div class="blabel" style="color:#00b4d8">📁 Foto real — Google Drive</div>
+      <div class="blabel" style="color:#00b4d8">📁 Arquivo do Google Drive</div>
       <div class="drive-ref">
-        <span class="drive-icon">🖼️</span>
-        <div class="drive-info">
+        <span style="font-size:16px;flex-shrink:0">🖼️</span>
+        <div style="flex:1;min-width:0">
           <div class="drive-name">${item.driveFile}</div>
           <div class="drive-hint">${item.driveHint}</div>
         </div>
         <a class="drive-link" href="${item.driveUrl}" target="_blank">Abrir ↗</a>
       </div>
     </div>
+
     <div class="block">
-      <div class="blabel" style="color:#f5a623">📝 Texto pronto para copiar</div>
-      <div class="tbox" id="t-${item.id}">${item.text}</div>
-      <button class="copybtn" onclick="cp('t-${item.id}',this)">Copiar texto</button>
+      <div class="blabel" style="color:${acColor}">📝 Texto da postagem</div>
+      <div class="tbox" id="texto-${item.id}">${item.texto}</div>
+      <button class="copybtn" onclick="cp('texto-${item.id}',this)">Copiar texto</button>
     </div>
+
     <div class="block">
-      <div class="pbox-header">
-        <div class="blabel" style="color:#4ade80;margin:0">🤖 Prompt para ChatGPT / DALL-E 3</div>
-        <span class="pbox-badge">DALL-E 3</span>
-      </div>
-      <div class="palette-bar">${paletteHTML(profile)}</div>
-      <div class="pbox" id="p-${item.id}">${item.prompt}</div>
-      <button class="copybtn" onclick="cp('p-${item.id}',this)">Copiar prompt</button>
+      <div class="blabel" style="color:#4ade80">🤖 Briefing criativo — ChatGPT / DALL-E 3</div>
+      ${paletteHTML(profile)}
+      <div class="prompt-wrap">${secs}</div>
     </div>
-    <div class="block">
-      <div class="blabel" style="color:#a78bfa">🖼️ Passo a passo no Canva</div>
-      <div class="canva-steps">${steps}</div>
-    </div>
+
   </div>
 </div>`;
 }
@@ -819,8 +1026,7 @@ function renderPanel(profile){
   const total=items.length;
   const doneN=items.filter(i=>done(i.id)).length;
   const pct=total>0?Math.round(doneN/total*100):0;
-  const colors={academia:'#e63900',sorveteria:'#f5c800',gympulse:'#f5c200'};
-  const c=colors[profile];
+  const c={academia:'#e63900',sorveteria:'#f5c800',gympulse:'#f5c200'}[profile];
   const groups=groupBy(items,'date');
   let html='';
   Object.keys(groups).sort().reverse().forEach(date=>{
@@ -841,9 +1047,9 @@ function renderAll(){['academia','sorveteria','gympulse'].forEach(renderPanel);}
 
 function buildHist(){
   const all=[
-    ...CONTENT.academia.map(i=>({...i,profile:'academia',color:'#e63900',label:'Academia'})),
-    ...CONTENT.sorveteria.map(i=>({...i,profile:'sorveteria',color:'#f5c800',label:'Sorveteria'})),
-    ...CONTENT.gympulse.map(i=>({...i,profile:'gympulse',color:'#f5c200',label:'GympulsePro'}))
+    ...CONTENT.academia.map(i=>({...i,color:'#e63900',label:'Academia'})),
+    ...CONTENT.sorveteria.map(i=>({...i,color:'#f5c800',label:'Sorveteria'})),
+    ...CONTENT.gympulse.map(i=>({...i,color:'#f5c200',label:'GympulsePro'}))
   ].sort((a,b)=>b.date.localeCompare(a.date)||a.time.localeCompare(b.time));
   document.getElementById('p-historico').innerHTML=all.map(item=>`
     <div class="hentry">
@@ -857,13 +1063,13 @@ function buildHist(){
 }
 
 function expand(id){document.getElementById('card-'+id).classList.toggle('open');}
+function toggleSec(cardId,idx){document.getElementById(`ps-${cardId}-${idx}`).classList.toggle('open');}
 
 function cp(id,btn){
   const el=document.getElementById(id);
   if(!el)return;
   navigator.clipboard.writeText(el.textContent).then(()=>{
-    const o=btn.textContent;
-    btn.textContent='✓ Copiado!';
+    const o=btn.textContent;btn.textContent='✓ Copiado!';
     setTimeout(()=>btn.textContent=o,1500);
   });
 }
