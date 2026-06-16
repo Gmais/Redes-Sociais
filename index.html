@@ -350,7 +350,10 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
       <div class="brand-icon">🎯</div>
       <div class="brand-text">PAINEL <span>GILSON</span></div>
     </div>
-    <div class="date-pill" id="datepill"></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="date-pill" id="datepill"></div>
+      <div id="syncDot" title="Sincronização com nuvem" style="width:8px;height:8px;border-radius:50%;background:#333;flex-shrink:0;transition:background 0.4s"></div>
+    </div>
   </div>
 </div>
 
@@ -419,6 +422,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
     </div>
   </div>
 </div>
+
 
 <div class="saved-toast" id="savedToast">✓ Alterações salvas!</div>
 
@@ -1745,10 +1749,32 @@ RESTRIÇÕES OBRIGATÓRIAS:
   ]
 };
 
-// STATE
+// STATE + SUPABASE SYNC
 const SK='gilson_v5';
+const SUPA_URL='https://ndzbfvxnallshfiouszk.supabase.co';
+const SUPA_KEY='sb_publishable_cEA3C8OvJgZfeZmbnfVYJg_3wuW1YAt';
+
 let S=JSON.parse(localStorage.getItem(SK)||'{}');
-const save=()=>localStorage.setItem(SK,JSON.stringify(S));
+
+async function supaGet(key){
+  try{
+    const r=await fetch(`${SUPA_URL}/rest/v1/painel_gilson_state?key=eq.${key}&select=value`,
+      {headers:{apikey:SUPA_KEY,Authorization:`Bearer ${SUPA_KEY}`}});
+    const d=await r.json();
+    return d[0]?.value??null;
+  }catch{return null;}
+}
+async function supaSet(key,value){
+  try{
+    await fetch(`${SUPA_URL}/rest/v1/painel_gilson_state`,{
+      method:'POST',
+      headers:{apikey:SUPA_KEY,Authorization:`Bearer ${SUPA_KEY}`,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates'},
+      body:JSON.stringify({key,value,updated_at:new Date().toISOString()})
+    });
+  }catch{}
+}
+
+const save=()=>{localStorage.setItem(SK,JSON.stringify(S));supaSet('done',S);};
 const done=id=>!!S[id];
 const toggle=id=>{S[id]=!S[id];save();renderAll();buildHist();};
 
@@ -1776,10 +1802,16 @@ function secColors(profile){
   return m[profile];
 }
 
+function stripRestricoes(txt){
+  return txt.replace(/\n+RESTRIÇÕES OBRIGATÓRIAS:[\s\S]*$/, '').trim();
+}
+
 function cardHTML(item,profile){
   const d=done(item.id);
   const sc=secColors(profile);
-  const secs=item.secoes.map((s,i)=>`
+  const secs=item.secoes.map((s,i)=>{
+    const conteudo = s.num==='03' ? stripRestricoes(s.conteudo) : s.conteudo;
+    return `
     <div class="prompt-section" id="ps-${item.id}-${i}">
       <div class="psec-header" onclick="toggleSec('${item.id}',${i})">
         <div class="psec-num" style="background:${s.cor}22;color:${s.cor}">${s.num}</div>
@@ -1787,11 +1819,12 @@ function cardHTML(item,profile){
         <span class="psec-chev">▼</span>
       </div>
       <div class="psec-body">
-        <div class="psec-content">${s.conteudo}</div>
+        <div class="psec-content">${conteudo}</div>
         <button class="copybtn" onclick="cp('ps-content-${item.id}-${i}',this)">Copiar</button>
-        <div style="display:none" id="ps-content-${item.id}-${i}">${s.conteudo}</div>
+        <div style="display:none" id="ps-content-${item.id}-${i}">${conteudo}</div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   const acColor={academia:'#e63900',sorveteria:'#f5c800',gympulse:'#f5c200'}[profile];
 
@@ -1833,6 +1866,13 @@ function cardHTML(item,profile){
       <div class="blabel" style="color:#4ade80">🤖 Briefing criativo — ChatGPT / DALL-E 3</div>
       ${paletteHTML(profile)}
       <div class="prompt-wrap">${secs}</div>
+      <div style="display:none" id="copytudo-${item.id}">${
+        'TEXTO DA POSTAGEM:\n' + item.texto +
+        '\n\n---\n01 · FORMATO E ESPECIFICAÇÕES:\n' + item.secoes[0].conteudo +
+        '\n\n---\n02 · INTENÇÃO DA POSTAGEM:\n' + item.secoes[1].conteudo +
+        '\n\n---\n03 · BRIEFING CRIATIVO:\n' + (item.secoes[2] ? stripRestricoes(item.secoes[2].conteudo) : '')
+      }</div>
+      <button class="copybtn" style="margin-top:12px;color:#4ade80;border-color:#1a281a;background:#080c08;font-size:11px;padding:7px 14px" onclick="cp('copytudo-${item.id}',this)">📋 Copiar tudo (Texto + Formato + Intenção + Briefing)</button>
     </div>
 
   </div>
@@ -1848,7 +1888,7 @@ function renderPanel(profile){
   const c={academia:'#e63900',sorveteria:'#f5c800',gympulse:'#f5c200'}[profile];
   const groups=groupBy(items,'date');
   let html='';
-  Object.keys(groups).sort().reverse().forEach(date=>{
+  Object.keys(groups).sort().forEach(date=>{
     html+=`<div class="dgroup"><div class="dlabel">${fmtDate(date)}</div>`;
     groups[date].forEach(item=>{html+=cardHTML(item,profile);});
     html+='</div>';
@@ -2113,13 +2153,15 @@ function findItem(id) {
   return null;
 }
 
-// Aplica edições salvas localmente antes da primeira renderização
-['academia','sorveteria','gympulse'].forEach(profile=>{
-  CONTENT[profile].forEach(item=>{
-    const saved = JSON.parse(localStorage.getItem('edits_' + item.id) || 'null');
-    if (saved) Object.assign(item, saved);
+function applyLocalEdits(){
+  ['academia','sorveteria','gympulse'].forEach(profile=>{
+    CONTENT[profile].forEach(item=>{
+      const saved=JSON.parse(localStorage.getItem('edits_'+item.id)||'null');
+      if(saved)Object.assign(item,saved);
+    });
   });
-});
+}
+applyLocalEdits();
 
 function openEdit(id) {
   const found = findItem(id);
@@ -2181,6 +2223,13 @@ function saveEdit() {
   localStorage.setItem('edits_' + editingId, JSON.stringify(edits));
   Object.assign(item, edits);
 
+  // Sync all edits to Supabase
+  const allEdits={};
+  ['academia','sorveteria','gympulse'].forEach(p=>{
+    CONTENT[p].forEach(it=>{const e=localStorage.getItem('edits_'+it.id);if(e)allEdits[it.id]=JSON.parse(e);});
+  });
+  supaSet('edits',allEdits);
+
   renderAll();
   buildHist();
   closeModalDirect();
@@ -2190,7 +2239,40 @@ function saveEdit() {
   setTimeout(()=>toast.classList.remove('show'), 2000);
 }
 
+// Render imediato com dados locais
 renderAll();
+buildHist();
+
+// Sync com Supabase em background
+(async()=>{
+  const dot=document.getElementById('syncDot');
+  if(dot)dot.style.background='#f5a623'; // laranja = sincronizando
+
+  const[remDone,remEdits]=await Promise.all([supaGet('done'),supaGet('edits')]);
+  let changed=false;
+
+  if(remDone && JSON.stringify(remDone)!==JSON.stringify(S)){
+    S=remDone;
+    localStorage.setItem(SK,JSON.stringify(S));
+    changed=true;
+  }
+
+  if(remEdits){
+    ['academia','sorveteria','gympulse'].forEach(profile=>{
+      CONTENT[profile].forEach(item=>{
+        const edit=remEdits[item.id];
+        if(edit){
+          localStorage.setItem('edits_'+item.id,JSON.stringify(edit));
+          Object.assign(item,edit);
+          changed=true;
+        }
+      });
+    });
+  }
+
+  if(changed){renderAll();buildHist();}
+  if(dot)dot.style.background='#4ade80'; // verde = sincronizado
+})();
 </script>
 </body>
 </html>
