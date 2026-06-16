@@ -48,6 +48,8 @@ body { background: var(--bg); color: var(--txt); font-family: 'Inter', sans-seri
 .tab[data-p="gympulse"].on::after { background:linear-gradient(90deg,#f5c200,#fff); opacity:1; }
 .tab[data-p="historico"].on { color:var(--txt); }
 .tab[data-p="historico"].on::after { background:linear-gradient(90deg,#e63900,#f5c800,#f5c200); opacity:1; }
+.tab[data-p="estrategia"].on { color:#a78bfa; }
+.tab[data-p="estrategia"].on::after { background:linear-gradient(90deg,#a78bfa,#6d28d9); opacity:1; }
 
 main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .panel { display:none; }
@@ -241,10 +243,9 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .field-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 @media(max-width:500px) { .field-row { grid-template-columns:1fr; } }
 
+
 /* ── ESTRATÉGIA ── */
-.strat-toggle-wrap { display:flex; justify-content:flex-end; margin:14px 0 4px; }
-.strat-wrap { margin-bottom:20px; }
-.strat-profile { margin-bottom:0; }
+.strat-profile { margin-bottom:40px; }
 
 .strat-profile-header {
   display:flex; align-items:center; gap:12px;
@@ -338,7 +339,12 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   font-size:10px; font-weight:800;
 }
 
+.strat-divider {
+  height:1px; background:var(--border); margin:32px 0;
+}
+
 @media(max-width:500px) { .strat-grid { grid-template-columns:1fr; } }
+
 </style>
 </head>
 <body>
@@ -350,10 +356,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
       <div class="brand-icon">🎯</div>
       <div class="brand-text">PAINEL <span>GILSON</span></div>
     </div>
-    <div style="display:flex;align-items:center;gap:8px">
-      <div class="date-pill" id="datepill"></div>
-      <div id="syncDot" title="Sincronização com nuvem" style="width:8px;height:8px;border-radius:50%;background:#333;flex-shrink:0;transition:background 0.4s"></div>
-    </div>
+    <div class="date-pill" id="datepill"></div>
   </div>
 </div>
 
@@ -372,59 +375,6 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   <div class="panel" id="p-gympulse"></div>
   <div class="panel" id="p-historico"></div>
 </main>
-
-<div class="modal-overlay" id="editModal" onclick="closeModal(event)">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title" id="modalTitle">EDITAR CARD</div>
-      <button class="modal-close" onclick="closeModalDirect()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="field-row">
-        <div class="field-group">
-          <label class="field-label">Horário</label>
-          <input class="field-input" id="edit-time" type="text">
-        </div>
-        <div class="field-group">
-          <label class="field-label">Formato</label>
-          <select class="field-input" id="edit-format">
-            <option value="Story">Story</option>
-            <option value="Post">Post</option>
-            <option value="Carrossel">Carrossel</option>
-          </select>
-        </div>
-      </div>
-      <div class="field-group">
-        <label class="field-label">Título</label>
-        <input class="field-input" id="edit-title" type="text">
-      </div>
-      <div class="field-group">
-        <label class="field-label">📝 Texto da postagem</label>
-        <textarea class="field-input" id="edit-texto" rows="6"></textarea>
-      </div>
-      <div class="field-group">
-        <label class="field-label" style="color:#e63900">01 · Formato e especificações</label>
-        <textarea class="field-input mono" id="edit-sec01" rows="5"></textarea>
-      </div>
-      <div class="field-group">
-        <label class="field-label" style="color:#f5a623">02 · Intenção da postagem</label>
-        <textarea class="field-input mono" id="edit-sec02" rows="5"></textarea>
-      </div>
-      <div class="field-group">
-        <label class="field-label" style="color:#4ade80">03 · Briefing criativo detalhado</label>
-        <textarea class="field-input mono" id="edit-sec03" rows="10"></textarea>
-      </div>
-      <div class="field-hint">As alterações são salvas neste navegador e aplicadas automaticamente neste dispositivo.</div>
-    </div>
-    <div class="modal-footer">
-      <button class="edit-btn" onclick="closeModalDirect()">Cancelar</button>
-      <button class="edit-btn edit-btn-primary" onclick="saveEdit()">💾 Salvar alterações</button>
-    </div>
-  </div>
-</div>
-
-
-<div class="saved-toast" id="savedToast">✓ Alterações salvas!</div>
 
 <script>
 const PALETTES = {
@@ -465,7 +415,9 @@ Vieram buscar mais disposição, mais sono, mais saúde.
 
 E encontraram tudo isso aqui. 🧡
 
-👉 Manda mensagem e garante sua aula experimental!`,
+Quer chegar lá também? Manda mensagem! 👇
+📲 (42) 99922-2857
+#fitness #academia #musculação #saudeebemestar #vidafitness #academiaparana #treinodiario #qualidadevida #mulheresativa #saudeemdia #treinofeminino #vidaativa #emagrecimento #treinofuncional #hiit #jump #musculacaofeminina #bemestarsaude #treinando #exerciciofisico #academiaturvoPR #turvoPR #planetacorpo #planetacorpoclubmais #academialocal #treinoturvo #guarapuava #guarapuavafit #interiorpr #cidadeinterior`,
       secoes:[
         {
           num:'01', cor:'#e63900', titulo:'FORMATO E ESPECIFICAÇÕES',
@@ -526,7 +478,11 @@ RESTRIÇÕES OBRIGATÓRIAS:
 ✅ Reduzir o estresse
 ✅ Ganhar disposição no dia a dia
 
-A ciência confirma. A gente te ajuda a colocar em prática.`,
+A ciência confirma. A gente te ajuda a colocar em prática.
+
+💬 Comenta aqui: qual desses benefícios você mais quer na sua vida?
+
+#fitness #academia #musculação #saudeebemestar #vidafitness #academiaparana #treinodiario #qualidadevida #mulheresativa #saudeemdia #treinofeminino #vidaativa #emagrecimento #treinofuncional #hiit #jump #musculacaofeminina #bemestarsaude #treinando #exerciciofisico #academiaturvoPR #turvoPR #planetacorpo #planetacorpoclubmais #academialocal #treinoturvo #guarapuava #guarapuavafit #interiorpr #cidadeinterior`,
       secoes:[
         {
           num:'01', cor:'#e63900', titulo:'FORMATO E ESPECIFICAÇÕES',
@@ -590,7 +546,9 @@ Tudo por R$ 209/mês. Sem pegadinhas.
 📍 Av. Maria Bettega, 360 — Centro, Turvo/PR
 📲 (42) 99922-2857
 
-#PlanetaCorpo #Turvo #SaúdeDeVerdade #QualidadeDeVida`,
+👉 Aula experimental GRÁTIS — link na bio! 💪
+
+#fitness #academia #musculação #saudeebemestar #vidafitness #academiaparana #treinodiario #qualidadevida #mulheresativa #saudeemdia #treinofeminino #vidaativa #emagrecimento #treinofuncional #hiit #jump #musculacaofeminina #bemestarsaude #treinando #exerciciofisico #academiaturvoPR #turvoPR #planetacorpo #planetacorpoclubmais #academialocal #treinoturvo #guarapuava #guarapuavafit #interiorpr #cidadeinterior`,
       secoes:[
         {
           num:'01', cor:'#e63900', titulo:'FORMATO E ESPECIFICAÇÕES',
@@ -650,7 +608,11 @@ A gente pensa diferente. 🧡
 
 A Planeta Corpo existe para quem quer começar, para quem parou e quer voltar, e para quem só precisa de um lugar gostoso de treinar.
 
-Desde 1998 sendo esse lugar pra Turvo. 🧡`,
+Desde 1998 sendo esse lugar pra Turvo. 🧡
+
+Marque alguém que precisa conhecer esse lugar 👇
+
+#fitness #academia #musculação #saudeebemestar #vidafitness #academiaparana #treinodiario #qualidadevida #mulheresativa #saudeemdia #treinofeminino #vidaativa #emagrecimento #treinofuncional #hiit #jump #musculacaofeminina #bemestarsaude #treinando #exerciciofisico #academiaturvoPR #turvoPR #planetacorpo #planetacorpoclubmais #academialocal #treinoturvo #guarapuava #guarapuavafit #interiorpr #cidadeinterior`,
       secoes:[
         {
           num:'01', cor:'#e63900', titulo:'FORMATO E ESPECIFICAÇÕES',
@@ -694,227 +656,6 @@ RESTRIÇÕES OBRIGATÓRIAS:
 • Use apenas 🧡 como emoji — combina com o laranja da marca`
         }
       ]
-    },
-    {
-      id:'ac5', date:'2026-06-17', time:'08h', format:'Story',
-      title:'Dica de Saúde — Treino melhora o sono',
-      driveFile:'Academia24.jpg',
-      driveUrl:'https://drive.google.com/file/d/1Ur7pNcZnnlYEGPQd63A3e-9tF0-x1Umi/view',
-      driveHint:'Foto da academia — fundo da dica de saúde',
-      texto:`Quem treina, dorme melhor. Quem dorme bem, treina melhor. 🧡
-
-A ciência chama de ciclo de saúde — e as nossas alunas sentem na pele.
-
-3x por semana já é suficiente para transformar suas noites e suas manhãs.
-
-Quer fazer parte? Manda mensagem e vem fazer uma aula experimental!`,
-      secoes:[
-        {
-          num:'01', cor:'#e63900', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Story Instagram
-Dimensões: 1080 × 1920px (proporção 9:16)
-Resolução: 72 DPI
-Zona segura: 150px das bordas superior e inferior
-Estilo: Informativo com ilustração flat minimalista`
-        },
-        {
-          num:'02', cor:'#f5a623', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Dica de Saúde / Educativo
-Objetivo: Comunicar o benefício do sono como consequência direta do treino — conecta a prática na academia com qualidade de vida cotidiana. Público mulheres 30-40 anos de Turvo.
-Funil: Topo — educar, gerar identificação e despertar desejo de começar
-Ação esperada: Salvamento do story, resposta ou DM pedindo aula experimental`
-        },
-        {
-          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
-          conteudo:`CONCEITO CENTRAL:
-Representar o ciclo positivo treino → sono → energia de forma visual, leve e compreensível. Não é sobre performance — é sobre qualidade de vida cotidiana.
-
-COMPOSIÇÃO DA IMAGEM:
-• Ilustração flat: círculo dividido em 3 fases — sol/treino, lua/sono, raio/energia
-• Ícones simples: haltere pequeno, lua crescente, raio de energia
-• Cada fase num setor arredondado com cor de destaque
-• Fundo escuro (#1a1a1a) com os 3 ícones em círculo centralizado
-• Espaço superior e inferior limpos para texto no Canva
-
-PALETA OBRIGATÓRIA:
-• Preto #1a1a1a — fundo principal
-• Laranja #e63900 — ícone de treino/energia e setas do ciclo
-• Teal #003f6b — ícone de sono/descanso
-• Branco #ffffff — texto e detalhes dos ícones
-
-ESTILO VISUAL:
-Flat design limpo e moderno, sem clichês fitness. Estética de infográfico de saúde contemporâneo. As 3 fases devem se conectar visualmente como um ciclo natural, sem pressa.`
-        }
-      ]
-    },
-    {
-      id:'ac6', date:'2026-06-17', time:'12h', format:'Story',
-      title:'Humanização — Cada aula tem uma história',
-      driveFile:'Academia23.jpg',
-      driveUrl:'https://drive.google.com/file/d/1tJwIyn_q134rkN3px66sYeFlUnpADIeG/view',
-      driveHint:'Foto real do espaço — transmite autenticidade e acolhimento',
-      texto:`Tem aluna que veio pela primeira vez com medo.
-
-Hoje é ela que incentiva a amiga a entrar. 🧡
-
-A Planeta Corpo não faz milagres — faz hábito.
-E hábito transforma.
-
-Você pode ser a próxima história da gente.`,
-      secoes:[
-        {
-          num:'01', cor:'#e63900', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Story Instagram
-Dimensões: 1080 × 1920px (proporção 9:16)
-Resolução: 72 DPI
-Zona segura: 150px das bordas
-Estilo: Autêntico, minimal — foto real prevalece`
-        },
-        {
-          num:'02', cor:'#f5a623', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Humanização da Marca
-Objetivo: Criar identificação emocional com mulheres que têm vontade mas medo de começar — usando a transformação de uma aluna como espelho. Não fala de corpo: fala de coragem e de comunidade.
-Funil: Topo — criar conexão emocional e pertencimento
-Ação esperada: Comentário, compartilhamento ("isso sou eu") ou DM com interesse`
-        },
-        {
-          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
-          conteudo:`CONCEITO CENTRAL:
-Foto real do espaço da academia transmitindo acolhimento. O texto conta uma micro-história de transformação — simples, humana e sem apelo estético. O espaço físico convida a se imaginar ali.
-
-COMPOSIÇÃO DA IMAGEM:
-• Foto real da academia (Academia23.jpg do Drive) como fundo
-• Overlay mínimo preto (#1a1a1a) — só o suficiente para o texto ser lido
-• Sem elementos gráficos além do texto e logo
-• Iluminação quente da foto: não modificar se já existir
-• Espaço central/inferior para o texto da legenda
-
-PALETA OBRIGATÓRIA:
-• Preto #1a1a1a — overlay mínimo (máx 20% opacidade)
-• Laranja #e63900 — destaque em palavra-chave opcional
-• Branco #ffffff — texto principal
-
-ESTILO VISUAL:
-Zero produção excessiva. Autenticidade da foto real vale mais que qualquer arte. O texto âncora a emoção, a foto âncora o lugar.`
-        }
-      ]
-    },
-    {
-      id:'ac7', date:'2026-06-17', time:'17h', format:'Post',
-      title:'Matrícula — Um plano, liberdade total',
-      driveFile:'Logo Academia Oficial.png',
-      driveUrl:'https://drive.google.com/file/d/0B5StJJgxShxeSTNEYm93M1g0Qms/view',
-      driveHint:'Logo oficial — elemento central do post',
-      texto:`Na Planeta Corpo Club+ você não paga por modalidade.
-
-Paga por liberdade. 🧡
-
-Musculação · Dança · Spinning · Funcional
-Jump · HIIT · Aulas com Prof. Wellinton
-
-Um plano. Qualquer dia. Qualquer horário.
-
-R$ 209/mês — sem fidelidade, sem letra miúda.
-
-📍 Av. Maria Bettega, 360 — Centro, Turvo/PR
-📲 (42) 99922-2857
-
-#PlanetaCorpo #ClubMais #Turvo #SaúdeDeVerdade #QualidadeDeVida`,
-      secoes:[
-        {
-          num:'01', cor:'#e63900', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Post Feed Instagram
-Dimensões: 1080 × 1080px (proporção 1:1)
-Resolução: 72 DPI
-Margem de segurança: 80px em todas as bordas
-Estilo: Institucional clean, legível, direto ao ponto`
-        },
-        {
-          num:'02', cor:'#f5a623', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Conversão / Chamada para Matrícula
-Objetivo: Comunicar a proposta de valor central da Club+ — um plano único, liberdade de modalidade e horário, sem burocracia. Usa "liberdade" como âncora emocional diferenciadora.
-Funil: Meio/Fundo — converter interesse em contato direto (WhatsApp ou visita)
-Ação esperada: Clique no WhatsApp, DM ou visita presencial`
-        },
-        {
-          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
-          conteudo:`CONCEITO CENTRAL:
-Post institucional que comunica liberdade total em um único plano. Visual limpo e legível — o texto e o logo são os protagonistas, sem decoração excessiva.
-
-COMPOSIÇÃO DA IMAGEM:
-• Fundo preto (#1a1a1a) com textura sutil de grade fina em cinza muito escuro
-• Logo Planeta Corpo centralizado no topo com brilho suave em laranja
-• Palavra "LIBERDADE" em laranja (#e63900) como elemento tipográfico principal
-• Lista de modalidades em branco, tamanho médio, espaçada
-• Caixa de preço em teal (#003f6b) com o valor em branco — na base
-• Informações de contato na última linha em fonte menor
-
-PALETA OBRIGATÓRIA:
-• Preto #1a1a1a — fundo
-• Laranja #e63900 — palavra-chave e destaques
-• Teal #003f6b — caixa do preço
-• Branco #ffffff — texto principal e logo
-
-HIERARQUIA VISUAL:
-1. Logo — topo centralizado
-2. "LIBERDADE" em laranja — elemento hero
-3. Lista de modalidades
-4. Caixa de preço em teal
-5. Contato na base`
-        }
-      ]
-    },
-    {
-      id:'ac8', date:'2026-06-17', time:'20h', format:'Story',
-      title:'Prova Social — A volta que não tem mais volta',
-      driveFile:'Academia25.jpg',
-      driveUrl:'https://drive.google.com/file/d/1_tYJHgSeLm7f9M1xyUjD70y-htknP4Ej/view',
-      driveHint:'Foto real da academia — base do story de encerramento',
-      texto:`"Parei de treinar uma época. Saí com menos disposição, menos sono, mais dor."
-
-A gente escuta isso com frequência. 🧡
-
-Quando o hábito se forma aqui, o corpo cobra a volta.
-
-Bem-vindo de volta, sempre que precisar.`,
-      secoes:[
-        {
-          num:'01', cor:'#e63900', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Story Instagram
-Dimensões: 1080 × 1920px (proporção 9:16)
-Resolução: 72 DPI
-Zona segura: 150px das bordas
-Estilo: Citação/testemunho, acolhedor`
-        },
-        {
-          num:'02', cor:'#f5a623', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Prova Social
-Objetivo: Usar um depoimento emocional (parafraseado) para criar identificação com mulheres que buscam disposição no dia a dia, não estética — reforçando o posicionamento de saúde.
-Funil: Topo — gerar conexão emocional e desejo de fazer parte
-Ação esperada: Compartilhamento, comentário, DM`
-        },
-        {
-          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
-          conteudo:`CONCEITO CENTRAL:
-Citação real parafrasada em balão de texto sobre foto autêntica da academia. A mensagem transmite compreensão e acolhimento — sem cobrança, sem comparação. "A porta está aberta."
-
-COMPOSIÇÃO DA IMAGEM:
-• Foto real da academia (Academia25.jpg do Drive) como fundo
-• Overlay escuro mínimo para o texto aparecer com clareza
-• Balão de citação estilizado com borda laranja (#e63900) e texto em branco
-• Logo discreto na base da composição
-• Atmosfera de fim do dia — iluminação quente da foto
-
-PALETA OBRIGATÓRIA:
-• Preto #1a1a1a — overlay mínimo
-• Laranja #e63900 — borda do balão de citação
-• Teal #003f6b — acento sutil no logo
-• Branco #ffffff — texto da citação
-
-ESTILO VISUAL:
-Caloroso e genuíno — depoimento real, não propaganda. O visual deve transmitir "a gente entende você", não urgência ou pressão para voltar.`
-        }
-      ]
     }
   ],
 
@@ -931,7 +672,9 @@ Começa a semana com o sabor que todo mundo ama!
 
 Hoje em destaque: [COLOQUE O SABOR DO DIA] 😍
 
-Vem nos visitar!`,
+Peça agora! Link na bio 📱 ou chama no WhatsApp 👇
+
+#sorvete #sorveteria #gelato #frozen #sorvetegourmet #turvo #turvopr #parana #sorveteparana #sorveteriaturvo #interiordoparana #sorvetesguriturvo #guriturvo #sorveteprofissional #buffetsorvete #sorvetesartesanais #sorvetesabores #acai #milkshake #picolé #sorvetederua #sorveterialocal #comidaboa #foodporn #reelsinstagram #foodlovers #saboreie #experimenteaqui #sorvetedodia #temsorvete`,
       secoes:[
         {
           num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
@@ -988,7 +731,9 @@ Sabores que fazem a sua semana começar com alegria.
 
 Venha nos visitar em Turvo/PR!
 
-#SorvetesGuri #Turvo #SorveteriaArtesanal #MomentoGuri`,
+Qual sabor você provaria? Comenta aí! 👇
+
+#sorvete #sorveteria #gelato #frozen #sorvetegourmet #turvo #turvopr #parana #sorveteparana #sorveteriaturvo #interiordoparana #sorvetesguriturvo #guriturvo #sorveteprofissional #buffetsorvete #sorvetesartesanais #sorvetesabores #acai #milkshake #picolé #sorvetederua #sorveterialocal #comidaboa #foodporn #reelsinstagram #foodlovers #saboreie #experimenteaqui #sorvetedodia #temsorvete`,
       secoes:[
         {
           num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
@@ -1045,7 +790,10 @@ RESTRIÇÕES OBRIGATÓRIAS:
 Combo especial de segunda:
 🍦 2 casquinhas por R$ [VALOR]
 
-Só hoje! Corre lá 🏃`,
+Só hoje! Corre lá ou chama no WhatsApp! 🏃
+Link na bio para pedir online 📱
+
+#sorvete #sorveteria #gelato #frozen #sorvetegourmet #turvo #turvopr #parana #sorveteparana #sorveteriaturvo #interiordoparana #sorvetesguriturvo #guriturvo #sorveteprofissional #buffetsorvete #sorvetesartesanais #sorvetesabores #acai #milkshake #picolé #sorvetederua #sorveterialocal #comidaboa #foodporn #reelsinstagram #foodlovers #saboreie #experimenteaqui #sorvetedodia #temsorvete`,
       secoes:[
         {
           num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
@@ -1100,7 +848,11 @@ RESTRIÇÕES OBRIGATÓRIAS:
 
 Amanhã tem mais sabores e mais sorrisos esperando por você.
 
-Boa noite, Turvo! 😊`,
+Boa noite, Turvo! 😊
+
+Ta alguém que ama sorvete tanto quanto você! 😍
+
+#sorvete #sorveteria #gelato #frozen #sorvetegourmet #turvo #turvopr #parana #sorveteparana #sorveteriaturvo #interiordoparana #sorvetesguriturvo #guriturvo #sorveteprofissional #buffetsorvete #sorvetesartesanais #sorvetesabores #acai #milkshake #picolé #sorvetederua #sorveterialocal #comidaboa #foodporn #reelsinstagram #foodlovers #saboreie #experimenteaqui #sorvetedodia #temsorvete`,
       secoes:[
         {
           num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
@@ -1143,302 +895,33 @@ RESTRIÇÕES OBRIGATÓRIAS:
 • Sem cores além da paleta — especialmente sem rosa ou laranja`
         }
       ]
-    },
-    {
-      id:'so5', date:'2026-06-17', time:'09h', format:'Story',
-      title:'Produto do Dia — Terça tem sabor especial',
-      driveFile:'mascote3d_guri_pose01_sorvete_tamanho_grande.png',
-      driveUrl:'https://drive.google.com/file/d/1Tb4fIXrE5vWurOTlJPjdfg3kxK9W8Olu/view',
-      driveHint:'Mascote 3D Guri com sorvete — protagonista do story',
-      texto:`🍦 Bom dia, Turvo!
-
-Quarta é dia de se dar um agrado pequeno que faz muita diferença.
-
-Hoje em destaque: [COLOQUE O SABOR DO DIA] 😍
-
-Passa aqui e faz a sua quarta mais doce! ☀️`,
-      secoes:[
-        {
-          num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Story Instagram
-Dimensões: 1080 × 1920px (proporção 9:16)
-Resolução: 72 DPI
-Zona segura: 150px das bordas
-Estilo: Festivo, colorido, energético — identidade Guri`
-        },
-        {
-          num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Produto do Dia / Divulgação Diária
-Objetivo: Criar o ritual diário do "sabor do dia" — o público começa a esperar esse story toda manhã. Gera visita por impulso no mesmo dia. O gancho "presente de meio de semana" é específico de quarta-feira.
-Funil: Fundo — conversão imediata (visita física)
-Ação esperada: Visita à sorveteria durante o dia`
-        },
-        {
-          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
-          conteudo:`CONCEITO CENTRAL:
-Story recorrente de produto do dia com identidade visual consistente. O mascote 3D Guri com sorvete é o comunicador oficial — os seguidores reconhecem e associam à marca. O gancho de quarta é "se dar um agrado no meio da semana".
-
-COMPOSIÇÃO DA IMAGEM:
-• Fundo: degradê diagonal de azul escuro (#003f6b) para azul turquesa (#00b4d8)
-• Elementos decorativos: bolinhas, confetes e formas em amarelo (#f5c800) e branco
-• Mascote Guri (Drive) posicionado à direita, ocupando 60% da altura
-• Caixa em amarelo (#f5c800) com borda arredondada para o nome do sabor (preenchido no Canva)
-
-PALETA OBRIGATÓRIA:
-• Azul escuro #003f6b — fundo principal
-• Azul turquesa #00b4d8 — degradê e acentos
-• Amarelo #f5c800 — caixa do sabor e confetes
-• Branco #ffffff — texto e logo
-
-ESTILO VISUAL:
-Alegre, festivo e reconhecível. Mesmo formato toda manhã = identidade de marca forte. Alta energia visual, cores saturadas mas harmônicas.`
-        }
-      ]
-    },
-    {
-      id:'so6', date:'2026-06-17', time:'11h30', format:'Post',
-      title:'Produto — Sorvete gourmet com alma de Turvo',
-      driveFile:'11.08 - Sabores Guri Mini BomBom de Açaí.png',
-      driveUrl:'https://drive.google.com/file/d/1as6g-9NsXdkpm2Yrh-p__w3SCZ73NTNv/view',
-      driveHint:'Post de sabores já produzido — protagonista visual do feed',
-      texto:`Tem sorvete que você come e esquece.
-
-Tem sorvete Guri que você pensa no dia seguinte. 🍦
-
-Buffet completo · Sorvetes artesanais · Aquele ambiente gostoso de Turvo
-
-📍 Passa lá hoje!
-
-#SorvetesGuri #Turvo #SorveteriaArtesanal #MomentoGuri #GourmettEmTurvo`,
-      secoes:[
-        {
-          num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Post Feed Instagram
-Dimensões: 1080 × 1080px (proporção 1:1)
-Resolução: 72 DPI
-Margem: 80px nas bordas
-Estilo: Food photography — produto como protagonista`
-        },
-        {
-          num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Construção de Marca / Brand Awareness
-Objetivo: Posicionar a Sorveteria Guri como experiência artesanal única em Turvo — não como sorvete comum. Gera desejo, vontade de provar e associação emocional com a marca.
-Funil: Topo — reconhecimento, desejo e salvamento
-Ação esperada: Curtida, salvamento do post e visita futura (ou no mesmo dia)`
-        },
-        {
-          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
-          conteudo:`CONCEITO CENTRAL:
-Post de produto minimalista e apetitoso. O sorvete é o protagonista absoluto — o design serve ao produto, não compete com ele. A leveza do visual comunica qualidade artesanal.
-
-COMPOSIÇÃO DA IMAGEM:
-• Ângulo: flat lay (vista de cima 90°) ou 3/4 levemente elevado
-• Produto: sorvete artesanal em destaque central, bem iluminado
-• Superfície: azul turquesa (#00b4d8) ou branco texturizado leve
-• Elementos decorativos: frutas ou ingredientes do sabor, bolinhas douradas discretas
-• Espaço superior para logo e inferior para texto no Canva
-• Luz: natural e suave, sem sombras duras
-
-PALETA OBRIGATÓRIA:
-• Azul turquesa #00b4d8 — superfície/fundo
-• Amarelo #f5c800 — elementos decorativos e logo
-• Azul escuro #003f6b — texto e logo
-• Branco #ffffff — espaço limpo
-
-ESTILO VISUAL:
-Food photography profissional mas acessível. Apetitoso, fresco e alegre. A imagem deve dar vontade de provar imediatamente.`
-        }
-      ]
-    },
-    {
-      id:'so7', date:'2026-06-17', time:'15h', format:'Story',
-      title:'Promoção — Combo especial de quarta',
-      driveFile:'mascote3d_guri_pose02_apresentando_tamanho_grande.png',
-      driveUrl:'https://drive.google.com/file/d/1saHs8AqxRT27bXp_AMtPw8UjThvDvp7f/view',
-      driveHint:'Mascote pose 02 "apresentando" — perfeito para promoção',
-      texto:`☀️ TARDE QUENTE = HORA DO SORVETE GURI!
-
-Combo especial de quarta-feira:
-🍦 2 casquinhas + cobertura por R$ [VALOR]
-
-Só hoje, só até fechar!
-
-Mostra esse story no caixa e aproveita 👇`,
-      secoes:[
-        {
-          num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Story Instagram
-Dimensões: 1080 × 1920px (proporção 9:16)
-Resolução: 72 DPI
-Zona segura: 150px das bordas
-Estilo: Promocional com alta energia e urgência visual`
-        },
-        {
-          num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Promoção com Urgência / Oferta do Dia
-Objetivo: Gerar visita à loja no período da tarde de quarta-feira. O combo com preço especial e validade "só hoje" cria urgência real de compra. Público que vê o story no horário de calor age por impulso.
-Funil: Fundo — conversão imediata
-Ação esperada: Visita à sorveteria ainda hoje com o story para resgatar`
-        },
-        {
-          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
-          conteudo:`CONCEITO CENTRAL:
-Mesma estrutura de alta energia da promoção de segunda — mascote Guri apresentando a oferta, fundo amarelo dominante transmitindo urgência e calor.
-
-COMPOSIÇÃO DA IMAGEM:
-• Fundo amarelo vibrante (#f5c800) dominante
-• Raios de sol estilizados e formas dinâmicas em azul escuro (#003f6b)
-• Mascote Guri pose 02 (Drive) à esquerda, gesticulando para a direita
-• Caixa de preço à direita em azul escuro (#003f6b) com texto branco
-• Banner "SÓ HOJE!" e "QUARTA-FEIRA" no topo em azul escuro com borda branca
-• Espaço para preço a ser preenchido no Canva
-
-PALETA OBRIGATÓRIA:
-• Amarelo #f5c800 — fundo dominante
-• Azul escuro #003f6b — caixas e banners
-• Azul turquesa #00b4d8 — acentos e setas
-• Branco #ffffff — texto sobre fundos escuros
-
-ESTILO VISUAL:
-Alta energia e impacto imediato. O olho deve seguir a sequência: mascote → preço → CTA. Ritmo visual dinâmico, como cartaz de promoção de loja.`
-        }
-      ]
-    },
-    {
-      id:'so8', date:'2026-06-17', time:'19h', format:'Story',
-      title:'Encerramento — Boa noite de quarta',
-      driveFile:'LOGO-GURI-V2.png',
-      driveUrl:'https://drive.google.com/file/d/1fO9HP4JSSYFfboE_jDGbNUFoRP38xcBk/view',
-      driveHint:'Logo Guri V2 — elemento central do story de encerramento',
-      texto:`Mais uma quarta que ficou mais doce com a Guri. 🌙
-
-Obrigado pela visita, pelo sorriso, por fazer parte da nossa história.
-
-Faltam só 2 dias para o fim de semana — e a Guri vai estar aqui! 🍦
-
-Boa noite, Turvo! 😊`,
-      secoes:[
-        {
-          num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Story Instagram
-Dimensões: 1080 × 1920px (proporção 9:16)
-Resolução: 72 DPI
-Zona segura: 150px das bordas
-Estilo: Aconchegante, emocional, comunidade`
-        },
-        {
-          num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Relacionamento / Comunidade
-Objetivo: Fechar o dia reforçando o vínculo afetivo com a comunidade de Turvo, sem caráter promocional.
-Funil: Topo — fidelização e lembrança de marca
-Ação esperada: Resposta ao story, emoji ou compartilhamento`
-        },
-        {
-          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
-          conteudo:`CONCEITO CENTRAL:
-Encerramento afetivo do dia — tom de "vizinho querido" dizendo boa noite, com visual noturno tranquilo.
-
-COMPOSIÇÃO DA IMAGEM:
-• Fundo: degradê noturno de azul escuro (#003f6b) para azul turquesa (#00b4d8) no topo
-• Lua crescente e estrelinhas em amarelo (#f5c800) espalhadas
-• Centro: espaço limpo para o logo Guri com brilho suave ao redor
-
-PALETA OBRIGATÓRIA:
-• Azul escuro #003f6b — fundo principal
-• Azul turquesa #00b4d8 — degradê superior
-• Amarelo #f5c800 — lua e estrelas
-• Branco #ffffff — logo e texto
-
-ESTILO VISUAL:
-Suave e contemplativo, menos elementos, mais respiro visual.
-
-RESTRIÇÕES OBRIGATÓRIAS:
-• Sem mascote nesse story — logo sozinho é suficiente
-• Sem elementos promocionais ou preços
-• Sem cores além da paleta`
-        }
-      ]
     }
   ],
 
-  gympulse:[
-    {
-      id:'gy1', date:'2026-06-16', time:'07h', format:'Story',
-      title:'Dado de Mercado — 70% abandonam',
-      driveFile:'WhatsApp Image 2026-05-20 at 11.13.27.jpeg',
-      driveUrl:'https://drive.google.com/file/d/1O2WQFEl1ELDwTuq3tiGKP-RGuAPhLrES/view',
-      driveHint:'Screenshot real do GympulsePro no Planeta Corpo — prova visual',
-      texto:`📊 VOCÊ SABIA?
-
-70% dos alunos de academia abandonam nos primeiros 3 meses.
-
-O motivo? Falta de engajamento e evolução visível.
-
-O GympulsePro resolve isso com gamificação em tempo real. 🎮
-
-Quer saber como? 👇`,
-      secoes:[
-        {
-          num:'01', cor:'#f5c200', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Story Instagram
-Dimensões: 1080 × 1920px (proporção 9:16)
-Resolução: 72 DPI
-Zona segura: 150px das bordas superior e inferior
-Estilo: Dado de impacto, dark premium`
-        },
-        {
-          num:'02', cor:'#ffffff', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Dado de Mercado
-Objetivo: Capturar a atenção de gestores de academia com uma estatística de impacto sobre abandono, criando consciência do problema antes de apresentar a solução.
-Funil: Topo — despertar consciência do problema
-Ação esperada: Parada no story e interesse em saber a solução`
-        },
-        {
-          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
-          conteudo:`CONCEITO CENTRAL:
-O número "70%" deve ser o elemento visual dominante — grande, impactante, quase chocante. Tudo no design serve para destacar esse dado e criar o gancho "como o GympulsePro resolve isso".
-
-COMPOSIÇÃO DA IMAGEM:
-• "70%" centralizado, ocupando a maior parte vertical da composição
-• Efeito de brilho/glow em amarelo (#f5c200) ao redor do número
-• Fundo preto (#0d0d0d) com grade digital sutil (linhas finas em cinza escuro #1c1c1c)
-• Espaço inferior reservado para o screenshot real do Drive, com borda amarela
-• Espaço superior para o texto explicativo
-
-PALETA OBRIGATÓRIA:
-• Preto #0d0d0d — fundo principal
-• Amarelo #f5c200 — número "70%" e destaques
-• Cinza escuro #1c1c1c — grade digital e elementos secundários
-• Branco #ffffff — texto de apoio
-
-ESTILO VISUAL:
-Dashboard premium, dark gaming. Sensação de dado real extraído de um painel de gestão — sério, direto, sem clichês de fitness motivacional.
-
-RESTRIÇÕES OBRIGATÓRIAS:
-• Sem texto na imagem gerada pelo ChatGPT (o "70%" será adicionado no Canva)
-• Screenshot real do Drive deve ser incluído na composição final
-• Sem ícones de fitness genéricos (halteres, tênis, etc.)`
-        }
-      ]
-    },
+  gympulse:[,
     {
       id:'gy2', date:'2026-06-16', time:'10h', format:'Post',
       title:'Funcionalidade — Monitor ao vivo',
       driveFile:'WhatsApp Image 2026-05-18 at 12.44.24.jpeg',
       driveUrl:'https://drive.google.com/file/d/17FVjyP_F1FcTo_zSI3jtay3D0dsasOJe/view',
       driveHint:'Screenshot real do monitor GympulsePro em Academia Life — hero visual do post',
-      texto:`🏆 Imagine seus alunos COMPETINDO para treinar mais.
+      texto:`Você sabia que 70% dos alunos de academia abandonam nos primeiros 3 meses?
 
-Com o GympulsePro você transforma cada treino em pontos, rankings e conquistas.
+A razão? Falta de motivação e evolução visível.
 
-✅ Monitor ao vivo
+Com o GympulsePro você transforma cada treino em pontos, rankings e conquistas:
+
+✅ Monitor ao vivo com BPM em tempo real
 ✅ Rankings por categoria
-✅ Engajamento real
-✅ Retenção comprovada
+✅ Engajamento comprovado
+✅ Retenção aumentada
 
-Sua academia merece isso. 🚀
+É assim que a Planeta Corpo mantém seus alunos treinando toda semana. 🚀
 
-#GympulsePro #GamificaçãoFitness #TechFitness #RetençãoDeAlunos`,
+Seu negócio já usa gamificação? Comenta aí! 👇
+Demo gratuita — link na bio 🎯
+
+#gympulse #gympulsepro #gamificacaofitness #gamificacaoacademia #academiagamificada #fittech #gestacadeacademia #plataformaacademia #academia #treinomotivacao #musculacao #fitness #vidasaudavel #transformacaofisica #desafiofitness #academiamoderna #saas #empreendedor #negociodigital #software #inovacao #startup #growthhacking #leadgeneration #techforgym #academiadigital #tecnologiaesportiva #retencaodealunos #engajamentofitness #rankingacademia`,
       secoes:[
         {
           num:'01', cor:'#f5c200', titulo:'FORMATO E ESPECIFICAÇÕES',
@@ -1488,72 +971,22 @@ RESTRIÇÕES OBRIGATÓRIAS:
       ]
     },
     {
-      id:'gy3', date:'2026-06-16', time:'14h', format:'Story',
-      title:'Prova Social — Aluno no ranking',
-      driveFile:'WhatsApp Image 2026-05-20 at 11.13.27.jpeg',
-      driveUrl:'https://drive.google.com/file/d/1O2WQFEl1ELDwTuq3tiGKP-RGuAPhLrES/view',
-      driveHint:'Screenshot GympulsePro Planeta Corpo — plataforma real em uso',
-      texto:`💬 "Meus alunos chegam na academia perguntando a posição deles no ranking."
-
-Isso é o GympulsePro em ação.
-
-Aluno engajado é aluno que não cancela. ✅
-
-Fala com a gente e agenda uma demo gratuita! 👊`,
-      secoes:[
-        {
-          num:'01', cor:'#f5c200', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Story Instagram
-Dimensões: 1080 × 1920px (proporção 9:16)
-Resolução: 72 DPI
-Zona segura: 150px das bordas
-Estilo: Citação/testemunho, dark premium`
-        },
-        {
-          num:'02', cor:'#ffffff', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Prova Social
-Objetivo: Usar um relato real (parafraseado) de gestor de academia sobre o impacto do GympulsePro no engajamento dos alunos, gerando confiança em quem ainda está decidindo.
-Funil: Meio — construir confiança e reduzir objeções
-Ação esperada: DM solicitando demo gratuita`
-        },
-        {
-          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
-          conteudo:`CONCEITO CENTRAL:
-Citação em destaque dentro de um balão de fala estilizado, com o screenshot real do produto como prova abaixo. A combinação "depoimento + prova visual" é o que gera confiança em decisores B2B.
-
-COMPOSIÇÃO DA IMAGEM:
-• Fundo preto (#0d0d0d) com silhueta abstrata muito sutil de equipamentos de academia em cinza escuro (#1c1c1c)
-• Balão de citação centralizado, com borda amarela (#f5c200)
-• Espaço inferior para o screenshot real do Drive, com borda amarela
-• Logo GympulsePro discreto no topo
-
-PALETA OBRIGATÓRIA:
-• Preto #0d0d0d — fundo principal
-• Amarelo #f5c200 — borda do balão e CTA
-• Cinza escuro #1c1c1c — silhuetas e elementos secundários
-• Branco #ffffff — texto da citação
-
-ESTILO VISUAL:
-Profissional B2B, dark premium. O balão de citação deve parecer um elemento de UI moderno, não um desenho informal.
-
-RESTRIÇÕES OBRIGATÓRIAS:
-• Sem texto na imagem gerada pelo ChatGPT (a citação será adicionada no Canva)
-• Screenshot real do Drive obrigatório na composição final
-• Sem rostos ou pessoas identificáveis`
-        }
-      ]
-    },
-    {
       id:'gy4', date:'2026-06-16', time:'18h', format:'Carrossel',
       title:'Demo — Ranking semanal ao vivo',
       driveFile:'WhatsApp Image 2026-05-18 at 12.44.24.jpeg',
       driveUrl:'https://drive.google.com/file/d/17FVjyP_F1FcTo_zSI3jtay3D0dsasOJe/view',
       driveHint:'Screenshot monitor Academia Life — use nos slides intermediários',
-      texto:`Slide 1: "Sua academia tem ranking de alunos?"
-Slide 2: "Com o GympulsePro tem — em tempo real"
-Slide 3: [Screenshot real do monitor do Drive]
-Slide 4: "Aluno que aparece no ranking, treina mais."
-Slide 5: "Demo gratuita? Manda mensagem! 👇"`,
+      texto:`Slide 1: "Você está perdendo 40% da frequência dos seus alunos sem saber por quê"
+Slide 2: "Alunos sem motivação visual somem nos primeiros 3 meses"
+Slide 3: "Com o GympulsePro: ranking ao vivo, pontos e conquistas a cada treino"
+Slide 4: [Screenshot real do monitor do Drive — prova visual]
+Slide 5: "Academia Planeta Corpo: frequência consistente após 60 dias com GympulsePro"
+Slide 6: "Quer esse resultado? Demo gratuita — manda mensagem! 👇"
+
+Salva esse carrossel e manda pro dono da sua academia! 💪
+Demo gratuita — link na bio 🎯
+
+#gympulse #gympulsepro #gamificacaofitness #gamificacaoacademia #academiagamificada #fittech #gestacadeacademia #plataformaacademia #academia #treinomotivacao #musculacao #fitness #vidasaudavel #transformacaofisica #desafiofitness #academiamoderna #saas #empreendedor #negociodigital #software #inovacao #startup #growthhacking #leadgeneration #techforgym #academiadigital #tecnologiaesportiva #retencaodealunos #engajamentofitness #rankingacademia`,
       secoes:[
         {
           num:'01', cor:'#f5c200', titulo:'FORMATO E ESPECIFICAÇÕES',
@@ -1609,176 +1042,14 @@ RESTRIÇÕES OBRIGATÓRIAS:
 • Identidade visual 100% consistente entre slides`
         }
       ]
-    },
-    {
-      id:'gy5', date:'2026-06-17', time:'10h', format:'Post',
-      title:'Dado de Mercado — Reter custa 5x menos',
-      driveFile:'WhatsApp Image 2026-05-20 at 11.13.27.jpeg',
-      driveUrl:'https://drive.google.com/file/d/1O2WQFEl1ELDwTuq3tiGKP-RGuAPhLrES/view',
-      driveHint:'Screenshot real do GympulsePro no Planeta Corpo — prova visual',
-      texto:`📊 Adquirir um aluno novo custa até 5× mais do que manter um aluno atual.
-
-Mas a maioria das academias só investe em captação.
-
-O GympulsePro inverte isso:
-
-✅ Frequência monitorada em tempo real
-✅ Alertas automáticos de inatividade
-✅ Gamificação que cria hábito de treino
-
-Sua academia está deixando alunos — e dinheiro — na mesa. 👇
-
-Demo gratuita → gympulse.pro
-
-#GympulsePro #GestãoDeAcademia #RetençãoDeAlunos #TechFitness`,
-      secoes:[
-        {
-          num:'01', cor:'#f5c200', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Post Feed Instagram
-Dimensões: 1080 × 1080px (proporção 1:1)
-Resolução: 72 DPI
-Margem: 80px nas bordas
-Estilo: SaaS premium, tech, B2B`
-        },
-        {
-          num:'02', cor:'#ffffff', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Dado de Mercado / Educativo
-Objetivo: Criar consciência do custo oculto de perder alunos e posicionar o GympulsePro como solução de retenção. Gestores focam em captação — esse post ataca o lado cego do negócio.
-Funil: Topo — despertar consciência de problema real e caro
-Ação esperada: Salvamento, compartilhamento e DM com interesse em demo`
-        },
-        {
-          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
-          conteudo:`CONCEITO CENTRAL:
-Comparação visual impactante entre o custo de adquirir (5×) e o custo de reter (1×) um aluno. O número "5×" deve ser o elemento visual dominante — grande e quase incômodo.
-
-COMPOSIÇÃO DA IMAGEM:
-• Layout dividido: bloco esquerdo "ADQUIRIR" maior em vermelho sutil (mostrar custo alto) vs bloco direito "RETER" menor em amarelo (custo baixo)
-• O número "5×" centralizado em amarelo (#f5c200) — elemento hero
-• Fundo preto (#0d0d0d) com grade digital sutil em cinza escuro (#1c1c1c)
-• Screenshot real do GympulsePro (Drive) na base com frame amarelo
-• Logo GympulsePro no topo centralizado
-
-PALETA OBRIGATÓRIA:
-• Preto #0d0d0d — fundo
-• Amarelo #f5c200 — "5×" e lado "reter"
-• Cinza escuro #1c1c1c — grade e elementos secundários
-• Branco #ffffff — texto explicativo
-
-HIERARQUIA VISUAL:
-1. "5×" em amarelo — elemento hero
-2. Comparação visual adquirir vs reter
-3. Logo GympulsePro no topo
-4. Screenshot real com frame amarelo na base`
-        }
-      ]
-    },
-    {
-      id:'gy6', date:'2026-06-17', time:'18h', format:'Carrossel',
-      title:'Prova Social — Planeta Corpo em números reais',
-      driveFile:'WhatsApp Image 2026-05-18 at 12.44.24.jpeg',
-      driveUrl:'https://drive.google.com/file/d/17FVjyP_F1FcTo_zSI3jtay3D0dsasOJe/view',
-      driveHint:'Screenshot painel GympulsePro — Planeta Corpo Club+ (Plano Black): 215 alunos, 408 aulas, 62min/129pts/971kcal por aula',
-      texto:`SLIDE 1 — CAPA
-O que acontece quando você coloca dados em tempo real dentro da academia?
-
-SLIDE 2 — NÚMERO CHOQUE
-215 alunos cadastrados.
-408 aulas registradas.
-Planeta Corpo Club+ · Plano Black · GympulsePro
-
-SLIDE 3 — SCREENSHOT REAL
-[screenshot do painel GympulsePro — Monitor ao Vivo / Relatório]
-
-SLIDE 4 — MÉTRICAS POR AULA
-Média por sessão:
-⏱ 62 minutos de treino
-🏆 129 pontos conquistados
-🔥 971 kcal registradas
-
-SLIDE 5 — IDENTIFICAÇÃO DO CASE
-Academia: Planeta Corpo Club+
-Cidade: Turvo/PR
-Plano: Black (25 sensores)
-Desde: 2025
-
-SLIDE 6 — CTA
-Sua academia pode ter isso.
-Teste gratuito disponível agora.
-👉 gympulse.pro`,
-      secoes:[
-        {
-          num:'01', cor:'#f5c200', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Carrossel Instagram
-Slides: 6 (capa + 4 conteúdo + CTA)
-Dimensões: 1080 × 1080px (proporção 1:1)
-Resolução: 72 DPI
-Zona segura: 100px das bordas
-Estilo: Dashboard premium, dark tech, dados reais`
-        },
-        {
-          num:'02', cor:'#ffffff', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Prova Social / Case Real
-Objetivo: Usar os dados reais do Planeta Corpo Club+ (cliente Black ativo) para demonstrar o impacto do GympulsePro com números concretos — não promessa, mas resultado comprovado.
-Funil: Meio/Fundo — criar desejo e urgência em gestores que já conhecem o produto
-Ação esperada: Salvamento do carrossel, compartilhamento e DM pedindo demo ou tabela de preços`
-        },
-        {
-          num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
-          conteudo:`CONCEITO CENTRAL:
-Dados reais do Planeta Corpo Club+ como protagonistas — números que falam por si. Cada slide revela uma camada da prova social, construindo credibilidade até o CTA final.
-
-SLIDE A SLIDE:
-• Slide 1 (Capa): Pergunta provocadora em amarelo sobre fundo preto. "O que acontece quando você coloca dados em tempo real dentro da academia?" — texto centralizado, logo GympulsePro no topo.
-• Slide 2 (Choque numérico): "215 alunos · 408 aulas" em tipo grande, amarelo (#f5c200), fundo preto — números como elementos hero com logo Planeta Corpo como crédito.
-• Slide 3 (Screenshot): Screenshot real do painel GympulsePro com frame amarelo — prova visual. Caption: "Isso é o painel deles. Ao vivo."
-• Slide 4 (Métricas/aula): Ícones + números: ⏱62 min / 🏆129 pts / 🔥971 kcal — layout de card de métricas em cinza escuro (#1c1c1c) sobre fundo preto.
-• Slide 5 (Identificação): Card de case com nome da academia, cidade, plano e tempo de uso — construção de confiança por transparência.
-• Slide 6 (CTA): "Sua academia pode ter isso." em branco + "gympulse.pro" em amarelo grande — fundo preto, botão amarelo (#f5c200) estilizado.
-
-PALETA OBRIGATÓRIA:
-• Preto #0d0d0d — fundo de todos os slides
-• Amarelo #f5c200 — números hero, CTAs, frames
-• Cinza escuro #1c1c1c — cards de métricas, elementos secundários
-• Branco #ffffff — texto explicativo e legendas
-
-HIERARQUIA VISUAL:
-1. Números em amarelo — elementos hero (slides 2 e 4)
-2. Screenshot real com frame amarelo (slide 3)
-3. Logo GympulsePro em todos os slides (canto superior)
-4. Texto branco de suporte`
-        }
-      ]
     }
   ]
 };
 
-// STATE + SUPABASE SYNC
+// STATE
 const SK='gilson_v5';
-const SUPA_URL='https://ndzbfvxnallshfiouszk.supabase.co';
-const SUPA_KEY='sb_publishable_cEA3C8OvJgZfeZmbnfVYJg_3wuW1YAt';
-
 let S=JSON.parse(localStorage.getItem(SK)||'{}');
-
-async function supaGet(key){
-  try{
-    const r=await fetch(`${SUPA_URL}/rest/v1/painel_gilson_state?key=eq.${key}&select=value`,
-      {headers:{apikey:SUPA_KEY,Authorization:`Bearer ${SUPA_KEY}`}});
-    const d=await r.json();
-    return d[0]?.value??null;
-  }catch{return null;}
-}
-async function supaSet(key,value){
-  try{
-    await fetch(`${SUPA_URL}/rest/v1/painel_gilson_state`,{
-      method:'POST',
-      headers:{apikey:SUPA_KEY,Authorization:`Bearer ${SUPA_KEY}`,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates'},
-      body:JSON.stringify({key,value,updated_at:new Date().toISOString()})
-    });
-  }catch{}
-}
-
-const save=()=>{localStorage.setItem(SK,JSON.stringify(S));supaSet('done',S);};
+const save=()=>localStorage.setItem(SK,JSON.stringify(S));
 const done=id=>!!S[id];
 const toggle=id=>{S[id]=!S[id];save();renderAll();buildHist();};
 
@@ -1806,16 +1077,10 @@ function secColors(profile){
   return m[profile];
 }
 
-function stripRestricoes(txt){
-  return txt.replace(/\n+RESTRIÇÕES OBRIGATÓRIAS:[\s\S]*$/, '').trim();
-}
-
 function cardHTML(item,profile){
   const d=done(item.id);
   const sc=secColors(profile);
-  const secs=item.secoes.map((s,i)=>{
-    const conteudo = s.num==='03' ? stripRestricoes(s.conteudo) : s.conteudo;
-    return `
+  const secs=item.secoes.map((s,i)=>`
     <div class="prompt-section" id="ps-${item.id}-${i}">
       <div class="psec-header" onclick="toggleSec('${item.id}',${i})">
         <div class="psec-num" style="background:${s.cor}22;color:${s.cor}">${s.num}</div>
@@ -1823,12 +1088,11 @@ function cardHTML(item,profile){
         <span class="psec-chev">▼</span>
       </div>
       <div class="psec-body">
-        <div class="psec-content">${conteudo}</div>
+        <div class="psec-content">${s.conteudo}</div>
         <button class="copybtn" onclick="cp('ps-content-${item.id}-${i}',this)">Copiar</button>
-        <div style="display:none" id="ps-content-${item.id}-${i}">${conteudo}</div>
+        <div style="display:none" id="ps-content-${item.id}-${i}">${s.conteudo}</div>
       </div>
-    </div>`;
-  }).join('');
+    </div>`).join('');
 
   const acColor={academia:'#e63900',sorveteria:'#f5c800',gympulse:'#f5c200'}[profile];
 
@@ -1870,13 +1134,6 @@ function cardHTML(item,profile){
       <div class="blabel" style="color:#4ade80">🤖 Briefing criativo — ChatGPT / DALL-E 3</div>
       ${paletteHTML(profile)}
       <div class="prompt-wrap">${secs}</div>
-      <div style="display:none" id="copytudo-${item.id}">${
-        'TEXTO DA POSTAGEM:\n' + item.texto +
-        '\n\n---\n01 · FORMATO E ESPECIFICAÇÕES:\n' + item.secoes[0].conteudo +
-        '\n\n---\n02 · INTENÇÃO DA POSTAGEM:\n' + item.secoes[1].conteudo +
-        '\n\n---\n03 · BRIEFING CRIATIVO:\n' + (item.secoes[2] ? stripRestricoes(item.secoes[2].conteudo) : '')
-      }</div>
-      <button class="copybtn" style="margin-top:12px;color:#4ade80;border-color:#1a281a;background:#080c08;font-size:11px;padding:7px 14px" onclick="cp('copytudo-${item.id}',this)">📋 Copiar tudo (Texto + Formato + Intenção + Briefing)</button>
     </div>
 
   </div>
@@ -1892,7 +1149,7 @@ function renderPanel(profile){
   const c={academia:'#e63900',sorveteria:'#f5c800',gympulse:'#f5c200'}[profile];
   const groups=groupBy(items,'date');
   let html='';
-  Object.keys(groups).sort().forEach(date=>{
+  Object.keys(groups).sort().reverse().forEach(date=>{
     html+=`<div class="dgroup"><div class="dlabel">${fmtDate(date)}</div>`;
     groups[date].forEach(item=>{html+=cardHTML(item,profile);});
     html+='</div>';
@@ -1903,203 +1160,10 @@ function renderPanel(profile){
       <div class="stat"><div class="stat-n" style="color:${c}">${doneN}</div><div class="stat-l">Feito</div></div>
       <div class="stat"><div class="stat-n">${total-doneN}</div><div class="stat-l">Pendente</div></div>
       <div class="stat"><div class="stat-n" style="color:${c}">${pct}%</div><div class="stat-l">Progresso</div></div>
-    </div>
-    <div class="strat-toggle-wrap">
-      <button class="edit-btn" onclick="toggleStrat('${profile}',this)">📈 Estratégia</button>
-    </div>
-    <div class="strat-wrap" id="strat-${profile}" style="display:none">${stratHTML(profile)}</div>
-    ${html||'<div class="empty"><div class="eico">📭</div><p>Sem conteúdo ainda.</p></div>'}`;
+    </div>${html||'<div class="empty"><div class="eico">📭</div><p>Sem conteúdo ainda.</p></div>'}`;
 }
 
 function renderAll(){['academia','sorveteria','gympulse'].forEach(renderPanel);}
-
-const ESTRATEGIA = {
-  academia: {
-    name:'Planeta Corpo Club+', handle:'@planetacorpoclubmais', color:'#e63900',
-    bio:`Academia em Turvo/PR há 27 anos 🧡
-Saúde, bem-estar e qualidade de vida — sem fórmula de estética
-Musculação · Dança · Spinning · Funcional · Jump · HIIT
-📍 Av. Maria Bettega, 360, Centro
-💬 (42) 99922-2857 | Aula experimental grátis 👇`,
-    engajamento:[
-      'Responder todos os comentários e DMs em até 2h, em tom acolhedor (conversa entre amigas)',
-      'Curtir e responder Stories de alunas que marcarem a academia',
-      'Repostar nos Stories sempre que uma aluna compartilhar um treino ou resultado',
-      'Usar caixinha de perguntas/enquetes pelo menos 2x por semana para gerar interação',
-      'Nunca usar linguagem fitness agressiva, "GRÁTIS!!!" gritado ou emojis de fogo/músculo'
-    ],
-    ctas:[
-      {tipo:'Prova Social', txt:'Quer chegar lá também? Manda mensagem! 📲'},
-      {tipo:'Dica de Saúde', txt:'Comenta aqui: qual desses benefícios você mais quer? 🧡'},
-      {tipo:'Matrícula', txt:'Aula experimental GRÁTIS — link na bio ou chama no WhatsApp 💪'},
-      {tipo:'Humanização', txt:'Marque aqui alguém que precisa conhecer esse lugar 🌿'},
-      {tipo:'Reel', txt:'Salva esse vídeo para não esquecer! ⭐'}
-    ],
-    hashtags:'#fitness #academia #musculação #saudeebemestar #vidafitness #academiaparana #treinodiario #qualidadevida #mulheresativa #saudeemdia #treinofeminino #vidaativa #emagrecimento #treinofuncional #hiit #jump #musculacaofeminina #bemestarsaude #treinando #exerciciofisico #academiaturvoPR #turvoPR #planetacorpo #planetacorpoclubmais #academialocal #treinoturvo #guarapuava #guarapuavafit #interiorpr #cidadeinterior',
-    formatos:[
-      {tipo:'Stories', pct:'40%', desc:'Bastidores, prova social e engajamento rápido'},
-      {tipo:'Post Feed', pct:'35%', desc:'Dicas de saúde e construção de marca'},
-      {tipo:'Carrossel', pct:'15%', desc:'Educação — benefícios, modalidades, mitos'},
-      {tipo:'Reels', pct:'10%', desc:'Crescimento de alcance e novos seguidores'}
-    ],
-    acoes:[
-      'Reativar as 107 alunas inativas (108/215 ativas) com conteúdo de humanização + convite direto',
-      'Divulgar o catálogo de Fitcoins (Açaí com Whey, Squeeze, Copo Stanley, Camiseta) — 157 pontos ganhos, 0 resgatados',
-      'Postar prova social semanal (aluna no ranking do GympulsePro) para reforçar engajamento',
-      'Manter funil: Prova social → Dica de saúde → Convite direto → Humanização'
-    ]
-  },
-  sorveteria:{
-    name:'Sorvetes Guri', handle:'@sorvetesguriturvo', color:'#00b4d8',
-    bio:`Sorveteria com buffet e loja de fábrica 🍦
-Sorvetes gourmet, açaí, milkshake e muito mais
-Turvo/PR — feito com carinho para sua família
-📍 Turvo/PR | Vem provar! 💙`,
-    engajamento:[
-      'Responder comentários e DMs no mesmo dia, com tom leve e alegre ("vizinho querido")',
-      'Repostar fotos/Stories de clientes saboreando os produtos',
-      'Usar enquetes de sabores ("Qual você prefere?") para gerar comentários',
-      'Avisar promoções do dia sempre nos Stories até as 15h (horário de maior movimento)',
-      'Marcar e agradecer publicamente clientes que citarem a sorveteria'
-    ],
-    ctas:[
-      {tipo:'Produto do Dia', txt:'Peça agora! Vem na loja ou chama no WhatsApp 📱'},
-      {tipo:'Promoção', txt:'Só hoje! Corre lá ou chama no WhatsApp 🏃'},
-      {tipo:'Lançamento', txt:'Qual você provaria primeiro? Comenta aí! 🍦'},
-      {tipo:'Bastidores', txt:'Marque aqui alguém que ama sorvete! 💙'},
-      {tipo:'Enquete', txt:'Qual sabor a gente devia trazer de volta? Comenta!'}
-    ],
-    hashtags:'#sorvete #sorveteria #gelato #frozen #sorvetegourmet #turvo #turvopr #parana #sorveteparana #sorveteriaturvo #interiordoparana #sorvetesguriturvo #guriturvo #sorveteprofissional #buffetsorvete #sorvetesartesanais #sorvetesabores #acai #milkshake #picolé #sorvetederua #sorveterialocal #comidaboa #foodporn #reelsinstagram #foodlovers #saboreie #experimenteaqui #sorvetedodia #temsorvete',
-    formatos:[
-      {tipo:'Stories', pct:'50%', desc:'Produto do dia, promoções e urgência'},
-      {tipo:'Post Feed', pct:'30%', desc:'Construção de marca e novos sabores'},
-      {tipo:'Reels', pct:'15%', desc:'Bastidores e mascote — alcance e diversão'},
-      {tipo:'Carrossel', pct:'5%', desc:'Cardápio, combos e ocasiões especiais'}
-    ],
-    acoes:[
-      'Manter rotina diária: 09h produto do dia (story+mascote), 11h30 post de produto, 15h promoção da tarde, 19h boa noite',
-      'Usar os mascotes 3D do Guri (pose com sorvete / apresentando) para promoções',
-      'Criar enquetes semanais de sabor para engajar a comunidade local',
-      'Reforçar recorrência com combos de fim de semana e datas comemorativas'
-    ]
-  },
-  gympulse:{
-    name:'GympulsePro', handle:'@gympulsepro', color:'#f5c200',
-    bio:`Gamificação para academias 🎮
-Monitoramento em tempo real, rankings, fitcoins e desafios
-Mais retenção, mais engajamento, mais resultado
-👉 Agende uma demo gratuita`,
-    engajamento:[
-      'Responder dúvidas técnicas de gestores/professores com dados e exemplos reais (tom B2B, profissional)',
-      'Comentar e curtir posts de academias parceiras (Planeta Corpo, Academia Life, Personal Altair)',
-      'Compartilhar prints reais do dashboard (sempre anonimizados) para gerar prova social',
-      'Responder perguntas de "Comenta aí 👇" em até 2h para alimentar o algoritmo',
-      'Evitar linguagem fitness genérica — falar sempre de ROI, retenção e dados'
-    ],
-    ctas:[
-      {tipo:'Dado de Mercado', txt:'Isso está acontecendo na sua academia? Comenta aí 👇'},
-      {tipo:'Funcionalidade', txt:'Quer ver isso funcionando ao vivo? Manda mensagem! 🎮'},
-      {tipo:'Prova Social', txt:'Quer esse resultado na sua academia? Agenda uma demo gratuita — link na bio 🎯'},
-      {tipo:'Demo', txt:'Salva esse vídeo e manda pro dono da sua academia! 💪'},
-      {tipo:'Educativo', txt:'Seu negócio já usa gamificação? Comenta aí 👇'}
-    ],
-    hashtags:'#gympulse #gympulsepro #gamificacaofitness #gamificacaoacademia #academiagamificada #fittech #gestaodeacademia #plataformaacademia #academia #treinomotivacao #musculacao #fitness #vidasaudavel #transformacaofisica #desafiofitness #academiamoderna #saas #empreendedor #negociodigital #software #inovacao #startup #growthhacking #leadgeneration #techforgym #academiadigital #tecnologiaesportiva #retencaodealunos #engajamentofitness #rankingacademia',
-    formatos:[
-      {tipo:'Post Feed', pct:'40%', desc:'Dados de mercado e funcionalidades (10h)'},
-      {tipo:'Carrossel', pct:'30%', desc:'Demos, cases e fluxos do produto (18h)'},
-      {tipo:'Reels', pct:'20%', desc:'Demonstrações rápidas para crescimento'},
-      {tipo:'Stories', pct:'10%', desc:'Bastidores de desenvolvimento e prova social'}
-    ],
-    acoes:[
-      'Converter Academia Life (trial, 6 alunos, 108 aulas) para plano pago — maior prioridade de conversão',
-      'Reativar Personal Altair (5 alunos, 6 aulas) — risco de churn',
-      'Lançar conteúdo sobre Fitcoins/recompensas para estimular resgates no Planeta Corpo (157 ganhos, 0 resgatados)',
-      'Criar e divulgar competições/desafios — atualmente 0 ativas',
-      'Manter funil: Dado de mercado → Funcionalidade → Prova social → Demo'
-    ]
-  }
-};
-
-function cpText(txt, btn){
-  navigator.clipboard.writeText(txt).then(()=>{
-    const o=btn.textContent; btn.textContent='✓ Copiado!';
-    setTimeout(()=>btn.textContent=o,1500);
-  });
-}
-
-function stratHTML(p){
-    const e=ESTRATEGIA[p];
-    return `
-    <div class="strat-profile">
-      <div class="strat-profile-header">
-        <div class="strat-profile-dot" style="background:${e.color}"></div>
-        <div>
-          <div class="strat-profile-name">${e.name}</div>
-          <div class="strat-profile-handle">${e.handle}</div>
-        </div>
-      </div>
-
-      <div class="strat-section">
-        <div class="strat-label">📝 Bio</div>
-        <div class="strat-box bio">${e.bio}</div>
-      </div>
-
-      <div class="strat-section">
-        <div class="strat-label">🤝 Regras de Engajamento</div>
-        <div class="strat-box">${e.engajamento.map(r=>'· '+r).join('\n')}</div>
-      </div>
-
-      <div class="strat-section">
-        <div class="strat-label">📣 CTA por Tipo de Post</div>
-        <div class="strat-cta-list">
-          ${e.ctas.map(c=>`
-          <div class="strat-cta-item">
-            <span class="strat-cta-type" style="background:${e.color}22;color:${e.color}">${c.tipo}</span>
-            <span class="strat-cta-text">${c.txt}</span>
-          </div>`).join('')}
-        </div>
-      </div>
-
-      <div class="strat-section">
-        <div class="strat-label">🎯 Mix de Formatos</div>
-        <div class="strat-grid">
-          ${e.formatos.map(f=>`
-          <div class="strat-card">
-            <div class="strat-card-label">${f.tipo}</div>
-            <div class="strat-card-value" style="color:${e.color}">${f.pct}</div>
-            <div class="strat-card-sub">${f.desc}</div>
-          </div>`).join('')}
-        </div>
-      </div>
-
-      <div class="strat-section">
-        <div class="strat-label">#️⃣ Hashtags Estruturadas</div>
-        <div class="strat-box hashtags" id="strat-hash-${p}">${e.hashtags}</div>
-        <div style="margin-top:8px;text-align:right;">
-          <button class="edit-btn" onclick="cpText(ESTRATEGIA.${p}.hashtags,this)">📋 Copiar hashtags</button>
-        </div>
-      </div>
-
-      <div class="strat-section">
-        <div class="strat-label">✅ Próximas Ações</div>
-        <div class="strat-action-list">
-          ${e.acoes.map((a,idx)=>`
-          <div class="strat-action">
-            <div class="strat-action-num" style="background:${e.color}22;color:${e.color}">${idx+1}</div>
-            <div>${a}</div>
-          </div>`).join('')}
-        </div>
-      </div>
-    </div>`;
-}
-
-let stratOpen={academia:false,sorveteria:false,gympulse:false};
-function toggleStrat(profile,btn){
-  stratOpen[profile]=!stratOpen[profile];
-  const wrap=document.getElementById('strat-'+profile);
-  wrap.style.display=stratOpen[profile]?'block':'none';
-  if(btn)btn.textContent=stratOpen[profile]?'📈 Ocultar estratégia':'📈 Estratégia';
-}
 
 function buildHist(){
   const all=[
@@ -2135,7 +1199,8 @@ function go(tab,el){
   document.getElementById('p-'+tab).classList.add('on');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   el.classList.add('on');
-  if(tab==='historico')buildHist();
+  if(tab==='historico') buildHist();
+  if(tab==='estrategia') buildEstrategia();
 }
 
 (function(){
@@ -2144,6 +1209,262 @@ function go(tab,el){
   const mn=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   document.getElementById('datepill').textContent=`${dn[n.getDay()]} ${n.getDate()} ${mn[n.getMonth()]}`;
 })();
+
+
+
+
+
+// ── ESTRATÉGIA ────────────────────────────────────────────────────────────
+const ESTRATEGIA = {
+  academia: {
+    name: 'Planeta Corpo Club+',
+    handle: '@planetacorpoclubmais',
+    color: '#e63900',
+    seguidores: '3.066', posts: '399', meta30: '3.500+', meta90: '5.000+',
+    bio: `🏋️ Planeta Corpo Club+
+📍 Av. Maria Bettega, 360 — Turvo/PR
+💪 Musculação · Funcional · Coletivas · Jump
+✨ Qualidade de vida desde 1998
+👇 Aula experimental GRÁTIS — link abaixo!`,
+    engajamento: [
+      'Responder TODOS os comentários nas primeiras 2 horas',
+      'Perguntar nos comentários: "Qual seu objetivo?" / "Qual seu maior desafio?"',
+      'Convidar para WhatsApp: "Bora conversar? Manda mensagem! 👇"',
+      'Stories: usar stickers de enquete, perguntas e contagem regressiva'
+    ],
+    ctas: [
+      {tipo:'Prova social', txt:'Quer chegar lá também? Manda mensagem! 👇'},
+      {tipo:'Dica de saúde', txt:'Comenta aqui: qual desses benefícios você mais quer?'},
+      {tipo:'Matrícula', txt:'Aula experimental GRÁTIS — link na bio! 💪'},
+      {tipo:'Humanização', txt:'Marque alguém que precisa conhecer esse lugar 🧡'},
+      {tipo:'Reel', txt:'Salva esse vídeo para não esquecer! ✅'}
+    ],
+    hashtags: `GRANDES: #fitness #academia #musculação #saudeebemestar #vidafitness
+
+MÉDIAS: #academiaparana #treinodiario #qualidadevida #mulheresativa #saudeemdia #treinofeminino #vidaativa #emagrecimento #treinofuncional #hiit #jump #musculacaofeminina #bemestarsaude #treinando #exerciciofisico
+
+MICRO: #academiaturvoPR #turvoPR #planetacorpo #planetacorpoclubmais #academialocal #treinoturvo #guarapuava #guarapuavafit #interiorpr #cidadeinterior`,
+    formatos: [
+      {tipo:'Reels', pct:'60%', desc:'Maior alcance — prioridade máxima'},
+      {tipo:'Carrosséis', pct:'25%', desc:'Educativo, planos de treino, guias'},
+      {tipo:'Posts estáticos', pct:'15%', desc:'Promoções, anúncios, agradecimentos'}
+    ],
+    acoes: [
+      'Atualizar a bio do Instagram com o novo texto',
+      'Criar Linktree: WhatsApp + Site + Aula experimental GRÁTIS',
+      'Priorizar Reels no lugar de posts estáticos',
+      'Responder TODOS os comentários nas primeiras 2 horas',
+      'Stories diários com stickers de enquete e perguntas'
+    ]
+  },
+
+  sorveteria: {
+    name: 'Sorvetes Guri',
+    handle: '@sorvetesguriturvo',
+    color: '#f5c800',
+    seguidores: '2.236', posts: '104', meta30: '2.500+', meta90: '3.200+',
+    bio: `🍦 Sorvetes Guri — Turvo/PR
+🏪 Buffet · Loja de Fábrica · Gourmet
+🕐 [HORÁRIO DE FUNCIONAMENTO]
+📱 Peça agora — link abaixo!
+💬 WhatsApp: (XX) XXXXX-XXXX`,
+    engajamento: [
+      'Responder TODOS os comentários nos primeiros 30 minutos',
+      'Responder TODOS os DMs em até 1 hora',
+      'Fazer perguntas: "Qual sabor você provaria?" / "Tag seu sabor favorito!"',
+      'Stories: enquetes de sabores, perguntas, contagem regressiva',
+      'Lives: 1-2 por mês apresentando produtos ou sabores novos'
+    ],
+    ctas: [
+      {tipo:'Produto do dia', txt:'Peça agora! Link na bio 📱'},
+      {tipo:'Promoção', txt:'Só hoje! Corre lá ou chama no WhatsApp 👇'},
+      {tipo:'Lançamento', txt:'Qual você provaria? Comenta aí! 🍦'},
+      {tipo:'Bastidores', txt:'Tag alguém que ama sorvete! 😍'},
+      {tipo:'Enquete', txt:'Qual sabor devemos lançar? Comenta!'}
+    ],
+    hashtags: `GERAIS: #sorvete #sorveteria #gelato #frozen #sorvetegourmet
+
+REGIONAIS: #turvo #turvopr #parana #sorveteparana #sorveteriaturvo #interiordoparana #sorvetesguriturvo #guriturvo
+
+NICHO: #sorveteprofissional #buffetsorvete #sorvetesartesanais #sorvetesabores #acai #milkshake #picolé #sorvetederua
+
+TENDÊNCIA: #sorveterialocal #comidaboa #foodporn #reelsinstagram #foodlovers #saboreie #experimenteaqui #sorvetedodia #temsorvete`,
+    formatos: [
+      {tipo:'Reels', pct:'3-4/sem', desc:'Primeiros 3s mostram produto irresistível'},
+      {tipo:'Stories', pct:'2-3x/dia', desc:'Promoção do dia, bastidores, enquetes'},
+      {tipo:'Feed', pct:'4-5/sem', desc:'Fotos de produto, lançamentos, promoções'},
+      {tipo:'Lives', pct:'1-2/mês', desc:'Apresentação de sabores novos'}
+    ],
+    acoes: [
+      'Atualizar bio com horário de funcionamento e WhatsApp',
+      'Criar 4 Reels com primeiros 3 segundos mostrando o produto',
+      'Fazer 1 Live apresentando sabor novo este mês',
+      'Responder TODOS comentários em 30 min e DMs em 1 hora',
+      'Story diário com enquete de sabores'
+    ]
+  },
+
+  gympulse: {
+    name: 'GympulsePro',
+    handle: '@gympulsepro',
+    color: '#f5c200',
+    seguidores: '2', posts: '4', meta30: '50+', meta90: '200+',
+    bio: `🎮 GympulsePro — Gamificação para Academias
+⚡ Monitor ao vivo · Rankings · Fitcoins
+🏆 Retenção comprovada de alunos
+📱 Demo gratuita — link abaixo!
+👇 Agende agora e veja ao vivo`,
+    engajamento: [
+      'Comentar em 10-15 posts de academias brasileiras por dia',
+      'Responder TODOS os comentários imediatamente',
+      'Responder DMs em até 1 hora',
+      'Stories diários com polls e dúvidas de gestores',
+      'Interagir com fitness coaches e personal trainers'
+    ],
+    ctas: [
+      {tipo:'Educativo', txt:'Seu negócio já usa gamificação? Comenta aí! 👇'},
+      {tipo:'Case study', txt:'Quer esse resultado? Agenda uma demo gratuita! Link na bio 🚀'},
+      {tipo:'Funcionalidade', txt:'Quer ver ao vivo? Manda mensagem! 🎮'},
+      {tipo:'Dado', txt:'Isso está acontecendo na sua academia? Comenta 👇'},
+      {tipo:'Reel', txt:'Salva e manda pro dono da sua academia! 💪'}
+    ],
+    hashtags: `PRODUTO: #gympulse #gympulsepro #gamificacaofitness #gamificacaoacademia #academiagamificada #fittech #gestacadeacademia #plataformaacademia
+
+FITNESS: #academia #treinomotivacao #musculacao #fitness #vidasaudavel #transformacaofisica #desafiofitness #academiamoderna
+
+NEGÓCIO: #saas #empreendedor #negociodigital #software #inovacao #startup #growthhacking #leadgeneration
+
+TECH: #techforgym #academiadigital #tecnologiaesportiva #retencaodealunos #engajamentofitness #rankingacademia`,
+    formatos: [
+      {tipo:'Reels', pct:'3x/sem', desc:'Demo rápida 15-30s com hook impactante'},
+      {tipo:'Carrosséis', pct:'2x/sem', desc:'Educativos 5-7 slides sobre gamificação'},
+      {tipo:'Post estático', pct:'1x/sem', desc:'Case study, estatística, depoimento'},
+      {tipo:'Stories', pct:'Diários', desc:'Bastidores, polls, dúvidas respondidas'}
+    ],
+    acoes: [
+      'Comentar em 10-15 perfis de academias hoje',
+      'Gravar 3 Reels de demo rápida (15-30 segundos)',
+      'Ativar ads R$20-50/dia segmentando donos de academia na semana 2',
+      'Fechar 2+ academias parceiras para shoutouts mútuos no mês 1',
+      'Criar série "Academia da Semana" destacando clientes'
+    ]
+  }
+};
+
+function buildEstrategia() {
+  const el = document.getElementById('p-estrategia');
+  const profiles = ['academia','sorveteria','gympulse'];
+  const labels = ['🏋️ Academia','🍦 Sorveteria','🎮 GympulsePro'];
+
+  let html = '';
+
+  profiles.forEach((profile, pi) => {
+    const d = ESTRATEGIA[profile];
+    const c = d.color;
+    const isLast = pi === profiles.length - 1;
+
+    // Metas grid
+    const metasHTML = `
+      <div class="strat-grid">
+        <div class="strat-card">
+          <div class="strat-card-label">Seguidores atuais</div>
+          <div class="strat-card-value" style="color:${c}">${d.seguidores}</div>
+          <div class="strat-card-sub">${d.posts} posts publicados</div>
+        </div>
+        <div class="strat-card">
+          <div class="strat-card-label">Meta 30 dias</div>
+          <div class="strat-card-value" style="color:${c}">${d.meta30}</div>
+          <div class="strat-card-sub">Meta 90 dias: ${d.meta90}</div>
+        </div>
+      </div>`;
+
+    // CTAs
+    const ctasHTML = d.ctas.map(cta => `
+      <div class="strat-cta-item">
+        <span class="strat-cta-type" style="background:${c}22;color:${c}">${cta.tipo}</span>
+        <span class="strat-cta-text">${cta.txt}</span>
+        <button class="copybtn" style="margin:0;flex-shrink:0" onclick="cpText('${cta.txt.replace(/'/g,"\'")}',this)">Copiar</button>
+      </div>`).join('');
+
+    // Formatos
+    const fmtsHTML = d.formatos.map(f => `
+      <div class="strat-cta-item">
+        <span class="strat-cta-type" style="background:${c}22;color:${c}">${f.tipo}</span>
+        <span class="strat-cta-text"><strong>${f.pct}</strong> — ${f.desc}</span>
+      </div>`).join('');
+
+    // Engajamento
+    const engHTML = d.engajamento.map((e,i) => `
+      <div class="strat-action">
+        <div class="strat-action-num" style="background:${c}22;color:${c}">${i+1}</div>
+        ${e}
+      </div>`).join('');
+
+    // Ações imediatas
+    const acoesHTML = d.acoes.map((a,i) => `
+      <div class="strat-action">
+        <div class="strat-action-num" style="background:rgba(74,222,128,0.15);color:#4ade80">${i+1}</div>
+        ${a}
+      </div>`).join('');
+
+    html += `
+    <div class="strat-profile">
+      <div class="strat-profile-header">
+        <div class="strat-profile-dot" style="background:${c}"></div>
+        <div>
+          <div class="strat-profile-name">${d.name}</div>
+          <div class="strat-profile-handle">${d.handle}</div>
+        </div>
+      </div>
+
+      ${metasHTML}
+
+      <div class="strat-section" style="margin-top:16px">
+        <div class="strat-label" style="color:${c}">📝 Bio pronta para copiar</div>
+        <div class="strat-box bio" id="bio-${profile}">${d.bio}</div>
+        <button class="copybtn" onclick="cp('bio-${profile}',this)">Copiar bio</button>
+      </div>
+
+      <div class="strat-section">
+        <div class="strat-label" style="color:${c}">🎯 CTAs por tipo de post</div>
+        <div class="strat-cta-list">${ctasHTML}</div>
+      </div>
+
+      <div class="strat-section">
+        <div class="strat-label" style="color:${c}">#️⃣ Hashtags (copiar bloco completo)</div>
+        <div class="strat-box hashtags" id="ht-${profile}">${d.hashtags}</div>
+        <button class="copybtn" onclick="cp('ht-${profile}',this)">Copiar hashtags</button>
+      </div>
+
+      <div class="strat-section">
+        <div class="strat-label" style="color:${c}">📐 Mix de formatos</div>
+        <div class="strat-cta-list">${fmtsHTML}</div>
+      </div>
+
+      <div class="strat-section">
+        <div class="strat-label" style="color:${c}">💬 Regras de engajamento</div>
+        <div class="strat-action-list">${engHTML}</div>
+      </div>
+
+      <div class="strat-section">
+        <div class="strat-label" style="color:#4ade80">🚀 Ações imediatas</div>
+        <div class="strat-action-list">${acoesHTML}</div>
+      </div>
+
+      ${!isLast ? '<div class="strat-divider"></div>' : ''}
+    </div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+function cpText(txt, btn) {
+  navigator.clipboard.writeText(txt).then(() => {
+    const o = btn.textContent;
+    btn.textContent = '✓';
+    setTimeout(() => btn.textContent = o, 1500);
+  });
+}
 
 // ── EDITOR ────────────────────────────────────────────────────────────────
 let editingId = null;
@@ -2157,16 +1478,6 @@ function findItem(id) {
   return null;
 }
 
-function applyLocalEdits(){
-  ['academia','sorveteria','gympulse'].forEach(profile=>{
-    CONTENT[profile].forEach(item=>{
-      const saved=JSON.parse(localStorage.getItem('edits_'+item.id)||'null');
-      if(saved)Object.assign(item,saved);
-    });
-  });
-}
-applyLocalEdits();
-
 function openEdit(id) {
   const found = findItem(id);
   if (!found) return;
@@ -2174,13 +1485,18 @@ function openEdit(id) {
   editingId = id;
   editingProfile = profile;
 
-  document.getElementById('modalTitle').textContent = 'EDITAR — ' + item.title;
-  document.getElementById('edit-time').value = item.time || '';
-  document.getElementById('edit-format').value = item.format || 'Story';
-  document.getElementById('edit-title').value = item.title || '';
-  document.getElementById('edit-texto').value = item.texto || '';
+  // Load saved overrides from localStorage
+  const saved = JSON.parse(localStorage.getItem('edits_' + id) || '{}');
+  const data = { ...item, ...saved };
 
-  const secs = item.secoes || [];
+  document.getElementById('modalTitle').textContent = 'EDITAR — ' + data.title;
+  document.getElementById('edit-time').value = data.time || '';
+  document.getElementById('edit-format').value = data.format || 'Story';
+  document.getElementById('edit-title').value = data.title || '';
+  document.getElementById('edit-texto').value = data.texto || '';
+
+  // Load secoes
+  const secs = data.secoes || item.secoes || [];
   document.getElementById('edit-sec01').value = secs[0] ? secs[0].conteudo : '';
   document.getElementById('edit-sec02').value = secs[1] ? secs[1].conteudo : '';
   document.getElementById('edit-sec03').value = secs[2] ? secs[2].conteudo : '';
@@ -2207,14 +1523,15 @@ function saveEdit() {
   if (!found) return;
   const { item } = found;
 
-  const fields = [
-    document.getElementById('edit-sec01'),
-    document.getElementById('edit-sec02'),
-    document.getElementById('edit-sec03')
-  ];
-  const updatedSecs = (item.secoes || []).map((s, i) => ({
-    ...s, conteudo: fields[i] ? fields[i].value : s.conteudo
-  }));
+  // Build updated secoes preserving colors/nums
+  const updatedSecs = (item.secoes || []).map((s, i) => {
+    const fields = [
+      document.getElementById('edit-sec01'),
+      document.getElementById('edit-sec02'),
+      document.getElementById('edit-sec03')
+    ];
+    return { ...s, conteudo: fields[i] ? fields[i].value : s.conteudo };
+  });
 
   const edits = {
     time:   document.getElementById('edit-time').value,
@@ -2224,59 +1541,104 @@ function saveEdit() {
     secoes: updatedSecs
   };
 
+  // Save to localStorage
   localStorage.setItem('edits_' + editingId, JSON.stringify(edits));
+
+  // Apply to CONTENT in memory
   Object.assign(item, edits);
 
-  // Sync all edits to Supabase
-  const allEdits={};
-  ['academia','sorveteria','gympulse'].forEach(p=>{
-    CONTENT[p].forEach(it=>{const e=localStorage.getItem('edits_'+it.id);if(e)allEdits[it.id]=JSON.parse(e);});
-  });
-  supaSet('edits',allEdits);
-
+  // Re-render
   renderAll();
   buildHist();
   closeModalDirect();
-
-  const toast = document.getElementById('savedToast');
-  toast.classList.add('show');
-  setTimeout(()=>toast.classList.remove('show'), 2000);
+  showToast();
 }
 
-// Render imediato com dados locais
-renderAll();
-buildHist();
+function showToast() {
+  const t = document.getElementById('savedToast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
 
-// Sync com Supabase em background
-(async()=>{
-  const dot=document.getElementById('syncDot');
-  if(dot)dot.style.background='#f5a623'; // laranja = sincronizando
-
-  const[remDone,remEdits]=await Promise.all([supaGet('done'),supaGet('edits')]);
-  let changed=false;
-
-  if(remDone && JSON.stringify(remDone)!==JSON.stringify(S)){
-    S=remDone;
-    localStorage.setItem(SK,JSON.stringify(S));
-    changed=true;
-  }
-
-  if(remEdits){
-    ['academia','sorveteria','gympulse'].forEach(profile=>{
-      CONTENT[profile].forEach(item=>{
-        const edit=remEdits[item.id];
-        if(edit){
-          localStorage.setItem('edits_'+item.id,JSON.stringify(edit));
-          Object.assign(item,edit);
-          changed=true;
-        }
-      });
+// Apply saved edits on load
+function applySavedEdits() {
+  for (const profile of ['academia','sorveteria','gympulse']) {
+    CONTENT[profile].forEach(item => {
+      const saved = localStorage.getItem('edits_' + item.id);
+      if (saved) {
+        try { Object.assign(item, JSON.parse(saved)); } catch(e) {}
+      }
     });
   }
+}
 
-  if(changed){renderAll();buildHist();}
-  if(dot)dot.style.background='#4ade80'; // verde = sincronizado
-})();
+// Run before first render
+applySavedEdits();
+
+renderAll();
 </script>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">EDITAR CARD</div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="field-row">
+        <div class="field-group">
+          <div class="field-label" style="color:#f5a623">🕐 Horário</div>
+          <input class="field-input" id="edit-time" type="text" placeholder="ex: 08h">
+        </div>
+        <div class="field-group">
+          <div class="field-label" style="color:#f5a623">📐 Formato</div>
+          <select class="field-input" id="edit-format">
+            <option value="Story">Story (1080×1920px)</option>
+            <option value="Post">Post Feed (1080×1080px)</option>
+            <option value="Carrossel">Carrossel (1080×1080px/slide)</option>
+            <option value="Reel">Reel (1080×1920px)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label" style="color:#f5a623">📌 Título do card</div>
+        <input class="field-input" id="edit-title" type="text" placeholder="Título do card">
+      </div>
+
+      <div class="field-group">
+        <div class="field-label" style="color:#f5a623">📝 Texto da postagem</div>
+        <textarea class="field-input" id="edit-texto" rows="6" placeholder="Texto completo da postagem..."></textarea>
+        <div class="field-hint">Esse é o texto que vai para o Instagram</div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label" style="color:#e63900">01 — Formato e Especificações</div>
+        <textarea class="field-input mono" id="edit-sec01" rows="5" placeholder="Dimensões, DPI, zona segura, estilo visual..."></textarea>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label" style="color:#f5a623">02 — Intenção da Postagem</div>
+        <textarea class="field-input mono" id="edit-sec02" rows="6" placeholder="Tipo, objetivo, funil, ação esperada..."></textarea>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label" style="color:#4ade80">03 — Briefing Criativo Detalhado</div>
+        <textarea class="field-input mono" id="edit-sec03" rows="14" placeholder="Conceito central, composição, paleta, estilo, restrições..."></textarea>
+        <div class="field-hint">Esse é o briefing completo para o ChatGPT/DALL-E 3</div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="edit-btn" onclick="closeModalDirect()">Cancelar</button>
+      <button class="edit-btn edit-btn-primary" onclick="saveEdit()">💾 Salvar alterações</button>
+    </div>
+  </div>
+</div>
+
+<div class="saved-toast" id="savedToast">✓ Alterações salvas!</div>
+
 </body>
 </html>
