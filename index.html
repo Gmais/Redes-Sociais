@@ -412,6 +412,18 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 
 @media(max-width:500px) { .strat-grid { grid-template-columns:1fr; } }
 
+.drive-connect-btn {
+  font-size:11px; font-weight:700; letter-spacing:0.03em;
+  padding:6px 12px; border-radius:7px; cursor:pointer;
+  border:1px solid rgba(0,180,216,0.35); background:rgba(0,180,216,0.08);
+  color:#00b4d8; font-family:'Inter',sans-serif; transition:all 0.15s;
+  white-space:nowrap;
+}
+.drive-connect-btn:hover { background:rgba(0,180,216,0.15); }
+.drive-connect-btn.connected {
+  border-color:rgba(74,222,128,0.4); background:rgba(74,222,128,0.1); color:#4ade80;
+}
+
 /* ── HIDE COMPLETED FILTER ── */
 .filter-bar {
   display:flex; justify-content:center; padding:10px 16px 0;
@@ -440,6 +452,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 }
 
 </style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -455,6 +468,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
       <div class="sync-dot syncing" id="syncDot"></div>
       <span id="syncLabel">Sincronizando</span>
     </div>
+    <button class="drive-connect-btn" id="driveConnectBtn" onclick="connectGoogleDrive()">🔗 Conectar Drive</button>
   </div>
 </div>
 
@@ -3376,23 +3390,105 @@ function imageBlockHTML(id, profile){
 function profileFolderName(profile){
   return {academia:'Academia', sorveteria:'Sorveteria', gympulse:'Gympulse'}[profile] || profile;
 }
+const DRIVE_FOLDER_MAP = {
+  academia: '1xltSXYrcyWBAmJxKMzohjG2uuPSPbkWq',
+  sorveteria: '1OOZGQK1XO6XMH5K9VfyVXxk9Hdx3U_oS',
+  gympulse: '1fxOPjshpJS10kbUeWKYm8UQmQMnN3Rt7'
+};
 
 function rerenderImageBox(id, profile){
   const box = document.getElementById('imgbox-'+id);
   if (box) box.innerHTML = imageBlockHTML(id, profile);
 }
 
-function fileToBase64(file){
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result; // data:mime;base64,XXXX
-      const base64 = result.split(',')[1];
-      resolve(base64);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+// ── GOOGLE OAUTH (browser-side, direct upload to Drive) ──
+const GOOGLE_OAUTH_CLIENT_ID = '531127789749-cj3s2m5rn48g17t8u8hsf4jq86n6i1c1.apps.googleusercontent.com';
+let gisTokenClient = null;
+let driveAccessToken = null;
+let driveTokenExpiry = 0;
+
+function initGoogleAuth(){
+  if (!window.google || !window.google.accounts) {
+    setTimeout(initGoogleAuth, 300); // gsi script ainda carregando
+    return;
+  }
+  gisTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_OAUTH_CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    callback: (resp) => {
+      if (resp && resp.access_token) {
+        driveAccessToken = resp.access_token;
+        driveTokenExpiry = Date.now() + (resp.expires_in ? resp.expires_in * 1000 : 3000000);
+        sessionStorage.setItem('gdrive_token', JSON.stringify({ t: driveAccessToken, exp: driveTokenExpiry }));
+        updateDriveConnectBtn(true);
+        if (window._pendingUploadAfterAuth) {
+          const fn = window._pendingUploadAfterAuth;
+          window._pendingUploadAfterAuth = null;
+          fn();
+        }
+      }
+    }
   });
+  // Restore a still-valid token from this browser session, if any
+  try {
+    const saved = JSON.parse(sessionStorage.getItem('gdrive_token') || 'null');
+    if (saved && saved.exp > Date.now() + 60000) {
+      driveAccessToken = saved.t;
+      driveTokenExpiry = saved.exp;
+      updateDriveConnectBtn(true);
+    }
+  } catch(e) {}
+}
+
+function updateDriveConnectBtn(connected){
+  const btn = document.getElementById('driveConnectBtn');
+  if (!btn) return;
+  if (connected) {
+    btn.textContent = '✓ Drive conectado';
+    btn.classList.add('connected');
+  } else {
+    btn.textContent = '🔗 Conectar Drive';
+    btn.classList.remove('connected');
+  }
+}
+
+function hasValidDriveToken(){
+  return !!driveAccessToken && Date.now() < driveTokenExpiry - 30000;
+}
+
+function connectGoogleDrive(){
+  if (!gisTokenClient) { initGoogleAuth(); setTimeout(connectGoogleDrive, 400); return; }
+  gisTokenClient.requestAccessToken({ prompt: hasValidDriveToken() ? '' : 'consent' });
+}
+
+function ensureDriveAuth(onReady){
+  if (hasValidDriveToken()) { onReady(); return; }
+  window._pendingUploadAfterAuth = onReady;
+  if (!gisTokenClient) { initGoogleAuth(); setTimeout(() => gisTokenClient && gisTokenClient.requestAccessToken(), 400); return; }
+  gisTokenClient.requestAccessToken();
+}
+
+async function uploadFileToDrive(file, folderId){
+  const boundary = 'painelgilson' + Date.now();
+  const metadata = { name: file.name, parents: [folderId] };
+  const delimiter = '\r\n--' + boundary + '\r\n';
+  const closeDelim = '\r\n--' + boundary + '--';
+
+  const metaPart = delimiter + 'Content-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify(metadata);
+  const mediaHeader = delimiter + 'Content-Type: ' + file.type + '\r\n\r\n';
+  const body = new Blob([metaPart, mediaHeader, file, closeDelim]);
+
+  const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink,thumbnailLink', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + driveAccessToken,
+      'Content-Type': 'multipart/related; boundary=' + boundary
+    },
+    body
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error((data.error && data.error.message) || 'Falha no upload para o Drive');
+  return data;
 }
 
 async function handleImageSelect(id, profile, inputEl){
@@ -3403,8 +3499,8 @@ async function handleImageSelect(id, profile, inputEl){
     rerenderImageBox(id, profile);
     return;
   }
-  if (file.size > 4 * 1024 * 1024) {
-    setImageData(id, { status:'error', fileName:file.name, errorMsg:'Imagem maior que 4MB — reduza o tamanho e tente de novo.' });
+  if (file.size > 15 * 1024 * 1024) {
+    setImageData(id, { status:'error', fileName:file.name, errorMsg:'Imagem maior que 15MB — reduza o tamanho e tente de novo.' });
     rerenderImageBox(id, profile);
     return;
   }
@@ -3412,35 +3508,28 @@ async function handleImageSelect(id, profile, inputEl){
   setImageData(id, { status:'uploading', fileName:file.name });
   rerenderImageBox(id, profile);
 
-  try {
-    const base64 = await fileToBase64(file);
-    const res = await fetch('/api/upload-drive', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        profile, itemId: id, fileName: file.name,
-        mimeType: file.type, base64
-      })
-    });
-    const data = await res.json();
-    if (!res.ok || !data.id) throw new Error(data.error || 'Falha no upload');
+  ensureDriveAuth(async () => {
+    try {
+      const folderId = DRIVE_FOLDER_MAP[profile];
+      const data = await uploadFileToDrive(file, folderId);
 
-    setImageData(id, {
-      status: 'ok',
-      fileId: data.id,
-      viewUrl: data.webViewLink || `https://drive.google.com/file/d/${data.id}/view`,
-      thumbnailLink: data.thumbnailLink || '',
-      fileName: file.name,
-      uploadedAt: new Date().toISOString()
-    });
-    rerenderImageBox(id, profile);
-    pushRemoteState();
-  } catch (e) {
-    setImageData(id, { status:'error', fileName:file.name, errorMsg: e.message || 'Erro de conexão' });
-    rerenderImageBox(id, profile);
-  } finally {
-    inputEl.value = '';
-  }
+      setImageData(id, {
+        status: 'ok',
+        fileId: data.id,
+        viewUrl: data.webViewLink || `https://drive.google.com/file/d/${data.id}/view`,
+        thumbnailLink: data.thumbnailLink || '',
+        fileName: file.name,
+        uploadedAt: new Date().toISOString()
+      });
+      rerenderImageBox(id, profile);
+      pushRemoteState();
+    } catch (e) {
+      setImageData(id, { status:'error', fileName:file.name, errorMsg: e.message || 'Erro de conexão' });
+      rerenderImageBox(id, profile);
+    } finally {
+      inputEl.value = '';
+    }
+  });
 }
 
 function applySavedImages(){
@@ -4161,6 +4250,7 @@ if (hideDoneCheckEl) hideDoneCheckEl.checked = hideDone;
 applySavedEdits();
 
 renderAll();
+initGoogleAuth();
 
 // Pull remote state on load, then re-render with synced data
 pullRemoteState().then(() => {
