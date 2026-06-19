@@ -3421,12 +3421,21 @@ function initGoogleAuth(){
         driveTokenExpiry = Date.now() + (resp.expires_in ? resp.expires_in * 1000 : 3000000);
         sessionStorage.setItem('gdrive_token', JSON.stringify({ t: driveAccessToken, exp: driveTokenExpiry }));
         updateDriveConnectBtn(true);
-        if (window._pendingUploadAfterAuth) {
-          const fn = window._pendingUploadAfterAuth;
-          window._pendingUploadAfterAuth = null;
-          fn();
-        }
+        resolvePendingAuth(null);
+      } else {
+        resolvePendingAuth(new Error('Login com Google não retornou permissão. Tente novamente.'));
       }
+    },
+    error_callback: (err) => {
+      let msg = 'Não foi possível abrir o login do Google.';
+      if (err && err.type === 'popup_failed_to_open') {
+        msg = 'O navegador bloqueou a janela de login do Google. Permita pop-ups para este site e tente de novo.';
+      } else if (err && err.type === 'popup_closed') {
+        msg = 'A janela de login foi fechada antes de concluir. Tente novamente.';
+      } else if (err && err.message) {
+        msg = err.message;
+      }
+      resolvePendingAuth(new Error(msg));
     }
   });
   // Restore a still-valid token from this browser session, if any
@@ -3438,6 +3447,18 @@ function initGoogleAuth(){
       updateDriveConnectBtn(true);
     }
   } catch(e) {}
+}
+
+// Resolves whatever upload is currently waiting on auth (success = null error, or an Error)
+function resolvePendingAuth(err){
+  if (window._authTimeoutId) { clearTimeout(window._authTimeoutId); window._authTimeoutId = null; }
+  const fn = window._pendingUploadAfterAuth;
+  window._pendingUploadAfterAuth = null;
+  if (fn) {
+    fn(err);
+  } else if (err) {
+    alert('Google Drive: ' + err.message);
+  }
 }
 
 function updateDriveConnectBtn(connected){
@@ -3461,10 +3482,23 @@ function connectGoogleDrive(){
   gisTokenClient.requestAccessToken({ prompt: hasValidDriveToken() ? '' : 'consent' });
 }
 
+// onReady(err) — err is null on success, or an Error describing what went wrong.
+// Always resolves: either via the GIS success/error callback, or via a 25s
+// safety timeout, so the UI can never get stuck spinning forever again.
 function ensureDriveAuth(onReady){
-  if (hasValidDriveToken()) { onReady(); return; }
+  if (hasValidDriveToken()) { onReady(null); return; }
   window._pendingUploadAfterAuth = onReady;
-  if (!gisTokenClient) { initGoogleAuth(); setTimeout(() => gisTokenClient && gisTokenClient.requestAccessToken(), 400); return; }
+  window._authTimeoutId = setTimeout(() => {
+    resolvePendingAuth(new Error('O login com Google demorou demais ou não respondeu. Verifique se uma janela de pop-up foi bloqueada e tente novamente.'));
+  }, 25000);
+  if (!gisTokenClient) {
+    initGoogleAuth();
+    setTimeout(() => {
+      if (gisTokenClient) gisTokenClient.requestAccessToken();
+      else resolvePendingAuth(new Error('Não foi possível iniciar o login do Google. Recarregue a página e tente de novo.'));
+    }, 600);
+    return;
+  }
   gisTokenClient.requestAccessToken();
 }
 
@@ -3478,16 +3512,33 @@ async function uploadFileToDrive(file, folderId){
   const mediaHeader = delimiter + 'Content-Type: ' + file.type + '\r\n\r\n';
   const body = new Blob([metaPart, mediaHeader, file, closeDelim]);
 
-  const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink,thumbnailLink', {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + driveAccessToken,
-      'Content-Type': 'multipart/related; boundary=' + boundary
-    },
-    body
-  });
+  // 30s hard timeout so a hung network request always surfaces as an error
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+  let res;
+  try {
+    res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink,thumbnailLink', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + driveAccessToken,
+        'Content-Type': 'multipart/related; boundary=' + boundary
+      },
+      body,
+      signal: controller.signal
+    });
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error('O envio para o Drive demorou demais e foi cancelado. Verifique sua conexão e tente novamente.');
+    throw new Error('Erro de rede ao enviar para o Drive: ' + e.message);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
   const data = await res.json();
-  if (!res.ok) throw new Error((data.error && data.error.message) || 'Falha no upload para o Drive');
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('Sessão do Google expirou. Toque em "Conectar Drive" de novo.');
+    throw new Error((data.error && data.error.message) || 'Falha no upload para o Drive');
+  }
   return data;
 }
 
@@ -3508,7 +3559,13 @@ async function handleImageSelect(id, profile, inputEl){
   setImageData(id, { status:'uploading', fileName:file.name });
   rerenderImageBox(id, profile);
 
-  ensureDriveAuth(async () => {
+  ensureDriveAuth(async (authErr) => {
+    if (authErr) {
+      setImageData(id, { status:'error', fileName:file.name, errorMsg: authErr.message });
+      rerenderImageBox(id, profile);
+      inputEl.value = '';
+      return;
+    }
     try {
       const folderId = DRIVE_FOLDER_MAP[profile];
       const data = await uploadFileToDrive(file, folderId);
