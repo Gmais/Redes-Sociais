@@ -102,10 +102,10 @@ Acolhedor, próximo, como conversa entre amigas. Sem linguagem fitness agressiva
 ### Lista de colaboradores a apresentar
 | Nome | Função |
 |---|---|
-| Maria Júlia | (a definir) |
-| Maria Clara | (a definir) |
-| Bruna | (a definir) |
-| Luiza Helena | (a definir) |
+| Maria Júlia | Atendente |
+| Maria Clara | Atendente |
+| Bruna | Atendente |
+| Luiza Helena | Atendente |
 
 ### Regras de execução
 - **Ordem de apresentação:** livre — Claude escolhe a sequência
