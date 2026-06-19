@@ -3716,23 +3716,53 @@ async function pullRemoteState() {
 async function pushRemoteState() {
   setSyncStatus('syncing');
   try {
-    // Gather all edits from localStorage
-    const allEdits = {};
+    // 1. Gather all local edits from localStorage
+    const localEdits = {};
     for (const profile of ['academia','sorveteria','gympulse']) {
       CONTENT[profile].forEach(item => {
         const saved = localStorage.getItem('edits_' + item.id);
         if (saved) {
-          try { allEdits[item.id] = JSON.parse(saved); } catch(e) {}
+          try { localEdits[item.id] = JSON.parse(saved); } catch(e) {}
         }
       });
     }
 
+    // 2. Pull latest remote state FIRST so we never clobber edits made on another device
+    let remoteDone = {};
+    let remoteEdits = {};
+    try {
+      const res = await supabaseFetch('painel_gilson_state?select=key,value');
+      if (res.ok) {
+        const rows = await res.json();
+        const doneRow = rows.find(r => r.key === 'done');
+        const editsRow = rows.find(r => r.key === 'edits');
+        if (doneRow && doneRow.value) remoteDone = doneRow.value;
+        if (editsRow && editsRow.value) remoteEdits = editsRow.value;
+      }
+    } catch (e) { /* if pull fails, proceed with local-only data */ }
+
+    // 3. Merge: remote first, local overrides (local is the freshest change just made)
+    const mergedDone = { ...remoteDone, ...S };
+    const mergedEdits = { ...remoteEdits, ...localEdits };
+
+    // 4. Adopt the merged result locally too, so this device also has any edits
+    //    made on other devices that it didn't have yet.
+    Object.assign(S, mergedDone);
+    save();
+    Object.keys(mergedEdits).forEach(id => {
+      localStorage.setItem('edits_' + id, JSON.stringify(mergedEdits[id]));
+    });
+    applySavedEdits();
+    renderAll();
+    if (typeof buildHist === 'function') buildHist();
+
+    // 5. Push the merged snapshot
     await supabaseFetch('painel_gilson_state', {
       method: 'POST',
       headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify([
-        { key: 'done', value: S, updated_at: new Date().toISOString() },
-        { key: 'edits', value: allEdits, updated_at: new Date().toISOString() }
+        { key: 'done', value: mergedDone, updated_at: new Date().toISOString() },
+        { key: 'edits', value: mergedEdits, updated_at: new Date().toISOString() }
       ])
     });
     setSyncStatus('synced');
@@ -3747,6 +3777,23 @@ function scheduleSync() {
   setSyncStatus('syncing');
   pushTimer = setTimeout(pushRemoteState, 800);
 }
+
+// Flush any pending sync immediately if the user navigates away, switches
+// tabs, or closes the page before the 800ms debounce fires. This is the
+// fix for "I saved but it didn't show up on the other PC" — previously a
+// quick tab switch/close within 800ms of saving silently dropped the sync.
+function flushSyncNow() {
+  if (pushTimer) {
+    clearTimeout(pushTimer);
+    pushTimer = null;
+    pushRemoteState();
+  }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') flushSyncNow();
+});
+window.addEventListener('pagehide', flushSyncNow);
+window.addEventListener('beforeunload', flushSyncNow);
 
 // ── COPIAR TUDO ──────────────────────────────────────────────────────────
 function copyAll(id) {
@@ -3852,7 +3899,7 @@ function saveEdit() {
   buildHist();
   closeModalDirect();
   showToast();
-  scheduleSync();
+  pushRemoteState(); // explicit save = sync immediately, don't wait on debounce
 }
 
 function showToast(msg) {
