@@ -137,6 +137,18 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .upload-box-text { font-size:12px; color:var(--txt2,#ccc); font-weight:600; }
 .upload-box-hint { font-size:10px; color:var(--txt3,#777); margin-top:2px; }
 .upload-box input[type="file"] { display:none; }
+.upload-box.needs-image, .upload-preview.needs-image {
+  border-color:#ff6b6b !important;
+  box-shadow:0 0 0 3px rgba(255,107,107,0.25);
+  animation: needsImageShake 0.45s ease;
+}
+@keyframes needsImageShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
 
 .upload-preview {
   display:flex; align-items:center; gap:10px;
@@ -3324,7 +3336,28 @@ const SK='gilson_v5';
 let S=JSON.parse(localStorage.getItem(SK)||'{}');
 const save=()=>localStorage.setItem(SK,JSON.stringify(S));
 const done=id=>!!S[id];
-const toggle=id=>{S[id]=!S[id];save();renderAll();buildHist();scheduleSync();};
+const toggle=id=>{
+  const willBeDone = !S[id];
+  if (willBeDone && !hasValidImage(id)) {
+    showToast('⚠️ Anexe uma imagem antes de validar como executado');
+    flashImageBox(id);
+    return;
+  }
+  S[id]=!S[id];save();renderAll();buildHist();scheduleSync();
+};
+function hasValidImage(id){
+  const img = getImageData(id);
+  return !!(img && img.status === 'ok');
+}
+function flashImageBox(id){
+  const card = document.getElementById('card-'+id);
+  if (card && !card.classList.contains('open')) card.classList.add('open');
+  const box = document.getElementById('imgbox-'+id);
+  if (!box) return;
+  box.scrollIntoView({behavior:'smooth', block:'center'});
+  box.classList.add('needs-image');
+  setTimeout(()=>box.classList.remove('needs-image'), 1600);
+}
 
 // ── HIDE COMPLETED FILTER ──
 let hideDone = localStorage.getItem('hideDone') === '1';
@@ -3643,7 +3676,7 @@ function cardHTML(item,profile){
   return `
 <div class="card ${d?'done':''}" data-p="${profile}" id="card-${item.id}">
   <div class="chead" onclick="expand('${item.id}')">
-    <button class="chk" onclick="event.stopPropagation();toggle('${item.id}')">${d?'✓':''}</button>
+    <button class="chk" title="${hasValidImage(item.id)?'Marcar como executado':'Anexe uma imagem para poder validar'}" onclick="event.stopPropagation();toggle('${item.id}')">${d?'✓':''}</button>
     <div class="cmeta">
       <span class="ctag">${item.time}</span>
       <span class="cfmt">${item.format}</span>
