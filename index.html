@@ -124,6 +124,44 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 
 /* Drive */
 .drive-ref { display:flex; align-items:center; gap:10px; background:rgba(0,180,216,0.06); border:1px solid rgba(0,180,216,0.15); border-radius:8px; padding:10px 12px; }
+
+/* ── IMAGE UPLOAD WIDGET ── */
+.upload-box {
+  border:1.5px dashed rgba(0,180,216,0.35); border-radius:10px;
+  padding:16px; text-align:center; cursor:pointer;
+  background:rgba(0,180,216,0.04); transition:all 0.15s;
+}
+.upload-box:hover { border-color:#00b4d8; background:rgba(0,180,216,0.08); }
+.upload-box.dragover { border-color:#00b4d8; background:rgba(0,180,216,0.12); }
+.upload-box-icon { font-size:22px; margin-bottom:6px; }
+.upload-box-text { font-size:12px; color:var(--txt2,#ccc); font-weight:600; }
+.upload-box-hint { font-size:10px; color:var(--txt3,#777); margin-top:2px; }
+.upload-box input[type="file"] { display:none; }
+
+.upload-preview {
+  display:flex; align-items:center; gap:10px;
+  background:rgba(0,180,216,0.06); border:1px solid rgba(0,180,216,0.15);
+  border-radius:8px; padding:10px 12px;
+}
+.upload-thumb {
+  width:44px; height:44px; border-radius:6px; object-fit:cover; flex-shrink:0;
+  background:#0a0f0a; border:1px solid rgba(0,180,216,0.2);
+}
+.upload-thumb-icon { font-size:20px; flex-shrink:0; }
+.upload-info { flex:1; min-width:0; }
+.upload-name { font-size:12.5px; font-weight:600; color:var(--txt,#fff); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.upload-status { font-size:10.5px; color:#4ade80; margin-top:2px; }
+.upload-status.error { color:#ff6b6b; }
+.upload-status.loading { color:#f5c200; }
+.upload-actions { display:flex; gap:6px; flex-shrink:0; }
+.upload-link, .upload-replace {
+  font-size:10px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase;
+  padding:6px 10px; border-radius:6px; cursor:pointer; text-decoration:none;
+  border:1px solid rgba(0,180,216,0.3); color:#00b4d8; background:transparent;
+  font-family:'Inter',sans-serif; white-space:nowrap;
+}
+.upload-link:hover, .upload-replace:hover { background:rgba(0,180,216,0.12); }
+
 .drive-name { font-size:12px; font-weight:600; color:#00b4d8; }
 .drive-hint { font-size:11px; color:var(--txt3); margin-top:2px; }
 .drive-link { font-size:10px; font-weight:700; color:#00b4d8; text-decoration:none; background:rgba(0,180,216,0.1); padding:4px 8px; border-radius:4px; white-space:nowrap; flex-shrink:0; }
@@ -3282,6 +3320,137 @@ function toggleHideDone(){
   renderAll();
 }
 
+// ── IMAGE UPLOAD (Google Drive via service account) ──
+function getImageData(id){
+  try { return JSON.parse(localStorage.getItem('img_'+id) || 'null'); } catch(e) { return null; }
+}
+function setImageData(id, data){
+  localStorage.setItem('img_'+id, JSON.stringify(data));
+}
+
+function imageBlockHTML(id, profile){
+  const img = getImageData(id);
+  if (img && img.status === 'ok') {
+    const thumb = img.thumbnailLink
+      ? `<img class="upload-thumb" src="${img.thumbnailLink}" alt="">`
+      : `<span class="upload-thumb-icon">🖼️</span>`;
+    return `
+      <div class="upload-preview">
+        ${thumb}
+        <div class="upload-info">
+          <div class="upload-name">${img.fileName}</div>
+          <div class="upload-status">✓ Enviado para o Drive (${profileFolderName(profile)})</div>
+        </div>
+        <div class="upload-actions">
+          <a class="upload-link" href="${img.viewUrl}" target="_blank">Abrir ↗</a>
+          <button class="upload-replace" onclick="document.getElementById('imgfile-${id}').click()">Substituir</button>
+        </div>
+      </div>`;
+  }
+  if (img && img.status === 'uploading') {
+    return `
+      <div class="upload-preview">
+        <span class="upload-thumb-icon">⏳</span>
+        <div class="upload-info">
+          <div class="upload-name">${img.fileName || 'Enviando...'}</div>
+          <div class="upload-status loading">Enviando para o Drive...</div>
+        </div>
+      </div>`;
+  }
+  if (img && img.status === 'error') {
+    return `
+      <div class="upload-box" onclick="document.getElementById('imgfile-${id}').click()">
+        <div class="upload-box-icon">⚠️</div>
+        <div class="upload-box-text" style="color:#ff6b6b">Falha no envio — toque para tentar de novo</div>
+        <div class="upload-box-hint">${img.errorMsg || ''}</div>
+      </div>`;
+  }
+  return `
+    <div class="upload-box" onclick="document.getElementById('imgfile-${id}').click()">
+      <div class="upload-box-icon">📤</div>
+      <div class="upload-box-text">Toque para enviar a imagem da postagem</div>
+      <div class="upload-box-hint">Vai direto para a pasta ${profileFolderName(profile)} no Drive</div>
+    </div>`;
+}
+
+function profileFolderName(profile){
+  return {academia:'Academia', sorveteria:'Sorveteria', gympulse:'Gympulse'}[profile] || profile;
+}
+
+function rerenderImageBox(id, profile){
+  const box = document.getElementById('imgbox-'+id);
+  if (box) box.innerHTML = imageBlockHTML(id, profile);
+}
+
+function fileToBase64(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result; // data:mime;base64,XXXX
+      const base64 = result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleImageSelect(id, profile, inputEl){
+  const file = inputEl.files && inputEl.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    setImageData(id, { status:'error', errorMsg:'Selecione um arquivo de imagem.' });
+    rerenderImageBox(id, profile);
+    return;
+  }
+  if (file.size > 4 * 1024 * 1024) {
+    setImageData(id, { status:'error', fileName:file.name, errorMsg:'Imagem maior que 4MB — reduza o tamanho e tente de novo.' });
+    rerenderImageBox(id, profile);
+    return;
+  }
+
+  setImageData(id, { status:'uploading', fileName:file.name });
+  rerenderImageBox(id, profile);
+
+  try {
+    const base64 = await fileToBase64(file);
+    const res = await fetch('/api/upload-drive', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        profile, itemId: id, fileName: file.name,
+        mimeType: file.type, base64
+      })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.id) throw new Error(data.error || 'Falha no upload');
+
+    setImageData(id, {
+      status: 'ok',
+      fileId: data.id,
+      viewUrl: data.webViewLink || `https://drive.google.com/file/d/${data.id}/view`,
+      thumbnailLink: data.thumbnailLink || '',
+      fileName: file.name,
+      uploadedAt: new Date().toISOString()
+    });
+    rerenderImageBox(id, profile);
+    pushRemoteState();
+  } catch (e) {
+    setImageData(id, { status:'error', fileName:file.name, errorMsg: e.message || 'Erro de conexão' });
+    rerenderImageBox(id, profile);
+  } finally {
+    inputEl.value = '';
+  }
+}
+
+function applySavedImages(){
+  for (const profile of ['academia','sorveteria','gympulse']) {
+    CONTENT[profile].forEach(item => {
+      rerenderImageBox(item.id, profile);
+    });
+  }
+}
+
 function fmtDate(ds){
   const[y,m,d]=ds.split('-').map(Number);
   const dt=new Date(y,m-1,d);
@@ -3343,15 +3512,9 @@ function cardHTML(item,profile){
       <button class="copy-all-btn" onclick="event.stopPropagation();copyAll('${item.id}')">📋 Copiar tudo</button>
     </div>
     <div class="block">
-      <div class="blabel" style="color:#00b4d8">📁 Arquivo do Google Drive</div>
-      <div class="drive-ref">
-        <span style="font-size:16px;flex-shrink:0">🖼️</span>
-        <div style="flex:1;min-width:0">
-          <div class="drive-name">${item.driveFile}</div>
-          <div class="drive-hint">${item.driveHint}</div>
-        </div>
-        <a class="drive-link" href="${item.driveUrl}" target="_blank">Abrir ↗</a>
-      </div>
+      <div class="blabel" style="color:#00b4d8">🖼️ Imagem a ser Publicada</div>
+      <div id="imgbox-${item.id}">${imageBlockHTML(item.id, profile)}</div>
+      <input type="file" accept="image/*" id="imgfile-${item.id}" style="display:none" onchange="handleImageSelect('${item.id}','${profile}',this)">
     </div>
 
     <div class="block">
@@ -3742,6 +3905,7 @@ async function pullRemoteState() {
     const rows = await res.json();
     const doneRow = rows.find(r => r.key === 'done');
     const editsRow = rows.find(r => r.key === 'edits');
+    const imagesRow = rows.find(r => r.key === 'images');
 
     if (doneRow && doneRow.value) {
       S = { ...doneRow.value, ...S }; // local takes priority on conflict during merge
@@ -3754,6 +3918,12 @@ async function pullRemoteState() {
       });
       applySavedEdits();
     }
+    if (imagesRow && imagesRow.value) {
+      Object.keys(imagesRow.value).forEach(id => {
+        localStorage.setItem('img_' + id, JSON.stringify(imagesRow.value[id]));
+      });
+      applySavedImages();
+    }
     setSyncStatus('synced');
   } catch (e) {
     setSyncStatus('offline');
@@ -3763,13 +3933,18 @@ async function pullRemoteState() {
 async function pushRemoteState() {
   setSyncStatus('syncing');
   try {
-    // 1. Gather all local edits from localStorage
+    // 1. Gather all local edits + images from localStorage
     const localEdits = {};
+    const localImages = {};
     for (const profile of ['academia','sorveteria','gympulse']) {
       CONTENT[profile].forEach(item => {
-        const saved = localStorage.getItem('edits_' + item.id);
-        if (saved) {
-          try { localEdits[item.id] = JSON.parse(saved); } catch(e) {}
+        const savedEdit = localStorage.getItem('edits_' + item.id);
+        if (savedEdit) {
+          try { localEdits[item.id] = JSON.parse(savedEdit); } catch(e) {}
+        }
+        const savedImg = localStorage.getItem('img_' + item.id);
+        if (savedImg) {
+          try { localImages[item.id] = JSON.parse(savedImg); } catch(e) {}
         }
       });
     }
@@ -3777,20 +3952,24 @@ async function pushRemoteState() {
     // 2. Pull latest remote state FIRST so we never clobber edits made on another device
     let remoteDone = {};
     let remoteEdits = {};
+    let remoteImages = {};
     try {
       const res = await supabaseFetch('painel_gilson_state?select=key,value');
       if (res.ok) {
         const rows = await res.json();
         const doneRow = rows.find(r => r.key === 'done');
         const editsRow = rows.find(r => r.key === 'edits');
+        const imagesRow = rows.find(r => r.key === 'images');
         if (doneRow && doneRow.value) remoteDone = doneRow.value;
         if (editsRow && editsRow.value) remoteEdits = editsRow.value;
+        if (imagesRow && imagesRow.value) remoteImages = imagesRow.value;
       }
     } catch (e) { /* if pull fails, proceed with local-only data */ }
 
     // 3. Merge: remote first, local overrides (local is the freshest change just made)
     const mergedDone = { ...remoteDone, ...S };
     const mergedEdits = { ...remoteEdits, ...localEdits };
+    const mergedImages = { ...remoteImages, ...localImages };
 
     // 4. Adopt the merged result locally too, so this device also has any edits
     //    made on other devices that it didn't have yet.
@@ -3799,7 +3978,11 @@ async function pushRemoteState() {
     Object.keys(mergedEdits).forEach(id => {
       localStorage.setItem('edits_' + id, JSON.stringify(mergedEdits[id]));
     });
+    Object.keys(mergedImages).forEach(id => {
+      localStorage.setItem('img_' + id, JSON.stringify(mergedImages[id]));
+    });
     applySavedEdits();
+    applySavedImages();
     renderAll();
     if (typeof buildHist === 'function') buildHist();
 
@@ -3809,7 +3992,8 @@ async function pushRemoteState() {
       headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify([
         { key: 'done', value: mergedDone, updated_at: new Date().toISOString() },
-        { key: 'edits', value: mergedEdits, updated_at: new Date().toISOString() }
+        { key: 'edits', value: mergedEdits, updated_at: new Date().toISOString() },
+        { key: 'images', value: mergedImages, updated_at: new Date().toISOString() }
       ])
     });
     setSyncStatus('synced');
