@@ -95,6 +95,28 @@ Acolhedor, próximo, como conversa entre amigas. Sem linguagem fitness agressiva
 
 ---
 
+## 👥 EQUIPE — COLABORADORES SORVETERIA GURI (ROTATIVO)
+
+> Adicionado em 19/06/2026. Mesma lógica da academia: replicar a temática de humanização/bastidores apresentando os colaboradores da Sorveteria Guri, um por vez.
+
+### Lista de colaboradores a apresentar
+| Nome | Função |
+|---|---|
+| Maria Júlia | (a definir) |
+| Maria Clara | (a definir) |
+| Bruna | (a definir) |
+| Luiza Helena | (a definir) |
+
+### Regras de execução
+- **Ordem de apresentação:** livre — Claude escolhe a sequência
+- **Cadência:** NÃO precisa ser uma por dia nem todas na mesma semana — distribuir conforme o calendário de conteúdo, sem forçar
+- **Slot recomendado:** seguir o padrão de bastidores da sorveteria (story de fechamento/relacionamento — ver horário 19h na estrutura de conteúdo diário)
+- **Estrutura do texto:** sempre nomear a pessoa, reforçar que o atendimento é pessoal e acolhedor (não anônimo), fechar com CTA de marcação de amigos ou visita à loja
+- **Paleta e restrições:** seguir o padrão já definido da sorveteria (azul escuro `#003f6b`, turquesa `#00b4d8`, amarelo `#f5c800`, branco `#ffffff`)
+- **Imagem:** preferencialmente foto real da colaboradora atuando na loja (Drive) — se não houver foto disponível, usar foto do espaço/produto e nomear no texto
+
+---
+
 ## 📐 ESPECIFICAÇÕES TÉCNICAS POR FORMATO
 | Formato | Dimensões | Proporção | Uso |
 |---|---|---|---|
