@@ -140,9 +140,17 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   color:#0d0d0d; background:#39ff14; box-shadow:0 0 8px #39ff14, 0 0 2px #39ff14 inset;
   animation: neon-pulse 1.8s ease-in-out infinite;
 }
+.cfmt.published {
+  color:#0d0d0d; background:#00e5ff; box-shadow:0 0 8px #00e5ff, 0 0 2px #00e5ff inset;
+  animation: neon-pulse-blue 1.8s ease-in-out infinite;
+}
 @keyframes neon-pulse {
   0%, 100% { box-shadow:0 0 6px #39ff14; }
   50% { box-shadow:0 0 14px #39ff14, 0 0 4px #fff inset; }
+}
+@keyframes neon-pulse-blue {
+  0%, 100% { box-shadow:0 0 6px #00e5ff; }
+  50% { box-shadow:0 0 14px #00e5ff, 0 0 4px #fff inset; }
 }
 .ctitle { font-size:13px; font-weight:600; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .cchev { font-size:10px; color:var(--txt3); flex-shrink:0; transition:transform 0.2s; }
@@ -5367,9 +5375,13 @@ function updateReadyBadge(id){
   if (!found) return;
   const { profile } = found;
   const pubData = getPublishData(id);
-  const isReadyToShow = ZERNIO_PROFILES.includes(profile) && isReadyForAutoPublish(id) && !(pubData && pubData.status === 'ok');
+  const isPublishedNow = ZERNIO_PROFILES.includes(profile) && !!(pubData && pubData.status === 'ok');
+  const isReadyToShow = ZERNIO_PROFILES.includes(profile) && !isPublishedNow && isReadyForAutoPublish(id);
   const badgeEl = document.getElementById('cfmt-'+id);
-  if (badgeEl) badgeEl.classList.toggle('ready', isReadyToShow);
+  if (badgeEl) {
+    badgeEl.classList.toggle('ready', isReadyToShow);
+    badgeEl.classList.toggle('published', isPublishedNow);
+  }
 }
 function publishBlockHTML(id){
   const pub = getPublishData(id);
@@ -5873,7 +5885,9 @@ function cardHTML(item,profile){
 
   const acColor={academia:'#e63900',sorveteria:'#f5c800',gympulse:'#f5c200'}[profile];
   const pubData = getPublishData(item.id);
-  const isReadyToShow = ZERNIO_PROFILES.includes(profile) && isReadyForAutoPublish(item.id) && !(pubData && pubData.status === 'ok');
+  const isPublishedNow = ZERNIO_PROFILES.includes(profile) && !!(pubData && pubData.status === 'ok');
+  const isReadyToShow = ZERNIO_PROFILES.includes(profile) && !isPublishedNow && isReadyForAutoPublish(item.id);
+  const cfmtClass = isPublishedNow ? ' published' : (isReadyToShow ? ' ready' : '');
 
   return `
 <div class="card ${d?'done':''}" data-p="${profile}" id="card-${item.id}">
@@ -5881,7 +5895,7 @@ function cardHTML(item,profile){
     <button class="chk" title="${hasValidImage(item.id)?'Marcar como executado':'Anexe uma imagem para poder validar'}" onclick="event.stopPropagation();toggle('${item.id}')">${d?'✓':''}</button>
     <div class="cmeta">
       <span class="ctag">${item.time}</span>
-      <span class="cfmt${isReadyToShow?' ready':''}" id="cfmt-${item.id}">${item.format}</span>
+      <span class="cfmt${cfmtClass}" id="cfmt-${item.id}">${item.format}</span>
       <span class="ctitle">${item.title}</span>
     </div>
     <span class="cchev">▼</span>
