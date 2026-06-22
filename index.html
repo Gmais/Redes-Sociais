@@ -5513,7 +5513,7 @@ function imageBlockHTML(id, profile){
         </div>
         <div class="upload-actions">
           <a class="upload-link" href="${img.viewUrl}" target="_blank">Abrir ↗</a>
-          <button class="upload-replace" onclick="document.getElementById('imgfile-${id}').click()">Substituir</button>
+          <button class="upload-replace" onclick="event.stopPropagation();startImageUpload('${id}','${profile}')">Substituir</button>
         </div>
       </div>`;
   }
@@ -5529,14 +5529,14 @@ function imageBlockHTML(id, profile){
   }
   if (img && img.status === 'error') {
     return `
-      <div class="upload-box" onclick="document.getElementById('imgfile-${id}').click()">
+      <div class="upload-box" onclick="startImageUpload('${id}','${profile}')">
         <div class="upload-box-icon">⚠️</div>
         <div class="upload-box-text" style="color:#ff6b6b">Falha no envio — toque para tentar de novo</div>
         <div class="upload-box-hint">${img.errorMsg || ''}</div>
       </div>`;
   }
   return `
-    <div class="upload-box" onclick="document.getElementById('imgfile-${id}').click()">
+    <div class="upload-box" onclick="startImageUpload('${id}','${profile}')">
       <div class="upload-box-icon">📤</div>
       <div class="upload-box-text">Toque para enviar a imagem da postagem</div>
       <div class="upload-box-hint">Vai direto para a pasta ${profileFolderName(profile)} no Drive</div>
@@ -5696,6 +5696,16 @@ async function uploadFileToDrive(file, folderId){
     throw new Error((data.error && data.error.message) || 'Falha no upload para o Drive');
   }
   return data;
+}
+
+function startImageUpload(id, profile){
+  ensureDriveAuth((authErr) => {
+    if (authErr) {
+      showToast('⚠️ ' + authErr.message);
+      return;
+    }
+    document.getElementById('imgfile-'+id).click();
+  });
 }
 
 async function handleImageSelect(id, profile, inputEl){
