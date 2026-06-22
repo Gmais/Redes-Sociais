@@ -59,7 +59,7 @@ module.exports = async (req, res) => {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ fileName, fileType: mimeType })
+      body: JSON.stringify({ filename: fileName, contentType: mimeType })
     });
     const presignData = await presignRes.json();
     if (!presignRes.ok) {
