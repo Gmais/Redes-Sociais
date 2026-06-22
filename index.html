@@ -5394,7 +5394,7 @@ async function publishToInstagram(id){
       const resp = await fetch('/api/publish-zernio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profile, caption: item.texto, fileName, mimeType, base64 })
+        body: JSON.stringify({ profile, caption: item.texto, fileName, mimeType, base64, format: item.format })
       });
       const data = await resp.json();
       if (!resp.ok || !data.ok) {

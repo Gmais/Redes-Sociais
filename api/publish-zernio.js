@@ -32,7 +32,7 @@ module.exports = async (req, res) => {
 
   try {
     const raw = await readBody(req);
-    const { profile, caption, fileName, mimeType, base64 } = JSON.parse(raw);
+    const { profile, caption, fileName, mimeType, base64, format } = JSON.parse(raw);
 
     const accountId = ACCOUNT_MAP[profile];
     if (!accountId) {
@@ -79,6 +79,13 @@ module.exports = async (req, res) => {
     }
 
     // 3. Cria o post já publicando imediatamente.
+    // Stories são 9:16 e usam contentType:'story'. Posts/Carrossel ficam no
+    // padrão de feed (sem platformSpecificData), que aceita proporção 0.8–1.91.
+    const platformTarget = { platform: 'instagram', accountId };
+    if ((format || '').toLowerCase() === 'story') {
+      platformTarget.platformSpecificData = { contentType: 'story' };
+    }
+
     const postRes = await fetch(`${ZERNIO_BASE}/posts`, {
       method: 'POST',
       headers: {
@@ -88,7 +95,7 @@ module.exports = async (req, res) => {
       body: JSON.stringify({
         content: caption || '',
         mediaItems: [{ type: 'image', url: presignData.publicUrl }],
-        platforms: [{ platform: 'instagram', accountId }],
+        platforms: [platformTarget],
         publishNow: true
       })
     });
