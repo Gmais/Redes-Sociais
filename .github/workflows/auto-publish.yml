@@ -1,0 +1,16 @@
+name: Auto-publicar posts prontos no Instagram
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chama o endpoint de publicacao automatica
+        run: |
+          curl -sS -X POST "https://redes-sociais-gilt-alpha.vercel.app/api/auto-publish" \
+            -H "x-auto-publish-secret: ${{ secrets.AUTO_PUBLISH_SECRET }}" \
+            -w "\nHTTP status: %{http_code}\n"

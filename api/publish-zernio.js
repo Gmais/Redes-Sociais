@@ -29,7 +29,7 @@ module.exports = async (req, res) => {
 
   try {
     const raw = await readBody(req);
-    const { profile, caption, fileName, mimeType, base64, format } = JSON.parse(raw);
+    const { profile, caption, fileName, mimeType, base64, format, zernioUrl } = JSON.parse(raw);
 
     const config = PROFILE_CONFIG[profile];
     if (!config) {
@@ -42,46 +42,48 @@ module.exports = async (req, res) => {
       res.status(500).json({ error: config.apiKeyEnv + ' não configurada no Vercel.' });
       return;
     }
-    if (!base64 || !fileName || !mimeType) {
-      res.status(400).json({ error: 'Imagem ausente no envio.' });
-      return;
-    }
-    // Vercel free/hobby serverless body limit é 4.5MB. Base64 é ~1.37x o
-    // tamanho real, então cortamos antes de tentar e estourar lá na frente.
-    if (base64.length > 6_000_000) {
-      res.status(413).json({ error: 'Imagem muito grande para publicar via API. Use uma imagem menor que 4MB.' });
-      return;
+
+    let publicUrl = zernioUrl;
+
+    if (!publicUrl) {
+      // Caminho antigo: sem URL pronta, baixa/sobe a imagem agora mesmo.
+      if (!base64 || !fileName || !mimeType) {
+        res.status(400).json({ error: 'Imagem ausente no envio.' });
+        return;
+      }
+      if (base64.length > 6_000_000) {
+        res.status(413).json({ error: 'Imagem muito grande para publicar via API. Use uma imagem menor que 4MB.' });
+        return;
+      }
+      const buffer = Buffer.from(base64, 'base64');
+
+      const presignRes = await fetch(`${ZERNIO_BASE}/media/presign`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ filename: fileName, contentType: mimeType })
+      });
+      const presignData = await presignRes.json();
+      if (!presignRes.ok) {
+        res.status(502).json({ error: 'Falha ao gerar URL de upload no Zernio: ' + (presignData.error || JSON.stringify(presignData)) });
+        return;
+      }
+
+      const uploadRes = await fetch(presignData.uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': mimeType },
+        body: buffer
+      });
+      if (!uploadRes.ok) {
+        res.status(502).json({ error: 'Falha ao enviar a imagem para o Zernio (status ' + uploadRes.status + ').' });
+        return;
+      }
+      publicUrl = presignData.publicUrl;
     }
 
-    const buffer = Buffer.from(base64, 'base64');
-
-    // 1. Pede uma URL pré-assinada pro Zernio guardar a imagem.
-    const presignRes = await fetch(`${ZERNIO_BASE}/media/presign`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ filename: fileName, contentType: mimeType })
-    });
-    const presignData = await presignRes.json();
-    if (!presignRes.ok) {
-      res.status(502).json({ error: 'Falha ao gerar URL de upload no Zernio: ' + (presignData.error || JSON.stringify(presignData)) });
-      return;
-    }
-
-    // 2. Sobe o arquivo direto pra URL pré-assinada (sem header de auth).
-    const uploadRes = await fetch(presignData.uploadUrl, {
-      method: 'PUT',
-      headers: { 'Content-Type': mimeType },
-      body: buffer
-    });
-    if (!uploadRes.ok) {
-      res.status(502).json({ error: 'Falha ao enviar a imagem para o Zernio (status ' + uploadRes.status + ').' });
-      return;
-    }
-
-    // 3. Cria o post já publicando imediatamente.
+    // Cria o post já publicando imediatamente.
     // Stories são 9:16 e usam contentType:'story'. Posts/Carrossel ficam no
     // padrão de feed (sem platformSpecificData), que aceita proporção 0.8–1.91.
     const platformTarget = { platform: 'instagram', accountId };
@@ -97,7 +99,7 @@ module.exports = async (req, res) => {
       },
       body: JSON.stringify({
         content: caption || '',
-        mediaItems: [{ type: 'image', url: presignData.publicUrl }],
+        mediaItems: [{ type: 'image', url: publicUrl }],
         platforms: [platformTarget],
         publishNow: true
       })

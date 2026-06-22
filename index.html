@@ -79,6 +79,15 @@ body { background: var(--bg); color: var(--txt); font-family: 'Inter', sans-seri
 .publish-badge.ok { background:#0d2e1f; color:#4ade80; border:1px solid #1e5a3a; }
 .publish-badge.publishing { background:#2e2410; color:#f5c200; border:1px solid #5a4a1e; }
 .publish-badge.error { background:#2e1212; color:#ff6b6b; border:1px solid #5a1e1e; }
+.publish-badge.pending { background:#1c1c1c; color:#999; border:1px solid #333; }
+.publish-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.publish-row + .publish-row { margin-top:8px; }
+.review-toggle {
+  display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700;
+  color:#ccc; cursor:pointer; user-select:none; background:#1c1c1c; border:1px solid #333;
+  border-radius:6px; padding:6px 10px;
+}
+.review-toggle input { accent-color:#4ade80; cursor:pointer; }
 
 .tabs-wrap { position:sticky; top:0; z-index:50; background:var(--bg); border-bottom:1px solid var(--border); margin-top:20px; }
 .tabs { display:flex; overflow-x:auto; scrollbar-width:none; padding:0 24px; gap:4px; }
@@ -179,6 +188,9 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .upload-info { flex:1; min-width:0; }
 .upload-name { font-size:12.5px; font-weight:600; color:var(--txt,#fff); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .upload-status { font-size:10.5px; color:#4ade80; margin-top:2px; }
+.upload-status.zernio-ok { color:#4ade80; }
+.upload-status.zernio-error { color:#ff6b6b; }
+.upload-status.zernio-error .upload-replace { margin-left:6px; }
 .upload-status.error { color:#ff6b6b; }
 .upload-status.loading { color:#f5c200; }
 .upload-actions { display:flex; gap:6px; flex-shrink:0; }
@@ -5306,6 +5318,26 @@ function toggleHideDone(){
 // ── PUBLICAÇÃO AUTOMÁTICA NO INSTAGRAM (via Zernio) ──
 // Academia, Sorveteria e GympulsePro têm conta conectada no Zernio.
 const ZERNIO_PROFILES = ['academia','sorveteria','gympulse'];
+
+function getReviewed(id){ return localStorage.getItem('reviewed_'+id) === '1'; }
+function setReviewed(id, val){
+  localStorage.setItem('reviewed_'+id, val ? '1' : '0');
+}
+function toggleReviewed(id){
+  setReviewed(id, !getReviewed(id));
+  rerenderPublishBlock(id);
+  pushRemoteState();
+}
+function isReadyForAutoPublish(id){
+  const img = getImageData(id);
+  return getReviewed(id) && !!(img && img.status === 'ok' && img.zernioStatus === 'ok' && img.zernioUrl);
+}
+function applySavedReviewed(){
+  for (const profile of ['academia','sorveteria','gympulse']) {
+    CONTENT[profile].forEach(item => { rerenderPublishBlock(item.id); });
+  }
+}
+
 function getPublishData(id){
   try { return JSON.parse(localStorage.getItem('pub_'+id) || 'null'); } catch(e) { return null; }
 }
@@ -5323,23 +5355,37 @@ function rerenderPublishBlock(id){
 }
 function publishBlockHTML(id){
   const pub = getPublishData(id);
+  const reviewed = getReviewed(id);
+  const ready = isReadyForAutoPublish(id);
+
+  const reviewToggle = `
+    <label class="review-toggle" onclick="event.stopPropagation();">
+      <input type="checkbox" ${reviewed?'checked':''} onchange="toggleReviewed('${id}')">
+      <span>👁️ Revisado</span>
+    </label>`;
+
+  const readyBadge = ready
+    ? `<span class="publish-badge ok">✅ 100% pronto — será publicado automaticamente no horário</span>`
+    : `<span class="publish-badge pending">${reviewed ? '⏳ Aguardando upload da imagem terminar' : '⚠️ Marque como revisado pra liberar a automação'}</span>`;
+
+  let actionHTML;
   if (pub && pub.status === 'publishing') {
-    return `<div class="publish-block" id="pubblock-${id}"><span class="publish-badge publishing">⏳ Publicando no Instagram...</span></div>`;
-  }
-  if (pub && pub.status === 'ok') {
-    return `<div class="publish-block" id="pubblock-${id}">
+    actionHTML = `<span class="publish-badge publishing">⏳ Publicando no Instagram...</span>`;
+  } else if (pub && pub.status === 'ok') {
+    actionHTML = `
       <span class="publish-badge ok">✓ Publicado no Instagram</span>
-      <button class="publish-btn" onclick="event.stopPropagation();publishToInstagram('${id}')">Publicar de novo</button>
-    </div>`;
-  }
-  if (pub && pub.status === 'error') {
-    return `<div class="publish-block" id="pubblock-${id}">
+      <button class="publish-btn" onclick="event.stopPropagation();publishToInstagram('${id}')">Publicar de novo</button>`;
+  } else if (pub && pub.status === 'error') {
+    actionHTML = `
       <span class="publish-badge error">⚠️ Falha ao publicar: ${pub.errorMsg || ''}</span>
-      <button class="publish-btn" onclick="event.stopPropagation();publishToInstagram('${id}')">Tentar de novo</button>
-    </div>`;
+      <button class="publish-btn" onclick="event.stopPropagation();publishToInstagram('${id}')">Tentar de novo</button>`;
+  } else {
+    actionHTML = `<button class="publish-btn" onclick="event.stopPropagation();publishToInstagram('${id}')">📤 Publicar agora no Instagram</button>`;
   }
+
   return `<div class="publish-block" id="pubblock-${id}">
-    <button class="publish-btn" onclick="event.stopPropagation();publishToInstagram('${id}')">📤 Publicar agora no Instagram</button>
+    <div class="publish-row">${reviewToggle}${(!pub || pub.status!=='ok') ? readyBadge : ''}</div>
+    <div class="publish-row">${actionHTML}</div>
   </div>`;
 }
 
@@ -5378,6 +5424,32 @@ async function publishToInstagram(id){
   setPublishData(id, { status: 'publishing' });
   rerenderPublishBlock(id);
 
+  const img = getImageData(id);
+
+  // Se a imagem já foi enviada pro Zernio em segundo plano (fluxo normal),
+  // publica direto sem precisar do login do Google.
+  if (img.zernioStatus === 'ok' && img.zernioUrl) {
+    try {
+      const resp = await fetch('/api/publish-zernio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile, caption: item.texto, format: item.format, zernioUrl: img.zernioUrl })
+      });
+      const data = await resp.json();
+      if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha desconhecida ao publicar.');
+      setPublishData(id, { status: 'ok', postId: data.postId, publishedAt: new Date().toISOString() });
+      rerenderPublishBlock(id);
+      showToast('✅ Publicado no Instagram!');
+      pushRemoteState();
+    } catch (e) {
+      setPublishData(id, { status: 'error', errorMsg: e.message || 'Erro de conexão' });
+      rerenderPublishBlock(id);
+    }
+    return;
+  }
+
+  // Caminho antigo (imagem ainda não preparada no Zernio): baixa do Drive
+  // com o login do navegador e sobe na hora.
   ensureDriveAuth(async (authErr) => {
     if (authErr) {
       setPublishData(id, { status: 'error', errorMsg: authErr.message });
@@ -5385,7 +5457,6 @@ async function publishToInstagram(id){
       return;
     }
     try {
-      const img = getImageData(id);
       const blob = await downloadDriveFile(img.fileId);
       const base64 = await blobToBase64(blob);
       const mimeType = blob.type || 'image/jpeg';
@@ -5425,12 +5496,20 @@ function imageBlockHTML(id, profile){
     const thumb = img.thumbnailLink
       ? `<img class="upload-thumb" src="${img.thumbnailLink}" alt="">`
       : `<span class="upload-thumb-icon">🖼️</span>`;
+    const zernioLine = img.zernioStatus === 'ok'
+      ? `<div class="upload-status zernio-ok">✓ Disponível pra publicação automática</div>`
+      : img.zernioStatus === 'error'
+        ? `<div class="upload-status zernio-error">⚠️ Falha ao preparar para automação: ${img.zernioErrorMsg || ''} <button class="upload-replace" onclick="event.stopPropagation();retryZernioUpload('${id}','${profile}')">Tentar de novo</button></div>`
+        : img.zernioStatus === 'pending'
+          ? `<div class="upload-status loading">⏳ Preparando para publicação automática...</div>`
+          : '';
     return `
       <div class="upload-preview">
         ${thumb}
         <div class="upload-info">
           <div class="upload-name">${img.fileName}</div>
           <div class="upload-status">✓ Enviado para o Drive (${profileFolderName(profile)})</div>
+          ${zernioLine}
         </div>
         <div class="upload-actions">
           <a class="upload-link" href="${img.viewUrl}" target="_blank">Abrir ↗</a>
@@ -5653,10 +5732,12 @@ async function handleImageSelect(id, profile, inputEl){
         viewUrl: data.webViewLink || `https://drive.google.com/file/d/${data.id}/view`,
         thumbnailLink: data.thumbnailLink || '',
         fileName: file.name,
-        uploadedAt: new Date().toISOString()
+        uploadedAt: new Date().toISOString(),
+        zernioStatus: ZERNIO_PROFILES.includes(profile) ? 'pending' : 'n/a'
       });
       rerenderImageBox(id, profile);
       pushRemoteState();
+      if (ZERNIO_PROFILES.includes(profile)) uploadToZernioBackground(id, profile, file);
     } catch (e) {
       setImageData(id, { status:'error', fileName:file.name, errorMsg: e.message || 'Erro de conexão' });
       rerenderImageBox(id, profile);
@@ -5664,6 +5745,53 @@ async function handleImageSelect(id, profile, inputEl){
       inputEl.value = '';
     }
   });
+}
+
+async function retryZernioUpload(id, profile){
+  const img = getImageData(id);
+  if (!img || !img.fileId) return;
+  setImageData(id, { ...img, zernioStatus: 'pending', zernioErrorMsg: '' });
+  rerenderImageBox(id, profile);
+  ensureDriveAuth(async (authErr) => {
+    if (authErr) {
+      setImageData(id, { ...img, zernioStatus: 'error', zernioErrorMsg: authErr.message });
+      rerenderImageBox(id, profile);
+      return;
+    }
+    try {
+      const blob = await downloadDriveFile(img.fileId);
+      const file = new File([blob], img.fileName || 'imagem.jpg', { type: blob.type || 'image/jpeg' });
+      await uploadToZernioBackground(id, profile, file);
+    } catch (e) {
+      const current = getImageData(id) || {};
+      setImageData(id, { ...current, zernioStatus: 'error', zernioErrorMsg: e.message || 'Erro de conexão' });
+      rerenderImageBox(id, profile);
+    }
+  });
+}
+
+async function uploadToZernioBackground(id, profile, file){
+  try {
+    const base64 = await blobToBase64(file);
+    const resp = await fetch('/api/zernio-media-upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile, fileName: file.name, mimeType: file.type || 'image/jpeg', base64 })
+    });
+    const data = await resp.json();
+    const current = getImageData(id) || {};
+    if (!resp.ok || !data.ok) {
+      setImageData(id, { ...current, zernioStatus: 'error', zernioErrorMsg: data.error || 'Falha desconhecida' });
+    } else {
+      setImageData(id, { ...current, zernioStatus: 'ok', zernioUrl: data.publicUrl });
+    }
+  } catch (e) {
+    const current = getImageData(id) || {};
+    setImageData(id, { ...current, zernioStatus: 'error', zernioErrorMsg: e.message || 'Erro de conexão' });
+  }
+  rerenderImageBox(id, profile);
+  rerenderPublishBlock(id);
+  pushRemoteState();
 }
 
 function applySavedImages(){
@@ -6131,6 +6259,7 @@ async function pullRemoteState() {
     const editsRow = rows.find(r => r.key === 'edits');
     const imagesRow = rows.find(r => r.key === 'images');
     const publishedRow = rows.find(r => r.key === 'published');
+    const reviewedRow = rows.find(r => r.key === 'reviewed');
 
     if (doneRow && doneRow.value) {
       S = { ...doneRow.value, ...S }; // local takes priority on conflict during merge
@@ -6155,6 +6284,12 @@ async function pullRemoteState() {
       });
       applySavedPublished();
     }
+    if (reviewedRow && reviewedRow.value) {
+      Object.keys(reviewedRow.value).forEach(id => {
+        setReviewed(id, !!reviewedRow.value[id]);
+      });
+      applySavedReviewed();
+    }
     setSyncStatus('synced');
   } catch (e) {
     setSyncStatus('offline');
@@ -6168,6 +6303,8 @@ async function pushRemoteState() {
     const localEdits = {};
     const localImages = {};
     const localPublished = {};
+    const localReviewed = {};
+    const manifest = {};
     for (const profile of ['academia','sorveteria','gympulse']) {
       CONTENT[profile].forEach(item => {
         const savedEdit = localStorage.getItem('edits_' + item.id);
@@ -6182,6 +6319,12 @@ async function pushRemoteState() {
         if (savedPub) {
           try { localPublished[item.id] = JSON.parse(savedPub); } catch(e) {}
         }
+        localReviewed[item.id] = getReviewed(item.id);
+        // Manifesto: dados que o servidor (cron) precisa pra publicar sem
+        // depender do navegador. item.texto/format já refletem edições aplicadas.
+        if (ZERNIO_PROFILES.includes(profile)) {
+          manifest[item.id] = { profile, date: item.date, time: item.time, format: item.format, caption: item.texto };
+        }
       });
     }
 
@@ -6190,6 +6333,7 @@ async function pushRemoteState() {
     let remoteEdits = {};
     let remoteImages = {};
     let remotePublished = {};
+    let remoteReviewed = {};
     try {
       const res = await supabaseFetch('painel_gilson_state?select=key,value');
       if (res.ok) {
@@ -6198,10 +6342,12 @@ async function pushRemoteState() {
         const editsRow = rows.find(r => r.key === 'edits');
         const imagesRow = rows.find(r => r.key === 'images');
         const publishedRow = rows.find(r => r.key === 'published');
+        const reviewedRow = rows.find(r => r.key === 'reviewed');
         if (doneRow && doneRow.value) remoteDone = doneRow.value;
         if (editsRow && editsRow.value) remoteEdits = editsRow.value;
         if (imagesRow && imagesRow.value) remoteImages = imagesRow.value;
         if (publishedRow && publishedRow.value) remotePublished = publishedRow.value;
+        if (reviewedRow && reviewedRow.value) remoteReviewed = reviewedRow.value;
       }
     } catch (e) { /* if pull fails, proceed with local-only data */ }
 
@@ -6210,6 +6356,7 @@ async function pushRemoteState() {
     const mergedEdits = { ...remoteEdits, ...localEdits };
     const mergedImages = { ...remoteImages, ...localImages };
     const mergedPublished = { ...remotePublished, ...localPublished };
+    const mergedReviewed = { ...remoteReviewed, ...localReviewed };
 
     // 4. Adopt the merged result locally too, so this device also has any edits
     //    made on other devices that it didn't have yet.
@@ -6224,9 +6371,13 @@ async function pushRemoteState() {
     Object.keys(mergedPublished).forEach(id => {
       localStorage.setItem('pub_' + id, JSON.stringify(mergedPublished[id]));
     });
+    Object.keys(mergedReviewed).forEach(id => {
+      setReviewed(id, !!mergedReviewed[id]);
+    });
     applySavedEdits();
     applySavedImages();
     applySavedPublished();
+    applySavedReviewed();
     renderAll();
     if (typeof buildHist === 'function') buildHist();
 
@@ -6238,7 +6389,9 @@ async function pushRemoteState() {
         { key: 'done', value: mergedDone, updated_at: new Date().toISOString() },
         { key: 'edits', value: mergedEdits, updated_at: new Date().toISOString() },
         { key: 'images', value: mergedImages, updated_at: new Date().toISOString() },
-        { key: 'published', value: mergedPublished, updated_at: new Date().toISOString() }
+        { key: 'published', value: mergedPublished, updated_at: new Date().toISOString() },
+        { key: 'reviewed', value: mergedReviewed, updated_at: new Date().toISOString() },
+        { key: 'manifest', value: manifest, updated_at: new Date().toISOString() }
       ])
     });
     setSyncStatus('synced');
@@ -6408,10 +6561,13 @@ applySavedEdits();
 renderAll();
 initGoogleAuth();
 
-// Pull remote state on load, then re-render with synced data
+// Pull remote state on load, then re-render with synced data, then push once
+// to make sure the server-side manifest (used by the auto-publish cron) is
+// always fresh — even on days nobody touches the panel.
 pullRemoteState().then(() => {
   renderAll();
   if (typeof buildHist === 'function') buildHist();
+  pushRemoteState();
 });
 </script>
 
