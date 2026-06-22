@@ -5304,8 +5304,8 @@ function toggleHideDone(){
 }
 
 // ── PUBLICAÇÃO AUTOMÁTICA NO INSTAGRAM (via Zernio) ──
-// Só Academia e Sorveteria têm conta conectada — GympulsePro continua manual.
-const ZERNIO_PROFILES = ['academia','sorveteria'];
+// Academia, Sorveteria e GympulsePro têm conta conectada no Zernio.
+const ZERNIO_PROFILES = ['academia','sorveteria','gympulse'];
 function getPublishData(id){
   try { return JSON.parse(localStorage.getItem('pub_'+id) || 'null'); } catch(e) { return null; }
 }

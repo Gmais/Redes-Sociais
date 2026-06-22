@@ -1,10 +1,13 @@
-// Publica posts no Instagram (Academia e Sorveteria) via Zernio API.
-// A ZERNIO_API_KEY fica só aqui no backend — nunca chega ao navegador.
+// Publica posts no Instagram (Academia, Sorveteria e GympulsePro) via Zernio API.
+// As chaves de API ficam só aqui no backend — nunca chegam ao navegador.
 
 // Não é segredo: são apenas os IDs das contas já conectadas no Zernio.
-const ACCOUNT_MAP = {
-  academia: '6a3915825f7d1751ab4af026',
-  sorveteria: '6a3916335f7d1751ab4afbe3'
+// Academia e Sorveteria estão na mesma conta Zernio (ZERNIO_API_KEY).
+// GympulsePro está numa conta Zernio separada (ZERNIO_API_KEY_GYMPULSE).
+const PROFILE_CONFIG = {
+  academia: { accountId: '6a3915825f7d1751ab4af026', apiKeyEnv: 'ZERNIO_API_KEY' },
+  sorveteria: { accountId: '6a3916335f7d1751ab4afbe3', apiKeyEnv: 'ZERNIO_API_KEY' },
+  gympulse: { accountId: '6a3920625f7d1751ab4b6fdc', apiKeyEnv: 'ZERNIO_API_KEY_GYMPULSE' }
 };
 
 const ZERNIO_BASE = 'https://zernio.com/api/v1';
@@ -24,19 +27,19 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const apiKey = process.env.ZERNIO_API_KEY;
-  if (!apiKey) {
-    res.status(500).json({ error: 'ZERNIO_API_KEY não configurada no Vercel.' });
-    return;
-  }
-
   try {
     const raw = await readBody(req);
     const { profile, caption, fileName, mimeType, base64, format } = JSON.parse(raw);
 
-    const accountId = ACCOUNT_MAP[profile];
-    if (!accountId) {
+    const config = PROFILE_CONFIG[profile];
+    if (!config) {
       res.status(400).json({ error: 'Perfil sem publicação automática configurada: ' + profile });
+      return;
+    }
+    const accountId = config.accountId;
+    const apiKey = process.env[config.apiKeyEnv];
+    if (!apiKey) {
+      res.status(500).json({ error: config.apiKeyEnv + ' não configurada no Vercel.' });
       return;
     }
     if (!base64 || !fileName || !mimeType) {
