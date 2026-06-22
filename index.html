@@ -136,6 +136,14 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .card[data-p="sorveteria"] .ctag { background:rgba(245,200,0,0.15); color:#f5c800; }
 .card[data-p="gympulse"] .ctag { background:rgba(245,194,0,0.15); color:#f5c200; }
 .cfmt { font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--txt3); background:var(--s2); padding:4px 8px; border-radius:4px; flex-shrink:0; }
+.cfmt.ready {
+  color:#0d0d0d; background:#39ff14; box-shadow:0 0 8px #39ff14, 0 0 2px #39ff14 inset;
+  animation: neon-pulse 1.8s ease-in-out infinite;
+}
+@keyframes neon-pulse {
+  0%, 100% { box-shadow:0 0 6px #39ff14; }
+  50% { box-shadow:0 0 14px #39ff14, 0 0 4px #fff inset; }
+}
 .ctitle { font-size:13px; font-weight:600; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .cchev { font-size:10px; color:var(--txt3); flex-shrink:0; transition:transform 0.2s; }
 .card.open .cchev { transform:rotate(180deg); }
@@ -5352,6 +5360,16 @@ function applySavedPublished(){
 function rerenderPublishBlock(id){
   const el = document.getElementById('pubblock-'+id);
   if (el) el.outerHTML = publishBlockHTML(id);
+  updateReadyBadge(id);
+}
+function updateReadyBadge(id){
+  const found = findItem(id);
+  if (!found) return;
+  const { profile } = found;
+  const pubData = getPublishData(id);
+  const isReadyToShow = ZERNIO_PROFILES.includes(profile) && isReadyForAutoPublish(id) && !(pubData && pubData.status === 'ok');
+  const badgeEl = document.getElementById('cfmt-'+id);
+  if (badgeEl) badgeEl.classList.toggle('ready', isReadyToShow);
 }
 function publishBlockHTML(id){
   const pub = getPublishData(id);
@@ -5854,6 +5872,8 @@ function cardHTML(item,profile){
     </div>`).join('');
 
   const acColor={academia:'#e63900',sorveteria:'#f5c800',gympulse:'#f5c200'}[profile];
+  const pubData = getPublishData(item.id);
+  const isReadyToShow = ZERNIO_PROFILES.includes(profile) && isReadyForAutoPublish(item.id) && !(pubData && pubData.status === 'ok');
 
   return `
 <div class="card ${d?'done':''}" data-p="${profile}" id="card-${item.id}">
@@ -5861,7 +5881,7 @@ function cardHTML(item,profile){
     <button class="chk" title="${hasValidImage(item.id)?'Marcar como executado':'Anexe uma imagem para poder validar'}" onclick="event.stopPropagation();toggle('${item.id}')">${d?'✓':''}</button>
     <div class="cmeta">
       <span class="ctag">${item.time}</span>
-      <span class="cfmt">${item.format}</span>
+      <span class="cfmt${isReadyToShow?' ready':''}" id="cfmt-${item.id}">${item.format}</span>
       <span class="ctitle">${item.title}</span>
     </div>
     <span class="cchev">▼</span>
