@@ -64,6 +64,22 @@ body { background: var(--bg); color: var(--txt); font-family: 'Inter', sans-seri
 }
 .copy-all-btn:hover { background:#ffd700; }
 
+.publish-block { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:8px 0 0; padding:0 0; }
+.publish-btn {
+  font-size:10px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase;
+  color:#fff; background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);
+  border:none; border-radius:6px; padding:8px 14px; cursor:pointer; font-family:'Inter',sans-serif;
+  transition:opacity 0.15s;
+}
+.publish-btn:hover { opacity:0.85; }
+.publish-badge {
+  font-size:10px; font-weight:700; letter-spacing:0.04em; padding:6px 10px; border-radius:6px;
+  display:inline-flex; align-items:center; gap:4px;
+}
+.publish-badge.ok { background:#0d2e1f; color:#4ade80; border:1px solid #1e5a3a; }
+.publish-badge.publishing { background:#2e2410; color:#f5c200; border:1px solid #5a4a1e; }
+.publish-badge.error { background:#2e1212; color:#ff6b6b; border:1px solid #5a1e1e; }
+
 .tabs-wrap { position:sticky; top:0; z-index:50; background:var(--bg); border-bottom:1px solid var(--border); margin-top:20px; }
 .tabs { display:flex; overflow-x:auto; scrollbar-width:none; padding:0 24px; gap:4px; }
 .tabs::-webkit-scrollbar { display:none; }
@@ -5287,6 +5303,114 @@ function toggleHideDone(){
   renderAll();
 }
 
+// ── PUBLICAÇÃO AUTOMÁTICA NO INSTAGRAM (via Zernio) ──
+// Só Academia e Sorveteria têm conta conectada — GympulsePro continua manual.
+const ZERNIO_PROFILES = ['academia','sorveteria'];
+function getPublishData(id){
+  try { return JSON.parse(localStorage.getItem('pub_'+id) || 'null'); } catch(e) { return null; }
+}
+function setPublishData(id, data){
+  localStorage.setItem('pub_'+id, JSON.stringify(data));
+}
+function applySavedPublished(){
+  for (const profile of ['academia','sorveteria','gympulse']) {
+    CONTENT[profile].forEach(item => { rerenderPublishBlock(item.id); });
+  }
+}
+function rerenderPublishBlock(id){
+  const el = document.getElementById('pubblock-'+id);
+  if (el) el.outerHTML = publishBlockHTML(id);
+}
+function publishBlockHTML(id){
+  const pub = getPublishData(id);
+  if (pub && pub.status === 'publishing') {
+    return `<div class="publish-block" id="pubblock-${id}"><span class="publish-badge publishing">⏳ Publicando no Instagram...</span></div>`;
+  }
+  if (pub && pub.status === 'ok') {
+    return `<div class="publish-block" id="pubblock-${id}">
+      <span class="publish-badge ok">✓ Publicado no Instagram</span>
+      <button class="publish-btn" onclick="event.stopPropagation();publishToInstagram('${id}')">Publicar de novo</button>
+    </div>`;
+  }
+  if (pub && pub.status === 'error') {
+    return `<div class="publish-block" id="pubblock-${id}">
+      <span class="publish-badge error">⚠️ Falha ao publicar: ${pub.errorMsg || ''}</span>
+      <button class="publish-btn" onclick="event.stopPropagation();publishToInstagram('${id}')">Tentar de novo</button>
+    </div>`;
+  }
+  return `<div class="publish-block" id="pubblock-${id}">
+    <button class="publish-btn" onclick="event.stopPropagation();publishToInstagram('${id}')">📤 Publicar agora no Instagram</button>
+  </div>`;
+}
+
+function blobToBase64(blob){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function downloadDriveFile(fileId){
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+    headers: { 'Authorization': 'Bearer ' + driveAccessToken }
+  });
+  if (!res.ok) throw new Error('Não foi possível baixar a imagem do Drive (status ' + res.status + ').');
+  return await res.blob();
+}
+
+async function publishToInstagram(id){
+  const found = findItem(id);
+  if (!found) return;
+  const { item, profile } = found;
+
+  if (!ZERNIO_PROFILES.includes(profile)) {
+    showToast('Esse perfil não tem publicação automática configurada.');
+    return;
+  }
+  if (!hasValidImage(id)) {
+    showToast('⚠️ Anexe uma imagem antes de publicar');
+    flashImageBox(id);
+    return;
+  }
+
+  setPublishData(id, { status: 'publishing' });
+  rerenderPublishBlock(id);
+
+  ensureDriveAuth(async (authErr) => {
+    if (authErr) {
+      setPublishData(id, { status: 'error', errorMsg: authErr.message });
+      rerenderPublishBlock(id);
+      return;
+    }
+    try {
+      const img = getImageData(id);
+      const blob = await downloadDriveFile(img.fileId);
+      const base64 = await blobToBase64(blob);
+      const mimeType = blob.type || 'image/jpeg';
+      const fileName = img.fileName || ('post-' + id + '.jpg');
+
+      const resp = await fetch('/api/publish-zernio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile, caption: item.texto, fileName, mimeType, base64 })
+      });
+      const data = await resp.json();
+      if (!resp.ok || !data.ok) {
+        throw new Error(data.error || 'Falha desconhecida ao publicar.');
+      }
+      setPublishData(id, { status: 'ok', postId: data.postId, publishedAt: new Date().toISOString() });
+      rerenderPublishBlock(id);
+      showToast('✅ Publicado no Instagram!');
+      pushRemoteState();
+    } catch (e) {
+      setPublishData(id, { status: 'error', errorMsg: e.message || 'Erro de conexão' });
+      rerenderPublishBlock(id);
+    }
+  });
+}
+
 // ── IMAGE UPLOAD (Google Drive via service account) ──
 function getImageData(id){
   try { return JSON.parse(localStorage.getItem('img_'+id) || 'null'); } catch(e) { return null; }
@@ -5610,6 +5734,7 @@ function cardHTML(item,profile){
       <button class="edit-btn" onclick="event.stopPropagation();openEdit('${item.id}')">✏️ Editar card</button>
       <button class="copy-all-btn" onclick="event.stopPropagation();copyAll('${item.id}')">📋 Copiar tudo</button>
     </div>
+    ${ZERNIO_PROFILES.includes(profile) ? publishBlockHTML(item.id) : ''}
     <div class="block">
       <div class="blabel" style="color:#00b4d8">🖼️ Imagem a ser Publicada</div>
       <div id="imgbox-${item.id}">${imageBlockHTML(item.id, profile)}</div>
@@ -6005,6 +6130,7 @@ async function pullRemoteState() {
     const doneRow = rows.find(r => r.key === 'done');
     const editsRow = rows.find(r => r.key === 'edits');
     const imagesRow = rows.find(r => r.key === 'images');
+    const publishedRow = rows.find(r => r.key === 'published');
 
     if (doneRow && doneRow.value) {
       S = { ...doneRow.value, ...S }; // local takes priority on conflict during merge
@@ -6023,6 +6149,12 @@ async function pullRemoteState() {
       });
       applySavedImages();
     }
+    if (publishedRow && publishedRow.value) {
+      Object.keys(publishedRow.value).forEach(id => {
+        localStorage.setItem('pub_' + id, JSON.stringify(publishedRow.value[id]));
+      });
+      applySavedPublished();
+    }
     setSyncStatus('synced');
   } catch (e) {
     setSyncStatus('offline');
@@ -6032,9 +6164,10 @@ async function pullRemoteState() {
 async function pushRemoteState() {
   setSyncStatus('syncing');
   try {
-    // 1. Gather all local edits + images from localStorage
+    // 1. Gather all local edits + images + published status from localStorage
     const localEdits = {};
     const localImages = {};
+    const localPublished = {};
     for (const profile of ['academia','sorveteria','gympulse']) {
       CONTENT[profile].forEach(item => {
         const savedEdit = localStorage.getItem('edits_' + item.id);
@@ -6045,6 +6178,10 @@ async function pushRemoteState() {
         if (savedImg) {
           try { localImages[item.id] = JSON.parse(savedImg); } catch(e) {}
         }
+        const savedPub = localStorage.getItem('pub_' + item.id);
+        if (savedPub) {
+          try { localPublished[item.id] = JSON.parse(savedPub); } catch(e) {}
+        }
       });
     }
 
@@ -6052,6 +6189,7 @@ async function pushRemoteState() {
     let remoteDone = {};
     let remoteEdits = {};
     let remoteImages = {};
+    let remotePublished = {};
     try {
       const res = await supabaseFetch('painel_gilson_state?select=key,value');
       if (res.ok) {
@@ -6059,9 +6197,11 @@ async function pushRemoteState() {
         const doneRow = rows.find(r => r.key === 'done');
         const editsRow = rows.find(r => r.key === 'edits');
         const imagesRow = rows.find(r => r.key === 'images');
+        const publishedRow = rows.find(r => r.key === 'published');
         if (doneRow && doneRow.value) remoteDone = doneRow.value;
         if (editsRow && editsRow.value) remoteEdits = editsRow.value;
         if (imagesRow && imagesRow.value) remoteImages = imagesRow.value;
+        if (publishedRow && publishedRow.value) remotePublished = publishedRow.value;
       }
     } catch (e) { /* if pull fails, proceed with local-only data */ }
 
@@ -6069,6 +6209,7 @@ async function pushRemoteState() {
     const mergedDone = { ...remoteDone, ...S };
     const mergedEdits = { ...remoteEdits, ...localEdits };
     const mergedImages = { ...remoteImages, ...localImages };
+    const mergedPublished = { ...remotePublished, ...localPublished };
 
     // 4. Adopt the merged result locally too, so this device also has any edits
     //    made on other devices that it didn't have yet.
@@ -6080,8 +6221,12 @@ async function pushRemoteState() {
     Object.keys(mergedImages).forEach(id => {
       localStorage.setItem('img_' + id, JSON.stringify(mergedImages[id]));
     });
+    Object.keys(mergedPublished).forEach(id => {
+      localStorage.setItem('pub_' + id, JSON.stringify(mergedPublished[id]));
+    });
     applySavedEdits();
     applySavedImages();
+    applySavedPublished();
     renderAll();
     if (typeof buildHist === 'function') buildHist();
 
@@ -6092,7 +6237,8 @@ async function pushRemoteState() {
       body: JSON.stringify([
         { key: 'done', value: mergedDone, updated_at: new Date().toISOString() },
         { key: 'edits', value: mergedEdits, updated_at: new Date().toISOString() },
-        { key: 'images', value: mergedImages, updated_at: new Date().toISOString() }
+        { key: 'images', value: mergedImages, updated_at: new Date().toISOString() },
+        { key: 'published', value: mergedPublished, updated_at: new Date().toISOString() }
       ])
     });
     setSyncStatus('synced');
