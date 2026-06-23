@@ -1,7 +1,7 @@
 # CONTEXTO — GILSON CAETANO
 > Arquivo de contexto para o Claude (aqui ou no Antigravity).
 > Leia este arquivo SEMPRE antes de gerar qualquer conteúdo ou executar qualquer tarefa.
-> Última atualização: 19 de junho de 2026
+> Última atualização: 23 de junho de 2026
 
 ---
 
@@ -154,3 +154,27 @@ Quando Gilson pedir "gera o conteúdo de [dia]":
 2. Atualize o `index.html` com os novos cards (validar sintaxe JS antes de commitar)
 3. Faça commit com mensagem clara (ex: "conteúdo 19/06 - ...")
 4. Push para o GitHub — Vercel publica automaticamente
+
+
+## 📈 ATUALIZAÇÃO DE ABORDAGEM — GROWTH (23/06/2026)
+
+> Mudanças no SISTEMA de geração de conteúdo, não nos posts específicos. Aplicar em todo conteúdo novo a partir de agora.
+
+### Hashtags
+- **Máximo 5 hashtags por post** — o Instagram capou oficialmente em 5 desde dez/2025 (Mosseri/Meta); acima disso o excedente é cortado ou penaliza alcance. O bloco antigo de 30 hashtags está obsoleto.
+- Hashtags **só em Post e Carrossel**. Story nunca leva hashtag.
+- Variar a combinação a cada post (não repetir sempre os mesmos 5) — misturar 1 nicho + 1 marca + 1 local + 2 tópico/contexto.
+
+### Formato
+- **Carrossel passa a valer pra Academia e Sorveteria também** (antes só GympulsePro usava). É o formato que gera mais salvamento/compartilhamento sem precisar de vídeo — priorizar pra conteúdo educativo/lista/bastidores de processo.
+- **Reels ainda não implementado no pipeline** (Zernio/`publish-zernio.js` só aceita `type:'image'` hoje). É o maior ganho potencial de alcance pendente — decisão de expandir o pipeline pra vídeo fica em aberto, depende de aprovação.
+
+### Identidade visual
+- **Correção:** Teal oficial da Academia é `#00b4b4` (estava saindo `#003f6b` por engano em alguns cards — esse é o azul da Sorveteria).
+
+### Segurança de publicação
+- Cards tipo "Produto do Dia" (sabor variável) precisam de marcação visual forte no campo a editar — ex: `[✏️ EDITAR ANTES DE PUBLICAR — sabor de hoje]` — pra reduzir risco de ir ao ar com o texto não preenchido.
+
+### Copy / Hook
+- Abrir com gancho específico ou contrariante (não genérico) — frase que gera identificação ou quebra padrão, não "Bom dia Turvo!" solto.
+- Incluir gatilho explícito de salvar/compartilhar/comentar quando o formato permitir (carrossel e listas, principalmente).
