@@ -1,7 +1,7 @@
 # CONTEXTO — GILSON CAETANO
 > Arquivo de contexto para o Claude (aqui ou no Antigravity).
 > Leia este arquivo SEMPRE antes de gerar qualquer conteúdo ou executar qualquer tarefa.
-> Última atualização: 23 de junho de 2026
+> Última atualização: 19 de junho de 2026
 
 ---
 
@@ -67,6 +67,146 @@ Acolhedor, próximo, como conversa entre amigas. Sem linguagem fitness agressiva
 - Stories com enquetes e perguntas
 - CTA claro em todo post
 - Reels priorizados quando possível
+
+---
+
+## 🎯 CAMPANHA DE JULHO 2026 — MÊS DO AMIGO
+
+### Informações gerais
+- **Nome da campanha:** Mês do Amigo
+- **Período:** 01 a 31 de julho de 2026
+- **Slogan oficial:** "Amigo que treina junto, economiza junto."
+- **Objetivo:** Captar 50-60 novos alunos através de indicações de alunos ativos
+- **Foco:** Incentivar prática em dupla, fortalecer motivação, constância e senso de comunidade
+
+### Como funciona
+Alunos ativos convidam amigos para se matricularem. Quando o indicado efetiva a matrícula durante julho, **ambos recebem benefício exclusivo** (20% de desconto).
+
+### Benefícios da promoção
+**Para o aluno que indicou:**
+- 20% de desconto conforme as regras da campanha
+- Pode receber Fitcoins por indicações adicionais *(regra a definir)*
+
+**Para o amigo indicado:**
+- 20% de desconto conforme as regras da campanha
+
+### Participantes elegíveis
+- Alunos ativos da academia
+- Novos alunos
+- Ex-alunos que retornarem durante o período
+
+### Planos participantes
+Válido para **todos os planos disponíveis** na academia.
+
+### Controle das indicações
+Registro via sistema da academia. **Responsabilidades das recepcionistas (Juliana e Isadora):**
+- Registrar corretamente as indicações
+- Confirmar vínculo entre indicador e indicado
+- Garantir aplicação dos benefícios
+- Esclarecer dúvidas dos alunos
+
+### Tom de comunicação da campanha
+- Descontraído e amigável
+- Motivador
+- Focado em parceria e resultados
+- **Mensagem principal:** Treinar acompanhado aumenta motivação, melhora consistência e torna a jornada mais divertida
+
+### Resposta padrão para atendimento
+*"O Mês do Amigo é a campanha especial de julho da Academia Planeta Corpo. Ao convidar um amigo para se matricular durante o período da promoção, vocês treinam juntos e ambos recebem 20% de desconto. Afinal, amigo que treina junto, economiza junto."*
+
+### Divulgação
+- **Canal principal:** Instagram (@planetacorpoclubmais)
+- **Público-alvo:** Alunos ativos, amigos e familiares, ex-alunos, pessoas interessadas em treinar com companhia
+
+### Informações pendentes
+- **Desconto:** Definir se 20% serão aplicados apenas na 1ª mensalidade ou em todo o plano
+- **Fitcoins:** Definir quantidade por indicação e regras de acúmulo/utilização
+
+---
+
+## 📅 ESTRATÉGIA DE CONTEÚDO — MÊS DO AMIGO (JULHO 2026)
+
+### Calendário de postagens — Academia (@planetacorpoclubmais)
+
+#### Semana 1 (01-07 de julho)
+**Tema:** Lançamento da campanha | Tom: Convite e curiosidade
+
+- **01/07 (seg) 8h — Story:** "Início oficial do Mês do Amigo — Teaser visual" | Preto + laranja, emojis 🧡
+- **01/07 (seg) 17h — Post Feed:** "Anúncio oficial da campanha" | Briefing criativo + copy conversacional | CTA claro: "Trague seu amigo"
+- **02/07 (ter) 12h — Story:** Dúvida comum #1 ("Como funciona?") — resposta rápida
+- **03/07 (qua) 20h — Bastidores:** Humanização — colaborador falando sobre benefício de treinar com amigo
+- **04/07 (qui) 17h — Reel:** "Treinar com amigo" (motivação, diversão, comunidade)
+- **05/07 (sex) 8h — Story:** Prova social — "João trouxe sua amiga Maria, ambos ganharam 20% de desconto!"
+- **05/07 (sex) 20h — Post Feed:** "Depoimento/case" — Como treinar junto transforma a jornada
+
+#### Semana 2 (08-14 de julho)
+**Tema:** Momentum e prova social | Tom: Celebração de resultados iniciais
+
+- **08/07 (seg) 12h — Story:** Contador visual ("X alunos já participaram!")
+- **09/07 (ter) 17h — Post Feed:** "Dica de saúde" — Benefícios psicológicos de treinar em dupla
+- **10/07 (qua) 20h — Bastidores:** Humanização — outra colaboradora apresentada
+- **11/07 (qui) 9h — Story:** Enquete: "Você já convidou seu melhor amigo?"
+- **12/07 (sex) 17h — Reel:** "Transformação" — antes/depois de dupla treinando 30 dias
+- **13/07 (sab) 15h — Post Feed:** Ajuste sábado — destaque de promoção (2 posts Academia, 6 Sorveteria)
+- **14/07 (dom) — Pausa orgânica ou story leve**
+
+#### Semana 3 (15-21 de julho)
+**Tema:** Meio da campanha — lembrança urgente | Tom: FOMO positivo ("Não perca!")
+
+- **15/07 (seg) 8h — Story:** "Faltam 16 dias — Traga seu amigo agora!" (urgência gentil)
+- **16/07 (ter) 12h — Post Feed:** "Últimas semanas — Aproveita enquanto dura!"
+- **17/07 (qua) 20h — Bastidores:** Humanização — colaborador #3
+- **18/07 (qui) 17h — Story:** Votação ("Qual horário você e seu amigo vão treinar?")
+- **19/07 (sex) 8h — Reel:** Montagem dinâmica — 3 histórias de duplas felizes
+- **19/07 (fri) 17h — Post Feed:** Relatório intermediário ("Já somos X novos alunos!")
+- **20/07 (sab) 15h — Post Feed:** Ajuste sábado
+- **21/07 (dom) — Pausa**
+
+#### Semana 4 (22-31 de julho)
+**Tema:** Reta final — Fechamento da campanha | Tom: Urgência e reconhecimento
+
+- **22/07 (seg) 12h — Story:** "Uma semana para terminar! Traga seu amigo agora!"
+- **23/07 (ter) 17h — Post Feed:** "Top 5 Duplas da Semana" (prova social + gamificação)
+- **24/07 (qua) 20h — Bastidores:** Humanização — colaborador #4
+- **25/07 (qui) 9h — Story:** "Últimos dias!" (contagem regressiva visual)
+- **26/07 (fri) 17h — Post Feed:** Testemunhais compilado ("Veja o que as duplas estão dizendo")
+- **26/07 (fri) 20h — Reel:** Montagem "Mês do Amigo em 15 segundos" (compilation)
+- **29/07 (seg) 8h — Story:** "HOJE É O ÚLTIMO DIA!" (urgência total)
+- **29/07 (ter) 12h — Post Feed:** Encerramento oficial com números finais
+- **31/07 (qua) 20h — Bastidores/Story:** Agradecimento à comunidade + teaser do que vem em agosto
+
+### Estrutura de cada card de conteúdo — Mês do Amigo
+*Aplicar este template em todos os posts durante julho:*
+
+**`01` Formato/Specs**
+- Story 1080×1920 | Feed 1080×1080 | Reel 1080×1920
+- Cores obrigatórias: Laranja (#e63900), Preto (#1a1a1a), Branco (#ffffff)
+- Emojis: 🧡💛🌿 (sem fogo, sem músculo)
+- Sem texto na imagem (todo copy é legenda)
+
+**`02` Intenção do post**
+- Funil: Awareness (semana 1) → Consideration (semanas 2-3) → Conversion (semana 4)
+- CTA obrigatório: "Traga seu amigo", "Convide agora", "Participe da campanha", "Clique no link"
+- Ação esperada: Compartilhamento interno, tagged friends, DM para dúvidas, clique no link da bio
+
+**`03` Briefing criativo detalhado**
+- Paleta visual: Laranja destaque, preto fundo, branco texto
+- Composição: Centrado, limpo, energético mas acolhedor
+- Hierarquia: Slogan → Imagem/Vídeo → Copy → CTA
+- Tone: Conversacional, amigável, sem jargão fitness agressivo
+
+### Hashtags — Campanha Mês do Amigo
+*30 hashtags por post (padrão Academia):*
+#MêsDoAmigo #AmigoQueTreinaJunto #AmigoQuePoupaTambém #AcademiaPlanetaCorpo #TreinoEmDupla #ComunidadeQueMotiva #QualidadeDeVida #AmigosDeTreino #DescontoParaDupla #MatrículaAgora #TreineComMotivaçãoDoble #SaudeCom Amigo #MotivacaoComParceria #AmigoIndica #AmigoSalva #TurvoPR #AcademiaLocal #27AnosDePadrão #SaudePsicológica #ConsistênciaTriplicada #DuplaDeSuccesso #AmigoMelhorQueSuplemento #TreineComemoia #Gym #FitnessComunidade #BenefíciosdoTreino #DescubraseuMelhorAmigo #JuntosSomosFortes #ComunidadeAcademia #CompromissoMútuo
+
+---
+
+### Pontos críticos para execução
+1. **Resposta rápida a DMs/comentários** — Juliana ou Isadora devem estar atentas durante campanhas
+2. **Consistência visual** — Manter paleta (laranja + preto + branco) em 100% dos posts
+3. **Humanização intercalada** — Não ficar só em "desconto" — alternar com bastidores e prova social
+4. **CTA cristalino** — Cada post deve deixar claro o próximo passo (link na bio, DM, visita presencial)
+5. **Métricas de acompanhamento** — Registrar quantas indicações vieram de cada post (via sistema)
 
 ---
 
@@ -154,27 +294,3 @@ Quando Gilson pedir "gera o conteúdo de [dia]":
 2. Atualize o `index.html` com os novos cards (validar sintaxe JS antes de commitar)
 3. Faça commit com mensagem clara (ex: "conteúdo 19/06 - ...")
 4. Push para o GitHub — Vercel publica automaticamente
-
-
-## 📈 ATUALIZAÇÃO DE ABORDAGEM — GROWTH (23/06/2026)
-
-> Mudanças no SISTEMA de geração de conteúdo, não nos posts específicos. Aplicar em todo conteúdo novo a partir de agora.
-
-### Hashtags
-- **Máximo 5 hashtags por post** — o Instagram capou oficialmente em 5 desde dez/2025 (Mosseri/Meta); acima disso o excedente é cortado ou penaliza alcance. O bloco antigo de 30 hashtags está obsoleto.
-- Hashtags **só em Post e Carrossel**. Story nunca leva hashtag.
-- Variar a combinação a cada post (não repetir sempre os mesmos 5) — misturar 1 nicho + 1 marca + 1 local + 2 tópico/contexto.
-
-### Formato
-- **Carrossel passa a valer pra Academia e Sorveteria também** (antes só GympulsePro usava). É o formato que gera mais salvamento/compartilhamento sem precisar de vídeo — priorizar pra conteúdo educativo/lista/bastidores de processo.
-- **Reels ainda não implementado no pipeline** (Zernio/`publish-zernio.js` só aceita `type:'image'` hoje). É o maior ganho potencial de alcance pendente — decisão de expandir o pipeline pra vídeo fica em aberto, depende de aprovação.
-
-### Identidade visual
-- **Correção:** Teal oficial da Academia é `#00b4b4` (estava saindo `#003f6b` por engano em alguns cards — esse é o azul da Sorveteria).
-
-### Segurança de publicação
-- Cards tipo "Produto do Dia" (sabor variável) precisam de marcação visual forte no campo a editar — ex: `[✏️ EDITAR ANTES DE PUBLICAR — sabor de hoje]` — pra reduzir risco de ir ao ar com o texto não preenchido.
-
-### Copy / Hook
-- Abrir com gancho específico ou contrariante (não genérico) — frase que gera identificação ou quebra padrão, não "Bom dia Turvo!" solto.
-- Incluir gatilho explícito de salvar/compartilhar/comentar quando o formato permitir (carrossel e listas, principalmente).
