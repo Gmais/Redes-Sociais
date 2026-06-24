@@ -29,9 +29,9 @@ Gilson Caetano é professor de Educação Física (SEED/PR — Colégio Estadual
 ### Modalidades
 Musculação, Dança, Spinning, Funcional, Jump, HIIT e aulas coletivas
 
-**Equipe de Professores:**
-- **João Alexandre** — Professor de Lutas
-- **Syonara** — Professora de Judô Infantil
+**Equipe de Professores & Horários:**
+- **João Alexandre** — Professor de Lutas | ⏰ Terças e quintas às 19h15
+- **Syonara** — Professora de Judô Infantil | ⏰ Terças e quintas às 17h30
 
 ### Público-alvo
 - **Primário:** Mulheres de 30 a 40 anos, moradoras de Turvo/PR
