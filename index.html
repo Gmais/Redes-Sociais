@@ -589,6 +589,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   box-shadow:0 0 12px rgba(74,222,128,0.3);
 }
 .new-post-btn:hover { background:linear-gradient(135deg,#22c55e,#16a34a); box-shadow:0 0 20px rgba(74,222,128,0.5); }
+.filter-bar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
 #newPostModal { display:none; }
 #newPostModal.open { display:flex; }
 .np-profile-bar { display:flex; gap:6px; margin-bottom:16px; }
@@ -8381,7 +8382,7 @@ const done=id=>!!S[id];
 const toggle=id=>{
   const willBeDone = !S[id];
   if (willBeDone && !hasValidImage(id)) {
-    showToast('⚠️ Anexe uma imagem/vídeo antes de validar como executado');
+    showToast('⚠️ Anexe uma mídia antes de validar como executado');
     flashImageBox(id);
     return;
   }
@@ -8463,7 +8464,9 @@ function updateReadyBadge(id){
   const { profile } = found;
   const pubData = getPublishData(id);
   const isPublishedNow = ZERNIO_PROFILES.includes(profile) && !!(pubData && pubData.status === 'ok');
-  const isReadyToShow = ZERNIO_PROFILES.includes(profile) && !isPublishedNow && isReadyForAutoPublish(id);
+  const imgData2 = getImageData(id);
+  const isDriveReady = !!(imgData2 && imgData2.status === 'ok') && getReviewed(id);
+  const isReadyToShow = !isPublishedNow && isDriveReady;
   const badgeEl = document.getElementById('cfmt-'+id);
   if (badgeEl) {
     badgeEl.classList.toggle('ready', isReadyToShow);
@@ -8483,7 +8486,15 @@ function publishBlockHTML(id){
 
   const readyBadge = ready
     ? `<span class="publish-badge ok">✅ 100% pronto — será publicado automaticamente no horário</span>`
-    : `<span class="publish-badge pending">${reviewed ? '⏳ Aguardando upload da imagem terminar' : '⚠️ Marque como revisado pra liberar a automação'}</span>`;
+    : `<span class="publish-badge pending">${reviewed ? (function(){
+      const _img = getImageData(id);
+      if (_img && _img.status === 'ok') {
+        if (_img.zernioStatus === 'pending') return '⏳ Preparando automação Zernio...';
+        if (_img.zernioStatus === 'error') return '⚠️ Falha no Zernio — tente substituir a mídia';
+        return '⏳ Sincronizando com Zernio...';
+      }
+      return '⏳ Envie a mídia para liberar';
+    })() : '⚠️ Marque como revisado pra liberar a automação'}</span>`;
 
   let actionHTML;
   if (pub && pub.status === 'publishing') {
@@ -9006,7 +9017,8 @@ function cardHTML(item,profile){
   const acColor={academia:'#e63900',sorveteria:'#f5c800',gympulse:'#f5c200'}[profile];
   const pubData = getPublishData(item.id);
   const isPublishedNow = ZERNIO_PROFILES.includes(profile) && !!(pubData && pubData.status === 'ok');
-  const isReadyToShow = ZERNIO_PROFILES.includes(profile) && !isPublishedNow && isReadyForAutoPublish(item.id);
+  const isDriveReady = !!(imgData && imgData.status === 'ok') && getReviewed(item.id);
+  const isReadyToShow = !isPublishedNow && isDriveReady;
   const cfmtClass = isPublishedNow ? ' published' : (isReadyToShow ? ' ready' : '');
 
   return `
