@@ -9815,13 +9815,48 @@ function showToast(msg) {
 
 // Apply saved edits on load
 function applySavedEdits() {
+  const allIds = new Set();
   for (const profile of ['academia','sorveteria','gympulse']) {
     CONTENT[profile].forEach(item => {
+      allIds.add(item.id);
       const saved = localStorage.getItem('edits_' + item.id);
       if (saved) {
         try { Object.assign(item, JSON.parse(saved)); } catch(e) {}
       }
     });
+  }
+  // Restaurar cards criados via Nova Postagem / Reaproveitar que não existem no HTML base
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key.startsWith('edits_')) continue;
+    const id = key.replace('edits_', '');
+    if (allIds.has(id)) continue; // já existe no CONTENT
+    try {
+      const cardData = JSON.parse(localStorage.getItem(key));
+      if (!cardData || !cardData.title) continue; // edit sem dados suficientes
+      // Determinar profile pelo prefixo do ID ou pelo campo salvo
+      let profile = null;
+      if (id.startsWith('ac')) profile = 'academia';
+      else if (id.startsWith('so')) profile = 'sorveteria';
+      else if (id.startsWith('gy')) profile = 'gympulse';
+      if (!profile) continue;
+      // Montar card mínimo
+      const newCard = {
+        id: id,
+        date: cardData.date || new Date().toISOString().slice(0,10),
+        time: cardData.time || '12h',
+        format: cardData.format || 'Post',
+        title: cardData.title || 'Sem título',
+        texto: cardData.texto || '',
+        secoes: cardData.secoes || [
+          {num:'01',cor:'#e63900',titulo:'FORMATO E ESPECIFICAÇÕES',conteudo:'A preencher'},
+          {num:'02',cor:'#f5a623',titulo:'INTENÇÃO DA POSTAGEM',conteudo:'A preencher'},
+          {num:'03',cor:'#4ade80',titulo:'BRIEFING CRIATIVO DETALHADO',conteudo:'A preencher'}
+        ]
+      };
+      CONTENT[profile].push(newCard);
+      allIds.add(id);
+    } catch(e) { console.error('Erro ao restaurar card', id, e); }
   }
 }
 
