@@ -27,11 +27,39 @@ Gilson Caetano é professor de Educação Física (SEED/PR — Colégio Estadual
 - **Seguidores Instagram:** ~3.066 | Posts: ~399
 
 ### Modalidades
-Musculação, Dança, Spinning, Funcional, Jump, HIIT e aulas coletivas
+Musculação, Dança, Spinning, Funcional, Jump, HIIT, Judô Infantil, Jiu Jitsu, Muay Thai e aulas coletivas
 
-**Equipe de Professores & Horários:**
-- **João Alexandre** — Professor de Lutas | ⏰ Terças e quintas às 19h15
-- **Syonara** — Professora de Judô Infantil | ⏰ Terças e quintas às 17h30
+**Equipe de Professores:**
+- **João Alexandre** — Professor de Lutas / Artes Marciais
+- **Syonara** — Professora de Judô Infantil
+
+### Tabela de Horários — Academia Planeta Corpo Club+
+
+**SEGUNDA, QUARTA E SEXTA:**
+| Horário | Modalidade | Intensidade |
+|---------|-----------|-------------|
+| 07h30 - 08h30 | HIIT | Alta |
+| 17h15 - 18h00 | Functional Kids | Média |
+| 18h15 - 19h00 | HIIT | Alta |
+| 18h30 - 19h30 | Funcional Adulto | Alta |
+| 18h30 - 20h00 | Dança | Média |
+| 06h00 - 11h00 | Musculação | Personalizada |
+| 14h00 - 22h00 | Musculação | Personalizada |
+| 18h15 - 19h00 | Jump | Alta |
+
+**TERÇA E QUINTA:**
+| Horário | Modalidade | Professor | Intensidade |
+|---------|-----------|-----------|-------------|
+| 17h30 - 18h30 | Judô Infantil | Syonara | Média |
+| 18h30 - 19h15 | Spinning | — | Alta |
+| 19h15 - 20h15 | Muay Thai | — | Alta |
+| 20h15 - 21h15 | Jiu Jitsu | — | Alta |
+| 06h00 - 11h00 | Musculação | — | Personalizada |
+| 14h00 - 22h00 | Musculação | — | Personalizada |
+
+**SÁBADO:**
+- Atividades conforme demanda
+- Horário livre para musculação e modalidades disponíveis
 
 ### Público-alvo
 - **Primário:** Mulheres de 30 a 40 anos, moradoras de Turvo/PR
