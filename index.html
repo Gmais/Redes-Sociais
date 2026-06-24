@@ -9597,11 +9597,14 @@ async function pushRemoteState() {
     const localPublished = {};
     const localReviewed = {};
     const manifest = {};
-    const today = new Date().toISOString().slice(0,10); // YYYY-MM-DD
+    const today = new Date().toISOString().slice(0,10);
+    const seenInManifest = new Set();
     for (const profile of ['academia','sorveteria','gympulse']) {
       CONTENT[profile].forEach(item => {
-        // Filtrar: apenas posts de hoje que NÃO foram feitos ainda
         if (item.date !== today || S[item.id]) return;
+        // Evitar duplicatas no manifesto
+        if (seenInManifest.has(item.id)) return;
+        seenInManifest.add(item.id);
         const savedEdit = localStorage.getItem('edits_' + item.id);
         if (savedEdit) {
           try { localEdits[item.id] = JSON.parse(savedEdit); } catch(e) {}
