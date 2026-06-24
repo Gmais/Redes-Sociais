@@ -482,7 +482,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 
 /* ── HIDE COMPLETED FILTER ── */
 .filter-bar {
-  display:flex; justify-content:center; padding:10px 16px 0;
+  display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:12px; padding:12px 0 0; width:100%;
 }
 .hide-done-check {
   display:inline-flex; align-items:center; gap:8px; cursor:pointer;
@@ -589,7 +589,6 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   box-shadow:0 0 12px rgba(74,222,128,0.3);
 }
 .new-post-btn:hover { background:linear-gradient(135deg,#22c55e,#16a34a); box-shadow:0 0 20px rgba(74,222,128,0.5); }
-.filter-bar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
 #newPostModal { display:none; }
 #newPostModal.open { display:flex; }
 .np-profile-bar { display:flex; gap:6px; margin-bottom:16px; }
@@ -639,6 +638,13 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   color:#fbbf24; background:transparent; border:1px solid #fbbf2433;
   border-radius:6px; padding:6px 10px; cursor:pointer; font-family:'Inter',sans-serif;
   transition:all 0.15s; white-space:nowrap;
+}
+.unpublish-btn:hover { background:#fbbf2422; border-color:#fbbf24; }
+
+.unpublish-btn {
+  font-size:10px; font-weight:700; color:#fbbf24; background:transparent;
+  border:1px solid #fbbf2433; border-radius:6px; padding:6px 10px;
+  cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.15s;
 }
 .unpublish-btn:hover { background:#fbbf2422; border-color:#fbbf24; }
 </style>
@@ -10300,6 +10306,17 @@ function unpublishCard(id, profile) {
   buildHist();
   scheduleSync();
   showToast('↩️ Status revertido — card marcado como não publicado');
+}
+
+function unpublishCard(id, profile) {
+  var ok = confirm('Confirma que este post NAO foi publicado no Instagram?\nIsso vai reverter o status para pendente.');
+  if (!ok) return;
+  localStorage.removeItem('pub_' + id);
+  rerenderPublishBlock(id, profile);
+  renderAll();
+  buildHist();
+  scheduleSync();
+  showToast('Status revertido — card pendente novamente');
 }
 </script>
 
