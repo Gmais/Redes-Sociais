@@ -9734,22 +9734,23 @@ function setCarouselData(id, data) {
 }
 function carouselSlidesHTML(id, profile) {
   const slides = getCarouselData(id);
-  if (!slides.length && !getImageData(id)) return '';
+  const mainImg = getImageData(id);
   let html = '<div class="carousel-slides">';
   html += '<div class="carousel-label">📑 Slides do Carrossel</div>';
-  
-  // Slide 1 é a imagem principal (já gerenciada pelo imageBlockHTML)
-  const mainImg = getImageData(id);
+
+  // Slide 1 = imagem/vídeo principal
   if (mainImg && mainImg.status === 'ok') {
     html += '<div class="carousel-slide"><span>1️⃣ ' + (mainImg.fileName || 'Slide 1') + '</span><span class="slide-ok">✓</span></div>';
+  } else {
+    html += '<div class="carousel-slide" style="color:var(--txt3)"><span>1️⃣ Envie a mídia principal acima</span></div>';
   }
-  
+
   // Slides adicionais
   slides.forEach((s, i) => {
     html += '<div class="carousel-slide"><span>' + (i+2) + '️⃣ ' + (s.fileName || 'Slide '+(i+2)) + '</span>';
     html += '<button class="slide-remove" onclick="removeCarouselSlide(\''+id+'\','+i+',\''+profile+'\')">✕</button></div>';
   });
-  
+
   html += '<button class="slide-add-btn" onclick="addCarouselSlide(\''+id+'\',\''+profile+'\')">+ Adicionar slide</button>';
   html += '</div>';
   return html;
