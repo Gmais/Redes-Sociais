@@ -571,6 +571,17 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .clone-ref-title { font-size:14px; font-weight:600; color:var(--txt); }
 #cloneModal { display:none; }
 #cloneModal.open { display:flex; }
+
+.past-done-section { margin-top:24px; }
+.past-done-divider {
+  font-size:12px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--txt3); padding:12px 0 8px; margin-bottom:4px;
+  border-top:1px solid var(--border);
+  display:flex; align-items:center; gap:8px;
+}
+.past-done-divider::after {
+  content:''; flex:1; height:1px; background:var(--border);
+}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -8960,6 +8971,12 @@ function cardHTML(item,profile){
 </div>`;
 }
 
+function getWeekStart(d) {
+  const dt = new Date(d); dt.setHours(0,0,0,0);
+  dt.setDate(dt.getDate() - dt.getDay());
+  return dt;
+}
+
 function renderPanel(profile){
   const items=CONTENT[profile];
   const el=document.getElementById('p-'+profile);
@@ -8968,13 +8985,95 @@ function renderPanel(profile){
   const pct=total>0?Math.round(doneN/total*100):0;
   const c={academia:'#e63900',sorveteria:'#f5c800',gympulse:'#f5c200'}[profile];
   const visibleItems = hideDone ? items.filter(i=>!done(i.id)) : items;
-  const groups=groupBy(visibleItems,'date');
-  let html='';
-  Object.keys(groups).sort().forEach(date=>{
-    html+=`<div class="dgroup"><div class="dlabel">${fmtDate(date)}</div>`;
-    groups[date].forEach(item=>{html+=cardHTML(item,profile);});
-    html+='</div>';
+
+  // Separar: semana atual + futuro (expandido) vs passado executado (agrupado)
+  const now = new Date();
+  const weekStart = getWeekStart(now);
+
+  const currentItems = []; // Semana atual + futuro + pendentes antigos
+  const pastDoneItems = []; // Passado e executado → agrupar
+
+  visibleItems.forEach(item => {
+    const [y,m,d] = item.date.split('-').map(Number);
+    const itemDate = new Date(y, m-1, d);
+    if (itemDate >= weekStart || !done(item.id)) {
+      currentItems.push(item);
+    } else {
+      pastDoneItems.push(item);
+    }
   });
+
+  // Renderizar itens atuais (expandidos, por data, como antes)
+  let html = '';
+  const currentGroups = groupBy(currentItems, 'date');
+  Object.keys(currentGroups).sort().forEach(date => {
+    html += `<div class="dgroup"><div class="dlabel">${fmtDate(date)}</div>`;
+    currentGroups[date].forEach(item => { html += cardHTML(item, profile); });
+    html += '</div>';
+  });
+
+  // Renderizar itens passados executados (agrupados por semana/mês, colapsados)
+  if (pastDoneItems.length > 0) {
+    const curMonth = now.getMonth();
+    const curYear = now.getFullYear();
+    const pastGroups = {};
+
+    pastDoneItems.sort((a,b) => b.date.localeCompare(a.date)).forEach(item => {
+      const [y,m,d] = item.date.split('-').map(Number);
+      const dt = new Date(y, m-1, d);
+      let gk;
+
+      if (dt.getMonth() === curMonth && dt.getFullYear() === curYear) {
+        const ws = getWeekStart(dt);
+        const wsStr = ws.toISOString().slice(0,10);
+        const we = new Date(ws); we.setDate(ws.getDate() + 6);
+        gk = 'sem_' + wsStr;
+        if (!pastGroups[gk]) pastGroups[gk] = {
+          label: '🗓️ Semana ' + fmtDate(wsStr) + ' a ' + fmtDate(we.toISOString().slice(0,10)),
+          sort: wsStr, items: []
+        };
+      } else {
+        const mKey = y + '-' + String(m).padStart(2,'0');
+        gk = 'mes_' + mKey;
+        if (!pastGroups[gk]) {
+          const mName = dt.toLocaleDateString('pt-BR', { month:'long', year:'numeric' });
+          pastGroups[gk] = {
+            label: '📅 ' + mName.charAt(0).toUpperCase() + mName.slice(1),
+            sort: mKey, items: []
+          };
+        }
+      }
+      pastGroups[gk].items.push(item);
+    });
+
+    const sortedGroups = Object.values(pastGroups).sort((a,b) => b.sort.localeCompare(a.sort));
+
+    html += '<div class="past-done-section">';
+    html += '<div class="past-done-divider">✅ Postagens realizadas</div>';
+    sortedGroups.forEach(g => {
+      const groupId = 'pg_' + profile + '_' + g.sort.replace(/[^a-z0-9]/gi,'');
+      html += `<div class="hist-group">
+        <div class="hist-group-header" onclick="toggleHistGroup(this)">
+          <span>${g.label}</span>
+          <span class="hist-group-meta">
+            <span class="hist-group-count">${g.items.length} posts</span>
+            <span class="hist-group-chev">▼</span>
+          </span>
+        </div>
+        <div class="hist-group-body" style="display:none">`;
+
+      const dateGroups = groupBy(g.items, 'date');
+      Object.keys(dateGroups).sort().forEach(date => {
+        html += `<div class="dgroup"><div class="dlabel">${fmtDate(date)}</div>`;
+        dateGroups[date].forEach(item => { html += cardHTML(item, profile); });
+        html += '</div>';
+      });
+
+      html += '</div></div>';
+    });
+    html += '</div>';
+  }
+
   const emptyMsg = hideDone && total>0 && visibleItems.length===0
     ? '<div class="empty"><div class="eico">🎉</div><p>Tudo concluído! Desmarque o filtro para ver tudo de novo.</p></div>'
     : '<div class="empty"><div class="eico">📭</div><p>Sem conteúdo ainda.</p></div>';
