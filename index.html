@@ -572,16 +572,13 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 #cloneModal { display:none; }
 #cloneModal.open { display:flex; }
 
-.past-done-section { margin-top:24px; }
-.past-done-divider {
-  font-size:12px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase;
-  color:var(--txt3); padding:12px 0 8px; margin-bottom:4px;
-  border-top:1px solid var(--border);
-  display:flex; align-items:center; gap:8px;
+.delete-btn {
+  font-size:10px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase;
+  color:#ff6b6b; background:transparent; border:1px solid #ff6b6b33;
+  border-radius:6px; padding:7px 12px; cursor:pointer; font-family:'Inter',sans-serif;
+  transition:all 0.15s; display:inline-flex; align-items:center; gap:4px;
 }
-.past-done-divider::after {
-  content:''; flex:1; height:1px; background:var(--border);
-}
+.delete-btn:hover { background:#ff6b6b22; border-color:#ff6b6b; }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -8946,6 +8943,7 @@ function cardHTML(item,profile){
       <button class="edit-btn" onclick="event.stopPropagation();openEdit('${item.id}')">✏️ Editar card</button>
       <button class="copy-all-btn" onclick="event.stopPropagation();copyAll('${item.id}')">📋 Copiar tudo</button>
       <button class="clone-btn" onclick="event.stopPropagation();cloneCard('${item.id}','${profile}')">🔄 Reaproveitar</button>
+      <button class="delete-btn" onclick="event.stopPropagation();deleteCard('${item.id}','${profile}')">🗑️ Excluir</button>
     </div>
     ${ZERNIO_PROFILES.includes(profile) ? publishBlockHTML(item.id) : ''}
     <div class="block">
@@ -8971,12 +8969,6 @@ function cardHTML(item,profile){
 </div>`;
 }
 
-function getWeekStart(d) {
-  const dt = new Date(d); dt.setHours(0,0,0,0);
-  dt.setDate(dt.getDate() - dt.getDay());
-  return dt;
-}
-
 function renderPanel(profile){
   const items=CONTENT[profile];
   const el=document.getElementById('p-'+profile);
@@ -8985,95 +8977,13 @@ function renderPanel(profile){
   const pct=total>0?Math.round(doneN/total*100):0;
   const c={academia:'#e63900',sorveteria:'#f5c800',gympulse:'#f5c200'}[profile];
   const visibleItems = hideDone ? items.filter(i=>!done(i.id)) : items;
-
-  // Separar: semana atual + futuro (expandido) vs passado executado (agrupado)
-  const now = new Date();
-  const weekStart = getWeekStart(now);
-
-  const currentItems = []; // Semana atual + futuro + pendentes antigos
-  const pastDoneItems = []; // Passado e executado → agrupar
-
-  visibleItems.forEach(item => {
-    const [y,m,d] = item.date.split('-').map(Number);
-    const itemDate = new Date(y, m-1, d);
-    if (itemDate >= weekStart || !done(item.id)) {
-      currentItems.push(item);
-    } else {
-      pastDoneItems.push(item);
-    }
+  const groups=groupBy(visibleItems,'date');
+  let html='';
+  Object.keys(groups).sort().forEach(date=>{
+    html+=`<div class="dgroup"><div class="dlabel">${fmtDate(date)}</div>`;
+    groups[date].forEach(item=>{html+=cardHTML(item,profile);});
+    html+='</div>';
   });
-
-  // Renderizar itens atuais (expandidos, por data, como antes)
-  let html = '';
-  const currentGroups = groupBy(currentItems, 'date');
-  Object.keys(currentGroups).sort().forEach(date => {
-    html += `<div class="dgroup"><div class="dlabel">${fmtDate(date)}</div>`;
-    currentGroups[date].forEach(item => { html += cardHTML(item, profile); });
-    html += '</div>';
-  });
-
-  // Renderizar itens passados executados (agrupados por semana/mês, colapsados)
-  if (pastDoneItems.length > 0) {
-    const curMonth = now.getMonth();
-    const curYear = now.getFullYear();
-    const pastGroups = {};
-
-    pastDoneItems.sort((a,b) => b.date.localeCompare(a.date)).forEach(item => {
-      const [y,m,d] = item.date.split('-').map(Number);
-      const dt = new Date(y, m-1, d);
-      let gk;
-
-      if (dt.getMonth() === curMonth && dt.getFullYear() === curYear) {
-        const ws = getWeekStart(dt);
-        const wsStr = ws.toISOString().slice(0,10);
-        const we = new Date(ws); we.setDate(ws.getDate() + 6);
-        gk = 'sem_' + wsStr;
-        if (!pastGroups[gk]) pastGroups[gk] = {
-          label: '🗓️ Semana ' + fmtDate(wsStr) + ' a ' + fmtDate(we.toISOString().slice(0,10)),
-          sort: wsStr, items: []
-        };
-      } else {
-        const mKey = y + '-' + String(m).padStart(2,'0');
-        gk = 'mes_' + mKey;
-        if (!pastGroups[gk]) {
-          const mName = dt.toLocaleDateString('pt-BR', { month:'long', year:'numeric' });
-          pastGroups[gk] = {
-            label: '📅 ' + mName.charAt(0).toUpperCase() + mName.slice(1),
-            sort: mKey, items: []
-          };
-        }
-      }
-      pastGroups[gk].items.push(item);
-    });
-
-    const sortedGroups = Object.values(pastGroups).sort((a,b) => b.sort.localeCompare(a.sort));
-
-    html += '<div class="past-done-section">';
-    html += '<div class="past-done-divider">✅ Postagens realizadas</div>';
-    sortedGroups.forEach(g => {
-      const groupId = 'pg_' + profile + '_' + g.sort.replace(/[^a-z0-9]/gi,'');
-      html += `<div class="hist-group">
-        <div class="hist-group-header" onclick="toggleHistGroup(this)">
-          <span>${g.label}</span>
-          <span class="hist-group-meta">
-            <span class="hist-group-count">${g.items.length} posts</span>
-            <span class="hist-group-chev">▼</span>
-          </span>
-        </div>
-        <div class="hist-group-body" style="display:none">`;
-
-      const dateGroups = groupBy(g.items, 'date');
-      Object.keys(dateGroups).sort().forEach(date => {
-        html += `<div class="dgroup"><div class="dlabel">${fmtDate(date)}</div>`;
-        dateGroups[date].forEach(item => { html += cardHTML(item, profile); });
-        html += '</div>';
-      });
-
-      html += '</div></div>';
-    });
-    html += '</div>';
-  }
-
   const emptyMsg = hideDone && total>0 && visibleItems.length===0
     ? '<div class="empty"><div class="eico">🎉</div><p>Tudo concluído! Desmarque o filtro para ver tudo de novo.</p></div>'
     : '<div class="empty"><div class="eico">📭</div><p>Sem conteúdo ainda.</p></div>';
@@ -9984,6 +9894,26 @@ function executeClone() {
 }
 
 
+
+// ── EXCLUIR CARD ──
+function deleteCard(id, profile) {
+  const item = CONTENT[profile].find(c => c.id === id);
+  if (!item) return;
+  const ok = confirm('🗑️ Excluir este card?\n\n"' + item.title + '"\n\nEssa ação não pode ser desfeita.');
+  if (!ok) return;
+  const idx = CONTENT[profile].findIndex(c => c.id === id);
+  if (idx > -1) {
+    CONTENT[profile].splice(idx, 1);
+    localStorage.removeItem('img_' + id);
+    localStorage.removeItem('carousel_' + id);
+    delete S[id];
+    save();
+    renderAll();
+    buildHist();
+    scheduleSync();
+    showToast('🗑️ Card excluído');
+  }
+}
 </script>
 
 <!-- EDIT MODAL -->
