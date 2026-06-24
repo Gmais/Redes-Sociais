@@ -10099,6 +10099,9 @@ function deleteCard(id, profile) {
     CONTENT[profile].splice(idx, 1);
     localStorage.removeItem('img_' + id);
     localStorage.removeItem('carousel_' + id);
+    localStorage.removeItem('edits_' + id);
+    localStorage.removeItem('pub_' + id);
+    localStorage.removeItem('reviewed_' + id);
     delete S[id];
     save();
     renderAll();
