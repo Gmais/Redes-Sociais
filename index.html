@@ -8891,14 +8891,14 @@ async function handleImageSelect(id, profile, inputEl){
     rerenderImageBox(id, profile);
     return;
   }
-  if (isVideo && file.type !== 'video/mp4') {
-    // Converter vídeo para MP4 antes de enviar
-    setImageData(id, { status:'uploading', fileName:'Convertendo ' + file.name + ' para MP4...' });
+  if (isVideo) {
+    // Comprimir e converter vídeo para MP4 (720p, max 20MB)
+    setImageData(id, { status:'uploading', fileName:'Comprimindo ' + file.name + '...' });
     rerenderImageBox(id, profile);
     try {
-      file = await convertVideoToMp4(file);
+      file = await compressVideo(file);
     } catch(convErr) {
-      setImageData(id, { status:'error', errorMsg:'Não foi possível converter: ' + convErr.message + '. Converta manualmente para MP4.' });
+      setImageData(id, { status:'error', errorMsg:'Falha na compressão: ' + convErr.message });
       rerenderImageBox(id, profile);
       return;
     }
@@ -10433,41 +10433,49 @@ async function convertImageToJpeg(file) {
   });
 }
 
-async function convertVideoToMp4(file) {
-  showUploadProgress(0, 'Convertendo ' + file.name + '...');
-  // Usar MediaRecorder + Canvas para recodificar em MP4/WebM
-  // Se o navegador suportar MediaRecorder com mimeType video/mp4, usamos
+async function compressVideo(file) {
+  showUploadProgress(0, 'Comprimindo ' + file.name + '...');
   const video = document.createElement('video');
   video.muted = true;
   video.playsInline = true;
+  video.preload = 'auto';
   const url = URL.createObjectURL(file);
-  
+
   return new Promise((resolve, reject) => {
     video.onloadedmetadata = async () => {
       const duration = video.duration;
-      if (duration > 90) {
+      if (!duration || duration > 90) {
         URL.revokeObjectURL(url);
         hideUploadProgress();
-        reject(new Error('Vídeo tem mais de 90 segundos (limite do Reel)'));
+        reject(new Error('Vídeo tem mais de 90s (limite do Reel)'));
         return;
       }
-      
+
+      // Escalar para 720p max mantendo proporção
+      let w = video.videoWidth;
+      let h = video.videoHeight;
+      const maxDim = 720;
+      if (w > h) {
+        if (h > maxDim) { w = Math.round(w * maxDim / h); h = maxDim; }
+      } else {
+        if (w > maxDim) { h = Math.round(h * maxDim / w); w = maxDim; }
+      }
+      // Garantir dimensões pares (exigido por codecs)
+      w = w % 2 === 0 ? w : w + 1;
+      h = h % 2 === 0 ? h : h + 1;
+
       const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      canvas.width = w;
+      canvas.height = h;
       const ctx = canvas.getContext('2d');
-      
-      // Tentar gravar como MP4, fallback para WebM
+
       let mimeType = 'video/mp4';
       if (!MediaRecorder.isTypeSupported(mimeType)) {
         mimeType = 'video/webm;codecs=vp9';
-        if (!MediaRecorder.isTypeSupported(mimeType)) {
-          mimeType = 'video/webm';
-        }
+        if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
       }
-      
-      const stream = canvas.captureStream(30);
-      // Adicionar áudio se existir
+
+      const stream = canvas.captureStream(24);
       try {
         const audioCtx = new AudioContext();
         const source = audioCtx.createMediaElementSource(video);
@@ -10475,50 +10483,48 @@ async function convertVideoToMp4(file) {
         source.connect(dest);
         source.connect(audioCtx.destination);
         dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
-      } catch(e) { /* sem áudio, ok */ }
-      
-      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 5000000 });
+      } catch(e) {}
+
+      // Bitrate baixo para manter arquivo pequeno (~2Mbps)
+      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2000000 });
       const chunks = [];
       recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-      
+
       recorder.onstop = () => {
         URL.revokeObjectURL(url);
         hideUploadProgress();
         const blob = new Blob(chunks, { type: mimeType.split(';')[0] });
         const ext = mimeType.includes('mp4') ? '.mp4' : '.webm';
-        const newName = file.name.replace(/\.[^.]+$/, ext);
-        resolve(new File([blob], newName, { type: mimeType.split(';')[0] }));
+        const newName = file.name.replace(/\.[^.]+$/, '_compressed' + ext);
+        const compressed = new File([blob], newName, { type: mimeType.split(';')[0] });
+        const sizeMB = (compressed.size / 1024 / 1024).toFixed(1);
+        showToast('✓ Vídeo comprimido: ' + sizeMB + 'MB (' + w + 'x' + h + ')');
+        resolve(compressed);
       };
-      
-      recorder.start();
+
+      recorder.start(1000);
       video.currentTime = 0;
-      video.play();
-      
+      await video.play();
+
       const drawFrame = () => {
-        if (video.ended || video.paused) {
-          recorder.stop();
-          return;
-        }
-        ctx.drawImage(video, 0, 0);
+        if (video.ended || video.paused) { recorder.stop(); return; }
+        ctx.drawImage(video, 0, 0, w, h);
         const pct = Math.round((video.currentTime / duration) * 100);
-        showUploadProgress(pct, 'Convertendo ' + file.name);
+        showUploadProgress(pct, 'Comprimindo ' + file.name + ' (' + pct + '%)');
         requestAnimationFrame(drawFrame);
       };
       drawFrame();
-      
-      video.onended = () => { recorder.stop(); };
+      video.onended = () => { if (recorder.state !== 'inactive') recorder.stop(); };
     };
-    
+
     video.onerror = () => {
       URL.revokeObjectURL(url);
       hideUploadProgress();
       reject(new Error('Não foi possível abrir o vídeo'));
     };
-    
     video.src = url;
   });
-}
-</script>
+}</script>
 
 <!-- EDIT MODAL -->
 <div class="modal-overlay" id="editModal" onclick="closeModal(event)">
