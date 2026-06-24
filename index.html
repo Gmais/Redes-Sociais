@@ -589,7 +589,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   box-shadow:0 0 12px rgba(74,222,128,0.3);
 }
 .new-post-btn:hover { background:linear-gradient(135deg,#22c55e,#16a34a); box-shadow:0 0 20px rgba(74,222,128,0.5); }
-
+.filter-bar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
 #newPostModal { display:none; }
 #newPostModal.open { display:flex; }
 .np-profile-bar { display:flex; gap:6px; margin-bottom:16px; }
@@ -616,6 +616,23 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 }
 .np-schedule-toggle input { accent-color:#f5a623; width:18px; height:18px; cursor:pointer; }
 .np-extra-dates { display:flex; flex-direction:column; gap:6px; margin-bottom:8px; }
+
+#upload-progress-bar {
+  display:none; position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  z-index:9999; background:#1a1a2e; border:1px solid #333; border-radius:12px;
+  padding:12px 20px; min-width:320px; flex-direction:column; gap:8px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.6);
+}
+.up-inner {
+  width:100%; height:8px; background:#262626; border-radius:4px; overflow:hidden;
+}
+.up-fill {
+  height:100%; width:0%; background:linear-gradient(90deg,#4ade80,#22c55e);
+  border-radius:4px; transition:width 0.3s;
+}
+.up-text {
+  font-size:12px; color:#ccc; text-align:center; font-weight:600;
+}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -8764,39 +8781,68 @@ async function uploadFileToDrive(file, folderId){
   const metadata = { name: file.name, parents: [folderId] };
   const delimiter = '\r\n--' + boundary + '\r\n';
   const closeDelim = '\r\n--' + boundary + '--';
-
   const metaPart = delimiter + 'Content-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify(metadata);
   const mediaHeader = delimiter + 'Content-Type: ' + file.type + '\r\n\r\n';
   const body = new Blob([metaPart, mediaHeader, file, closeDelim]);
 
-  // 30s hard timeout so a hung network request always surfaces as an error
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  const isVideo = file.type.startsWith('video/');
+  const timeout = isVideo ? 120000 : 45000; // 2min vídeo, 45s imagem
 
-  let res;
-  try {
-    res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink,thumbnailLink', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + driveAccessToken,
-        'Content-Type': 'multipart/related; boundary=' + boundary
-      },
-      body,
-      signal: controller.signal
-    });
-  } catch (e) {
-    if (e.name === 'AbortError') throw new Error('O envio para o Drive demorou demais e foi cancelado. Verifique sua conexão e tente novamente.');
-    throw new Error('Erro de rede ao enviar para o Drive: ' + e.message);
-  } finally {
-    clearTimeout(timeoutId);
-  }
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const timerId = setTimeout(() => { xhr.abort(); reject(new Error('Upload demorou demais. Verifique sua conexão.')); }, timeout);
 
-  const data = await res.json();
-  if (!res.ok) {
-    if (res.status === 401) throw new Error('Sessão do Google expirou. Toque em "Conectar Drive" de novo.');
-    throw new Error((data.error && data.error.message) || 'Falha no upload para o Drive');
+    // Barra de progresso
+    showUploadProgress(0, file.name);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        showUploadProgress(pct, file.name);
+      }
+    };
+
+    xhr.onload = () => {
+      clearTimeout(timerId);
+      hideUploadProgress();
+      try {
+        const data = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(data);
+        } else if (xhr.status === 401) {
+          reject(new Error('Sessão do Google expirou. Toque em "Conectar Drive" de novo.'));
+        } else {
+          reject(new Error((data.error && data.error.message) || 'Falha no upload'));
+        }
+      } catch(e) { reject(new Error('Resposta inválida do Drive')); }
+    };
+
+    xhr.onerror = () => { clearTimeout(timerId); hideUploadProgress(); reject(new Error('Erro de rede ao enviar para o Drive')); };
+    xhr.onabort = () => { clearTimeout(timerId); hideUploadProgress(); };
+
+    xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink,thumbnailLink');
+    xhr.setRequestHeader('Authorization', 'Bearer ' + driveAccessToken);
+    xhr.setRequestHeader('Content-Type', 'multipart/related; boundary=' + boundary);
+    xhr.send(body);
+  });
+}
+
+function showUploadProgress(pct, fileName) {
+  let bar = document.getElementById('upload-progress-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'upload-progress-bar';
+    bar.innerHTML = '<div class="up-inner"><div class="up-fill" id="up-fill"></div></div><div class="up-text" id="up-text"></div>';
+    document.body.appendChild(bar);
   }
-  return data;
+  bar.style.display = 'flex';
+  document.getElementById('up-fill').style.width = pct + '%';
+  const shortName = fileName.length > 25 ? fileName.slice(0,22) + '...' : fileName;
+  document.getElementById('up-text').textContent = '📤 ' + shortName + ' — ' + pct + '%';
+}
+
+function hideUploadProgress() {
+  const bar = document.getElementById('upload-progress-bar');
+  if (bar) bar.style.display = 'none';
 }
 
 function startImageUpload(id, profile){
