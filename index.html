@@ -633,6 +633,14 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .up-text {
   font-size:12px; color:#ccc; text-align:center; font-weight:600;
 }
+
+.unpublish-btn {
+  font-size:10px; font-weight:700; letter-spacing:0.04em;
+  color:#fbbf24; background:transparent; border:1px solid #fbbf2433;
+  border-radius:6px; padding:6px 10px; cursor:pointer; font-family:'Inter',sans-serif;
+  transition:all 0.15s; white-space:nowrap;
+}
+.unpublish-btn:hover { background:#fbbf2422; border-color:#fbbf24; }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -8500,9 +8508,11 @@ function publishBlockHTML(id){
   if (pub && pub.status === 'publishing') {
     actionHTML = `<span class="publish-badge publishing">⏳ Publicando no Instagram...</span>`;
   } else if (pub && pub.status === 'ok') {
+    const pubTime = pub.publishedAt ? ' em ' + new Date(pub.publishedAt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
     actionHTML = `
-      <span class="publish-badge ok">✓ Publicado no Instagram</span>
-      <button class="publish-btn" onclick="event.stopPropagation();publishToInstagram('${id}')">Publicar de novo</button>`;
+      <span class="publish-badge ok">✓ Publicado no Instagram${pubTime}</span>
+      <button class="publish-btn" onclick="event.stopPropagation();publishToInstagram('${id}')">Republicar</button>
+      <button class="unpublish-btn" onclick="event.stopPropagation();unpublishCard('${id}','${profile}')">↩️ Não foi publicado</button>`;
   } else if (pub && pub.status === 'error') {
     actionHTML = `
       <span class="publish-badge error">⚠️ Falha ao publicar: ${pub.errorMsg || ''}</span>
@@ -10279,6 +10289,18 @@ document.addEventListener('change', function(e) {
   if (e.target.id === 'np-repeat-start' || e.target.id === 'np-repeat-end') npUpdateRepeatInfo();
 });
 
+
+// ── DESFAZER PUBLICAÇÃO ──
+function unpublishCard(id, profile) {
+  const ok = confirm('↩️ Confirma que este post NÃO foi publicado no Instagram?\n\nIsso vai reverter o status para pendente e permitir republicar.');
+  if (!ok) return;
+  localStorage.removeItem('pub_' + id);
+  rerenderPublishBlock(id, profile);
+  renderAll();
+  buildHist();
+  scheduleSync();
+  showToast('↩️ Status revertido — card marcado como não publicado');
+}
 </script>
 
 <!-- EDIT MODAL -->
