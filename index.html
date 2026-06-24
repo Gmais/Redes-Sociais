@@ -8518,7 +8518,7 @@ function publishBlockHTML(id){
     actionHTML = `
       <span class="publish-badge ok">✓ Publicado no Instagram${pubTime}</span>
       <button class="publish-btn" onclick="event.stopPropagation();publishToInstagram('${id}')">Republicar</button>
-      <button class="unpublish-btn" onclick="event.stopPropagation();unpublishCard('${id}','${profile}')">↩️ Não foi publicado</button>`;
+      <button class="unpublish-btn" onclick="event.stopPropagation();unpublishCard('${id}')">↩️ Não foi publicado</button>`;
   } else if (pub && pub.status === 'error') {
     actionHTML = `
       <span class="publish-badge error">⚠️ Falha ao publicar: ${pub.errorMsg || ''}</span>
@@ -10297,22 +10297,16 @@ document.addEventListener('change', function(e) {
 
 
 // ── DESFAZER PUBLICAÇÃO ──
-function unpublishCard(id, profile) {
-  const ok = confirm('↩️ Confirma que este post NÃO foi publicado no Instagram?\n\nIsso vai reverter o status para pendente e permitir republicar.');
-  if (!ok) return;
-  localStorage.removeItem('pub_' + id);
-  rerenderPublishBlock(id, profile);
-  renderAll();
-  buildHist();
-  scheduleSync();
-  showToast('↩️ Status revertido — card marcado como não publicado');
-}
 
-function unpublishCard(id, profile) {
+
+
+
+function unpublishCard(id) {
   var ok = confirm('Confirma que este post NAO foi publicado no Instagram?\nIsso vai reverter o status para pendente.');
   if (!ok) return;
   localStorage.removeItem('pub_' + id);
-  rerenderPublishBlock(id, profile);
+  var found = findItem(id);
+  if (found) rerenderPublishBlock(id, found.profile);
   renderAll();
   buildHist();
   scheduleSync();
