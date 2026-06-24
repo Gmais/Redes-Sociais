@@ -9017,7 +9017,8 @@ function cardHTML(item,profile){
   const acColor={academia:'#e63900',sorveteria:'#f5c800',gympulse:'#f5c200'}[profile];
   const pubData = getPublishData(item.id);
   const isPublishedNow = ZERNIO_PROFILES.includes(profile) && !!(pubData && pubData.status === 'ok');
-  const isDriveReady = !!(imgData && imgData.status === 'ok') && getReviewed(item.id);
+  const _img = getImageData(item.id);
+  const isDriveReady = !!(_img && _img.status === 'ok') && getReviewed(item.id);
   const isReadyToShow = !isPublishedNow && isDriveReady;
   const cfmtClass = isPublishedNow ? ' published' : (isReadyToShow ? ' ready' : '');
 
