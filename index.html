@@ -9646,6 +9646,10 @@ async function pushRemoteState() {
     // 3. Merge: remote first, local overrides (local is the freshest change just made)
     const mergedDone = { ...remoteDone, ...S };
     const mergedEdits = { ...remoteEdits, ...localEdits };
+    // Remover cards deletados do merge
+    var _del = [];
+    try { _del = JSON.parse(localStorage.getItem('deleted_cards') || '[]'); } catch(e) {}
+    _del.forEach(function(did) { delete mergedEdits[did]; });
     const mergedImages = { ...remoteImages, ...localImages };
     const mergedPublished = { ...remotePublished, ...localPublished };
     const mergedReviewed = { ...remoteReviewed, ...localReviewed };
@@ -9850,6 +9854,10 @@ function applySavedEdits() {
     const id = key.replace('edits_', '');
     if (allIds.has(id)) continue; // já existe no CONTENT
     try {
+      // Ignorar cards deletados
+      var deletedCards = [];
+      try { deletedCards = JSON.parse(localStorage.getItem('deleted_cards') || '[]'); } catch(e2) {}
+      if (deletedCards.includes(id)) continue;
       const cardData = JSON.parse(localStorage.getItem(key));
       if (!cardData || !cardData.title) continue; // edit sem dados suficientes
       // Determinar profile pelo prefixo do ID ou pelo campo salvo
@@ -10103,6 +10111,11 @@ function deleteCard(id, profile) {
     localStorage.removeItem('pub_' + id);
     localStorage.removeItem('reviewed_' + id);
     delete S[id];
+    // Marcar como deletado para não voltar do Supabase
+    var deleted = [];
+    try { deleted = JSON.parse(localStorage.getItem('deleted_cards') || '[]'); } catch(e) {}
+    if (!deleted.includes(id)) deleted.push(id);
+    localStorage.setItem('deleted_cards', JSON.stringify(deleted));
     save();
     renderAll();
     buildHist();
