@@ -507,6 +507,61 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   font-size:12px; font-weight:600; letter-spacing:0.02em; color:var(--txt2,#ccc);
 }
 
+
+/* Melhorias v3 */
+.clone-btn {
+  font-size:10px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase;
+  color:#fff; background:#6366f1; border:1px solid #6366f1;
+  border-radius:6px; padding:7px 12px; cursor:pointer; font-family:'Inter',sans-serif;
+  transition:all 0.15s; display:inline-flex; align-items:center; gap:4px;
+}
+.clone-btn:hover { background:#818cf8; border-color:#818cf8; }
+
+.carousel-slides {
+  margin-top:10px; padding:10px; background:var(--s2);
+  border:1px solid var(--border); border-radius:8px;
+}
+.carousel-label {
+  font-size:11px; font-weight:700; color:var(--txt2);
+  margin-bottom:8px; text-transform:uppercase; letter-spacing:0.06em;
+}
+.carousel-slide {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 10px; margin:4px 0; background:var(--s1);
+  border-radius:4px; font-size:12px; color:var(--txt2);
+}
+.slide-ok { color:#4ade80; font-weight:700; }
+.slide-remove {
+  background:none; border:none; color:#ff6b6b;
+  cursor:pointer; font-size:14px; padding:2px 6px;
+}
+.slide-add-btn {
+  width:100%; margin-top:6px; padding:8px;
+  background:transparent; border:1px dashed var(--border);
+  color:var(--txt3); border-radius:4px; cursor:pointer;
+  font-size:12px; font-weight:600; transition:all 0.2s;
+}
+.slide-add-btn:hover { border-color:#f5c200; color:#f5c200; }
+
+.hist-group { margin-bottom:2px; }
+.hist-group-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 20px; background:var(--s2); cursor:pointer;
+  font-weight:700; font-size:14px; color:var(--txt);
+  border:1px solid var(--border); border-radius:8px;
+  transition:background 0.2s; user-select:none;
+}
+.hist-group-header:hover { background:var(--s1); }
+.hist-group-meta { display:flex; align-items:center; gap:10px; }
+.hist-group-count { font-size:11px; font-weight:600; color:var(--txt3); }
+.hist-group-chev {
+  display:inline-block; font-size:12px; color:var(--txt3);
+  transition:transform 0.3s;
+}
+.hist-group-body {
+  padding:4px 0 8px;
+}
+
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -8255,9 +8310,18 @@ const done=id=>!!S[id];
 const toggle=id=>{
   const willBeDone = !S[id];
   if (willBeDone && !hasValidImage(id)) {
-    showToast('⚠️ Anexe uma imagem antes de validar como executado');
+    showToast('⚠️ Anexe uma imagem/vídeo antes de validar como executado');
     flashImageBox(id);
     return;
+  }
+  // Melhoria 4: Se o badge está verde (ready/pendente), pedir confirmação
+  if (willBeDone) {
+    const badgeEl = document.getElementById('cfmt-'+id);
+    const isPublished = badgeEl && badgeEl.classList.contains('published');
+    if (!isPublished) {
+      const ok = confirm('⚠️ Este card ainda não foi publicado (status azul).\n\nTem certeza que deseja marcar como Executado?\n\n(Publique no Instagram antes de marcar como feito)');
+      if (!ok) return;
+    }
   }
   S[id]=!S[id];save();renderAll();buildHist();scheduleSync();
 };
@@ -8520,7 +8584,7 @@ function imageBlockHTML(id, profile){
   return `
     <div class="upload-box" onclick="startImageUpload('${id}','${profile}')">
       <div class="upload-box-icon">📤</div>
-      <div class="upload-box-text">Toque para enviar a imagem da postagem</div>
+      <div class="upload-box-text">Toque para enviar imagem ou vídeo da postagem</div>
       <div class="upload-box-hint">Vai direto para a pasta ${profileFolderName(profile)} no Drive</div>
     </div>`;
 }
@@ -8693,13 +8757,17 @@ function startImageUpload(id, profile){
 async function handleImageSelect(id, profile, inputEl){
   const file = inputEl.files && inputEl.files[0];
   if (!file) return;
-  if (!file.type.startsWith('image/')) {
-    setImageData(id, { status:'error', errorMsg:'Selecione um arquivo de imagem.' });
+  const isVideo = file.type.startsWith('video/');
+  const isImage = file.type.startsWith('image/');
+  if (!isImage && !isVideo) {
+    setImageData(id, { status:'error', errorMsg:'Selecione uma imagem ou vídeo.' });
     rerenderImageBox(id, profile);
     return;
   }
-  if (file.size > 15 * 1024 * 1024) {
-    setImageData(id, { status:'error', fileName:file.name, errorMsg:'Imagem maior que 15MB — reduza o tamanho e tente de novo.' });
+  const maxSize = isVideo ? 100 * 1024 * 1024 : 15 * 1024 * 1024;
+  const maxLabel = isVideo ? '100MB' : '15MB';
+  if (file.size > maxSize) {
+    setImageData(id, { status:'error', fileName:file.name, errorMsg:'Arquivo maior que ' + maxLabel + ' — reduza o tamanho e tente de novo.' });
     rerenderImageBox(id, profile);
     return;
   }
@@ -8854,15 +8922,17 @@ function cardHTML(item,profile){
   </div>
   <div class="cbody">
 
-    <div class="block" style="display:flex;justify-content:flex-end;margin-top:12px;">
+    <div class="block" style="display:flex;justify-content:flex-end;margin-top:12px;gap:6px;flex-wrap:wrap;">
       <button class="edit-btn" onclick="event.stopPropagation();openEdit('${item.id}')">✏️ Editar card</button>
       <button class="copy-all-btn" onclick="event.stopPropagation();copyAll('${item.id}')">📋 Copiar tudo</button>
+      <button class="clone-btn" onclick="event.stopPropagation();cloneCard('${item.id}','${profile}')">🔄 Reaproveitar</button>
     </div>
     ${ZERNIO_PROFILES.includes(profile) ? publishBlockHTML(item.id) : ''}
     <div class="block">
-      <div class="blabel" style="color:#00b4d8">🖼️ Imagem a ser Publicada</div>
+      <div class="blabel" style="color:#00b4d8">📎 Mídia a ser Publicada</div>
       <div id="imgbox-${item.id}">${imageBlockHTML(item.id, profile)}</div>
-      <input type="file" accept="image/*" id="imgfile-${item.id}" style="display:none" onchange="handleImageSelect('${item.id}','${profile}',this)">
+      <input type="file" accept="image/*,video/mp4,video/quicktime,video/webm" id="imgfile-${item.id}" style="display:none" ${item.format==='Carrossel'?'multiple':''} onchange="handleImageSelect('${item.id}','${profile}',this)">
+      ${item.format==='Carrossel' ? carouselSlidesHTML(item.id, profile) : ''}
     </div>
 
     <div class="block">
@@ -8916,15 +8986,83 @@ function buildHist(){
     ...CONTENT.sorveteria.map(i=>({...i,color:'#f5c800',label:'Sorveteria'})),
     ...CONTENT.gympulse.map(i=>({...i,color:'#f5c200',label:'GympulsePro'}))
   ].sort((a,b)=>b.date.localeCompare(a.date)||a.time.localeCompare(b.time));
-  document.getElementById('p-historico').innerHTML=all.map(item=>`
-    <div class="hentry">
-      <div class="hdot" style="background:${item.color}"></div>
-      <div class="hinfo">
-        <div class="htitle">${item.title}</div>
-        <div class="hsub">${item.label} · ${item.time} · ${item.format} · ${fmtDate(item.date)}</div>
+
+  const now = new Date();
+  const curMonth = now.getMonth();
+  const curYear = now.getFullYear();
+  const groups = {};
+
+  all.forEach(item => {
+    const [y,m,d] = item.date.split('-').map(Number);
+    const dt = new Date(y, m-1, d);
+    let gk;
+
+    if (dt.getMonth() === curMonth && dt.getFullYear() === curYear) {
+      // Mês atual → agrupar por semana
+      const dayOfWeek = dt.getDay();
+      const weekStart = new Date(dt);
+      weekStart.setDate(dt.getDate() - dayOfWeek);
+      const ws = weekStart.toISOString().slice(0,10);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      const we = weekEnd.toISOString().slice(0,10);
+      gk = `sem_${ws}`;
+      if (!groups[gk]) groups[gk] = {
+        label: `🗓️ Semana ${fmtDate(ws)} a ${fmtDate(we)}`,
+        sort: ws,
+        items: []
+      };
+    } else {
+      // Mês anterior → agrupar por mês
+      const mKey = `${y}-${String(m).padStart(2,'0')}`;
+      gk = `mes_${mKey}`;
+      if (!groups[gk]) {
+        const mName = dt.toLocaleDateString('pt-BR', { month:'long', year:'numeric' });
+        groups[gk] = {
+          label: `📅 ${mName.charAt(0).toUpperCase() + mName.slice(1)}`,
+          sort: mKey,
+          items: []
+        };
+      }
+    }
+    groups[gk].items.push(item);
+  });
+
+  const sorted = Object.values(groups).sort((a,b) => b.sort.localeCompare(a.sort));
+
+  document.getElementById('p-historico').innerHTML = sorted.map((g, gi) => `
+    <div class="hist-group">
+      <div class="hist-group-header" onclick="toggleHistGroup(this)">
+        <span>${g.label}</span>
+        <span class="hist-group-meta">
+          <span class="hist-group-count">${g.items.length} posts</span>
+          <span class="hist-group-chev">▼</span>
+        </span>
       </div>
-      <div class="hbadge ${done(item.id)?'done':'pend'}">${done(item.id)?'FEITO':'PENDENTE'}</div>
+      <div class="hist-group-body" style="display:${gi===0?'block':'none'}">
+        ${g.items.map(item => `
+          <div class="hentry">
+            <div class="hdot" style="background:${item.color}"></div>
+            <div class="hinfo">
+              <div class="htitle">${item.title}</div>
+              <div class="hsub">${item.label} · ${item.time} · ${item.format} · ${fmtDate(item.date)}</div>
+            </div>
+            <div class="hbadge ${done(item.id)?'done':'pend'}">${done(item.id)?'FEITO':'PENDENTE'}</div>
+          </div>`).join('')}
+      </div>
     </div>`).join('');
+}
+
+function toggleHistGroup(el){
+  const body = el.parentElement.querySelector('.hist-group-body');
+  const chev = el.querySelector('.hist-group-chev');
+  if (body.style.display === 'none') {
+    body.style.display = 'block';
+    chev.style.transform = 'rotate(180deg)';
+  } else {
+    body.style.display = 'none';
+    chev.style.transform = 'rotate(0deg)';
+  }
 }
 
 function expand(id){document.getElementById('card-'+id).classList.toggle('open');}
@@ -9567,425 +9705,107 @@ pullRemoteState().then(() => {
 });
 
 
-// ============================================================================
-// SISTEMA DE MELHORIAS v2 - Implementado automaticamente
-// ============================================================================
-// ============================================================================
-// MELHORIA 1: Suporte a Vídeos + Múltiplos Arquivos para Carrossel
-// ============================================================================
 
-const ORIGINAL_renderCardFiles = window.renderCardFiles || function() { return ''; };
 
-window.renderCardFiles = function(card) {
-  if (!card.files) return '';
+// ── MELHORIA 2: Carrossel múltiplos slides ──
+function getCarouselData(id) {
+  try { return JSON.parse(localStorage.getItem('carousel_'+id) || '[]'); } catch(e) { return []; }
+}
+function setCarouselData(id, data) {
+  localStorage.setItem('carousel_'+id, JSON.stringify(data));
+}
+function carouselSlidesHTML(id, profile) {
+  const slides = getCarouselData(id);
+  if (!slides.length && !getImageData(id)) return '';
+  let html = '<div class="carousel-slides">';
+  html += '<div class="carousel-label">📑 Slides do Carrossel</div>';
   
-  const isCarousel = card.formato === 'Carrossel';
-  let html = '<div class="card-files">';
+  // Slide 1 é a imagem principal (já gerenciada pelo imageBlockHTML)
+  const mainImg = getImageData(id);
+  if (mainImg && mainImg.status === 'ok') {
+    html += '<div class="carousel-slide"><span>1️⃣ ' + (mainImg.fileName || 'Slide 1') + '</span><span class="slide-ok">✓</span></div>';
+  }
   
-  card.files.forEach((file, idx) => {
-    const type = file.type.startsWith('video') ? 'video' : 'image';
-    const icon = type === 'video' ? '🎬' : '🖼️';
-    const label = isCarousel ? `Slide ${idx + 1}` : file.name.split('/').pop();
-    
-    html += `
-      <div class="file-item" data-type="${type}">
-        <span>${icon} ${label}</span>
-        <button class="file-remove" onclick="removeCardFile('${card.id}', ${idx})">✕</button>
-      </div>
-    `;
+  // Slides adicionais
+  slides.forEach((s, i) => {
+    html += '<div class="carousel-slide"><span>' + (i+2) + '️⃣ ' + (s.fileName || 'Slide '+(i+2)) + '</span>';
+    html += '<button class="slide-remove" onclick="removeCarouselSlide(\''+id+'\','+i+',\''+profile+'\')">✕</button></div>';
   });
   
-  // Botão de upload adicional para Carrossel
-  if (isCarousel) {
-    html += `
-      <button class="file-add-btn" onclick="openFileUploadForCarousel('${card.id}')">
-        + Adicionar slide
-      </button>
-    `;
-  }
-  
+  html += '<button class="slide-add-btn" onclick="addCarouselSlide(\''+id+'\',\''+profile+'\')">+ Adicionar slide</button>';
   html += '</div>';
   return html;
-};
+}
 
-window.removeCardFile = function(cardId, index) {
-  const card = findCardById(cardId);
-  if (card && card.files && card.files[index]) {
-    card.files.splice(index, 1);
-    saveState();
-    renderAllCards();
-  }
-};
-
-window.openFileUploadForCarousel = function(cardId) {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.multiple = true;
-  input.accept = 'image/*,video/*';
-  
-  input.onchange = async (e) => {
-    const card = findCardById(cardId);
-    if (!card) return;
-    
-    if (!card.files) card.files = [];
-    
-    for (let file of e.target.files) {
-      const url = await uploadMediaToGoogleDrive(file);
-      if (url) {
-        card.files.push({ name: file.name, type: file.type, url: url });
+function addCarouselSlide(id, profile) {
+  ensureDriveAuth((authErr) => {
+    if (authErr) { showToast('⚠️ ' + authErr.message); return; }
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*,video/mp4,video/quicktime,video/webm';
+    input.multiple = true;
+    input.onchange = async (e) => {
+      const slides = getCarouselData(id);
+      for (const file of e.target.files) {
+        try {
+          const folderId = DRIVE_FOLDER_MAP[profile];
+          const data = await uploadFileToDrive(file, folderId);
+          slides.push({
+            fileId: data.id,
+            fileName: file.name,
+            viewUrl: data.webViewLink || 'https://drive.google.com/file/d/'+data.id+'/view',
+            uploadedAt: new Date().toISOString()
+          });
+        } catch(err) {
+          showToast('❌ Erro ao enviar ' + file.name);
+        }
       }
-    }
-    
-    saveState();
-    renderAllCards();
-  };
-  
-  input.click();
-};
-
-// ============================================================================
-// MELHORIA 2: Upload de Vídeos
-// ============================================================================
-
-window.uploadMediaToGoogleDrive = async function(file) {
-  try {
-    // Detectar tipo de arquivo
-    const isVideo = file.type.startsWith('video');
-    
-    // Chamar serverless function no Vercel
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('type', isVideo ? 'video' : 'image');
-    
-    const response = await fetch('/api/upload-media', {
-      method: 'POST',
-      body: formData
-    });
-    
-    if (!response.ok) throw new Error(`Upload falhou: ${response.status}`);
-    
-    const data = await response.json();
-    return data.url;
-  } catch (err) {
-    console.error('Erro no upload:', err);
-    showToast('❌ Erro ao fazer upload do arquivo', 3000);
-    return null;
-  }
-};
-
-// ============================================================================
-// MELHORIA 3: Reaproveitar Postagens (Clone)
-// ============================================================================
-
-window.cloneCard = function(cardId) {
-  const sourceCard = findCardById(cardId);
-  if (!sourceCard) return;
-  
-  const newCard = JSON.parse(JSON.stringify(sourceCard));
-  newCard.id = `${sourceCard.brand}_${Date.now()}`;
-  newCard.data = formatDate(new Date(Date.now() + 24 * 60 * 60 * 1000)); // Próximo dia
-  newCard.hora = sourceCard.hora; // Mantém mesma hora
-  newCard.done = false;
-  newCard.publishStatus = 'pending'; // Melhoria 4: status inicial
-  
-  // Adicionar ao brand correto
-  const brandKey = sourceCard.brand;
-  const brandIndex = CONTENT[brandKey].findIndex(c => c.brand === brandKey);
-  
-  if (brandIndex !== -1) {
-    CONTENT[brandKey].push(newCard);
-    saveState();
-    renderAllCards();
-    showToast('✓ Card clonado com sucesso!', 2000);
-  }
-};
-
-// ============================================================================
-// MELHORIA 4: Validação Inteligente do Status
-// ============================================================================
-
-// Enum de status: 'pending' (verde) vs 'published' (azul)
-const PUBLISH_STATUS = {
-  PENDING: 'pending',      // Verde neon - ainda não publicado
-  PUBLISHED: 'published'   // Azul neon - já publicado
-};
-
-window.getPublishBadgeClass = function(card) {
-  if (!card.publishStatus) return 'pending';
-  return card.publishStatus === PUBLISH_STATUS.PUBLISHED ? 'published' : 'pending';
-};
-
-window.renderPublishBadge = function(card) {
-  const status = card.publishStatus || PUBLISH_STATUS.PENDING;
-  const statusColor = status === PUBLISH_STATUS.PUBLISHED ? '#00b4ff' : '#00ff00';
-  const statusText = status === PUBLISH_STATUS.PUBLISHED ? '📤 Publicado' : '⏳ Pendente';
-  
-  return `
-    <span class="publish-badge ${status}" style="color: ${statusColor}; border: 1px solid ${statusColor};">
-      ${statusText}
-    </span>
-  `;
-};
-
-window.toggleCardDone = function(cardId) {
-  const card = findCardById(cardId);
-  if (!card) return;
-  
-  // Melhoria 4: Validação - só permite marcar como feito se estiver publicado (azul)
-  if (card.publishStatus !== PUBLISH_STATUS.PUBLISHED) {
-    // Se estiver pendente (verde), pedir confirmação
-    const confirmed = confirm(
-      '⚠️ Este card ainda não foi marcado como Publicado (status azul).\\n\\n' +
-      'Tem certeza que deseja marcar como Executado?\\n\\n' +
-      '(Publique o card no Instagram antes de marcar como feito)'
-    );
-    
-    if (!confirmed) return;
-  }
-  
-  card.done = !card.done;
-  saveState();
-  renderAllCards();
-};
-
-// ============================================================================
-// MELHORIA 5: Agrupar Histórico por Período
-// ============================================================================
-
-window.renderHistoryGrouped = function(cards) {
-  const sorted = [...cards].sort((a, b) => new Date(b.data) - new Date(a.data));
-  
-  const grouped = {};
-  const now = new Date();
-  
-  sorted.forEach(card => {
-    const cardDate = new Date(card.data);
-    let groupKey;
-    
-    // Se for do mês atual, agrupar por semana
-    if (cardDate.getMonth() === now.getMonth() && cardDate.getFullYear() === now.getFullYear()) {
-      const weekStart = new Date(cardDate);
-      weekStart.setDate(cardDate.getDate() - cardDate.getDay());
-      groupKey = `🗓️ Semana de ${formatDate(weekStart)}`;
-    } else {
-      // Se for mês anterior/antigo, agrupar por mês
-      groupKey = `📅 ${cardDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`;
-    }
-    
-    if (!grouped[groupKey]) grouped[groupKey] = [];
-    grouped[groupKey].push(card);
+      setCarouselData(id, slides);
+      renderAll(); buildHist();
+      showToast('✓ ' + e.target.files.length + ' slide(s) adicionado(s)');
+    };
+    input.click();
   });
+}
+
+function removeCarouselSlide(id, index, profile) {
+  const slides = getCarouselData(id);
+  slides.splice(index, 1);
+  setCarouselData(id, slides);
+  renderAll(); buildHist();
+}
+
+// ── MELHORIA 3: Reaproveitar (clonar) postagem ──
+function cloneCard(id, profile) {
+  const source = CONTENT[profile].find(c => c.id === id);
+  if (!source) { showToast('❌ Card não encontrado'); return; }
   
-  let html = '<div class="history-grouped">';
+  // Gerar novo ID único
+  const newId = profile.slice(0,2) + '_clone_' + Date.now();
   
-  Object.entries(grouped).forEach(([period, periodCards]) => {
-    html += `
-      <div class="history-period">
-        <div class="period-header" onclick="togglePeriod(this)">
-          <span>${period}</span>
-          <span class="period-count">${periodCards.length} posts</span>
-          <span class="period-toggle">▼</span>
-        </div>
-        <div class="period-content" style="display: none;">
-          ${periodCards.map(card => `
-            <div class="history-item">
-              ${card.titulo} - ${card.hora} (${card.formato})
-              <span class="status-badge ${card.done ? 'done' : ''}">${card.done ? '✓ Executado' : '⏳ Pendente'}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
-  });
+  // Clonar profundamente
+  const clone = JSON.parse(JSON.stringify(source));
+  clone.id = newId;
   
-  html += '</div>';
-  return html;
-};
-
-window.togglePeriod = function(element) {
-  const content = element.parentElement.querySelector('.period-content');
-  const toggle = element.querySelector('.period-toggle');
+  // Mover para amanhã
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  clone.date = tomorrow.toISOString().slice(0,10);
   
-  if (content.style.display === 'none') {
-    content.style.display = 'block';
-    toggle.style.transform = 'rotate(180deg)';
-  } else {
-    content.style.display = 'none';
-    toggle.style.transform = 'rotate(0deg)';
-  }
-};
-
-// ============================================================================
-// CSS adicional para as melhorias
-// ============================================================================
-
-const additionalCSS = `
-.card-files {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
-  padding: 8px;
-  background: var(--s2);
-  border-radius: 6px;
-  border: 1px solid var(--border);
+  // Título indica que é reaproveitado
+  clone.title = '🔄 ' + clone.title;
+  
+  CONTENT[profile].push(clone);
+  renderAll();
+  buildHist();
+  scheduleSync();
+  showToast('✓ Postagem clonada para ' + fmtDate(clone.date));
+  
+  // Ir para a aba do perfil e expandir
+  const tab = document.querySelector('.tab[data-p="'+profile+'"]');
+  if (tab) tab.click();
 }
 
-.file-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 8px;
-  background: var(--s1);
-  border-radius: 4px;
-  font-size: 12px;
-  color: var(--txt2);
-}
-
-.file-remove {
-  background: none;
-  border: none;
-  color: #ff6b6b;
-  cursor: pointer;
-  font-size: 16px;
-  padding: 0;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.file-add-btn {
-  background: var(--s1);
-  border: 1px dashed var(--border);
-  color: var(--txt2);
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  transition: all 0.2s;
-}
-
-.file-add-btn:hover {
-  border-color: #f5c200;
-  color: #f5c200;
-}
-
-.publish-badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.publish-badge.pending {
-  background: rgba(0, 255, 0, 0.1);
-  color: #00ff00;
-  border: 1px solid #00ff00;
-  animation: pulse-neon 2s ease-in-out infinite;
-}
-
-.publish-badge.published {
-  background: rgba(0, 180, 255, 0.1);
-  color: #00b4ff;
-  border: 1px solid #00b4ff;
-  animation: pulse-neon 2s ease-in-out infinite;
-}
-
-@keyframes pulse-neon {
-  0%, 100% { opacity: 1; text-shadow: 0 0 10px currentColor; }
-  50% { opacity: 0.7; text-shadow: 0 0 20px currentColor; }
-}
-
-.history-grouped {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.history-period {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.period-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: var(--s2);
-  cursor: pointer;
-  user-select: none;
-  font-weight: 600;
-  color: var(--txt);
-  transition: background 0.2s;
-}
-
-.period-header:hover {
-  background: var(--s1);
-}
-
-.period-count {
-  font-size: 12px;
-  color: var(--txt3);
-  margin: 0 8px;
-}
-
-.period-toggle {
-  display: inline-flex;
-  transition: transform 0.3s;
-  color: var(--txt3);
-}
-
-.period-content {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 16px;
-  background: var(--s1);
-}
-
-.history-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 12px;
-  color: var(--txt2);
-}
-
-.history-item:last-child {
-  border-bottom: none;
-}
-
-.status-badge {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 3px;
-  background: var(--border);
-  color: var(--txt3);
-}
-
-.status-badge.done {
-  background: rgba(0, 230, 118, 0.2);
-  color: #00e676;
-}
-`;
-
-// Injetar CSS adicional
-const styleTag = document.createElement('style');
-styleTag.textContent = additionalCSS;
-document.head.appendChild(styleTag);
-
-console.log('✓ Todas as 5 melhorias foram carregadas!');
 
 </script>
 
