@@ -9843,7 +9843,10 @@ function showToast(msg) {
 
 // Apply saved edits on load
 function applySavedEdits() {
+  const today = new Date().toISOString().slice(0,10);
   const allIds = new Set();
+  
+  // PASSO 1: Restaurar edições de cards existentes no CONTENT
   for (const profile of ['academia','sorveteria','gympulse']) {
     CONTENT[profile].forEach(item => {
       allIds.add(item.id);
@@ -9853,88 +9856,56 @@ function applySavedEdits() {
       }
     });
   }
-  // Restaurar cards criados via Nova Postagem / Reaproveitar que não existem no HTML base
+  
+  // PASSO 2: Restaurar cards criados (Nova Postagem/Reaproveitar) que não existem no CONTENT base
+  // ⚠️ CRITICAL: Apenas se forem de hoje ou futuro
+  var deletedCards = [];
+  try { deletedCards = JSON.parse(localStorage.getItem('deleted_cards') || '[]'); } catch(e) {}
+  
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (!key.startsWith('edits_')) continue;
+    if (!key || !key.startsWith('edits_')) continue;
+    
     const id = key.replace('edits_', '');
-    if (allIds.has(id)) continue; // já existe no CONTENT
+    if (allIds.has(id)) continue; // já existe no CONTENT base
+    if (deletedCards.includes(id)) continue; // foi deletado
+    
     try {
-      // Ignorar cards deletados
-      var deletedCards = [];
-      try { deletedCards = JSON.parse(localStorage.getItem('deleted_cards') || '[]'); } catch(e2) {}
-      if (deletedCards.includes(id)) continue;
       const cardData = JSON.parse(localStorage.getItem(key));
-      if (!cardData || !cardData.title) continue; // edit sem dados suficientes
-      // Determinar profile pelo prefixo do ID ou pelo campo salvo
-      let profile = null;
+      if (!cardData || !cardData.title) continue;
+      
+      // BLOQUEIO CRÍTICO: não restaurar posts de datas antigas
+      const cardDate = cardData.date || today;
+      if (cardDate < today) {
+        console.warn('⚠️ POST ANTIGO IGNORADO:', id, 'data:', cardDate);
+        localStorage.removeItem(key); // Limpar automaticamente
+        continue;
+      }
+      
+      // Determinar profile pelo prefixo do ID
+      let profile = 'sorveteria';
       if (id.startsWith('ac')) profile = 'academia';
-      else if (id.startsWith('so')) profile = 'sorveteria';
       else if (id.startsWith('gy')) profile = 'gympulse';
-      if (!profile) continue;
-      // Montar card mínimo
+      
+      // Criar novo card no CONTENT
       const newCard = {
         id: id,
-        date: cardData.date || new Date().toISOString().slice(0,10),
-        time: cardData.time || '12h',
+        date: cardData.date || today,
+        time: cardData.time || '10h',
         format: cardData.format || 'Post',
-        title: cardData.title || 'Sem título',
+        title: cardData.title,
         texto: cardData.texto || '',
-        secoes: cardData.secoes || [
-          {num:'01',cor:'#e63900',titulo:'FORMATO E ESPECIFICAÇÕES',conteudo:'A preencher'},
-          {num:'02',cor:'#f5a623',titulo:'INTENÇÃO DA POSTAGEM',conteudo:'A preencher'},
-          {num:'03',cor:'#4ade80',titulo:'BRIEFING CRIATIVO DETALHADO',conteudo:'A preencher'}
-        ]
+        secoes: cardData.secoes || []
       };
+      
       CONTENT[profile].push(newCard);
-      allIds.add(id);
-    } catch(e) { console.error('Erro ao restaurar card', id, e); }
+      console.log('✓ Restaurado card novo:', id, 'data:', cardDate);
+    } catch(e) {
+      console.error('Erro ao restaurar card:', id, e);
+    }
   }
 }
 
-// Sync the hide-done checkbox with the stored preference
-const hideDoneCheckEl = document.getElementById('hideDoneCheck');
-if (hideDoneCheckEl) hideDoneCheckEl.checked = hideDone;
-
-// Run before first render
-applySavedEdits();
-
-renderAll();
-initGoogleAuth();
-
-// Pull remote state on load, then re-render with synced data, then push once
-// to make sure the server-side manifest (used by the auto-publish cron) is
-// always fresh — even on days nobody touches the panel.
-// Sincronizar com Supabase ao carregar
-let lastRemoteSync = 0;
-async function syncWithRemote() {
-  const now = Date.now();
-  // Só sync a cada 30s para não sobrecarregar
-  if (now - lastRemoteSync < 30000) return;
-  lastRemoteSync = now;
-  try {
-    await pullRemoteState();
-    renderAll();
-    if (typeof buildHist === 'function') buildHist();
-  } catch(e) { console.error('Sync remoto falhou:', e); }
-}
-pullRemoteState().then(() => {
-  renderAll();
-  if (typeof buildHist === 'function') buildHist();
-  pushRemoteState();
-});
-
-// Polling a cada 30s enquanto página está ativa
-setInterval(syncWithRemote, 30000);
-// Sincronizar quando volta pro foco
-document.addEventListener('visibilitychange', function() {
-  if (!document.hidden) syncWithRemote();
-});
-
-
-
-
-// ── MELHORIA 2: Carrossel múltiplos slides ──
 function getCarouselData(id) {
   try { return JSON.parse(localStorage.getItem('carousel_'+id) || '[]'); } catch(e) { return []; }
 }
