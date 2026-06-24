@@ -10003,6 +10003,11 @@ function executeClone() {
     clone.title = '🔄 ' + source.title.replace(/^🔄 /, '');
     CONTENT[profile].push(clone);
 
+    // Garantir que o clone NÃO herda status "feito"
+    delete S[clone.id];
+    // Limpar status de publicação (é um post novo)
+    localStorage.removeItem('pub_' + clone.id);
+
     // Copiar mídia do original para o clone
     if (sourceImg && sourceImg.status === 'ok') {
       setImageData(clone.id, JSON.parse(JSON.stringify(sourceImg)));
