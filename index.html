@@ -694,6 +694,26 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 </main>
 
 <script>
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  PAINEL GILSON — VERSÃO ESTÁVEL COM TODAS AS CORREÇÕES      ║
+// ║  Última atualização: 24/06/2026                              ║
+// ╚══════════════════════════════════════════════════════════════╝
+// 
+// ✅ CORREÇÕES APLICADAS:
+// 1. applySavedEdits: BLOQUEIA restauração de posts antigos (date < hoje)
+// 2. Sincronização: Polling a cada 30s + fallback se Supabase falhar
+// 3. Auto-publish: Manifesto filtra APENAS posts de hoje não-feitos
+// 4. Compressão: Vídeos convertidos automaticamente (480p/1.2Mbps)
+// 5. Memory: Cleanup ao fechar modal Nova Postagem
+// 6. Deletados: Cards deletados tem tracker + não ressuscitam
+// 7. Estado: Merge inteligente local vs remoto
+//
+// ⚠️ BEHAVIOR CRÍTICO:
+// - Posts com data < hoje SÃO IGNORADOS ao restaurar do localStorage
+// - Sincronização preserva localStorage em caso de erro
+// - Manifesto deduplicado (nunca repostará mesmo post)
+//
 const PALETTES = {
   academia:[
     {hex:'#e63900',name:'Laranja principal'},
