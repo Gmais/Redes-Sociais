@@ -9565,6 +9565,428 @@ pullRemoteState().then(() => {
   if (typeof buildHist === 'function') buildHist();
   pushRemoteState();
 });
+
+
+// ============================================================================
+// SISTEMA DE MELHORIAS v2 - Implementado automaticamente
+// ============================================================================
+// ============================================================================
+// MELHORIA 1: Suporte a Vídeos + Múltiplos Arquivos para Carrossel
+// ============================================================================
+
+const ORIGINAL_renderCardFiles = window.renderCardFiles || function() { return ''; };
+
+window.renderCardFiles = function(card) {
+  if (!card.files) return '';
+  
+  const isCarousel = card.formato === 'Carrossel';
+  let html = '<div class="card-files">';
+  
+  card.files.forEach((file, idx) => {
+    const type = file.type.startsWith('video') ? 'video' : 'image';
+    const icon = type === 'video' ? '🎬' : '🖼️';
+    const label = isCarousel ? `Slide ${idx + 1}` : file.name.split('/').pop();
+    
+    html += `
+      <div class="file-item" data-type="${type}">
+        <span>${icon} ${label}</span>
+        <button class="file-remove" onclick="removeCardFile('${card.id}', ${idx})">✕</button>
+      </div>
+    `;
+  });
+  
+  // Botão de upload adicional para Carrossel
+  if (isCarousel) {
+    html += `
+      <button class="file-add-btn" onclick="openFileUploadForCarousel('${card.id}')">
+        + Adicionar slide
+      </button>
+    `;
+  }
+  
+  html += '</div>';
+  return html;
+};
+
+window.removeCardFile = function(cardId, index) {
+  const card = findCardById(cardId);
+  if (card && card.files && card.files[index]) {
+    card.files.splice(index, 1);
+    saveState();
+    renderAllCards();
+  }
+};
+
+window.openFileUploadForCarousel = function(cardId) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.multiple = true;
+  input.accept = 'image/*,video/*';
+  
+  input.onchange = async (e) => {
+    const card = findCardById(cardId);
+    if (!card) return;
+    
+    if (!card.files) card.files = [];
+    
+    for (let file of e.target.files) {
+      const url = await uploadMediaToGoogleDrive(file);
+      if (url) {
+        card.files.push({ name: file.name, type: file.type, url: url });
+      }
+    }
+    
+    saveState();
+    renderAllCards();
+  };
+  
+  input.click();
+};
+
+// ============================================================================
+// MELHORIA 2: Upload de Vídeos
+// ============================================================================
+
+window.uploadMediaToGoogleDrive = async function(file) {
+  try {
+    // Detectar tipo de arquivo
+    const isVideo = file.type.startsWith('video');
+    
+    // Chamar serverless function no Vercel
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', isVideo ? 'video' : 'image');
+    
+    const response = await fetch('/api/upload-media', {
+      method: 'POST',
+      body: formData
+    });
+    
+    if (!response.ok) throw new Error(`Upload falhou: ${response.status}`);
+    
+    const data = await response.json();
+    return data.url;
+  } catch (err) {
+    console.error('Erro no upload:', err);
+    showToast('❌ Erro ao fazer upload do arquivo', 3000);
+    return null;
+  }
+};
+
+// ============================================================================
+// MELHORIA 3: Reaproveitar Postagens (Clone)
+// ============================================================================
+
+window.cloneCard = function(cardId) {
+  const sourceCard = findCardById(cardId);
+  if (!sourceCard) return;
+  
+  const newCard = JSON.parse(JSON.stringify(sourceCard));
+  newCard.id = `${sourceCard.brand}_${Date.now()}`;
+  newCard.data = formatDate(new Date(Date.now() + 24 * 60 * 60 * 1000)); // Próximo dia
+  newCard.hora = sourceCard.hora; // Mantém mesma hora
+  newCard.done = false;
+  newCard.publishStatus = 'pending'; // Melhoria 4: status inicial
+  
+  // Adicionar ao brand correto
+  const brandKey = sourceCard.brand;
+  const brandIndex = CONTENT[brandKey].findIndex(c => c.brand === brandKey);
+  
+  if (brandIndex !== -1) {
+    CONTENT[brandKey].push(newCard);
+    saveState();
+    renderAllCards();
+    showToast('✓ Card clonado com sucesso!', 2000);
+  }
+};
+
+// ============================================================================
+// MELHORIA 4: Validação Inteligente do Status
+// ============================================================================
+
+// Enum de status: 'pending' (verde) vs 'published' (azul)
+const PUBLISH_STATUS = {
+  PENDING: 'pending',      // Verde neon - ainda não publicado
+  PUBLISHED: 'published'   // Azul neon - já publicado
+};
+
+window.getPublishBadgeClass = function(card) {
+  if (!card.publishStatus) return 'pending';
+  return card.publishStatus === PUBLISH_STATUS.PUBLISHED ? 'published' : 'pending';
+};
+
+window.renderPublishBadge = function(card) {
+  const status = card.publishStatus || PUBLISH_STATUS.PENDING;
+  const statusColor = status === PUBLISH_STATUS.PUBLISHED ? '#00b4ff' : '#00ff00';
+  const statusText = status === PUBLISH_STATUS.PUBLISHED ? '📤 Publicado' : '⏳ Pendente';
+  
+  return `
+    <span class="publish-badge ${status}" style="color: ${statusColor}; border: 1px solid ${statusColor};">
+      ${statusText}
+    </span>
+  `;
+};
+
+window.toggleCardDone = function(cardId) {
+  const card = findCardById(cardId);
+  if (!card) return;
+  
+  // Melhoria 4: Validação - só permite marcar como feito se estiver publicado (azul)
+  if (card.publishStatus !== PUBLISH_STATUS.PUBLISHED) {
+    // Se estiver pendente (verde), pedir confirmação
+    const confirmed = confirm(
+      '⚠️ Este card ainda não foi marcado como Publicado (status azul).\\n\\n' +
+      'Tem certeza que deseja marcar como Executado?\\n\\n' +
+      '(Publique o card no Instagram antes de marcar como feito)'
+    );
+    
+    if (!confirmed) return;
+  }
+  
+  card.done = !card.done;
+  saveState();
+  renderAllCards();
+};
+
+// ============================================================================
+// MELHORIA 5: Agrupar Histórico por Período
+// ============================================================================
+
+window.renderHistoryGrouped = function(cards) {
+  const sorted = [...cards].sort((a, b) => new Date(b.data) - new Date(a.data));
+  
+  const grouped = {};
+  const now = new Date();
+  
+  sorted.forEach(card => {
+    const cardDate = new Date(card.data);
+    let groupKey;
+    
+    // Se for do mês atual, agrupar por semana
+    if (cardDate.getMonth() === now.getMonth() && cardDate.getFullYear() === now.getFullYear()) {
+      const weekStart = new Date(cardDate);
+      weekStart.setDate(cardDate.getDate() - cardDate.getDay());
+      groupKey = `🗓️ Semana de ${formatDate(weekStart)}`;
+    } else {
+      // Se for mês anterior/antigo, agrupar por mês
+      groupKey = `📅 ${cardDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`;
+    }
+    
+    if (!grouped[groupKey]) grouped[groupKey] = [];
+    grouped[groupKey].push(card);
+  });
+  
+  let html = '<div class="history-grouped">';
+  
+  Object.entries(grouped).forEach(([period, periodCards]) => {
+    html += `
+      <div class="history-period">
+        <div class="period-header" onclick="togglePeriod(this)">
+          <span>${period}</span>
+          <span class="period-count">${periodCards.length} posts</span>
+          <span class="period-toggle">▼</span>
+        </div>
+        <div class="period-content" style="display: none;">
+          ${periodCards.map(card => `
+            <div class="history-item">
+              ${card.titulo} - ${card.hora} (${card.formato})
+              <span class="status-badge ${card.done ? 'done' : ''}">${card.done ? '✓ Executado' : '⏳ Pendente'}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  });
+  
+  html += '</div>';
+  return html;
+};
+
+window.togglePeriod = function(element) {
+  const content = element.parentElement.querySelector('.period-content');
+  const toggle = element.querySelector('.period-toggle');
+  
+  if (content.style.display === 'none') {
+    content.style.display = 'block';
+    toggle.style.transform = 'rotate(180deg)';
+  } else {
+    content.style.display = 'none';
+    toggle.style.transform = 'rotate(0deg)';
+  }
+};
+
+// ============================================================================
+// CSS adicional para as melhorias
+// ============================================================================
+
+const additionalCSS = `
+.card-files {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--s2);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: var(--s1);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--txt2);
+}
+
+.file-remove {
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-add-btn {
+  background: var(--s1);
+  border: 1px dashed var(--border);
+  color: var(--txt2);
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.file-add-btn:hover {
+  border-color: #f5c200;
+  color: #f5c200;
+}
+
+.publish-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.publish-badge.pending {
+  background: rgba(0, 255, 0, 0.1);
+  color: #00ff00;
+  border: 1px solid #00ff00;
+  animation: pulse-neon 2s ease-in-out infinite;
+}
+
+.publish-badge.published {
+  background: rgba(0, 180, 255, 0.1);
+  color: #00b4ff;
+  border: 1px solid #00b4ff;
+  animation: pulse-neon 2s ease-in-out infinite;
+}
+
+@keyframes pulse-neon {
+  0%, 100% { opacity: 1; text-shadow: 0 0 10px currentColor; }
+  50% { opacity: 0.7; text-shadow: 0 0 20px currentColor; }
+}
+
+.history-grouped {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.history-period {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.period-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--s2);
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  color: var(--txt);
+  transition: background 0.2s;
+}
+
+.period-header:hover {
+  background: var(--s1);
+}
+
+.period-count {
+  font-size: 12px;
+  color: var(--txt3);
+  margin: 0 8px;
+}
+
+.period-toggle {
+  display: inline-flex;
+  transition: transform 0.3s;
+  color: var(--txt3);
+}
+
+.period-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--s1);
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--txt2);
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.status-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--border);
+  color: var(--txt3);
+}
+
+.status-badge.done {
+  background: rgba(0, 230, 118, 0.2);
+  color: #00e676;
+}
+`;
+
+// Injetar CSS adicional
+const styleTag = document.createElement('style');
+styleTag.textContent = additionalCSS;
+document.head.appendChild(styleTag);
+
+console.log('✓ Todas as 5 melhorias foram carregadas!');
+
 </script>
 
 <!-- EDIT MODAL -->
