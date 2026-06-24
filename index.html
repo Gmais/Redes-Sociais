@@ -10457,6 +10457,7 @@ async function convertImageToJpeg(file) {
 }
 
 async function compressVideo(file) {
+  const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('Conversão demorou muito — tente um vídeo mais curto')), 120000));
   showUploadProgress(0, 'Comprimindo ' + file.name + '...');
   const video = document.createElement('video');
   video.muted = true;
