@@ -9108,7 +9108,12 @@ function renderPanel(profile){
     </div>${html||emptyMsg}`;
 }
 
-function renderAll(){['academia','sorveteria','gympulse'].forEach(renderPanel);}
+function renderAll(){
+  try {['academia','sorveteria','gympulse'].forEach(renderPanel);
+  } catch(err) {
+    console.error('Erro em renderAll:', err);
+    showToast('⚠️ Erro ao renderizar — recarregue a página');
+  }}
 
 function buildHist(){
   const all=[
@@ -10010,7 +10015,7 @@ function executeClone() {
   closeCloneModal({ target: modal, currentTarget: modal });
   renderAll();
   buildHist();
-  scheduleSync();
+  pushRemoteState();
 
   if (dates.length === 1) {
     showToast('✓ Card clonado para ' + fmtDate(dates[0]));
@@ -10039,8 +10044,8 @@ function deleteCard(id, profile) {
     save();
     renderAll();
     buildHist();
-    scheduleSync();
-    showToast('🗑️ Card excluído');
+    pushRemoteState();
+    showToast('🗑️ Card excluído e sincronizado');
   }
 }
 
@@ -10281,10 +10286,13 @@ async function executeNewPost() {
   buildHist();
   scheduleSync();
 
+  // Salvar imediatamente no Supabase para não perder dados
+  pushRemoteState();
+
   if (allDates.length === 1) {
-    showToast('✅ Postagem criada para ' + fmtDate(allDates[0]));
+    showToast('✅ Postagem criada e salva!');
   } else {
-    showToast('✅ ' + allDates.length + ' postagens criadas!');
+    showToast('✅ ' + allDates.length + ' postagens criadas e salvas!');
   }
 
   const tab = document.querySelector('.tab[data-p="' + profile + '"]');
