@@ -10454,7 +10454,7 @@ async function compressVideo(file) {
       // Escalar para 720p max mantendo proporção
       let w = video.videoWidth;
       let h = video.videoHeight;
-      const maxDim = 720;
+      const maxDim = 480;
       if (w > h) {
         if (h > maxDim) { w = Math.round(w * maxDim / h); h = maxDim; }
       } else {
@@ -10486,7 +10486,7 @@ async function compressVideo(file) {
       } catch(e) {}
 
       // Bitrate baixo para manter arquivo pequeno (~2Mbps)
-      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2000000 });
+      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 1200000 });
       const chunks = [];
       recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
 
@@ -10498,7 +10498,11 @@ async function compressVideo(file) {
         const newName = file.name.replace(/\.[^.]+$/, '_compressed' + ext);
         const compressed = new File([blob], newName, { type: mimeType.split(';')[0] });
         const sizeMB = (compressed.size / 1024 / 1024).toFixed(1);
-        showToast('✓ Vídeo comprimido: ' + sizeMB + 'MB (' + w + 'x' + h + ')');
+        if (compressed.size > 8 * 1024 * 1024) {
+          showToast('⚠️ Vídeo comprimido (' + sizeMB + 'MB) ainda grande. Tente um vídeo mais curto.');
+        } else {
+          showToast('✓ Vídeo comprimido: ' + sizeMB + 'MB (' + w + 'x' + h + ')');
+        }
         resolve(compressed);
       };
 
