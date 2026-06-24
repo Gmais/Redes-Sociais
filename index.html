@@ -8891,6 +8891,11 @@ async function handleImageSelect(id, profile, inputEl){
     rerenderImageBox(id, profile);
     return;
   }
+  if (isVideo && file.type !== 'video/mp4') {
+    setImageData(id, { status:'error', errorMsg:'Formato de vídeo não aceito. O Instagram só aceita MP4 (H.264). Converta o arquivo antes de enviar.' });
+    rerenderImageBox(id, profile);
+    return;
+  }
   const maxSize = isVideo ? 100 * 1024 * 1024 : 15 * 1024 * 1024;
   const maxLabel = isVideo ? '100MB' : '15MB';
   if (file.size > maxSize) {
@@ -9061,7 +9066,7 @@ function cardHTML(item,profile){
     <div class="block">
       <div class="blabel" style="color:#00b4d8">📎 Mídia a ser Publicada</div>
       <div id="imgbox-${item.id}">${imageBlockHTML(item.id, profile)}</div>
-      <input type="file" accept="image/*,video/mp4,video/quicktime,video/webm" id="imgfile-${item.id}" style="display:none" ${item.format==='Carrossel'?'multiple':''} onchange="handleImageSelect('${item.id}','${profile}',this)">
+      <input type="file" accept="image/*,video/mp4" id="imgfile-${item.id}" style="display:none" ${item.format==='Carrossel'?'multiple':''} onchange="handleImageSelect('${item.id}','${profile}',this)">
       ${item.format==='Carrossel' ? carouselSlidesHTML(item.id, profile) : ''}
     </div>
 
@@ -9923,6 +9928,10 @@ function addCarouselSlide(id, profile) {
     input.onchange = async (e) => {
       const slides = getCarouselData(id);
       for (const file of e.target.files) {
+        if (file.type.startsWith('video/') && file.type !== 'video/mp4') {
+          showToast('⚠️ ' + file.name + ' não é MP4. Converta antes de enviar.');
+          continue;
+        }
         try {
           const folderId = DRIVE_FOLDER_MAP[profile];
           const data = await uploadFileToDrive(file, folderId);
@@ -10157,6 +10166,10 @@ function npSelectMedia() {
 function npMediaSelected(inputEl) {
   if (!inputEl.files || !inputEl.files.length) return;
   for (const f of inputEl.files) {
+    if (f.type.startsWith('video/') && f.type !== 'video/mp4') {
+      showToast('⚠️ Vídeo ' + f.name + ' não é MP4. O Instagram só aceita MP4 (H.264).');
+      continue;
+    }
     npSelectedFiles.push(f);
   }
   npRenderMediaList();
@@ -10553,7 +10566,7 @@ function unpublishCard(id) {
           <div class="np-media-hint" id="np-media-hint">Imagem ou vídeo. Para Carrossel, selecione vários.</div>
           <div class="np-media-list" id="np-media-list"></div>
         </div>
-        <input type="file" id="np-media-input" style="display:none" accept="image/*,video/mp4,video/quicktime,video/webm" onchange="npMediaSelected(this)">
+        <input type="file" id="np-media-input" style="display:none" accept="image/*,video/mp4" onchange="npMediaSelected(this)">
       </div>
 
       <div class="np-divider"></div>
