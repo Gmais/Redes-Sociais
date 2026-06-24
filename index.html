@@ -9986,7 +9986,10 @@ function executeClone() {
     }
   }
 
-  // Criar clones
+  // Criar clones com mídia
+  const sourceImg = getImageData(sourceId);
+  const sourceCarousel = getCarouselData(sourceId);
+
   dates.forEach((dt, idx) => {
     const clone = JSON.parse(JSON.stringify(source));
     clone.id = profile.slice(0, 2) + '_clone_' + Date.now() + '_' + idx;
@@ -9994,6 +9997,14 @@ function executeClone() {
     clone.time = time;
     clone.title = '🔄 ' + source.title.replace(/^🔄 /, '');
     CONTENT[profile].push(clone);
+
+    // Copiar mídia do original para o clone
+    if (sourceImg && sourceImg.status === 'ok') {
+      setImageData(clone.id, JSON.parse(JSON.stringify(sourceImg)));
+    }
+    if (sourceCarousel && sourceCarousel.length > 0) {
+      setCarouselData(clone.id, JSON.parse(JSON.stringify(sourceCarousel)));
+    }
   });
 
   closeCloneModal({ target: modal, currentTarget: modal });
