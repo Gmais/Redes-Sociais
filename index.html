@@ -563,13 +563,14 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 }
 
 
-.delete-btn {
-  font-size:10px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase;
-  color:#ff6b6b; background:transparent; border:1px solid #ff6b6b33;
-  border-radius:6px; padding:7px 12px; cursor:pointer; font-family:'Inter',sans-serif;
-  transition:all 0.15s; display:inline-flex; align-items:center; gap:4px;
+.clone-ref {
+  background:var(--s2); border:1px solid var(--border); border-radius:8px;
+  padding:12px 14px; margin-bottom:16px;
 }
-.delete-btn:hover { background:#ff6b6b22; border-color:#ff6b6b; }
+.clone-ref-label { font-size:10px; font-weight:700; color:var(--txt3); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px; }
+.clone-ref-title { font-size:14px; font-weight:600; color:var(--txt); }
+#cloneModal { display:none; }
+#cloneModal.open { display:flex; }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -8934,7 +8935,6 @@ function cardHTML(item,profile){
       <button class="edit-btn" onclick="event.stopPropagation();openEdit('${item.id}')">✏️ Editar card</button>
       <button class="copy-all-btn" onclick="event.stopPropagation();copyAll('${item.id}')">📋 Copiar tudo</button>
       <button class="clone-btn" onclick="event.stopPropagation();cloneCard('${item.id}','${profile}')">🔄 Reaproveitar</button>
-      <button class="delete-btn" onclick="event.stopPropagation();deleteCard('${item.id}','${profile}')">🗑️ Excluir</button>
     </div>
     ${ZERNIO_PROFILES.includes(profile) ? publishBlockHTML(item.id) : ''}
     <div class="block">
@@ -9788,55 +9788,102 @@ function removeCarouselSlide(id, index, profile) {
 function cloneCard(id, profile) {
   const source = CONTENT[profile].find(c => c.id === id);
   if (!source) { showToast('❌ Card não encontrado'); return; }
-  
-  // Gerar novo ID único
-  const newId = profile.slice(0,2) + '_clone_' + Date.now();
-  
-  // Clonar profundamente
-  const clone = JSON.parse(JSON.stringify(source));
-  clone.id = newId;
-  
-  // Mover para amanhã
+
+  // Preencher modal com dados do card original
+  const modal = document.getElementById('cloneModal');
+  modal.dataset.sourceId = id;
+  modal.dataset.profile = profile;
+
+  // Data padrão: amanhã
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  clone.date = tomorrow.toISOString().slice(0,10);
-  
-  // Título indica que é reaproveitado
-  clone.title = '🔄 ' + clone.title;
-  
-  CONTENT[profile].push(clone);
+  document.getElementById('clone-date').value = tomorrow.toISOString().slice(0, 10);
+
+  // Horário padrão: mesmo do original
+  document.getElementById('clone-time').value = source.time;
+
+  // Repetição padrão: nenhuma
+  document.getElementById('clone-repeat').value = 'none';
+  updateRepeatInfo();
+
+  // Título para referência
+  document.getElementById('clone-ref-title').textContent = source.title;
+
+  modal.classList.add('open');
+}
+
+function updateRepeatInfo() {
+  const repeat = document.getElementById('clone-repeat').value;
+  const info = document.getElementById('clone-repeat-info');
+  if (repeat === 'none') {
+    info.textContent = 'Será criado apenas 1 card na data selecionada.';
+  } else if (repeat === 'weekly') {
+    info.textContent = 'Serão criados 4 cards: um por semana a partir da data selecionada.';
+  } else if (repeat === 'monthly') {
+    info.textContent = 'Serão criados 3 cards: um por mês a partir da data selecionada.';
+  }
+}
+
+function closeCloneModal(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('cloneModal').classList.remove('open');
+}
+
+function executeClone() {
+  const modal = document.getElementById('cloneModal');
+  const sourceId = modal.dataset.sourceId;
+  const profile = modal.dataset.profile;
+  const source = CONTENT[profile].find(c => c.id === sourceId);
+  if (!source) return;
+
+  const baseDate = document.getElementById('clone-date').value;
+  const time = document.getElementById('clone-time').value;
+  const repeat = document.getElementById('clone-repeat').value;
+
+  if (!baseDate) { showToast('⚠️ Selecione uma data'); return; }
+  if (!time) { showToast('⚠️ Informe o horário'); return; }
+
+  // Calcular datas de criação
+  const dates = [baseDate];
+  if (repeat === 'weekly') {
+    for (let i = 1; i < 4; i++) {
+      const d = new Date(baseDate);
+      d.setDate(d.getDate() + (7 * i));
+      dates.push(d.toISOString().slice(0, 10));
+    }
+  } else if (repeat === 'monthly') {
+    for (let i = 1; i < 3; i++) {
+      const d = new Date(baseDate);
+      d.setMonth(d.getMonth() + i);
+      dates.push(d.toISOString().slice(0, 10));
+    }
+  }
+
+  // Criar clones
+  dates.forEach((dt, idx) => {
+    const clone = JSON.parse(JSON.stringify(source));
+    clone.id = profile.slice(0, 2) + '_clone_' + Date.now() + '_' + idx;
+    clone.date = dt;
+    clone.time = time;
+    clone.title = '🔄 ' + source.title.replace(/^🔄 /, '');
+    CONTENT[profile].push(clone);
+  });
+
+  closeCloneModal({ target: modal, currentTarget: modal });
   renderAll();
   buildHist();
   scheduleSync();
-  showToast('✓ Postagem clonada para ' + fmtDate(clone.date));
-  
-  // Ir para a aba do perfil e expandir
-  const tab = document.querySelector('.tab[data-p="'+profile+'"]');
+
+  if (dates.length === 1) {
+    showToast('✓ Card clonado para ' + fmtDate(dates[0]));
+  } else {
+    showToast('✓ ' + dates.length + ' cards criados (' + (repeat === 'weekly' ? 'semanal' : 'mensal') + ')');
+  }
+
+  const tab = document.querySelector('.tab[data-p="' + profile + '"]');
   if (tab) tab.click();
 }
 
-
-
-// ── EXCLUIR CARD ──
-function deleteCard(id, profile) {
-  const item = CONTENT[profile].find(c => c.id === id);
-  if (!item) return;
-  const ok = confirm('🗑️ Excluir este card?\n\n"' + item.title + '"\n\nEssa ação não pode ser desfeita.');
-  if (!ok) return;
-  const idx = CONTENT[profile].findIndex(c => c.id === id);
-  if (idx > -1) {
-    CONTENT[profile].splice(idx, 1);
-    // Limpar dados associados
-    localStorage.removeItem('img_' + id);
-    localStorage.removeItem('carousel_' + id);
-    delete S[id];
-    save();
-    renderAll();
-    buildHist();
-    scheduleSync();
-    showToast('🗑️ Card excluído');
-  }
-}
 
 </script>
 
@@ -9901,6 +9948,66 @@ function deleteCard(id, profile) {
 </div>
 
 <div class="saved-toast" id="savedToast">✓ Alterações salvas!</div>
+
+
+<div class="modal-overlay" id="cloneModal" onclick="closeCloneModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">🔄 Reaproveitar Postagem</div>
+      <button class="modal-close" onclick="closeCloneModal({target:document.getElementById('cloneModal'),currentTarget:document.getElementById('cloneModal')})">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="clone-ref">
+        <div class="clone-ref-label">Postagem original:</div>
+        <div class="clone-ref-title" id="clone-ref-title"></div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label" style="color:#4ade80">📅 Data da postagem</div>
+        <input class="field-input" id="clone-date" type="date">
+      </div>
+
+      <div class="field-group">
+        <div class="field-label" style="color:#00b4d8">🕐 Horário</div>
+        <select class="field-input" id="clone-time">
+          <option value="06h">06h</option>
+          <option value="07h">07h</option>
+          <option value="08h">08h</option>
+          <option value="09h">09h</option>
+          <option value="10h">10h</option>
+          <option value="11h">11h</option>
+          <option value="11h30">11h30</option>
+          <option value="12h">12h</option>
+          <option value="13h">13h</option>
+          <option value="14h">14h</option>
+          <option value="15h">15h</option>
+          <option value="16h">16h</option>
+          <option value="17h">17h</option>
+          <option value="18h">18h</option>
+          <option value="19h">19h</option>
+          <option value="20h">20h</option>
+          <option value="21h">21h</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label" style="color:#f5a623">🔁 Repetição</div>
+        <select class="field-input" id="clone-repeat" onchange="updateRepeatInfo()">
+          <option value="none">Não repetir — apenas 1 vez</option>
+          <option value="weekly">Semanal — repetir por 4 semanas</option>
+          <option value="monthly">Mensal — repetir por 3 meses</option>
+        </select>
+        <div class="field-hint" id="clone-repeat-info">Será criado apenas 1 card na data selecionada.</div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="edit-btn" onclick="closeCloneModal({target:document.getElementById('cloneModal'),currentTarget:document.getElementById('cloneModal')})">Cancelar</button>
+      <button class="edit-btn edit-btn-primary" onclick="executeClone()">🔄 Criar postagem(ns)</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
