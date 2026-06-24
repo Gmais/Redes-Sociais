@@ -579,6 +579,43 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   transition:all 0.15s; display:inline-flex; align-items:center; gap:4px;
 }
 .delete-btn:hover { background:#ff6b6b22; border-color:#ff6b6b; }
+
+.new-post-btn {
+  font-size:12px; font-weight:800; letter-spacing:0.06em;
+  color:#0d0d0d; background:linear-gradient(135deg,#4ade80,#22c55e);
+  border:none; border-radius:8px; padding:10px 18px; cursor:pointer;
+  font-family:'Inter',sans-serif; transition:all 0.15s;
+  display:inline-flex; align-items:center; gap:6px;
+  box-shadow:0 0 12px rgba(74,222,128,0.3);
+}
+.new-post-btn:hover { background:linear-gradient(135deg,#22c55e,#16a34a); box-shadow:0 0 20px rgba(74,222,128,0.5); }
+.filter-bar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+#newPostModal { display:none; }
+#newPostModal.open { display:flex; }
+.np-profile-bar { display:flex; gap:6px; margin-bottom:16px; }
+.np-profile-opt {
+  flex:1; padding:10px 8px; border-radius:6px; border:2px solid var(--border);
+  background:var(--s2); color:var(--txt2); font-size:12px; font-weight:700;
+  cursor:pointer; text-align:center; font-family:'Inter',sans-serif; transition:all 0.2s;
+}
+.np-profile-opt.np-profile-active { border-color:var(--pc); color:var(--pc); background:color-mix(in srgb, var(--pc) 10%, var(--s1)); }
+.np-profile-opt:hover { border-color:var(--pc); }
+.np-media-area { padding:12px; background:var(--s2); border:1px solid var(--border); border-radius:8px; }
+.np-media-btn {
+  width:100%; padding:12px; background:transparent; border:1px dashed var(--border);
+  color:var(--txt2); border-radius:6px; cursor:pointer; font-size:13px; font-weight:600;
+  transition:all 0.2s; font-family:'Inter',sans-serif;
+}
+.np-media-btn:hover { border-color:#f5c200; color:#f5c200; }
+.np-media-hint { font-size:11px; color:var(--txt3); margin-top:6px; text-align:center; }
+.np-media-list { margin-top:8px; display:flex; flex-direction:column; gap:4px; }
+.np-divider { height:1px; background:var(--border); margin:16px 0; }
+.np-schedule-toggle {
+  display:flex; align-items:center; gap:8px; cursor:pointer;
+  font-size:13px; font-weight:600; color:var(--txt); user-select:none;
+}
+.np-schedule-toggle input { accent-color:#f5a623; width:18px; height:18px; cursor:pointer; }
+.np-extra-dates { display:flex; flex-direction:column; gap:6px; margin-bottom:8px; }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -615,6 +652,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
     <span class="checkmark"></span>
     <span class="hide-done-label">Esconder ações já realizadas</span>
   </label>
+  <button class="new-post-btn" id="newPostBtn" onclick="openNewPostModal()">＋ Nova Postagem</button>
 </div>
 
 <main>
@@ -9095,11 +9133,16 @@ function cp(id,btn){
   });
 }
 
+let activeProfile = 'academia';
 function go(tab,el){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
   document.getElementById('p-'+tab).classList.add('on');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   el.classList.add('on');
+  if(['academia','sorveteria','gympulse'].includes(tab)) activeProfile = tab;
+  // Esconder botão Nova Postagem no Histórico/Estratégia
+  const npBtn = document.getElementById('newPostBtn');
+  if(npBtn) npBtn.style.display = ['historico','estrategia'].includes(tab) ? 'none' : 'flex';
   if(tab==='historico') buildHist();
   if(tab==='estrategia') buildEstrategia();
 }
@@ -9915,6 +9958,269 @@ function deleteCard(id, profile) {
     showToast('🗑️ Card excluído');
   }
 }
+
+// ── NOVA POSTAGEM ──────────────────────────────────────────────────────────
+let npSelectedFiles = [];
+
+function openNewPostModal() {
+  const modal = document.getElementById('newPostModal');
+  const today = new Date();
+  document.getElementById('np-date').value = today.toISOString().slice(0,10);
+  document.getElementById('np-time').value = '10h';
+  document.getElementById('np-format').value = 'Story';
+  document.getElementById('np-title').value = '';
+  document.getElementById('np-texto').value = '';
+  document.getElementById('np-schedule-check').checked = false;
+  document.getElementById('np-schedule-section').style.display = 'none';
+  document.getElementById('np-repeat').value = 'none';
+  npSelectedFiles = [];
+  document.getElementById('np-media-list').innerHTML = '';
+  document.getElementById('np-media-input').removeAttribute('multiple');
+  document.getElementById('np-media-hint').textContent = 'Imagem ou vídeo.';
+  npFormatChanged();
+
+  // Profile bar
+  const profileLabels = {academia:'🏋️ Academia', sorveteria:'🍦 Sorveteria', gympulse:'🎮 GympulsePro'};
+  const profileColors = {academia:'#e63900', sorveteria:'#f5c800', gympulse:'#f5c200'};
+  let barHtml = '';
+  ['academia','sorveteria','gympulse'].forEach(p => {
+    const sel = p === activeProfile ? ' np-profile-active' : '';
+    barHtml += '<button class="np-profile-opt' + sel + '" style="--pc:' + profileColors[p] + '" data-p="' + p + '" onclick="npSelectProfile(\'' + p + '\')">' + profileLabels[p] + '</button>';
+  });
+  document.getElementById('np-profile-bar').innerHTML = barHtml;
+
+  modal.classList.add('open');
+}
+
+function npSelectProfile(p) {
+  activeProfile = p;
+  document.querySelectorAll('.np-profile-opt').forEach(el => {
+    el.classList.toggle('np-profile-active', el.dataset.p === p);
+  });
+}
+
+function closeNewPostModal(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('newPostModal').classList.remove('open');
+}
+
+function npFormatChanged() {
+  const fmt = document.getElementById('np-format').value;
+  const input = document.getElementById('np-media-input');
+  const hint = document.getElementById('np-media-hint');
+  if (fmt === 'Carrossel') {
+    input.setAttribute('multiple', 'true');
+    hint.textContent = 'Selecione várias imagens/vídeos para os slides do carrossel.';
+  } else if (fmt === 'Reel') {
+    input.removeAttribute('multiple');
+    hint.textContent = 'Selecione um vídeo para o Reel.';
+  } else {
+    input.removeAttribute('multiple');
+    hint.textContent = 'Imagem ou vídeo.';
+  }
+}
+
+function npSelectMedia() {
+  document.getElementById('np-media-input').click();
+}
+
+function npMediaSelected(inputEl) {
+  if (!inputEl.files || !inputEl.files.length) return;
+  for (const f of inputEl.files) {
+    npSelectedFiles.push(f);
+  }
+  npRenderMediaList();
+  inputEl.value = '';
+}
+
+function npRenderMediaList() {
+  const list = document.getElementById('np-media-list');
+  if (!npSelectedFiles.length) { list.innerHTML = ''; return; }
+  list.innerHTML = npSelectedFiles.map((f, i) => {
+    const icon = f.type.startsWith('video') ? '🎬' : '🖼️';
+    return '<div class="carousel-slide"><span>' + icon + ' ' + f.name + '</span><button class="slide-remove" onclick="npRemoveMedia(' + i + ')">✕</button></div>';
+  }).join('');
+}
+
+function npRemoveMedia(idx) {
+  npSelectedFiles.splice(idx, 1);
+  npRenderMediaList();
+}
+
+function npToggleSchedule() {
+  const checked = document.getElementById('np-schedule-check').checked;
+  document.getElementById('np-schedule-section').style.display = checked ? 'block' : 'none';
+  if (checked) npRepeatChanged();
+}
+
+function npRepeatChanged() {
+  const val = document.getElementById('np-repeat').value;
+  document.getElementById('np-manual-days').style.display = val === 'none' ? 'block' : 'none';
+  document.getElementById('np-repeat-range').style.display = val !== 'none' ? 'block' : 'none';
+  if (val !== 'none') {
+    const baseDate = document.getElementById('np-date').value || new Date().toISOString().slice(0,10);
+    document.getElementById('np-repeat-start').value = baseDate;
+    const endDate = new Date(baseDate);
+    if (val === 'weekly') endDate.setDate(endDate.getDate() + 28);
+    else endDate.setMonth(endDate.getMonth() + 3);
+    document.getElementById('np-repeat-end').value = endDate.toISOString().slice(0,10);
+    npUpdateRepeatInfo();
+  }
+}
+
+function npUpdateRepeatInfo() {
+  const val = document.getElementById('np-repeat').value;
+  const start = document.getElementById('np-repeat-start').value;
+  const end = document.getElementById('np-repeat-end').value;
+  if (!start || !end) return;
+  const dates = npCalcRepeatDates(val, start, end);
+  const info = document.getElementById('np-repeat-info');
+  info.textContent = 'Serão criados ' + dates.length + ' posts (' + (val === 'weekly' ? 'semanal' : 'mensal') + ') de ' + fmtDate(start) + ' a ' + fmtDate(end);
+}
+
+function npCalcRepeatDates(mode, start, end) {
+  const dates = [];
+  const d = new Date(start);
+  const endD = new Date(end);
+  while (d <= endD) {
+    dates.push(d.toISOString().slice(0,10));
+    if (mode === 'weekly') d.setDate(d.getDate() + 7);
+    else d.setMonth(d.getMonth() + 1);
+  }
+  return dates;
+}
+
+function npAddExtraDate() {
+  const container = document.getElementById('np-extra-dates');
+  const input = document.createElement('input');
+  input.className = 'field-input np-extra-date';
+  input.type = 'date';
+  container.appendChild(input);
+}
+
+async function executeNewPost() {
+  const profile = activeProfile;
+  const baseDate = document.getElementById('np-date').value;
+  const time = document.getElementById('np-time').value;
+  const format = document.getElementById('np-format').value;
+  const title = document.getElementById('np-title').value.trim();
+  const texto = document.getElementById('np-texto').value.trim();
+
+  if (!baseDate) { showToast('⚠️ Selecione uma data'); return; }
+  if (!title) { showToast('⚠️ Informe um título'); return; }
+
+  // Calcular todas as datas
+  let allDates = [baseDate];
+  const scheduleOn = document.getElementById('np-schedule-check').checked;
+
+  if (scheduleOn) {
+    const repeat = document.getElementById('np-repeat').value;
+    if (repeat === 'none') {
+      // Dias manuais
+      document.querySelectorAll('.np-extra-date').forEach(el => {
+        if (el.value && !allDates.includes(el.value)) allDates.push(el.value);
+      });
+    } else {
+      const start = document.getElementById('np-repeat-start').value;
+      const end = document.getElementById('np-repeat-end').value;
+      if (start && end) allDates = npCalcRepeatDates(repeat, start, end);
+    }
+  }
+
+  // Upload de arquivos se houver
+  let uploadedFiles = [];
+  if (npSelectedFiles.length > 0 && hasValidDriveToken()) {
+    showToast('📤 Enviando arquivos...');
+    const folderId = DRIVE_FOLDER_MAP[profile];
+    for (const file of npSelectedFiles) {
+      try {
+        const data = await uploadFileToDrive(file, folderId);
+        uploadedFiles.push({
+          fileId: data.id,
+          fileName: file.name,
+          fileType: file.type,
+          viewUrl: data.webViewLink || 'https://drive.google.com/file/d/' + data.id + '/view',
+          thumbnailLink: data.thumbnailLink || ''
+        });
+      } catch(err) {
+        showToast('❌ Erro ao enviar ' + file.name);
+      }
+    }
+  }
+
+  // Criar posts
+  allDates.forEach((dt, idx) => {
+    const newId = profile.slice(0,2) + '_new_' + Date.now() + '_' + idx;
+    const card = {
+      id: newId,
+      date: dt,
+      time: time,
+      format: format,
+      title: title,
+      texto: texto || '',
+      secoes: [
+        { num:'01', cor:'#e63900', titulo:'FORMATO E ESPECIFICAÇÕES', conteudo: formatSpec(format) },
+        { num:'02', cor:'#f5a623', titulo:'INTENÇÃO DA POSTAGEM', conteudo: 'A preencher' },
+        { num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO', conteudo: 'A preencher' }
+      ]
+    };
+    CONTENT[profile].push(card);
+
+    // Associar primeira imagem ao card
+    if (uploadedFiles.length > 0) {
+      const mainFile = uploadedFiles[0];
+      setImageData(newId, {
+        status: 'ok',
+        fileId: mainFile.fileId,
+        viewUrl: mainFile.viewUrl,
+        thumbnailLink: mainFile.thumbnailLink,
+        fileName: mainFile.fileName,
+        uploadedAt: new Date().toISOString(),
+        zernioStatus: 'n/a'
+      });
+      // Slides adicionais para Carrossel
+      if (format === 'Carrossel' && uploadedFiles.length > 1) {
+        const extraSlides = uploadedFiles.slice(1).map(f => ({
+          fileId: f.fileId,
+          fileName: f.fileName,
+          viewUrl: f.viewUrl,
+          uploadedAt: new Date().toISOString()
+        }));
+        setCarouselData(newId, extraSlides);
+      }
+    }
+  });
+
+  closeNewPostModal({target: document.getElementById('newPostModal'), currentTarget: document.getElementById('newPostModal')});
+  renderAll();
+  buildHist();
+  scheduleSync();
+
+  if (allDates.length === 1) {
+    showToast('✅ Postagem criada para ' + fmtDate(allDates[0]));
+  } else {
+    showToast('✅ ' + allDates.length + ' postagens criadas!');
+  }
+
+  const tab = document.querySelector('.tab[data-p="' + profile + '"]');
+  if (tab) tab.click();
+}
+
+function formatSpec(fmt) {
+  const specs = {
+    'Story': 'Tipo: Story Instagram\nDimensões: 1080 × 1920px (proporção 9:16)\nResolução: 72 DPI\nZona segura: manter elementos entre 150px das bordas superior e inferior',
+    'Post': 'Tipo: Post Feed Instagram\nDimensões: 1080 × 1080px (proporção 1:1)\nResolução: 72 DPI',
+    'Carrossel': 'Tipo: Carrossel Instagram\nDimensões: 1080 × 1080px por slide (proporção 1:1)\nResolução: 72 DPI\nMáximo: 10 slides',
+    'Reel': 'Tipo: Reel Instagram\nDimensões: 1080 × 1920px (proporção 9:16)\nResolução: 72 DPI\nDuração: até 90 segundos'
+  };
+  return specs[fmt] || specs['Post'];
+}
+
+// Atualizar info quando datas mudam
+document.addEventListener('change', function(e) {
+  if (e.target.id === 'np-repeat-start' || e.target.id === 'np-repeat-end') npUpdateRepeatInfo();
+});
+
 </script>
 
 <!-- EDIT MODAL -->
@@ -10035,6 +10341,117 @@ function deleteCard(id, profile) {
     <div class="modal-footer">
       <button class="edit-btn" onclick="closeCloneModal({target:document.getElementById('cloneModal'),currentTarget:document.getElementById('cloneModal')})">Cancelar</button>
       <button class="edit-btn edit-btn-primary" onclick="executeClone()">🔄 Criar postagem(ns)</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-overlay" id="newPostModal" onclick="closeNewPostModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:520px">
+    <div class="modal-header">
+      <div class="modal-title">＋ Nova Postagem</div>
+      <button class="modal-close" onclick="closeNewPostModal({target:document.getElementById('newPostModal'),currentTarget:document.getElementById('newPostModal')})">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+
+      <div class="np-profile-bar" id="np-profile-bar"></div>
+
+      <div class="field-group">
+        <div class="field-label" style="color:#4ade80">📅 Data</div>
+        <input class="field-input" id="np-date" type="date">
+      </div>
+
+      <div class="field-group">
+        <div class="field-label" style="color:#00b4d8">🕐 Horário</div>
+        <select class="field-input" id="np-time">
+          <option value="06h">06h</option><option value="07h">07h</option>
+          <option value="08h">08h</option><option value="09h">09h</option>
+          <option value="10h">10h</option><option value="11h">11h</option>
+          <option value="11h30">11h30</option><option value="12h">12h</option>
+          <option value="13h">13h</option><option value="14h">14h</option>
+          <option value="15h">15h</option><option value="16h">16h</option>
+          <option value="17h">17h</option><option value="18h">18h</option>
+          <option value="19h">19h</option><option value="20h">20h</option>
+          <option value="21h">21h</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label" style="color:#f5a623">📐 Formato</div>
+        <select class="field-input" id="np-format" onchange="npFormatChanged()">
+          <option value="Story">Story (1080×1920px)</option>
+          <option value="Post">Post Feed (1080×1080px)</option>
+          <option value="Carrossel">Carrossel (1080×1080px/slide)</option>
+          <option value="Reel">Reel (1080×1920px)</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label" style="color:#e63900">📌 Título</div>
+        <input class="field-input" id="np-title" type="text" placeholder="Ex: Prova Social — Resultados reais">
+      </div>
+
+      <div class="field-group">
+        <div class="field-label" style="color:#00b4d8">📝 Texto da postagem</div>
+        <textarea class="field-input" id="np-texto" rows="5" placeholder="Texto que vai para o Instagram..."></textarea>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label" style="color:#f5c200">📎 Mídia</div>
+        <div class="np-media-area" id="np-media-area">
+          <button class="np-media-btn" onclick="npSelectMedia()">📤 Selecionar arquivo(s)</button>
+          <div class="np-media-hint" id="np-media-hint">Imagem ou vídeo. Para Carrossel, selecione vários.</div>
+          <div class="np-media-list" id="np-media-list"></div>
+        </div>
+        <input type="file" id="np-media-input" style="display:none" accept="image/*,video/mp4,video/quicktime,video/webm" onchange="npMediaSelected(this)">
+      </div>
+
+      <div class="np-divider"></div>
+
+      <div class="field-group">
+        <label class="np-schedule-toggle">
+          <input type="checkbox" id="np-schedule-check" onchange="npToggleSchedule()">
+          <span>📆 Agendar para outros dias?</span>
+        </label>
+      </div>
+
+      <div id="np-schedule-section" style="display:none">
+        <div class="field-group">
+          <div class="field-label" style="color:#f5a623">🔁 Repetição</div>
+          <select class="field-input" id="np-repeat" onchange="npRepeatChanged()">
+            <option value="none">Sem repetição — escolher dias manualmente</option>
+            <option value="weekly">Semanal</option>
+            <option value="monthly">Mensal</option>
+          </select>
+        </div>
+
+        <div id="np-manual-days" style="display:none">
+          <div class="field-group">
+            <div class="field-label" style="color:#4ade80">Selecione os dias adicionais</div>
+            <div class="np-extra-dates" id="np-extra-dates">
+              <input class="field-input np-extra-date" type="date">
+            </div>
+            <button class="slide-add-btn" onclick="npAddExtraDate()">+ Adicionar dia</button>
+          </div>
+        </div>
+
+        <div id="np-repeat-range" style="display:none">
+          <div class="field-group">
+            <div class="field-label" style="color:#4ade80">📅 Data de início</div>
+            <input class="field-input" id="np-repeat-start" type="date">
+          </div>
+          <div class="field-group">
+            <div class="field-label" style="color:#ff6b6b">📅 Data de término</div>
+            <input class="field-input" id="np-repeat-end" type="date">
+          </div>
+          <div class="field-hint" id="np-repeat-info"></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="edit-btn" onclick="closeNewPostModal({target:document.getElementById('newPostModal'),currentTarget:document.getElementById('newPostModal')})">Cancelar</button>
+      <button class="edit-btn edit-btn-primary" onclick="executeNewPost()">✅ Criar Postagem</button>
     </div>
   </div>
 </div>
