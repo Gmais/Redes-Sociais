@@ -9597,8 +9597,11 @@ async function pushRemoteState() {
     const localPublished = {};
     const localReviewed = {};
     const manifest = {};
+    const today = new Date().toISOString().slice(0,10); // YYYY-MM-DD
     for (const profile of ['academia','sorveteria','gympulse']) {
       CONTENT[profile].forEach(item => {
+        // Filtrar: apenas posts de hoje que NÃO foram feitos ainda
+        if (item.date !== today || S[item.id]) return;
         const savedEdit = localStorage.getItem('edits_' + item.id);
         if (savedEdit) {
           try { localEdits[item.id] = JSON.parse(savedEdit); } catch(e) {}
@@ -9899,10 +9902,30 @@ initGoogleAuth();
 // Pull remote state on load, then re-render with synced data, then push once
 // to make sure the server-side manifest (used by the auto-publish cron) is
 // always fresh — even on days nobody touches the panel.
+// Sincronizar com Supabase ao carregar
+let lastRemoteSync = 0;
+async function syncWithRemote() {
+  const now = Date.now();
+  // Só sync a cada 30s para não sobrecarregar
+  if (now - lastRemoteSync < 30000) return;
+  lastRemoteSync = now;
+  try {
+    await pullRemoteState();
+    renderAll();
+    if (typeof buildHist === 'function') buildHist();
+  } catch(e) { console.error('Sync remoto falhou:', e); }
+}
 pullRemoteState().then(() => {
   renderAll();
   if (typeof buildHist === 'function') buildHist();
   pushRemoteState();
+});
+
+// Polling a cada 30s enquanto página está ativa
+setInterval(syncWithRemote, 30000);
+// Sincronizar quando volta pro foco
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden) syncWithRemote();
 });
 
 
@@ -10528,7 +10551,30 @@ async function compressVideo(file) {
     };
     video.src = url;
   });
-}</script>
+}
+// ── LIMPEZA AUTOMÁTICA ──
+function cleanupOldPosts() {
+  const today = new Date().toISOString().slice(0,10);
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const key = localStorage.key(i);
+    if (!key || (!key.startsWith('edits_') && !key.startsWith('img_') && !key.startsWith('carousel_'))) continue;
+    try {
+      const dataKey = key.replace(/^(edits_|img_|carousel_)/, 'edits_');
+      const editData = JSON.parse(localStorage.getItem(dataKey) || '{}');
+      const date = editData.date || today;
+      // Limpar posts de ontem ou mais antigos que foram feitos
+      if (date < today && editData.done) {
+        localStorage.removeItem(key);
+      }
+    } catch(e) {}
+  }
+}
+// Rodar 1x por dia ao carregar
+if (!localStorage.getItem('lastCleanup') || new Date(localStorage.getItem('lastCleanup')).toDateString() !== new Date().toDateString()) {
+  cleanupOldPosts();
+  localStorage.setItem('lastCleanup', new Date().toISOString());
+}
+</script>
 
 <!-- EDIT MODAL -->
 <div class="modal-overlay" id="editModal" onclick="closeModal(event)">
