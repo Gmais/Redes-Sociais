@@ -562,6 +562,14 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   padding:4px 0 8px;
 }
 
+
+.delete-btn {
+  font-size:10px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase;
+  color:#ff6b6b; background:transparent; border:1px solid #ff6b6b33;
+  border-radius:6px; padding:7px 12px; cursor:pointer; font-family:'Inter',sans-serif;
+  transition:all 0.15s; display:inline-flex; align-items:center; gap:4px;
+}
+.delete-btn:hover { background:#ff6b6b22; border-color:#ff6b6b; }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -8926,6 +8934,7 @@ function cardHTML(item,profile){
       <button class="edit-btn" onclick="event.stopPropagation();openEdit('${item.id}')">✏️ Editar card</button>
       <button class="copy-all-btn" onclick="event.stopPropagation();copyAll('${item.id}')">📋 Copiar tudo</button>
       <button class="clone-btn" onclick="event.stopPropagation();cloneCard('${item.id}','${profile}')">🔄 Reaproveitar</button>
+      <button class="delete-btn" onclick="event.stopPropagation();deleteCard('${item.id}','${profile}')">🗑️ Excluir</button>
     </div>
     ${ZERNIO_PROFILES.includes(profile) ? publishBlockHTML(item.id) : ''}
     <div class="block">
@@ -9806,6 +9815,28 @@ function cloneCard(id, profile) {
   if (tab) tab.click();
 }
 
+
+
+// ── EXCLUIR CARD ──
+function deleteCard(id, profile) {
+  const item = CONTENT[profile].find(c => c.id === id);
+  if (!item) return;
+  const ok = confirm('🗑️ Excluir este card?\n\n"' + item.title + '"\n\nEssa ação não pode ser desfeita.');
+  if (!ok) return;
+  const idx = CONTENT[profile].findIndex(c => c.id === id);
+  if (idx > -1) {
+    CONTENT[profile].splice(idx, 1);
+    // Limpar dados associados
+    localStorage.removeItem('img_' + id);
+    localStorage.removeItem('carousel_' + id);
+    delete S[id];
+    save();
+    renderAll();
+    buildHist();
+    scheduleSync();
+    showToast('🗑️ Card excluído');
+  }
+}
 
 </script>
 
