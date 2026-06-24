@@ -8882,7 +8882,7 @@ function startImageUpload(id, profile){
 }
 
 async function handleImageSelect(id, profile, inputEl){
-  const file = inputEl.files && inputEl.files[0];
+  let file = inputEl.files && inputEl.files[0];
   if (!file) return;
   const isVideo = file.type.startsWith('video/');
   const isImage = file.type.startsWith('image/');
