@@ -9596,7 +9596,7 @@ async function pullRemoteState() {
       });
       applySavedPublished();
     }
-    if (reviewedRow && reviewedRow.value && !_pushInProgress) {
+    if (reviewedRow && reviewedRow.value) {
       Object.keys(reviewedRow.value).forEach(id => {
         setReviewed(id, !!reviewedRow.value[id]);
       });
@@ -9609,9 +9609,7 @@ async function pullRemoteState() {
   }
 }
 
-let _pushInProgress = false;
 async function pushRemoteState() {
-  _pushInProgress = true;
   setSyncStatus('syncing');
   try {
     // 1. Gather all local edits + images + published status from localStorage
@@ -9723,8 +9721,6 @@ async function pushRemoteState() {
   } catch (e) {
     console.error('❌ Erro em pushRemoteState:', e.message, e);
     setSyncStatus('offline');
-  } finally {
-    _pushInProgress = false;
   }
 }
 
@@ -9934,6 +9930,9 @@ initGoogleAuth();
 // Sincronizar com Supabase ao carregar
 let lastRemoteSync = 0;
 async function syncWithRemote() {
+  // 🔐 NÃO sincronizar se push está em andamento
+  if (_pushInProgress) return;
+  
   const now = Date.now();
   // Só sync a cada 30s para não sobrecarregar
   if (now - lastRemoteSync < 30000) return;
