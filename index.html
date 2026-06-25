@@ -9598,7 +9598,12 @@ async function pullRemoteState() {
     }
     if (reviewedRow && reviewedRow.value) {
       Object.keys(reviewedRow.value).forEach(id => {
-        setReviewed(id, !!reviewedRow.value[id]);
+        // ⚡ Dar prioridade ao estado LOCAL (evita sobrescrever mudanças em sync)
+        const localReviewedRaw = localStorage.getItem('reviewed_' + id);
+        if (localReviewedRaw === null) {
+          // Só aplica o remoto se não houver local
+          setReviewed(id, !!reviewedRow.value[id]);
+        }
       });
       applySavedReviewed();
     }
