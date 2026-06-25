@@ -8462,7 +8462,13 @@ function setReviewed(id, val){
   localStorage.setItem('reviewed_'+id, val ? '1' : '0');
 }
 function toggleReviewed(id){
-  setReviewed(id, !getReviewed(id));
+  const nv = !getReviewed(id);
+  setReviewed(id, nv);
+  const btn = document.getElementById('revbtn-'+id);
+  if (btn) {
+    btn.querySelector('span').textContent = (nv?'✅':'⬜') + ' Revisado';
+    btn.style.cssText = nv ? 'background:#14532d;border-color:#4ade80;color:#4ade80;' : '';
+  }
   rerenderPublishBlock(id);
   scheduleSync();
 }
@@ -8513,7 +8519,7 @@ function publishBlockHTML(id){
   const ready = isReadyForAutoPublish(id);
 
   const reviewToggle = `
-    <button type="button" class="review-toggle" onclick="event.stopPropagation(); toggleReviewed('${id}');" style="${reviewed?'background:#14532d;border-color:#4ade80;color:#4ade80;':''}">
+    <button type="button" class="review-toggle" id="revbtn-${id}" onclick="event.stopPropagation(); toggleReviewed('${id}');" style="${reviewed?'background:#14532d;border-color:#4ade80;color:#4ade80;':''}">
       <span>${reviewed?'✅':'⬜'} Revisado</span>
     </button>`;
 
