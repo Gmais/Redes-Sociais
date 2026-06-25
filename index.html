@@ -9581,8 +9581,8 @@ async function pullRemoteState() {
         const dynCards = dynamicRow.value;
         const parsedCards = typeof dynCards === 'string' ? JSON.parse(dynCards) : dynCards;
         if (Array.isArray(parsedCards) && parsedCards.length > 0) {
-          CONTENT.academia = CONTENT.academia.filter(c => !c.id.includes('-dyn-'));
-          CONTENT.academia.unshift(...parsedCards);
+          CONTENT.gympulse = CONTENT.gympulse.filter(c => !c.id.startsWith('gy-dyn-'));
+          CONTENT.gympulse.unshift(...parsedCards);
           changed = true;
         }
       } catch(e){}
