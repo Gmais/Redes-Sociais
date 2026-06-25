@@ -9592,8 +9592,23 @@ async function pullRemoteState() {
         const dynCards = dynamicRow.value;
         const parsedCards = typeof dynCards === 'string' ? JSON.parse(dynCards) : dynCards;
         if (Array.isArray(parsedCards) && parsedCards.length > 0) {
-          CONTENT.gympulse = CONTENT.gympulse.filter(c => !c.id.startsWith('gy-dyn-'));
-          CONTENT.gympulse.unshift(...parsedCards);
+          // Inject into Academia tab (not Gympulse)
+          CONTENT.academia = CONTENT.academia.filter(c => !c.id.includes('-dyn-'));
+          CONTENT.academia.unshift(...parsedCards);
+          // Auto-populate img_ localStorage so the image shows as ready without manual upload
+          parsedCards.forEach(card => {
+            if (card.driveUrl && !getImageData(card.id)) {
+              const fileName = card.driveUrl.split('/').pop() || 'ranking.svg';
+              setImageData(card.id, {
+                status: 'ok',
+                fileName: fileName,
+                viewUrl: card.driveUrl,
+                thumbnailLink: card.driveUrl,
+                zernioStatus: 'ok',
+                zernioUrl: card.driveUrl
+              });
+            }
+          });
           changed = true;
         }
       } catch(e){}
