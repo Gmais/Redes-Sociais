@@ -10099,15 +10099,8 @@ function executeClone() {
     }
   }
 
-  // ⚠️ VALIDAÇÃO: Verificar se o card original tem imagem
+  // Criar clones com mídia
   const sourceImg = getImageData(sourceId);
-  if (!sourceImg || sourceImg.status !== 'ok') {
-    const cont = confirm('⚠️ O card original não tem imagem!\n\nDeseja continuar mesmo assim?\n(Você precisará adicionar uma imagem ao novo card antes de publicar)');
-    if (!cont) {
-      showToast('❌ Clone cancelado — imagem obrigatória');
-      return;
-    }
-  }
   const sourceCarousel = getCarouselData(sourceId);
 
   dates.forEach((dt, idx) => {
