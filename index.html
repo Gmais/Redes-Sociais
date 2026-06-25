@@ -8514,7 +8514,7 @@ function publishBlockHTML(id){
 
   const reviewToggle = `
     <label class="review-toggle" onclick="event.stopPropagation();">
-      <input type="checkbox" ${reviewed?'checked':''} onchange="toggleReviewed('${id}')">
+      <input type="checkbox" ${reviewed?'checked':''} onchange="event.stopPropagation(); toggleReviewed('${id}')">
       <span>👁️ Revisado</span>
     </label>`;
 
