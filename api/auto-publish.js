@@ -43,7 +43,7 @@ function scheduledUtcMs(dateStr, timeStr) {
 
 async function postToInstagram(profile, caption, format, mediaUrl) {
   const config = PROFILE_CONFIG[profile];
-  const apiKey = process.env[config.apiKeyEnv];
+  const apiKey = process.env[config.apiKeyEnv] || process.env.ZERNIO_API_KEY;
   if (!apiKey) throw new Error(config.apiKeyEnv + ' não configurada');
 
   const platformTarget = { platform: 'instagram', accountId: config.accountId };
