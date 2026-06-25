@@ -8463,7 +8463,8 @@ function setReviewed(id, val){
 }
 function toggleReviewed(id){
   setReviewed(id, !getReviewed(id));
-  pushRemoteState();
+  rerenderPublishBlock(id);
+  scheduleSync();
 }
 function isReadyForAutoPublish(id){
   const img = getImageData(id);
