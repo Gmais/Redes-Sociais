@@ -9645,6 +9645,9 @@ async function pushRemoteState() {
     const seenInManifest = new Set();
     for (const profile of ['academia','sorveteria','gympulse']) {
       CONTENT[profile].forEach(item => {
+        // Reviewed coletado para TODOS os cards (qualquer data), senão o valor
+        // remoto antigo sobrescreve e desmarca cards futuros.
+        localReviewed[item.id] = getReviewed(item.id);
         if (item.date !== today || S[item.id]) return;
         // Evitar duplicatas no manifesto
         if (seenInManifest.has(item.id)) return;
@@ -9661,7 +9664,6 @@ async function pushRemoteState() {
         if (savedPub) {
           try { localPublished[item.id] = JSON.parse(savedPub); } catch(e) {}
         }
-        localReviewed[item.id] = getReviewed(item.id);
         // Manifesto: dados que o servidor (cron) precisa pra publicar sem
         // depender do navegador. item.texto/format já refletem edições aplicadas.
         if (ZERNIO_PROFILES.includes(profile)) {
