@@ -679,7 +679,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 
 <div class="filter-bar">
   <label class="hide-done-check">
-    <input type="checkbox" id="hideDoneCheck" onchange="toggleHideDone()">
+    <!-- <input type="checkbox" id="hideDoneCheck" onchange="toggleHideDone()">
     <span class="checkmark"></span>
     <span class="hide-done-label">Esconder ações já realizadas</span>
   </label>
@@ -8461,7 +8461,7 @@ function getReviewed(id){ return localStorage.getItem('reviewed_'+id) === '1'; }
 function setReviewed(id, val){
   localStorage.setItem('reviewed_'+id, val ? '1' : '0');
 }
-function toggleReviewed(id){
+function toggleReviewed_DISABLED(id){
   setReviewed(id, !getReviewed(id));
   pushRemoteState();
 }
@@ -8512,7 +8512,10 @@ function publishBlockHTML(id){
   const ready = isReadyForAutoPublish(id);
 
   const reviewToggle = `
-    <button class="review-btn" onclick="event.stopPropagation(); setReviewed('${id}', !getReviewed('${id}'));" style="background:none; border:none; cursor:pointer; padding:4px 8px; font-size:14px; color:${reviewed ? '#4ade80' : '#888'};" title="Marcar revisado">👁️ Revisado</button>`;
+    <label class="review-toggle" onclick="event.stopPropagation();">
+      <!-- <input type="checkbox" ${reviewed?'checked':''} onchange="event.stopPropagation(); toggleReviewed_DISABLED('${id}')">
+      <span>👁️ Revisado</span>
+    </label>`;
 
   const readyBadge = ready
     ? `<span class="publish-badge ok">✅ 100% pronto — será publicado automaticamente no horário</span>`
@@ -10804,7 +10807,7 @@ if (!localStorage.getItem('lastCleanup') || new Date(localStorage.getItem('lastC
 
       <div class="field-group">
         <label class="np-schedule-toggle">
-          <input type="checkbox" id="np-schedule-check" onchange="npToggleSchedule()">
+          <!-- <input type="checkbox" id="np-schedule-check" onchange="npToggleSchedule()">
           <span>📆 Agendar para outros dias?</span>
         </label>
       </div>
