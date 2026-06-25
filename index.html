@@ -8512,10 +8512,7 @@ function publishBlockHTML(id){
   const ready = isReadyForAutoPublish(id);
 
   const reviewToggle = `
-    <label class="review-toggle" onclick="event.stopPropagation();">
-      <input type="checkbox" ${reviewed?'checked':''} onchange="event.stopPropagation(); toggleReviewed('${id}')">
-      <span>👁️ Revisado</span>
-    </label>`;
+    <button class="review-btn" onclick="event.stopPropagation(); event.preventDefault(); setReviewed('${id}', !getReviewed('${id}')); return false;" title="Marcar como revisado" style="background:none; border:none; cursor:pointer; padding:0; font-size:16px; ${reviewed ? 'color:#4ade80' : 'color:#888'}">👁️</button>`;
 
   const readyBadge = ready
     ? `<span class="publish-badge ok">✅ 100% pronto — será publicado automaticamente no horário</span>`
