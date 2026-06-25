@@ -8463,7 +8463,6 @@ function setReviewed(id, val){
 }
 function toggleReviewed(id){
   setReviewed(id, !getReviewed(id));
-  rerenderPublishBlock(id);
   pushRemoteState();
 }
 function isReadyForAutoPublish(id){
