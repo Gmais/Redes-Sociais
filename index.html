@@ -9710,7 +9710,7 @@ async function pushRemoteState() {
         { key: 'edits', value: mergedEdits, updated_at: new Date().toISOString() },
         { key: 'images', value: mergedImages, updated_at: new Date().toISOString() },
         { key: 'published', value: mergedPublished, updated_at: new Date().toISOString() },
-        { key: 'reviewed', value: mergedReviewed, updated_at: new Date().toISOString() },
+        // { key: 'reviewed', value: mergedReviewed, updated_at: new Date().toISOString() }, // ❌ Desabilitado
         { key: 'manifest', value: manifest, updated_at: new Date().toISOString() }
       ])
     });
