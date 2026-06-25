@@ -34,7 +34,7 @@ module.exports = async (req, res) => {
       res.status(400).json({ error: 'Perfil sem conta Zernio configurada: ' + profile });
       return;
     }
-    const apiKey = process.env[config.apiKeyEnv];
+    const apiKey = process.env[config.apiKeyEnv] || process.env.ZERNIO_API_KEY;
     if (!apiKey) {
       res.status(500).json({ error: config.apiKeyEnv + ' não configurada no Vercel.' });
       return;
