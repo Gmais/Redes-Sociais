@@ -9146,7 +9146,13 @@ function renderPanel(profile){
 }
 
 function renderAll(){
-  try {['academia','sorveteria','gympulse'].forEach(renderPanel);
+  try {
+    // Preservar cards abertos antes de reconstruir
+    const _openIds = [];
+    document.querySelectorAll('.card.open').forEach(c => _openIds.push(c.id));
+    ['academia','sorveteria','gympulse'].forEach(renderPanel);
+    // Restaurar cards abertos
+    _openIds.forEach(cid => { const el = document.getElementById(cid); if (el) el.classList.add('open'); });
   } catch(err) {
     console.error('Erro em renderAll:', err);
     showToast('⚠️ Erro ao renderizar — recarregue a página');
