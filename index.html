@@ -9572,6 +9572,21 @@ async function pullRemoteState() {
     const imagesRow = rows.find(r => r.key === 'images');
     const publishedRow = rows.find(r => r.key === 'published');
     const reviewedRow = rows.find(r => r.key === 'reviewed');
+    const dynamicRow = rows.find(r => r.key === 'gympulse_dynamic_cards');
+
+    let changed = false;
+
+    if (dynamicRow && dynamicRow.value) {
+      try {
+        const dynCards = dynamicRow.value;
+        const parsedCards = typeof dynCards === 'string' ? JSON.parse(dynCards) : dynCards;
+        if (Array.isArray(parsedCards) && parsedCards.length > 0) {
+          CONTENT.gympulse = CONTENT.gympulse.filter(c => !c.id.startsWith('gy-dyn-'));
+          CONTENT.gympulse.unshift(...parsedCards);
+          changed = true;
+        }
+      } catch(e){}
+    }
 
     if (doneRow && doneRow.value) {
       S = { ...doneRow.value, ...S }; // local takes priority on conflict during merge
