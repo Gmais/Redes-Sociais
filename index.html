@@ -9596,14 +9596,9 @@ async function pullRemoteState() {
       });
       applySavedPublished();
     }
-    if (reviewedRow && reviewedRow.value) {
+    if (reviewedRow && reviewedRow.value && !_pushInProgress) {
       Object.keys(reviewedRow.value).forEach(id => {
-        // ⚡ Dar prioridade ao estado LOCAL (evita sobrescrever mudanças em sync)
-        const localReviewedRaw = localStorage.getItem('reviewed_' + id);
-        if (localReviewedRaw === null) {
-          // Só aplica o remoto se não houver local
-          setReviewed(id, !!reviewedRow.value[id]);
-        }
+        setReviewed(id, !!reviewedRow.value[id]);
       });
       applySavedReviewed();
     }
@@ -9614,7 +9609,9 @@ async function pullRemoteState() {
   }
 }
 
+let _pushInProgress = false;
 async function pushRemoteState() {
+  _pushInProgress = true;
   setSyncStatus('syncing');
   try {
     // 1. Gather all local edits + images + published status from localStorage
@@ -9726,6 +9723,8 @@ async function pushRemoteState() {
   } catch (e) {
     console.error('❌ Erro em pushRemoteState:', e.message, e);
     setSyncStatus('offline');
+  } finally {
+    _pushInProgress = false;
   }
 }
 
