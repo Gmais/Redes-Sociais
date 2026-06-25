@@ -37,7 +37,7 @@ module.exports = async (req, res) => {
       return;
     }
     const accountId = config.accountId;
-    const apiKey = process.env[config.apiKeyEnv];
+    const apiKey = process.env[config.apiKeyEnv] || process.env.ZERNIO_API_KEY;
     if (!apiKey) {
       res.status(500).json({ error: config.apiKeyEnv + ' não configurada no Vercel.' });
       return;
