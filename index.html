@@ -8512,11 +8512,7 @@ function publishBlockHTML(id){
   const ready = isReadyForAutoPublish(id);
 
   const reviewToggle = `
-    <label class="review-toggle" onclick="event.stopPropagation();">
-      <!-- CHECKBOX REMOVIDO -->
-      <span>👁️ Revisado</span>
-    </label>`;
-
+    
   const readyBadge = ready
     ? `<span class="publish-badge ok">✅ 100% pronto — será publicado automaticamente no horário</span>`
     : `<span class="publish-badge pending">${reviewed ? (function(){
