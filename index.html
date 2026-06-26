@@ -10030,6 +10030,14 @@ function applySavedImages(){
   }
 }
 
+// ── FUSO HORÁRIO — tudo opera no horário de Brasília (America/Sao_Paulo, UTC-3 fixo) ──
+// Corrige o bug de new Date().toISOString() (UTC) virar o dia seguinte entre ~21h e 00h BR.
+function todayBR(){ return new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'}); }
+function dateBR(offsetDays){
+  const [y,m,d] = todayBR().split('-').map(Number);
+  const t = Date.UTC(y, m-1, d) + (offsetDays||0)*86400000;
+  return new Date(t).toISOString().slice(0,10);
+}
 function fmtDate(ds){
   const[y,m,d]=ds.split('-').map(Number);
   const dt=new Date(y,m-1,d);
@@ -10274,10 +10282,11 @@ function go(tab,el){
 }
 
 (function(){
-  const n=new Date();
+  const [yy,mm,dd]=todayBR().split('-').map(Number);
+  const n=new Date(Date.UTC(yy,mm-1,dd));
   const dn=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   const mn=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  document.getElementById('datepill').textContent=`${dn[n.getDay()]} ${n.getDate()} ${mn[n.getMonth()]}`;
+  document.getElementById('datepill').textContent=`${dn[n.getUTCDay()]} ${dd} ${mn[mm-1]}`;
 })();
 
 
@@ -10654,7 +10663,7 @@ async function pushRemoteState() {
     const localPublished = {};
     const localReviewed = {};
     const manifest = {};
-    const today = new Date().toISOString().slice(0,10);
+    const today = todayBR();
     const seenInManifest = new Set();
     for (const profile of ['academia','sorveteria','gympulse']) {
       CONTENT[profile].forEach(item => {
@@ -10935,7 +10944,7 @@ function applySavedEdits() {
       // Montar card mínimo
       const newCard = {
         id: id,
-        date: cardData.date || new Date().toISOString().slice(0,10),
+        date: cardData.date || todayBR(),
         time: cardData.time || '12h',
         format: cardData.format || 'Post',
         title: cardData.title || 'Sem título',
@@ -11075,9 +11084,7 @@ function cloneCard(id, profile) {
   modal.dataset.profile = profile;
 
   // Data padrão: amanhã
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  document.getElementById('clone-date').value = tomorrow.toISOString().slice(0, 10);
+  document.getElementById('clone-date').value = dateBR(1);
 
   // Horário padrão: mesmo do original
   document.getElementById('clone-time').value = source.time;
@@ -11222,8 +11229,7 @@ let npSelectedFiles = [];
 
 function openNewPostModal() {
   const modal = document.getElementById('newPostModal');
-  const today = new Date();
-  document.getElementById('np-date').value = today.toISOString().slice(0,10);
+  document.getElementById('np-date').value = todayBR();
   document.getElementById('np-time').value = '10h';
   document.getElementById('np-format').value = 'Story';
   document.getElementById('np-title').value = '';
@@ -11319,7 +11325,7 @@ function npRepeatChanged() {
   document.getElementById('np-manual-days').style.display = val === 'none' ? 'block' : 'none';
   document.getElementById('np-repeat-range').style.display = val !== 'none' ? 'block' : 'none';
   if (val !== 'none') {
-    const baseDate = document.getElementById('np-date').value || new Date().toISOString().slice(0,10);
+    const baseDate = document.getElementById('np-date').value || todayBR();
     document.getElementById('np-repeat-start').value = baseDate;
     const endDate = new Date(baseDate);
     if (val === 'weekly') endDate.setDate(endDate.getDate() + 28);
@@ -11625,7 +11631,7 @@ async function compressVideo(file) {
 }
 // ── LIMPEZA AUTOMÁTICA ──
 function cleanupOldPosts() {
-  const today = new Date().toISOString().slice(0,10);
+  const today = todayBR();
   for (let i = localStorage.length - 1; i >= 0; i--) {
     const key = localStorage.key(i);
     if (!key || (!key.startsWith('edits_') && !key.startsWith('img_') && !key.startsWith('carousel_'))) continue;

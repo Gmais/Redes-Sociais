@@ -211,7 +211,7 @@ Registro via sistema da academia. **Responsabilidades das recepcionistas (Julian
 *Aplicar este template em todos os posts durante julho:*
 
 **`01` Formato/Specs**
-- Story 1080×1920 | Feed 1080×1080 | Reel 1080×1920
+- Story 1080×1920 | Feed 1080×1350 (4:5) | Carrossel 1080×1350 (4:5) | Reel 1080×1920
 - Cores obrigatórias: Laranja (#e63900), Preto (#1a1a1a), Branco (#ffffff)
 - Emojis: 🧡💛🌿 (sem fogo, sem músculo)
 - Sem texto na imagem (todo copy é legenda)
@@ -293,9 +293,11 @@ Registro via sistema da academia. **Responsabilidades das recepcionistas (Julian
 | Formato | Dimensões | Proporção | Uso |
 |---|---|---|---|
 | Story | 1080 × 1920px | 9:16 | Engajamento rápido, urgência, bastidores |
-| Post Feed | 1080 × 1080px | 1:1 | Alcance, construção de marca, matrículas |
-| Carrossel | 1080 × 1080px por slide | 1:1 | Educação, demonstração, narrativa |
+| Post Feed | 1080 × 1350px | 4:5 | Alcance, construção de marca, matrículas |
+| Carrossel | 1080 × 1350px por slide | 4:5 | Educação, demonstração, narrativa |
 | Reel | 1080 × 1920px | 9:16 | Crescimento de seguidores |
+
+> **⚠️ REGRA DE FORMATO (atualizada em 26/06/2026):** Todo **Post de feed** e **Carrossel** deve ser produzido em **1080 × 1350px (proporção 4:5, retrato)** — formato vertical que ocupa mais área no feed do Instagram e tende a ter mais alcance. Aplicar em TODAS as próximas publicações, tanto na seção `01 Formato/Specs` dos cards quanto nos prompts de geração de imagem por IA (gerar a imagem já em 1080×1350). Story e Reel permanecem em 1080 × 1920px (9:16). Mantém-se a regra de **sem texto na imagem** (todo copy vai na legenda).
 
 ### Tipos de intenção por perfil
 **Academia:** Prova Social, Dica de Saúde, Convite à Matrícula, Humanização
