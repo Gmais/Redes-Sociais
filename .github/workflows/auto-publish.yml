@@ -1,16 +1,34 @@
 name: Auto-publicar posts prontos no Instagram
 
+# IMPORTANTE: o agendamento do GitHub Actions (schedule) e' IRREGULAR de
+# proposito pelo GitHub — dispara a cada 1-4h em vez do */10 pedido, ainda
+# mais em repo publico. Para nao depender dessa pontualidade, cada execucao
+# mantem um LOOP interno que chama o endpoint de auto-publish a cada 5 min,
+# por ~5h50m. O controle de concorrencia (cancel-in-progress) garante UM
+# unico loop ativo: cada novo disparo agendado reinicia o loop, mantendo
+# cobertura praticamente continua. Repo publico = minutos de Actions gratis.
+
 on:
   schedule:
     - cron: '*/10 * * * *'
   workflow_dispatch: {}
 
+concurrency:
+  group: auto-publish
+  cancel-in-progress: true
+
 jobs:
   trigger:
     runs-on: ubuntu-latest
+    timeout-minutes: 355
     steps:
-      - name: Chama o endpoint de publicacao automatica
+      - name: Loop de ping no endpoint de auto-publish
         run: |
-          curl -sS -X POST "https://redes-sociais-gilt-alpha.vercel.app/api/auto-publish" \
-            -H "x-auto-publish-secret: ${{ secrets.AUTO_PUBLISH_SECRET }}" \
-            -w "\nHTTP status: %{http_code}\n"
+          FIM=$(( $(date +%s) + 350*60 ))   # roda por ~5h50m e sai p/ o proximo disparo assumir
+          while [ "$(date +%s)" -lt "$FIM" ]; do
+            CODE=$(curl -sS --max-time 60 -o /dev/null -w "%{http_code}" -X POST \
+              "https://redes-sociais-gilt-alpha.vercel.app/api/auto-publish" \
+              -H "x-auto-publish-secret: ${{ secrets.AUTO_PUBLISH_SECRET }}" || echo "000")
+            echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) auto-publish -> HTTP $CODE"
+            sleep 300
+          done
