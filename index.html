@@ -10711,6 +10711,7 @@ Direto, tom de produto. Sem texto na imagem.`
 // STATE
 const SK='gilson_v5';
 let S=JSON.parse(localStorage.getItem(SK)||'{}');
+const PENDING = { done: new Set(), edits: new Set(), images: new Set(), published: new Set(), reviewed: new Set() };
 const save=()=>localStorage.setItem(SK,JSON.stringify(S));
 const done=id=>!!S[id];
 const toggle=id=>{
@@ -10729,7 +10730,7 @@ const toggle=id=>{
       if (!ok) return;
     }
   }
-  S[id]=!S[id];save();renderAll();buildHist();scheduleSync();
+  S[id]=!S[id];save();PENDING.done.add(id);renderAll();buildHist();scheduleSync();
 };
 function hasValidImage(id){
   const img = getImageData(id);
@@ -10760,6 +10761,7 @@ const ZERNIO_PROFILES = ['academia','sorveteria','gympulse'];
 function getReviewed(id){ return localStorage.getItem('reviewed_'+id) === '1'; }
 function setReviewed(id, val){
   localStorage.setItem('reviewed_'+id, val ? '1' : '0');
+  PENDING.reviewed.add(id);
 }
 function toggleReviewed(id){
   const nv = !getReviewed(id);
@@ -10787,6 +10789,7 @@ function getPublishData(id){
 }
 function setPublishData(id, data){
   localStorage.setItem('pub_'+id, JSON.stringify(data));
+  PENDING.published.add(id);
 }
 function applySavedPublished(){
   for (const profile of ['academia','sorveteria','gympulse']) {
@@ -10957,6 +10960,7 @@ function getImageData(id){
 }
 function setImageData(id, data){
   localStorage.setItem('img_'+id, JSON.stringify(data));
+  if (id && typeof id === 'string' && !id.includes('-dyn-')) PENDING.images.add(id);
 }
 
 function imageBlockHTML(id, profile){
@@ -11938,31 +11942,46 @@ async function pullRemoteState() {
     }
 
     if (doneRow && doneRow.value) {
-      S = { ...doneRow.value, ...S }; // local takes priority on conflict during merge
-      Object.assign(S, doneRow.value);
+      Object.keys(doneRow.value).forEach(id => {
+        if (!PENDING.done.has(id)) {
+          S[id] = doneRow.value[id];
+        }
+      });
       save();
     }
     if (editsRow && editsRow.value) {
       Object.keys(editsRow.value).forEach(id => {
-        localStorage.setItem('edits_' + id, JSON.stringify(editsRow.value[id]));
+        if (!PENDING.edits.has(id)) {
+          localStorage.setItem('edits_' + id, JSON.stringify(editsRow.value[id]));
+        }
       });
       applySavedEdits();
     }
     if (imagesRow && imagesRow.value) {
       Object.keys(imagesRow.value).forEach(id => {
-        localStorage.setItem('img_' + id, JSON.stringify(imagesRow.value[id]));
+        if (!PENDING.images.has(id)) {
+          localStorage.setItem('img_' + id, JSON.stringify(imagesRow.value[id]));
+        }
       });
       applySavedImages();
     }
     if (publishedRow && publishedRow.value) {
       Object.keys(publishedRow.value).forEach(id => {
-        localStorage.setItem('pub_' + id, JSON.stringify(publishedRow.value[id]));
+        if (!PENDING.published.has(id)) {
+          localStorage.setItem('pub_' + id, JSON.stringify(publishedRow.value[id]));
+        }
       });
       applySavedPublished();
     }
-    // 🔐 Não sincronizar 'reviewed' automaticamente
-    // (evita conflitos de sincronização bidirecional)
-    // Será sincronizado manualmente quando necessário
+    if (reviewedRow && reviewedRow.value) {
+      Object.keys(reviewedRow.value).forEach(id => {
+        if (!PENDING.reviewed.has(id)) {
+          setReviewed(id, !!reviewedRow.value[id]);
+        }
+      });
+    }
+    // 🔐 'reviewed' é sincronizado aqui para que as mudanças cheguem em todos os lugares
+    // desde que não tenha edição pendente no PENDING
     setSyncStatus('synced');
   } catch (e) {
     console.error('❌ Erro em pushRemoteState:', e.message, e);
@@ -12033,20 +12052,59 @@ async function pushRemoteState() {
       }
     } catch (e) { /* if pull fails, proceed with local-only data */ }
 
-    // 3. Merge: remote first, local overrides (local is the freshest change just made)
-    const mergedDone = { ...remoteDone, ...S };
-    const mergedEdits = { ...remoteEdits, ...localEdits };
-    // Remover cards deletados do merge
+    // 3. Merge PENDING changes into remote state
+    const mergedDone = { ...remoteDone };
+    PENDING.done.forEach(id => { mergedDone[id] = S[id]; });
+    
+    const mergedEdits = { ...remoteEdits };
+    PENDING.edits.forEach(id => { 
+      if (localEdits[id]) mergedEdits[id] = localEdits[id]; 
+      else delete mergedEdits[id];
+    });
     var _del = [];
     try { _del = JSON.parse(localStorage.getItem('deleted_cards') || '[]'); } catch(e) {}
     _del.forEach(function(did) { delete mergedEdits[did]; });
-    const mergedImages = { ...remoteImages, ...localImages };
-    const mergedPublished = { ...remotePublished, ...localPublished };
-    const mergedReviewed = { ...remoteReviewed, ...localReviewed };
 
-    // 4. Adopt the merged result locally too, so this device also has any edits
-    //    made on other devices that it didn't have yet.
-    Object.assign(S, mergedDone);
+    const mergedImages = { ...remoteImages };
+    PENDING.images.forEach(id => { 
+      if (localImages[id]) mergedImages[id] = localImages[id];
+    });
+
+    const mergedPublished = { ...remotePublished };
+    PENDING.published.forEach(id => { 
+      if (localPublished[id]) mergedPublished[id] = localPublished[id];
+    });
+
+    const mergedReviewed = { ...remoteReviewed };
+    PENDING.reviewed.forEach(id => { 
+      mergedReviewed[id] = localReviewed[id];
+    });
+
+    // 4. Push the merged snapshot FIRST before adopting locally
+    const pushRes = await supabaseFetch('painel_gilson_state', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify([
+        { key: 'done', value: mergedDone, updated_at: new Date().toISOString() },
+        { key: 'edits', value: mergedEdits, updated_at: new Date().toISOString() },
+        { key: 'images', value: mergedImages, updated_at: new Date().toISOString() },
+        { key: 'published', value: mergedPublished, updated_at: new Date().toISOString() },
+        { key: 'reviewed', value: mergedReviewed, updated_at: new Date().toISOString() },
+        { key: 'manifest', value: manifest, updated_at: new Date().toISOString() }
+      ])
+    });
+
+    if (!pushRes.ok) throw new Error('Push falhou');
+
+    // Sucesso no push, podemos limpar a fila PENDING
+    PENDING.done.clear();
+    PENDING.edits.clear();
+    PENDING.images.clear();
+    PENDING.published.clear();
+    PENDING.reviewed.clear();
+
+    // 5. Adopt the merged result locally so we are in sync with what was saved
+    Object.keys(mergedDone).forEach(id => { S[id] = mergedDone[id]; });
     save();
     Object.keys(mergedEdits).forEach(id => {
       localStorage.setItem('edits_' + id, JSON.stringify(mergedEdits[id]));
@@ -12060,6 +12118,7 @@ async function pushRemoteState() {
     Object.keys(mergedReviewed).forEach(id => {
       setReviewed(id, !!mergedReviewed[id]);
     });
+    
     applySavedEdits();
     applySavedImages();
     applySavedPublished();
@@ -12067,19 +12126,6 @@ async function pushRemoteState() {
     renderAll();
     if (typeof buildHist === 'function') buildHist();
 
-    // 5. Push the merged snapshot
-    await supabaseFetch('painel_gilson_state', {
-      method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify([
-        { key: 'done', value: mergedDone, updated_at: new Date().toISOString() },
-        { key: 'edits', value: mergedEdits, updated_at: new Date().toISOString() },
-        { key: 'images', value: mergedImages, updated_at: new Date().toISOString() },
-        { key: 'published', value: mergedPublished, updated_at: new Date().toISOString() },
-        { key: 'reviewed', value: mergedReviewed, updated_at: new Date().toISOString() },
-        { key: 'manifest', value: manifest, updated_at: new Date().toISOString() }
-      ])
-    });
     setSyncStatus('synced');
   } catch (e) {
     console.error('❌ Erro em pushRemoteState:', e.message, e);
@@ -12206,6 +12252,7 @@ function saveEdit() {
 
   // Save to localStorage
   localStorage.setItem('edits_' + editingId, JSON.stringify(edits));
+  PENDING.edits.add(editingId);
 
   // Apply to CONTENT in memory
   Object.assign(item, edits);

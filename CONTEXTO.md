@@ -1,164 +1,161 @@
-# CONTEXTO — GILSON CAETANO
-> Arquivo de contexto para o Claude (aqui ou no Antigravity).
-> Leia este arquivo SEMPRE antes de gerar qualquer conteúdo ou executar qualquer tarefa.
-> Última atualização: 19 de junho de 2026
+# 📋 Painel de Conteúdo Instagram — Contexto do Projeto
+
+## 🎯 Visão Geral
+Painel web privado para planejamento, execução e histórico de conteúdo Instagram das três marcas de Gilson Caetano. Ferramenta operacional de execução diária, não de planejamento estratégico. Síncrono entre dispositivos via Supabase + auto-publish para Instagram via API Zernio.
 
 ---
 
-## 🧑 QUEM É GILSON
+## 🏢 Contexto do Negócio
 
-Gilson Caetano é professor de Educação Física (SEED/PR — Colégio Estadual Edite C. Marques, Guarapuava/PR), dono da academia Planeta Corpo Club+ e da Sorveteria Guri em Turvo/PR, e desenvolvedor/operador do GympulsePro (gympulse.pro), uma plataforma SaaS de gamificação para academias.
+### Três Marcas
+1. **Academia Planeta Corpo Club+** (Turvo/PR)
+   - Desde 1998
+   - Localização: Av. Maria Bettega, 360
+   - Contato: (42) 99922-2857
+   - Instagram: @planetacorpoclubmais
+   - Website: www.planetacorpoclubmais.com.br
+   - Público: musculação, crossfit, lutas, judô infantil, recepção
+   - Campanha ativa (jun/jul 2026): "Mês do Amigo" (20% desc para referenciador + novo aluno, meta 50-60 novos)
 
-**Localização:** Turvo/PR e Guarapuava/PR
-**Perfil:** Executa tudo sozinho — ensino, gestão da academia, sorveteria e desenvolvimento de software. Alta capacidade técnica e criativa, mas com tempo extremamente limitado.
-**Relação com IA:** Usa Claude como parceiro estratégico e operacional. Prefere respostas diretas, executáveis e sem enrolação.
+2. **Sorvetes Guri** (Turvo/PR)
+   - Sorveteria com buffet, loja de fábrica e cardápio gourmet
+   - Instagram: @sorvetesguriturvo_
+   - Website: www.sorvetesguriturvo.com.br
+   - Campanha ativa (jun/jul 2026): "Inverno Fitness" (açaí com whey, linha zero açúcar, 20% desc)
+
+3. **GympulsePro** (B2B SaaS)
+   - Plataforma de gamificação para gestão de academias
+   - Website: gympulse.pro
+   - Instagram: @gympulse.pro
+   - Público: proprietários de academias, gerentes, educadores
 
 ---
 
-## 🏋️ FRENTE 1 — PLANETA CORPO CLUB+
+## 🏗️ Infraestrutura Técnica
 
-### Dados gerais
-- **Site:** planetacorpoclubmais.com.br
-- **Instagram:** @planetacorpoclubmais
-- **Endereço:** Av. Maria Bettega, 360 — Centro, Turvo/PR
-- **WhatsApp:** (42) 99922-2857
-- **Fundação:** 1998 (27+ anos de história)
-- **Mensalidade:** R$ 209/mês — todas as modalidades inclusas, horário livre
-- **Seguidores Instagram:** ~3.066 | Posts: ~399
+### Repositório & Deploy
+- **GitHub:** `Gmais/Redes-Sociais` (branch `main`)
+- **Vercel:** Deploy automático ~30s após push (projeto `redes-sociais`, team `Gilson's projects`)
+- **URL ao vivo:** `redes-sociais-gilt-alpha.vercel.app`
 
-### Modalidades
-Musculação, Dança, Spinning, Funcional, Jump, HIIT, Judô Infantil, Jiu Jitsu, Muay Thai e aulas coletivas
+### Banco de Dados
+- **Supabase:** Projeto `ndzbfvxnallshfiouszk`
+- **Tabela:** `painel_gilson_state`
+- **Chaves de estado:** `manifest`, `published`, `reviewed`, `images`, `done`, `edits`
+- **Sincronização:** ~30s (Supabase sobrescreve dados em HTML estático)
 
-**Equipe de Professores:**
-- **João Alexandre** — Professor de Lutas / Artes Marciais
-- **Syonara** — Professora de Judô Infantil
+### Integração Google Drive
+- **Serviço:** Upload automático de imagens geradas (IA) para Google Drive
+- **Conta:** `upload-painel@painel-gilson.iam.gserviceaccount.com`
+- **Pastas por marca:** `1-mZJyf6yFvnZhnTGUWhQxjl-OaGz7y1P` (raiz), subpastas por marca
 
-### Tabela de Horários — Academia Planeta Corpo Club+
+### Publishing (Instagram)
+- **Zernio API:** Publishing automático para Instagram
+- **IDs de Conta:**
+  - Academia: `6a3915825f7d1751ab4af026`
+  - Sorveteria: `6a3916335f7d1751ab4afbe3`
+  - GympulsePro: `6a3920625f7d1751ab4b6fdc`
+- **Auto-publish:** Self-loop endpoint a cada 5 min (máx 5h50m por run), latência típica ~5 min
+- **Verificação:** `evaluateDelivery()` checa entrega real no Instagram (não apenas aceição de API)
 
-**SEGUNDA, QUARTA E SEXTA:**
-| Horário | Modalidade | Intensidade |
-|---------|-----------|-------------|
-| 07h30 - 08h30 | HIIT | Alta |
-| 17h15 - 18h00 | Functional Kids | Média |
-| 18h15 - 19h00 | HIIT | Alta |
-| 18h30 - 19h30 | Funcional Adulto | Alta |
-| 18h30 - 20h00 | Dança | Média |
-| 06h00 - 11h00 | Musculação | Personalizada |
-| 14h00 - 22h00 | Musculação | Personalizada |
-| 18h15 - 19h00 | Jump | Alta |
+---
 
-**TERÇA E QUINTA:**
-| Horário | Modalidade | Professor | Intensidade |
-|---------|-----------|-----------|-------------|
-| 17h30 - 18h30 | Judô Infantil | Syonara | Média |
-| 18h30 - 19h15 | Spinning | — | Alta |
-| 19h15 - 20h15 | Muay Thai | — | Alta |
-| 20h15 - 21h15 | Jiu Jitsu | — | Alta |
-| 06h00 - 11h00 | Musculação | — | Personalizada |
-| 14h00 - 22h00 | Musculação | — | Personalizada |
+## 📱 Funcionalidades Principais
 
-**SÁBADO:**
-- Atividades conforme demanda
-- Horário livre para musculação e modalidades disponíveis
+### Painel de Controle
+- **Abas por marca** (Academia / Sorveteria / GympulsePro)
+- **Checklist de execução:** feito/não feito por post
+- **Modal de edição inline:** horário, formato, título, texto, briefing criativo
+- **Botão "📋 Copiar tudo":** exporta conteúdo para clipboard
+- **Indicador de sincronização:** ponto visual (laranja = sincronizando, verde = sincronizado)
 
-### Público-alvo
-- **Primário:** Mulheres de 30 a 40 anos, moradoras de Turvo/PR
-- **Perfil:** Pessoas comuns, sem apelo atlético ou estético. Buscam qualidade de vida, saúde, disposição, sono melhor e redução de estresse — NÃO performance ou estética
-- **Comportamento:** Têm receio de academia (julgamento, complexidade), valorizam ambiente acolhedor e comunidade local
+### Histórico
+- Ordem decrescente (mais recente primeiro)
+- Rastreamento de posts publicados
+- Histórico de edições
 
-### Identidade visual
-- **Laranja:** `#e63900` — cor principal, CTA, destaques
-- **Teal:** `#00b4b4` — acento secundário
-- **Preto:** `#1a1a1a` — fundo e overlays
-- **Branco:** `#ffffff` — texto principal
+### Aba Estratégia
+- Bio por perfil
+- CTAs (call-to-action) por marca
+- Blocos de hashtags (30 por categoria)
+- Regras de engajamento
 
-### Tom de voz
-Acolhedor, próximo, como conversa entre amigas. Sem linguagem fitness agressiva. Sem "GRÁTIS!" gritado. Sem emojis de fogo ou músculo. Usar 🧡💛🌿 como emojis padrão.
+---
 
-### Bio oficial
+## 📊 Padrão de Conteúdo
+
+### Volume Diário
+- **Segunda-sexta:** 4 Academia + 4 Sorveteria + 2 GympulsePro = **10 posts/dia**
+- **Sábado:** 2 Academia + 6 Sorveteria + 2 GympulsePro = **10 posts/dia**
+- Distribuição otimizada para horários de pico por marca
+
+### Estrutura de Card (3 seções)
 ```
-🏋️ Planeta Corpo Club+
-📍 Av. Maria Bettega, 360 — Turvo/PR
-💪 Musculação · Funcional · Coletivas · Jump
-✨ Qualidade de vida desde 1998
-👇 Aula experimental GRÁTIS — link abaixo!
+01. FORMATO / SPECS
+   - Tipo: Post, Carrossel, Story, Reel
+   - Dimensões: 1080×1350px (4:5 portrait) para Post/Carrossel
+   - Regra hashtags: 5 hashtags em Post, 0 em Story/Carrossel
+
+02. INTENÇÃO DO POST
+   - Objetivo: tráfego, engajamento, humanização, promo, educação, etc.
+   - Público-alvo
+   - Tom de voz
+
+03. BRIEFING CRIATIVO DETALHADO
+   - Descrição visual (sem texto sobreposto em imagem)
+   - Elementos visuais, cores, estilo
+   - Copy (texto do post)
+   - Hashtags
 ```
 
-### Intenção no Instagram
-**Converter seguidores em matrículas.** Funil: Prova social → Dica de saúde → Convite direto → Humanização
+### Regras de Conteúdo
+- ✅ **Sem texto sobreposto em imagens** (regra obrigatória para prompts IA)
+- ✅ **Máx 5 hashtags por Post** (regra de Instagram desde dez 2025)
+- ✅ **Carrossel favorecido** (altas taxas de save/share)
+- ✅ **Mix de formatos** (Post, Carrossel, Story, Reel)
+- ✅ **Humanização com staff:** cada colaborador apresentado individualmente
+- ✅ **Posicionamento indireto:** referenciar diferenças sem citar concorrentes
 
-### Diferenciais competitivos (usar para contrapor concorrência, sem citar nomes)
-- ❌ Não apoiamos uso de anabolizantes — saúde de verdade, sem atalhos perigosos
-- ✅ Melhor estrutura aeróbica da região
-- 🚫 Zero tolerância a assédio com mulheres — ambiente seguro é prioridade
-- 🎓 Maior equipe de profissionais com CREF
-- 🏠 100% turvense — mais de 27 anos de história local genuína
+### Staff para Posts de Humanização
+**Academia:**
+- Musculação: David, Lidiane, Ana, Thiago, Wesley
+- Recepção: Juliana, Isadora
+- Lutas/Muay Thai/Jiu Jitsu: João Alexandre
+- Judô Infantil: Syonara
+- Benchmark: Prof. Wellinton
 
-### Regras de engajamento (obrigatórias)
-- Responder comentários e DMs rapidamente
-- Stories com enquetes e perguntas
-- CTA claro em todo post
-- Reels priorizados quando possível
-
----
-
-## 🎯 CAMPANHA DE JULHO 2026 — MÊS DO AMIGO
-
-### Informações gerais
-- **Nome da campanha:** Mês do Amigo
-- **Período:** 01 a 31 de julho de 2026
-- **Slogan oficial:** "Amigo que treina junto, economiza junto."
-- **Objetivo:** Captar 50-60 novos alunos através de indicações de alunos ativos
-- **Foco:** Incentivar prática em dupla, fortalecer motivação, constância e senso de comunidade
-
-### Como funciona
-Alunos ativos convidam amigos para se matricularem. Quando o indicado efetiva a matrícula durante julho, **ambos recebem benefício exclusivo** (20% de desconto).
-
-### Benefícios da promoção
-**Para o aluno que indicou:**
-- 20% de desconto conforme as regras da campanha
-- Pode receber Fitcoins por indicações adicionais *(regra a definir)*
-
-**Para o amigo indicado:**
-- 20% de desconto conforme as regras da campanha
-
-### Participantes elegíveis
-- Alunos ativos da academia
-- Novos alunos
-- Ex-alunos que retornarem durante o período
-
-### Planos participantes
-Válido para **todos os planos disponíveis** na academia.
-
-### Controle das indicações
-Registro via sistema da academia. **Responsabilidades das recepcionistas (Juliana e Isadora):**
-- Registrar corretamente as indicações
-- Confirmar vínculo entre indicador e indicado
-- Garantir aplicação dos benefícios
-- Esclarecer dúvidas dos alunos
-
-### Tom de comunicação da campanha
-- Descontraído e amigável
-- Motivador
-- Focado em parceria e resultados
-- **Mensagem principal:** Treinar acompanhado aumenta motivação, melhora consistência e torna a jornada mais divertida
-
-### Resposta padrão para atendimento
-*"O Mês do Amigo é a campanha especial de julho da Academia Planeta Corpo. Ao convidar um amigo para se matricular durante o período da promoção, vocês treinam juntos e ambos recebem 20% de desconto. Afinal, amigo que treina junto, economiza junto."*
-
-### Divulgação
-- **Canal principal:** Instagram (@planetacorpoclubmais)
-- **Público-alvo:** Alunos ativos, amigos e familiares, ex-alunos, pessoas interessadas em treinar com companhia
-
-### Informações pendentes
-- **Desconto:** Definir se 20% serão aplicados apenas na 1ª mensalidade ou em todo o plano
-- **Fitcoins:** Definir quantidade por indicação e regras de acúmulo/utilização
+**Sorveteria:**
+- Atendentes: Maria Júlia, Maria Clara, Bruna, Luiza Helena
 
 ---
 
-## 📅 ESTRATÉGIA DE CONTEÚDO — MÊS DO AMIGO (JULHO 2026)
+## 🎬 Campanhas Ativas (Jun/Jul 2026)
 
-### Calendário de postagens — Academia (@planetacorpoclubmais)
+### Academia: "Mês do Amigo"
+- **Slogan:** "Amigo que treina junto, economiza junto."
+- **Oferta:** 20% de desconto para referenciador + novo aluno
+- **Meta:** 50-60 novos alunos
+- **Duração:** Junho/Julho
+
+### Sorveteria: "Inverno Fitness"
+- **Slogan:** "Seu treino continua até na sobremesa."
+- **Produtos:** Açaí com whey protein, linha zero açúcar
+- **Oferta:** 20% de desconto
+- **Duração:** Junho/Julho
+
+---
+
+## 🔧 Questões Técnicas em Aberto
+
+### Críticas
+1. **Chave admin Supabase:** Localização não confirmada — necessária para writes de estado direto do ambiente Claude
+2. **HTTP outbound bloqueado:** Claude não consegue chamar Supabase/Vercel de bash — soluções precisam rodar em Vercel ou browser
+3. **Chaves Zernio expostas:** API keys `sk_e2fcbf7c`, `sk_8f2dab48` foram expostas em histórico — precisam ser rotacionadas
+
+### Mitigações em Progresso
+- Reativar `cron-job.org` como gatilho redundante (ativa independente de self-loop)
+- Confirmar e localizar chave admin Supabase
+- Rotação de chaves Zernio
 
 #### Semana 1 (01-07 de julho)
 **Tema:** Lançamento da campanha | Tom: Convite e curiosidade
@@ -233,59 +230,42 @@ Registro via sistema da academia. **Responsabilidades das recepcionistas (Julian
 
 ---
 
-### Pontos críticos para execução
-1. **Resposta rápida a DMs/comentários** — Juliana ou Isadora devem estar atentas durante campanhas
-2. **Consistência visual** — Manter paleta (laranja + preto + branco) em 100% dos posts
-3. **Humanização intercalada** — Não ficar só em "desconto" — alternar com bastidores e prova social
-4. **CTA cristalino** — Cada post deve deixar claro o próximo passo (link na bio, DM, visita presencial)
-5. **Métricas de acompanhamento** — Registrar quantas indicações vieram de cada post (via sistema)
+## 📈 Métricas & Objetivos
+
+### KPIs Rastreados
+- Engajamento (likes, comments, shares) por post
+- Taxa de clique (CTR) para links em bio
+- Crescimento de followers por marca
+- Conversão de referências (Academia "Mês do Amigo")
+- Taxa de desconto aplicado (Sorveteria "Inverno Fitness")
+
+### Cadência de Análise
+- Semanal: Top posts, trending topics
+- Mensal: Performance por campaign, ajuste de volume/mix
 
 ---
 
-## 👥 EQUIPE — COLABORADORES PARA HUMANIZAÇÃO (ROTATIVO)
+## 👤 Responsabilidades & Acesso
 
-> Adicionado em 19/06/2026. A postagem de bastidores apresentando o **Prof. Wellinton** (story "Bastidores — Professor Wellinton em ação", 17/06) teve performance muito positiva. Decisão: replicar essa temática apresentando os demais colaboradores da Planeta Corpo Club+, um por vez.
+**Claude:** Execução técnica completa (criação de conteúdo, deploy, troubleshooting)
+**Gilson:** Aprovação de estratégia, feedback criativo, decisões de campanha
 
-### Lista de colaboradores a apresentar
-| Nome | Função |
-|---|---|
-| David | Musculação |
-| Lidiane | Musculação |
-| Ana | Musculação |
-| Thiago | Musculação |
-| Wesley | Musculação |
-| Juliana | Recepção |
-| Isadora | Recepção |
-
-### Regras de execução
-- **Ordem de apresentação:** livre — Claude escolhe a sequência (sugestão: intercalar musculação e recepção para variar o cenário visual)
-- **Cadência:** NÃO precisa ser um por dia nem todos na mesma semana — distribuir conforme o calendário de conteúdo, sem forçar
-- **Slot recomendado:** seguir o formato que funcionou — Story 20h "Bastidores", no mesmo tom usado com o Prof. Wellinton (humanização, reconhecimento nominal, autenticidade, sem produção pesada)
-- **Estrutura do texto:** sempre nomear a pessoa + função, reforçar que o cuidado/atendimento é pessoal (não anônimo), fechar com CTA de marcação de amigos
-- **Paleta e restrições:** seguir o padrão já definido (preto `#1a1a1a` overlay mínimo, laranja `#e63900` em detalhes, branco `#ffffff` texto, emojis 🧡💛 apenas)
-- **Imagem:** preferencialmente foto real do colaborador atuando (Drive) — se não houver foto disponível, usar foto do espaço/equipamento da modalidade dele e nomear no texto
+**Acesso:**
+- GitHub token: `ghp_***`
+- Vercel team: `team_qNwqDFsenUMf0RhyXOxzC6l1`
+- Supabase public key: `sb_publishable_cEA3C8OvJgZfeZmbnfVYJg_3wuW1YAt`
 
 ---
 
-## 👥 EQUIPE — COLABORADORES SORVETERIA GURI (ROTATIVO)
+## 📚 Referência Rápida
 
-> Adicionado em 19/06/2026. Mesma lógica da academia: replicar a temática de humanização/bastidores apresentando os colaboradores da Sorveteria Guri, um por vez.
-
-### Lista de colaboradores a apresentar
-| Nome | Função |
-|---|---|
-| Maria Júlia | Atendente |
-| Maria Clara | Atendente |
-| Bruna | Atendente |
-| Luiza Helena | Atendente |
-
-### Regras de execução
-- **Ordem de apresentação:** livre — Claude escolhe a sequência
-- **Cadência:** NÃO precisa ser uma por dia nem todas na mesma semana — distribuir conforme o calendário de conteúdo, sem forçar
-- **Slot recomendado:** seguir o padrão de bastidores da sorveteria (story de fechamento/relacionamento — ver horário 19h na estrutura de conteúdo diário)
-- **Estrutura do texto:** sempre nomear a pessoa, reforçar que o atendimento é pessoal e acolhedor (não anônimo), fechar com CTA de marcação de amigos ou visita à loja
-- **Paleta e restrições:** seguir o padrão já definido da sorveteria (azul escuro `#003f6b`, turquesa `#00b4d8`, amarelo `#f5c800`, branco `#ffffff`)
-- **Imagem:** preferencialmente foto real da colaboradora atuando na loja (Drive) — se não houver foto disponível, usar foto do espaço/produto e nomear no texto
+| Recurso | URL/Localização |
+|---------|-----------------|
+| **Painel ao vivo** | redes-sociais-gilt-alpha.vercel.app |
+| **Repositório** | github.com/Gmais/Redes-Sociais |
+| **Contexto estratégico** | CONTEXTO.md (raiz do repo) |
+| **Pasta Google Drive** | 1-mZJyf6yFvnZhnTGUWhQxjl-OaGz7y1P |
+| **Banco de dados** | Supabase project `ndzbfvxnallshfiouszk` |
 
 ---
 
@@ -328,3 +308,6 @@ Quando Gilson pedir "gera o conteúdo de [dia]":
 2. Atualize o `index.html` com os novos cards (validar sintaxe JS antes de commitar)
 3. Faça commit com mensagem clara (ex: "conteúdo 19/06 - ...")
 4. Push para o GitHub — Vercel publica automaticamente
+
+**Última atualização:** Jun 29, 2026  
+**Status:** Operacional com mitigações em progresso
