@@ -22,6 +22,33 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 355
     steps:
+      - name: Sincronizar posts dias 3-4
+        run: |
+          curl -sS -X POST \
+            "https://redes-sociais-gilt-alpha.vercel.app/api/sync-posts" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "ac62":{"id":"ac62","dia":"3","horario":"08:00","marca":"Academia","status":"pending"},
+              "ac63":{"id":"ac63","dia":"3","horario":"12:00","marca":"Academia","status":"pending"},
+              "ac64":{"id":"ac64","dia":"3","horario":"17:00","marca":"Academia","status":"pending"},
+              "ac65":{"id":"ac65","dia":"3","horario":"20:00","marca":"Academia","status":"pending"},
+              "so82":{"id":"so82","dia":"3","horario":"09:00","marca":"Sorveteria","status":"pending"},
+              "so83":{"id":"so83","dia":"3","horario":"11:30","marca":"Sorveteria","status":"pending"},
+              "so84":{"id":"so84","dia":"3","horario":"15:00","marca":"Sorveteria","status":"pending"},
+              "so85":{"id":"so85","dia":"3","horario":"19:00","marca":"Sorveteria","status":"pending"},
+              "gy35":{"id":"gy35","dia":"3","horario":"10:00","marca":"GympulsePro","status":"pending"},
+              "gy36":{"id":"gy36","dia":"3","horario":"18:00","marca":"GympulsePro","status":"pending"},
+              "ac66":{"id":"ac66","dia":"4","horario":"08:00","marca":"Academia","status":"pending"},
+              "ac67":{"id":"ac67","dia":"4","horario":"20:00","marca":"Academia","status":"pending"},
+              "so86":{"id":"so86","dia":"4","horario":"09:00","marca":"Sorveteria","status":"pending"},
+              "so87":{"id":"so87","dia":"4","horario":"11:30","marca":"Sorveteria","status":"pending"},
+              "so88":{"id":"so88","dia":"4","horario":"15:00","marca":"Sorveteria","status":"pending"},
+              "so89":{"id":"so89","dia":"4","horario":"17:00","marca":"Sorveteria","status":"pending"},
+              "so90":{"id":"so90","dia":"4","horario":"19:00","marca":"Sorveteria","status":"pending"},
+              "gy37":{"id":"gy37","dia":"4","horario":"10:00","marca":"GympulsePro","status":"pending"},
+              "gy38":{"id":"gy38","dia":"4","horario":"18:00","marca":"GympulsePro","status":"pending"}
+            }'
+
       - name: Loop de ping no endpoint de auto-publish
         run: |
           FIM=$(( $(date +%s) + 350*60 ))   # roda por ~5h50m e sai p/ o proximo disparo assumir
