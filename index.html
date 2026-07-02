@@ -13300,8 +13300,31 @@ async function pullRemoteState() {
     const publishedRow = rows.find(r => r.key === 'published');
     const reviewedRow = rows.find(r => r.key === 'reviewed');
     const dynamicRow = rows.find(r => r.key === 'gympulse_dynamic_cards');
+    const deletedRow = rows.find(r => r.key === 'deleted');
 
     let changed = false;
+
+    if (deletedRow && Array.isArray(deletedRow.value)) {
+      let localDeleted = [];
+      try { localDeleted = JSON.parse(localStorage.getItem('deleted_cards') || '[]'); } catch(e) {}
+      const mergedDeleted = Array.from(new Set([...localDeleted, ...deletedRow.value]));
+      localStorage.setItem('deleted_cards', JSON.stringify(mergedDeleted));
+      mergedDeleted.forEach(id => {
+        for (const profile of ['academia','sorveteria','gympulse']) {
+          const idx = CONTENT[profile].findIndex(c => c.id === id);
+          if (idx > -1) {
+            CONTENT[profile].splice(idx, 1);
+            delete S[id];
+            localStorage.removeItem('img_' + id);
+            localStorage.removeItem('carousel_' + id);
+            localStorage.removeItem('edits_' + id);
+            localStorage.removeItem('pub_' + id);
+            localStorage.removeItem('reviewed_' + id);
+          }
+        }
+      });
+      save();
+    }
 
     if (dynamicRow && dynamicRow.value) {
       try {
@@ -13424,6 +13447,7 @@ async function pushRemoteState() {
     let remoteImages = {};
     let remotePublished = {};
     let remoteReviewed = {};
+    let remoteDeleted = [];
     try {
       const res = await supabaseFetch('painel_gilson_state?select=key,value');
       if (res.ok) {
@@ -13433,26 +13457,32 @@ async function pushRemoteState() {
         const imagesRow = rows.find(r => r.key === 'images');
         const publishedRow = rows.find(r => r.key === 'published');
         const reviewedRow = rows.find(r => r.key === 'reviewed');
+        const deletedRow = rows.find(r => r.key === 'deleted');
         if (doneRow && doneRow.value) remoteDone = doneRow.value;
         if (editsRow && editsRow.value) remoteEdits = editsRow.value;
         if (imagesRow && imagesRow.value) remoteImages = imagesRow.value;
         if (publishedRow && publishedRow.value) remotePublished = publishedRow.value;
         if (reviewedRow && reviewedRow.value) remoteReviewed = reviewedRow.value;
+        if (deletedRow && Array.isArray(deletedRow.value)) remoteDeleted = deletedRow.value;
       }
     } catch (e) { /* if pull fails, proceed with local-only data */ }
 
     // 3. Merge PENDING changes into remote state
     const mergedDone = { ...remoteDone };
     PENDING.done.forEach(id => { mergedDone[id] = S[id]; });
-    
-    const mergedEdits = { ...remoteEdits };
-    PENDING.edits.forEach(id => { 
-      if (localEdits[id]) mergedEdits[id] = localEdits[id]; 
-      else delete mergedEdits[id];
-    });
+
     var _del = [];
     try { _del = JSON.parse(localStorage.getItem('deleted_cards') || '[]'); } catch(e) {}
-    _del.forEach(function(did) { delete mergedEdits[did]; });
+    // Deletion is monotonic (append-only) — union local + remote so a delete
+    // made on any device is never lost, and never comes back on a re-push.
+    const mergedDeleted = Array.from(new Set([...remoteDeleted, ..._del]));
+
+    const mergedEdits = { ...remoteEdits };
+    PENDING.edits.forEach(id => {
+      if (localEdits[id]) mergedEdits[id] = localEdits[id];
+      else delete mergedEdits[id];
+    });
+    mergedDeleted.forEach(function(did) { delete mergedEdits[did]; });
 
     const mergedImages = { ...remoteImages };
     PENDING.images.forEach(id => { 
@@ -13479,6 +13509,7 @@ async function pushRemoteState() {
         { key: 'images', value: mergedImages, updated_at: new Date().toISOString() },
         { key: 'published', value: mergedPublished, updated_at: new Date().toISOString() },
         { key: 'reviewed', value: mergedReviewed, updated_at: new Date().toISOString() },
+        { key: 'deleted', value: mergedDeleted, updated_at: new Date().toISOString() },
         { key: 'manifest', value: manifest, updated_at: new Date().toISOString() }
       ])
     });
@@ -13507,7 +13538,17 @@ async function pushRemoteState() {
     Object.keys(mergedReviewed).forEach(id => {
       setReviewed(id, !!mergedReviewed[id]);
     });
-    
+    localStorage.setItem('deleted_cards', JSON.stringify(mergedDeleted));
+    mergedDeleted.forEach(id => {
+      for (const profile of ['academia','sorveteria','gympulse']) {
+        const idx = CONTENT[profile].findIndex(c => c.id === id);
+        if (idx > -1) {
+          CONTENT[profile].splice(idx, 1);
+          delete S[id];
+        }
+      }
+    });
+
     applySavedEdits();
     applySavedImages();
     applySavedPublished();
