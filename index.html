@@ -13460,6 +13460,28 @@ async function pushRemoteState() {
       });
     }
 
+    // 1b. The loop above only looks at cards dated today (it doubles as the
+    // manifest builder for the auto-publish cron). But edits/clones/new
+    // posts for OTHER dates are just as real and must still be pushed —
+    // otherwise the merge step below sees them missing from localEdits and
+    // actively deletes them from the remote state. Gather those directly
+    // from localStorage for any id already marked dirty in PENDING.
+    PENDING.edits.forEach(id => {
+      if (localEdits[id]) return;
+      const savedEdit = localStorage.getItem('edits_' + id);
+      if (savedEdit) { try { localEdits[id] = JSON.parse(savedEdit); } catch(e) {} }
+    });
+    PENDING.images.forEach(id => {
+      if (localImages[id]) return;
+      const savedImg = localStorage.getItem('img_' + id);
+      if (savedImg) { try { localImages[id] = JSON.parse(savedImg); } catch(e) {} }
+    });
+    PENDING.published.forEach(id => {
+      if (localPublished[id]) return;
+      const savedPub = localStorage.getItem('pub_' + id);
+      if (savedPub) { try { localPublished[id] = JSON.parse(savedPub); } catch(e) {} }
+    });
+
     // 2. Pull latest remote state FIRST so we never clobber edits made on another device
     let remoteDone = {};
     let remoteEdits = {};
@@ -13979,6 +14001,14 @@ function executeClone() {
     clone.title = '🔄 ' + source.title.replace(/^🔄 /, '');
     CONTENT[profile].push(clone);
 
+    // Persistir o clone em si (não só imagem/carrossel) — sem isso ele só
+    // existe na memória desta aba e nunca chega a outro dispositivo.
+    localStorage.setItem('edits_' + clone.id, JSON.stringify({
+      date: clone.date, time: clone.time, format: clone.format,
+      title: clone.title, texto: clone.texto, secoes: clone.secoes
+    }));
+    PENDING.edits.add(clone.id);
+
     // Garantir que o clone NÃO herda status "feito"
     delete S[clone.id];
     // Limpar status de publicação (é um post novo)
@@ -14246,6 +14276,14 @@ async function executeNewPost() {
       ]
     };
     CONTENT[profile].push(card);
+
+    // Persistir o card em si (não só done/imagem/publicado) — sem isso ele
+    // só existe na memória desta aba e nunca chega a outro dispositivo.
+    localStorage.setItem('edits_' + newId, JSON.stringify({
+      date: card.date, time: card.time, format: card.format,
+      title: card.title, texto: card.texto, secoes: card.secoes
+    }));
+    PENDING.edits.add(newId);
 
     // Associar primeira imagem ao card
     if (uploadedFiles.length > 0) {
