@@ -13258,6 +13258,25 @@ function cpText(txt, btn) {
 const SUPABASE_URL = 'https://ndzbfvxnallshfiouszk.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_cEA3C8OvJgZfeZmbnfVYJg_3wuW1YAt';
 
+// deleted_cards accumulates locally forever (old test clicks, stale ids from
+// months ago) and was never meant to leave the browser it happened in. The
+// first time this device runs the cross-device delete sync below, freeze
+// whatever is already in deleted_cards as "legacy" so it's never pushed to
+// Supabase — only ids deleted AFTER this point (genuinely new, deliberate
+// clicks on 🗑️ Excluir) are eligible to sync to other devices.
+if (!localStorage.getItem('deleted_legacy_baseline_set')) {
+  localStorage.setItem('deleted_legacy_ignore', localStorage.getItem('deleted_cards') || '[]');
+  localStorage.setItem('deleted_legacy_baseline_set', '1');
+}
+function getSyncableDeletedIds() {
+  let raw = [];
+  try { raw = JSON.parse(localStorage.getItem('deleted_cards') || '[]'); } catch(e) {}
+  let legacy = [];
+  try { legacy = JSON.parse(localStorage.getItem('deleted_legacy_ignore') || '[]'); } catch(e) {}
+  const legacySet = new Set(legacy);
+  return raw.filter(id => !legacySet.has(id));
+}
+
 function setSyncStatus(status) {
   const dot = document.getElementById('syncDot');
   const label = document.getElementById('syncLabel');
@@ -13471,8 +13490,10 @@ async function pushRemoteState() {
     const mergedDone = { ...remoteDone };
     PENDING.done.forEach(id => { mergedDone[id] = S[id]; });
 
-    var _del = [];
-    try { _del = JSON.parse(localStorage.getItem('deleted_cards') || '[]'); } catch(e) {}
+    // Only push ids deleted AFTER the legacy baseline above — never the
+    // pre-existing local deleted_cards backlog, which may hold stale/test
+    // entries never meant to apply globally.
+    var _del = getSyncableDeletedIds();
     // Deletion is monotonic (append-only) — union local + remote so a delete
     // made on any device is never lost, and never comes back on a re-push.
     const mergedDeleted = Array.from(new Set([...remoteDeleted, ..._del]));
