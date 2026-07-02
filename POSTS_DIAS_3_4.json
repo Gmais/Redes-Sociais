@@ -1,0 +1,42 @@
+{
+  "version": "1.0",
+  "generated_at": "2026-07-02T18:00:00Z",
+  "dias": {
+    "3": {
+      "data": "2026-07-03",
+      "posts": [
+        {"id":"ac62","marca":"Academia","horario":"08:00","formato":"Post","intenção":"Amplificar Mês do Amigo","desc":"Duas pessoas musculação sorrindo, teal+branco"},
+        {"id":"ac63","marca":"Academia","horario":"12:00","formato":"Carrossel","intenção":"Detalhar critérios desconto","desc":"3 slides: high-five, frequentadores, badges"},
+        {"id":"ac64","marca":"Academia","horario":"17:00","formato":"Post","intenção":"Humanizar colaborador","desc":"Colaborador ajudando, ambiente acolhedor"},
+        {"id":"ac65","marca":"Academia","horario":"20:00","formato":"Post","intenção":"CTA final urgência","desc":"Pós-treino, 28 dias de julho"},
+        {"id":"so82","marca":"Sorveteria","horario":"09:00","formato":"Post","intenção":"Lançamento zero açúcar","desc":"Taça açaí roxo premium"},
+        {"id":"so83","marca":"Sorveteria","horario":"11:30","formato":"Carrossel","intenção":"Educar combinações","desc":"4 sabores zero açúcar"},
+        {"id":"so84","marca":"Sorveteria","horario":"15:00","formato":"Post","intenção":"Humanizar atendente","desc":"Preparando açaí com cuidado"},
+        {"id":"so85","marca":"Sorveteria","horario":"19:00","formato":"Post","intenção":"Sensorial textura","desc":"Close-up colher pegando açaí"},
+        {"id":"gy35","marca":"GympulsePro","horario":"10:00","formato":"Post","intenção":"Educacional gamificação","desc":"Mockup painel badges ranking"},
+        {"id":"gy36","marca":"GympulsePro","horario":"18:00","formato":"Post","intenção":"Case success","desc":"Before/after academia retenção"}
+      ],
+      "total": 10
+    },
+    "4": {
+      "data": "2026-07-04",
+      "posts": [
+        {"id":"ac66","marca":"Academia","horario":"08:00","formato":"Post","intenção":"Sexta de energia","desc":"Jump expansão força"},
+        {"id":"ac67","marca":"Academia","horario":"20:00","formato":"Post","intenção":"Noite social","desc":"Grupo pós-treino conversando"},
+        {"id":"so86","marca":"Sorveteria","horario":"09:00","formato":"Carrossel","intenção":"Lifestyle fim de semana","desc":"Café, treino, balada"},
+        {"id":"so87","marca":"Sorveteria","horario":"11:30","formato":"Post","intenção":"Manhã sábado","desc":"Açaí + frutas clean"},
+        {"id":"so88","marca":"Sorveteria","horario":"15:00","formato":"Post","intenção":"Tarde social","desc":"Picolé compartilhado"},
+        {"id":"so89","marca":"Sorveteria","horario":"17:00","formato":"Post","intenção":"Transição noite","desc":"Açaí entardecer aconchego"},
+        {"id":"so90","marca":"Sorveteria","horario":"19:00","formato":"Carrossel","intenção":"Noite destino","desc":"Sorveteria ambiente taças"},
+        {"id":"gy37","marca":"GympulsePro","horario":"10:00","formato":"Post","intenção":"Dica fim de semana","desc":"Painel desafios planejamento"},
+        {"id":"gy38","marca":"GympulsePro","horario":"18:00","formato":"Post","intenção":"Social features","desc":"Ranking visual competição"}
+      ],
+      "total": 9
+    }
+  },
+  "resumo": {
+    "dia_3": {"academia": 4, "sorveteria": 4, "gympulse": 2, "total": 10},
+    "dia_4": {"academia": 2, "sorveteria": 5, "gympulse": 2, "total": 9},
+    "geral": 19
+  }
+}
