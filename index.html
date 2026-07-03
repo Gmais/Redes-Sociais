@@ -13350,7 +13350,14 @@ async function pullRemoteState() {
     if (dynamicRow && dynamicRow.value) {
       try {
         const dynCards = dynamicRow.value;
-        const parsedCards = typeof dynCards === 'string' ? JSON.parse(dynCards) : dynCards;
+        let parsedCards = typeof dynCards === 'string' ? JSON.parse(dynCards) : dynCards;
+        // Excluir da injeção qualquer card que já foi apagado (localmente ou
+        // em outro dispositivo) — sem isso, cards -dyn- excluídos voltavam
+        // sempre, porque essa injeção ignorava a lista de deletados.
+        let deletedIdsForDyn = [];
+        try { deletedIdsForDyn = JSON.parse(localStorage.getItem('deleted_cards') || '[]'); } catch(e) {}
+        const deletedSetForDyn = new Set(deletedIdsForDyn);
+        if (Array.isArray(parsedCards)) parsedCards = parsedCards.filter(c => !deletedSetForDyn.has(c.id));
         if (Array.isArray(parsedCards) && parsedCards.length > 0) {
           // Inject into Academia tab (not Gympulse)
           CONTENT.academia = CONTENT.academia.filter(c => !c.id.includes('-dyn-'));
@@ -14062,6 +14069,17 @@ function deleteCard(id, profile) {
     try { deleted = JSON.parse(localStorage.getItem('deleted_cards') || '[]'); } catch(e) {}
     if (!deleted.includes(id)) deleted.push(id);
     localStorage.setItem('deleted_cards', JSON.stringify(deleted));
+    // Uma exclusão feita agora, de propósito, sempre tem que sincronizar —
+    // mesmo que esse id já estivesse congelado como "legado" (backlog antigo
+    // de antes do sync existir). Sem isso, excluir de novo um card que voltou
+    // não tinha efeito nenhum nos outros dispositivos: a exclusão nunca saía
+    // deste navegador.
+    try {
+      var legacyIgnore = JSON.parse(localStorage.getItem('deleted_legacy_ignore') || '[]');
+      if (legacyIgnore.includes(id)) {
+        localStorage.setItem('deleted_legacy_ignore', JSON.stringify(legacyIgnore.filter(function(x){ return x !== id; })));
+      }
+    } catch(e) {}
     save();
     renderAll();
     buildHist();
