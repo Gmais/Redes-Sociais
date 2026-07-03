@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Painel de Conteúdo — Gilson</title>
-<meta name="build-id" content="2026-07-03-02">
+<meta name="build-id" content="2026-07-03-03">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
@@ -12115,7 +12115,34 @@ Profissional e didático, progressão visual clara entre os slides.`
 // STATE
 const SK='gilson_v5';
 let S=JSON.parse(localStorage.getItem(SK)||'{}');
-const PENDING = { done: new Set(), edits: new Set(), images: new Set(), published: new Set(), reviewed: new Set() };
+// PENDING costumava viver só na memória — se a aba recarregasse (F5 manual,
+// o detector de versão nova, o navegador matando a aba em segundo plano)
+// antes do push terminar, a fila era perdida silenciosamente: a edição
+// continuava intacta no localStorage, mas nada mais sabia que precisava
+// reenviar ela pro servidor. Foi assim que edições de card (ex: so86/so87)
+// ficaram presas pra sempre só num aparelho. Agora cada Set persiste no
+// localStorage a cada mudança, então uma fila pendente sobrevive a reload
+// e é reenviada no próximo sync bem-sucedido.
+function makePersistentSet(storageKey) {
+  let initial = [];
+  try { initial = JSON.parse(localStorage.getItem(storageKey) || '[]'); } catch (e) {}
+  const s = new Set(initial);
+  const persist = () => { try { localStorage.setItem(storageKey, JSON.stringify([...s])); } catch (e) {} };
+  const origAdd = s.add.bind(s);
+  const origDelete = s.delete.bind(s);
+  const origClear = s.clear.bind(s);
+  s.add = (v) => { origAdd(v); persist(); return s; };
+  s.delete = (v) => { const r = origDelete(v); persist(); return r; };
+  s.clear = () => { origClear(); persist(); };
+  return s;
+}
+const PENDING = {
+  done: makePersistentSet('pending_done'),
+  edits: makePersistentSet('pending_edits'),
+  images: makePersistentSet('pending_images'),
+  published: makePersistentSet('pending_published'),
+  reviewed: makePersistentSet('pending_reviewed')
+};
 const save=()=>localStorage.setItem(SK,JSON.stringify(S));
 const done=id=>!!S[id];
 const toggle=id=>{
@@ -13737,6 +13764,25 @@ if (hideDoneCheckEl) hideDoneCheckEl.checked = hideDone;
 
 // Run before first render
 applySavedEdits();
+
+// Reconciliação única: antes da fila PENDING persistir no localStorage,
+// edições feitas num aparelho podiam ficar presas lá pra sempre sem nunca
+// voltar a ser marcadas como "precisa sincronizar" (foi o caso de so86/so87
+// — a edição existia só no navegador, nunca tinha chegado no servidor).
+// Isso varre uma vez só tudo que já existe localmente e marca como
+// pendente, garantindo que suba no próximo sync — depois disso a fila
+// persistente já cobre o resto.
+if (!localStorage.getItem('pending_reconcile_v1_done')) {
+  const allLocalKeys = [];
+  for (let i = 0; i < localStorage.length; i++) allLocalKeys.push(localStorage.key(i));
+  allLocalKeys.forEach(function (key) {
+    if (key.startsWith('edits_')) PENDING.edits.add(key.slice('edits_'.length));
+    else if (key.startsWith('img_')) PENDING.images.add(key.slice('img_'.length));
+    else if (key.startsWith('pub_')) PENDING.published.add(key.slice('pub_'.length));
+    else if (key.startsWith('reviewed_')) PENDING.reviewed.add(key.slice('reviewed_'.length));
+  });
+  localStorage.setItem('pending_reconcile_v1_done', '1');
+}
 
 renderAll();
 initGoogleAuth();
