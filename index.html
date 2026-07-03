@@ -12817,7 +12817,9 @@ function cardHTML(item,profile){
     </div>
     ${ZERNIO_PROFILES.includes(profile) ? publishBlockHTML(item.id) : ''}
     <div class="block">
-      <div class="blabel" style="color:#00b4d8">📎 Mídia a ser Publicada</div>
+      <div class="blabel" style="color:#00b4d8">📎 Mídia a ser Publicada
+        <a class="upload-link" style="margin-left:auto" href="https://drive.google.com/drive/folders/${DRIVE_FOLDER_MAP[profile]}" target="_blank" onclick="event.stopPropagation()">🔍 Buscar imagem</a>
+      </div>
       <div id="imgbox-${item.id}">${imageBlockHTML(item.id, profile)}</div>
       <input type="file" accept="image/*,video/*" id="imgfile-${item.id}" style="display:none" ${item.format==='Carrossel'?'multiple':''} onchange="handleImageSelect('${item.id}','${profile}',this)">
       ${item.format==='Carrossel' ? carouselSlidesHTML(item.id, profile) : ''}
