@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Painel de Conteúdo — Gilson</title>
-<meta name="build-id" content="2026-07-03-01">
+<meta name="build-id" content="2026-07-03-02">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
@@ -13447,35 +13447,27 @@ async function pullRemoteState() {
 async function pushRemoteState() {
   setSyncStatus('syncing');
   try {
-    // 1. Gather all local edits + images + published status from localStorage
+    // Antigamente essa função lia o estado remoto inteiro, mesclava as
+    // mudanças locais por cima e regravava o blob inteiro de volta. Isso
+    // cria uma corrida clássica de leia-modifique-grave: se dois aparelhos
+    // fazem esse ciclo ao mesmo tempo, quem grava por último apaga
+    // silenciosamente o que o outro tinha acabado de salvar (foi assim que
+    // um "done" sumiu e um card excluído voltou). Agora só mandamos o DELTA
+    // (só o que este aparelho realmente mudou) e quem mescla é o Postgres,
+    // atomicamente, via merge_panel_state — sem essa janela de corrida.
+
+    // 1. Coletar apenas o delta local (o que está pendente de sync)
     const localEdits = {};
     const localImages = {};
     const localPublished = {};
-    const localReviewed = {};
     const manifest = {};
     const today = todayBR();
     const seenInManifest = new Set();
     for (const profile of ['academia','sorveteria','gympulse']) {
       CONTENT[profile].forEach(item => {
-        // Reviewed coletado para TODOS os cards (qualquer data), senão o valor
-        // remoto antigo sobrescreve e desmarca cards futuros.
-        localReviewed[item.id] = getReviewed(item.id);
         if (item.date !== today || S[item.id]) return;
-        // Evitar duplicatas no manifesto
         if (seenInManifest.has(item.id)) return;
         seenInManifest.add(item.id);
-        const savedEdit = localStorage.getItem('edits_' + item.id);
-        if (savedEdit) {
-          try { localEdits[item.id] = JSON.parse(savedEdit); } catch(e) {}
-        }
-        const savedImg = localStorage.getItem('img_' + item.id);
-        if (savedImg) {
-          try { localImages[item.id] = JSON.parse(savedImg); } catch(e) {}
-        }
-        const savedPub = localStorage.getItem('pub_' + item.id);
-        if (savedPub) {
-          try { localPublished[item.id] = JSON.parse(savedPub); } catch(e) {}
-        }
         // Manifesto: dados que o servidor (cron) precisa pra publicar sem
         // depender do navegador. item.texto/format já refletem edições aplicadas.
         if (ZERNIO_PROFILES.includes(profile)) {
@@ -13483,143 +13475,61 @@ async function pushRemoteState() {
         }
       });
     }
-
-    // 1b. The loop above only looks at cards dated today (it doubles as the
-    // manifest builder for the auto-publish cron). But edits/clones/new
-    // posts for OTHER dates are just as real and must still be pushed —
-    // otherwise the merge step below sees them missing from localEdits and
-    // actively deletes them from the remote state. Gather those directly
-    // from localStorage for any id already marked dirty in PENDING.
     PENDING.edits.forEach(id => {
-      if (localEdits[id]) return;
       const savedEdit = localStorage.getItem('edits_' + id);
       if (savedEdit) { try { localEdits[id] = JSON.parse(savedEdit); } catch(e) {} }
     });
     PENDING.images.forEach(id => {
-      if (localImages[id]) return;
       const savedImg = localStorage.getItem('img_' + id);
       if (savedImg) { try { localImages[id] = JSON.parse(savedImg); } catch(e) {} }
     });
     PENDING.published.forEach(id => {
-      if (localPublished[id]) return;
       const savedPub = localStorage.getItem('pub_' + id);
       if (savedPub) { try { localPublished[id] = JSON.parse(savedPub); } catch(e) {} }
     });
+    const donePatch = {};
+    PENDING.done.forEach(id => { donePatch[id] = !!S[id]; });
+    const reviewedPatch = {};
+    PENDING.reviewed.forEach(id => { reviewedPatch[id] = getReviewed(id); });
+    // Só ids excluídos depois do congelamento de legado (ver getSyncableDeletedIds) —
+    // exclusão é monotônica, o merge no servidor só faz união, nunca some.
+    const deletedPatch = getSyncableDeletedIds();
 
-    // 2. Pull latest remote state FIRST so we never clobber edits made on another device
-    let remoteDone = {};
-    let remoteEdits = {};
-    let remoteImages = {};
-    let remotePublished = {};
-    let remoteReviewed = {};
-    let remoteDeleted = [];
-    try {
-      const res = await supabaseFetch('painel_gilson_state?select=key,value');
-      if (res.ok) {
-        const rows = await res.json();
-        const doneRow = rows.find(r => r.key === 'done');
-        const editsRow = rows.find(r => r.key === 'edits');
-        const imagesRow = rows.find(r => r.key === 'images');
-        const publishedRow = rows.find(r => r.key === 'published');
-        const reviewedRow = rows.find(r => r.key === 'reviewed');
-        const deletedRow = rows.find(r => r.key === 'deleted');
-        if (doneRow && doneRow.value) remoteDone = doneRow.value;
-        if (editsRow && editsRow.value) remoteEdits = editsRow.value;
-        if (imagesRow && imagesRow.value) remoteImages = imagesRow.value;
-        if (publishedRow && publishedRow.value) remotePublished = publishedRow.value;
-        if (reviewedRow && reviewedRow.value) remoteReviewed = reviewedRow.value;
-        if (deletedRow && Array.isArray(deletedRow.value)) remoteDeleted = deletedRow.value;
-      }
-    } catch (e) { /* if pull fails, proceed with local-only data */ }
+    const patches = {};
+    if (Object.keys(donePatch).length) patches.done = donePatch;
+    if (Object.keys(localEdits).length) patches.edits = localEdits;
+    if (Object.keys(localImages).length) patches.images = localImages;
+    if (Object.keys(localPublished).length) patches.published = localPublished;
+    if (Object.keys(reviewedPatch).length) patches.reviewed = reviewedPatch;
+    if (deletedPatch.length) patches.deleted = deletedPatch;
 
-    // 3. Merge PENDING changes into remote state
-    const mergedDone = { ...remoteDone };
-    PENDING.done.forEach(id => { mergedDone[id] = S[id]; });
+    // 2. Mesclar o delta atomicamente no servidor (RPC = uma única transação)
+    if (Object.keys(patches).length > 0) {
+      const mergeRes = await supabaseFetch('rpc/merge_panel_state', {
+        method: 'POST',
+        body: JSON.stringify({ patches })
+      });
+      if (!mergeRes.ok) throw new Error('merge_panel_state falhou: ' + await mergeRes.text());
+    }
 
-    // Only push ids deleted AFTER the legacy baseline above — never the
-    // pre-existing local deleted_cards backlog, which may hold stale/test
-    // entries never meant to apply globally.
-    var _del = getSyncableDeletedIds();
-    // Deletion is monotonic (append-only) — union local + remote so a delete
-    // made on any device is never lost, and never comes back on a re-push.
-    const mergedDeleted = Array.from(new Set([...remoteDeleted, ..._del]));
-
-    const mergedEdits = { ...remoteEdits };
-    PENDING.edits.forEach(id => {
-      if (localEdits[id]) mergedEdits[id] = localEdits[id];
-      else delete mergedEdits[id];
-    });
-    mergedDeleted.forEach(function(did) { delete mergedEdits[did]; });
-
-    const mergedImages = { ...remoteImages };
-    PENDING.images.forEach(id => { 
-      if (localImages[id]) mergedImages[id] = localImages[id];
-    });
-
-    const mergedPublished = { ...remotePublished };
-    PENDING.published.forEach(id => { 
-      if (localPublished[id]) mergedPublished[id] = localPublished[id];
-    });
-
-    const mergedReviewed = { ...remoteReviewed };
-    PENDING.reviewed.forEach(id => { 
-      mergedReviewed[id] = localReviewed[id];
-    });
-
-    // 4. Push the merged snapshot FIRST before adopting locally
-    const pushRes = await supabaseFetch('painel_gilson_state', {
+    // Manifesto continua sendo uma foto completa (não um delta) — é só um
+    // cache derivado do CONTENT de hoje pro cron ler, seguro sobrescrever.
+    await supabaseFetch('painel_gilson_state', {
       method: 'POST',
       headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify([
-        { key: 'done', value: mergedDone, updated_at: new Date().toISOString() },
-        { key: 'edits', value: mergedEdits, updated_at: new Date().toISOString() },
-        { key: 'images', value: mergedImages, updated_at: new Date().toISOString() },
-        { key: 'published', value: mergedPublished, updated_at: new Date().toISOString() },
-        { key: 'reviewed', value: mergedReviewed, updated_at: new Date().toISOString() },
-        { key: 'deleted', value: mergedDeleted, updated_at: new Date().toISOString() },
-        { key: 'manifest', value: manifest, updated_at: new Date().toISOString() }
-      ])
+      body: JSON.stringify([{ key: 'manifest', value: manifest, updated_at: new Date().toISOString() }])
     });
 
-    if (!pushRes.ok) throw new Error('Push falhou');
-
-    // Sucesso no push, podemos limpar a fila PENDING
+    // 3. Sucesso — pode limpar a fila local
     PENDING.done.clear();
     PENDING.edits.clear();
     PENDING.images.clear();
     PENDING.published.clear();
     PENDING.reviewed.clear();
 
-    // 5. Adopt the merged result locally so we are in sync with what was saved
-    Object.keys(mergedDone).forEach(id => { S[id] = mergedDone[id]; });
-    save();
-    Object.keys(mergedEdits).forEach(id => {
-      localStorage.setItem('edits_' + id, JSON.stringify(mergedEdits[id]));
-    });
-    Object.keys(mergedImages).forEach(id => {
-      localStorage.setItem('img_' + id, JSON.stringify(mergedImages[id]));
-    });
-    Object.keys(mergedPublished).forEach(id => {
-      localStorage.setItem('pub_' + id, JSON.stringify(mergedPublished[id]));
-    });
-    Object.keys(mergedReviewed).forEach(id => {
-      setReviewed(id, !!mergedReviewed[id]);
-    });
-    localStorage.setItem('deleted_cards', JSON.stringify(mergedDeleted));
-    mergedDeleted.forEach(id => {
-      for (const profile of ['academia','sorveteria','gympulse']) {
-        const idx = CONTENT[profile].findIndex(c => c.id === id);
-        if (idx > -1) {
-          CONTENT[profile].splice(idx, 1);
-          delete S[id];
-        }
-      }
-    });
-
-    applySavedEdits();
-    applySavedImages();
-    applySavedPublished();
-    applySavedReviewed();
+    // 4. Puxar o estado consolidado do servidor (já mesclado com o que
+    // qualquer outro aparelho tiver mandado) e aplicar localmente.
+    await pullRemoteState();
     renderAll();
     if (typeof buildHist === 'function') buildHist();
 
