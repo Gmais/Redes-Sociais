@@ -26,11 +26,16 @@ function supabaseFetch(path, options = {}) {
   });
 }
 
-// "08h" -> {h:8,m:0} / "11h30" -> {h:11,m:30}
+// "08h" -> {h:8,m:0} / "11h30" -> {h:11,m:30} / "08:00" -> {h:8,m:0} / "17:30" -> {h:17,m:30}
 function parseTime(timeStr) {
-  const match = /^(\d{1,2})h(\d{2})?$/.exec((timeStr || '').trim());
-  if (!match) return null;
-  return { h: parseInt(match[1], 10), m: match[2] ? parseInt(match[2], 10) : 0 };
+  const s = (timeStr || '').trim();
+  // Formato "08h" ou "18h30"
+  let match = /^(\d{1,2})h(\d{2})?$/.exec(s);
+  if (match) return { h: parseInt(match[1], 10), m: match[2] ? parseInt(match[2], 10) : 0 };
+  // Formato "08:00" ou "17:30"
+  match = /^(\d{1,2}):(\d{2})$/.exec(s);
+  if (match) return { h: parseInt(match[1], 10), m: parseInt(match[2], 10) };
+  return null;
 }
 
 // Brasil não tem horário de verão desde 2019: America/Sao_Paulo é UTC-3 fixo.
@@ -85,6 +90,7 @@ module.exports = async (req, res) => {
     const nowMs = Date.now();
     const results = [];
     const newlyPublished = {};
+    const skipped = [];
 
     for (const id of Object.keys(manifest)) {
       const item = manifest[id];
@@ -94,8 +100,21 @@ module.exports = async (req, res) => {
       const alreadyPublished = !!(published[id] && published[id].status === 'ok');
       const due = scheduledUtcMs(item.date, item.time);
 
-      if (!isReviewed || !hasReadyImage || alreadyPublished || due === null || nowMs < due) continue;
-      if (!PROFILE_CONFIG[item.profile]) continue;
+      // Log detalhado de cada post para debug
+      if (!isReviewed) { skipped.push({ id, reason: 'não revisado' }); continue; }
+      if (!hasReadyImage) {
+        const imgStatus = img ? `status=${img.status}, zernio=${img.zernioStatus}` : 'sem imagem';
+        skipped.push({ id, reason: 'imagem não pronta (' + imgStatus + ')' });
+        continue;
+      }
+      if (alreadyPublished) { skipped.push({ id, reason: 'já publicado' }); continue; }
+      if (due === null) { skipped.push({ id, reason: 'horário inválido: ' + item.time }); continue; }
+      if (nowMs < due) {
+        const minLeft = Math.round((due - nowMs) / 60000);
+        skipped.push({ id, reason: 'agendado para daqui ' + minLeft + 'min (' + item.time + ')' });
+        continue;
+      }
+      if (!PROFILE_CONFIG[item.profile]) { skipped.push({ id, reason: 'perfil desconhecido: ' + item.profile }); continue; }
 
       try {
         const postId = await postToInstagram(item.profile, item.caption, item.format, img.zernioUrl);
@@ -122,7 +141,13 @@ module.exports = async (req, res) => {
       });
     }
 
-    res.status(200).json({ ok: true, checked: Object.keys(manifest).length, published: results });
+    res.status(200).json({
+      ok: true,
+      checked: Object.keys(manifest).length,
+      published: results,
+      skipped: skipped,
+      timestamp: new Date().toISOString()
+    });
   } catch (e) {
     res.status(500).json({ error: e.message || 'Erro inesperado no auto-publish.' });
   }
