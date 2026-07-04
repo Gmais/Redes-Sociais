@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Painel de Conteúdo — Gilson</title>
-<meta name="build-id" content="2026-07-03-04">
+<meta name="build-id" content="2026-07-03-03">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
@@ -13471,59 +13471,19 @@ async function pullRemoteState() {
   }
 }
 
-// ── FALLBACK: merge manual via read-merge-write ──
-// Usado quando a RPC merge_panel_state não existe ou falha.
-async function manualMergePatches(patches) {
-  // 1. Ler estado atual do Supabase
-  const res = await supabaseFetch('painel_gilson_state?select=key,value');
-  if (!res.ok) throw new Error('Falha ao ler estado para merge manual');
-  const rows = await res.json();
-  const getRow = (k) => (rows.find(r => r.key === k) || {}).value || {};
-  const getArr = (k) => { const v = (rows.find(r => r.key === k) || {}).value; return Array.isArray(v) ? v : []; };
-
-  // 2. Mesclar cada chave
-  const upserts = [];
-  const now = new Date().toISOString();
-  if (patches.done) {
-    const merged = { ...getRow('done'), ...patches.done };
-    upserts.push({ key: 'done', value: merged, updated_at: now });
-  }
-  if (patches.edits) {
-    const merged = { ...getRow('edits'), ...patches.edits };
-    upserts.push({ key: 'edits', value: merged, updated_at: now });
-  }
-  if (patches.images) {
-    const merged = { ...getRow('images'), ...patches.images };
-    upserts.push({ key: 'images', value: merged, updated_at: now });
-  }
-  if (patches.published) {
-    const merged = { ...getRow('published'), ...patches.published };
-    upserts.push({ key: 'published', value: merged, updated_at: now });
-  }
-  if (patches.reviewed) {
-    const merged = { ...getRow('reviewed'), ...patches.reviewed };
-    upserts.push({ key: 'reviewed', value: merged, updated_at: now });
-  }
-  if (patches.deleted) {
-    const merged = Array.from(new Set([...getArr('deleted'), ...patches.deleted]));
-    upserts.push({ key: 'deleted', value: merged, updated_at: now });
-  }
-
-  // 3. Gravar tudo de volta
-  if (upserts.length > 0) {
-    const writeRes = await supabaseFetch('painel_gilson_state', {
-      method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify(upserts)
-    });
-    if (!writeRes.ok) throw new Error('Falha no merge manual: ' + writeRes.status);
-  }
-}
-
 async function pushRemoteState() {
   setSyncStatus('syncing');
   try {
-    // Coleta o delta local (o que está pendente de sync)
+    // Antigamente essa função lia o estado remoto inteiro, mesclava as
+    // mudanças locais por cima e regravava o blob inteiro de volta. Isso
+    // cria uma corrida clássica de leia-modifique-grave: se dois aparelhos
+    // fazem esse ciclo ao mesmo tempo, quem grava por último apaga
+    // silenciosamente o que o outro tinha acabado de salvar (foi assim que
+    // um "done" sumiu e um card excluído voltou). Agora só mandamos o DELTA
+    // (só o que este aparelho realmente mudou) e quem mescla é o Postgres,
+    // atomicamente, via merge_panel_state — sem essa janela de corrida.
+
+    // 1. Coletar apenas o delta local (o que está pendente de sync)
     const localEdits = {};
     const localImages = {};
     const localPublished = {};
@@ -13535,12 +13495,15 @@ async function pushRemoteState() {
         if (item.date !== today) return;
         if (seenInManifest.has(item.id)) return;
         seenInManifest.add(item.id);
-        // FIX 2: Manifesto inclui TODOS os posts de hoje que ainda não foram
-        // publicados no Instagram — independente do status "done" (checklist).
-        // O "done" é controle visual do operador, não deve impedir publicação.
+        
+        // Manifesto: dados que o servidor (cron) precisa pra publicar sem
+        // depender do navegador. item.texto/format já refletem edições aplicadas.
+        // O status "done" (S[item.id]) é visual e não deve impedir auto-publicação.
+        // Evitamos enviar se já foi publicado (status 'ok').
         const pubData = getPublishData(item.id);
-        const alreadyPublished = !!(pubData && pubData.status === 'ok');
-        if (!alreadyPublished && ZERNIO_PROFILES.includes(profile)) {
+        if (pubData && pubData.status === 'ok') return;
+
+        if (ZERNIO_PROFILES.includes(profile)) {
           manifest[item.id] = { profile, date: item.date, time: item.time, format: item.format, caption: item.texto };
         }
       });
@@ -13573,24 +13536,13 @@ async function pushRemoteState() {
     if (Object.keys(reviewedPatch).length) patches.reviewed = reviewedPatch;
     if (deletedPatch.length) patches.deleted = deletedPatch;
 
-    // FIX 1: Tenta RPC merge_panel_state; se falhar, usa fallback manual.
+    // 2. Mesclar o delta atomicamente no servidor (RPC = uma única transação)
     if (Object.keys(patches).length > 0) {
-      let rpcOk = false;
-      try {
-        const mergeRes = await supabaseFetch('rpc/merge_panel_state', {
-          method: 'POST',
-          body: JSON.stringify({ patches })
-        });
-        rpcOk = mergeRes.ok;
-        if (!rpcOk) {
-          console.warn('⚠️ merge_panel_state falhou (status ' + mergeRes.status + '), usando fallback manual');
-        }
-      } catch (rpcErr) {
-        console.warn('⚠️ merge_panel_state indisponível, usando fallback manual:', rpcErr.message);
-      }
-      if (!rpcOk) {
-        await manualMergePatches(patches);
-      }
+      const mergeRes = await supabaseFetch('rpc/merge_panel_state', {
+        method: 'POST',
+        body: JSON.stringify({ patches })
+      });
+      if (!mergeRes.ok) throw new Error('merge_panel_state falhou: ' + await mergeRes.text());
     }
 
     // Manifesto continua sendo uma foto completa (não um delta) — é só um
@@ -13601,14 +13553,15 @@ async function pushRemoteState() {
       body: JSON.stringify([{ key: 'manifest', value: manifest, updated_at: new Date().toISOString() }])
     });
 
-    // Sucesso — pode limpar a fila local
+    // 3. Sucesso — pode limpar a fila local
     PENDING.done.clear();
     PENDING.edits.clear();
     PENDING.images.clear();
     PENDING.published.clear();
     PENDING.reviewed.clear();
 
-    // Puxar o estado consolidado do servidor e aplicar localmente.
+    // 4. Puxar o estado consolidado do servidor (já mesclado com o que
+    // qualquer outro aparelho tiver mandado) e aplicar localmente.
     await pullRemoteState();
     renderAll();
     if (typeof buildHist === 'function') buildHist();
@@ -13621,89 +13574,28 @@ async function pushRemoteState() {
 }
 
 let pushTimer = null;
-let pushInProgress = false;
 function scheduleSync() {
   if (pushTimer) clearTimeout(pushTimer);
   setSyncStatus('syncing');
   pushTimer = setTimeout(pushRemoteState, 800);
 }
 
-// FIX 3: Envia o estado pendente de forma confiável ao fechar/trocar aba.
-// Usa keepalive no fetch (visibilitychange) e sendBeacon como último recurso
-// (pagehide/beforeunload) — o browser garante delivery mesmo após tab close.
-function buildBeaconPayload() {
-  // Monta o manifesto atual pra enviar via sendBeacon
-  const manifest = {};
-  const today = todayBR();
-  const seen = new Set();
-  for (const profile of ['academia','sorveteria','gympulse']) {
-    CONTENT[profile].forEach(item => {
-      if (item.date !== today || seen.has(item.id)) return;
-      seen.add(item.id);
-      const pubData = getPublishData(item.id);
-      const alreadyPublished = !!(pubData && pubData.status === 'ok');
-      if (!alreadyPublished && ZERNIO_PROFILES.includes(profile)) {
-        manifest[item.id] = { profile, date: item.date, time: item.time, format: item.format, caption: item.texto };
-      }
-    });
-  }
-  return JSON.stringify([{ key: 'manifest', value: manifest, updated_at: new Date().toISOString() }]);
-}
-
-function flushSyncNow(useKeepalive) {
-  if (!pushTimer && !hasPendingSync()) return;
+// Flush any pending sync immediately if the user navigates away, switches
+// tabs, or closes the page before the 800ms debounce fires. This is the
+// fix for "I saved but it didn't show up on the other PC" — previously a
+// quick tab switch/close within 800ms of saving silently dropped the sync.
+function flushSyncNow() {
   if (pushTimer) {
     clearTimeout(pushTimer);
     pushTimer = null;
-  }
-  if (useKeepalive) {
-    // visibilitychange: fetch com keepalive garante que o browser completa
-    // o request mesmo com a aba em background
-    try {
-      fetch(`${SUPABASE_URL}/rest/v1/painel_gilson_state`, {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates,return=minimal'
-        },
-        body: buildBeaconPayload(),
-        keepalive: true
-      }).catch(() => {});
-    } catch(e) {}
-    // Agenda o push completo pro momento em que a aba voltar ao foco
-    pushTimer = setTimeout(pushRemoteState, 100);
-  } else {
-    // pagehide/beforeunload: sendBeacon como último recurso
-    try {
-      const blob = new Blob([buildBeaconPayload()], { type: 'application/json' });
-      navigator.sendBeacon(
-        `${SUPABASE_URL}/rest/v1/painel_gilson_state?apikey=${SUPABASE_KEY}`,
-        blob
-      );
-    } catch(e) {}
-    // Tenta push normal também (pode completar se o browser permitir)
     pushRemoteState();
   }
 }
-
-function hasPendingSync() {
-  return PENDING.done.size > 0 || PENDING.edits.size > 0 ||
-         PENDING.images.size > 0 || PENDING.published.size > 0 ||
-         PENDING.reviewed.size > 0;
-}
-
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') {
-    flushSyncNow(true); // keepalive
-  } else {
-    // FIX 4: Ao voltar ao foco, re-sincroniza imediatamente
-    syncWithRemote();
-  }
+  if (document.visibilityState === 'hidden') flushSyncNow();
 });
-window.addEventListener('pagehide', () => flushSyncNow(false));
-window.addEventListener('beforeunload', () => flushSyncNow(false));
+window.addEventListener('pagehide', flushSyncNow);
+window.addEventListener('beforeunload', flushSyncNow);
 
 // ── COPIAR TUDO ──────────────────────────────────────────────────────────
 function copyAll(id) {
@@ -13912,10 +13804,9 @@ async function syncWithRemote() {
   if (now - lastRemoteSync < 30000) return;
   lastRemoteSync = now;
   try {
-    // FIX 4: Se há PENDING acumulado (push anterior falhou), retenta o push
-    // completo em vez de só puxar. Isso garante retry automático sem depender
-    // de ação do usuário.
-    if (hasPendingSync()) {
+    // Retenta enviar as edições locais se houver algo pendente na fila
+    const pendingCount = PENDING.done.size + PENDING.edits.size + PENDING.images.size + PENDING.published.size + PENDING.reviewed.size;
+    if (pendingCount > 0) {
       await pushRemoteState();
     } else {
       await pullRemoteState();
@@ -13932,6 +13823,10 @@ pullRemoteState().then(() => {
 
 // Polling a cada 30s enquanto página está ativa
 setInterval(syncWithRemote, 30000);
+// Sincronizar quando volta pro foco
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden) syncWithRemote();
+});
 
 // ── DETECTOR DE VERSÃO DESATUALIZADA ────────────────────────────────────
 // Abas abertas há muito tempo sem F5 ficam presas rodando um HTML/JS antigo
