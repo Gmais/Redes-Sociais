@@ -13133,7 +13133,7 @@ async function pushRemoteState() {
     const seenInManifest = new Set();
     for (const profile of ['academia','sorveteria','gympulse']) {
       CONTENT[profile].forEach(item => {
-        if (item.date !== today) return;
+        if (item.date < today) return;
         if (seenInManifest.has(item.id)) return;
         seenInManifest.add(item.id);
         // FIX 2: Manifesto inclui TODOS os posts de hoje que ainda não foram
@@ -14248,3 +14248,4 @@ if (!localStorage.getItem('lastCleanup') || new Date(localStorage.getItem('lastC
   cleanupOldPosts();
   localStorage.setItem('lastCleanup', new Date().toISOString());
 }
+
