@@ -743,6 +743,30 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 //
 const PALETTES = {
   academia:[
+
+    {hex:'#e63900',name:'Laranja principal'},
+    {hex:'#003f6b',name:'Teal acento'},
+    {hex:'#1a1a1a',name:'Preto fundo'},
+    {hex:'#ffffff',name:'Branco texto'}
+  ],
+  sorveteria:[
+
+    {hex:'#003f6b',name:'Azul escuro'},
+    {hex:'#00b4d8',name:'Azul turquesa'},
+    {hex:'#f5c800',name:'Amarelo'},
+    {hex:'#ffffff',name:'Branco'}
+  ],
+  gympulse:[
+
+    {hex:'#f5c200',name:'Amarelo'},
+    {hex:'#ffffff',name:'Branco'},
+    {hex:'#0d0d0d',name:'Preto'},
+    {hex:'#1c1c1c',name:'Cinza escuro'}
+  ]
+};
+
+const CONTENT = {
+  academia:[
     {
       id:'ac_0907_1', date:'2026-07-09', time:'07h00', format:'Story',
       title:'Motivação Matinal',
@@ -871,222 +895,6 @@ const PALETTES = {
           conteudo:`Altíssimo contraste. Design focado apenas em informar o benefício claro.` }
       ]
     },
-
-    {hex:'#e63900',name:'Laranja principal'},
-    {hex:'#003f6b',name:'Teal acento'},
-    {hex:'#1a1a1a',name:'Preto fundo'},
-    {hex:'#ffffff',name:'Branco texto'}
-  ],
-  sorveteria:[
-    {
-      id:'so_0907_1', date:'2026-07-09', time:'09h00', format:'Story',
-      title:'Bastidores (Produção)',
-      driveFile:'0907_sorv_story1.png',
-      driveUrl:'#',
-      driveHint:'Vídeo ou foto da produção de caldas.',
-      texto:`Começando o dia preparando a magia de sempre! 🍫💛\n\nTudo fresco e com muito amor.\n\n#sorvetesguriturvo #turvopr #producaopropria`,
-      secoes:[
-        { num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Story Instagram\nDimensões: 1080 × 1920px (9:16)\nRegra 60-30-10: 60% Amarelo claro, 30% Marrom, 10% CTA Vermelho.\nTexto max: 20%.` },
-        { num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Bastidores\nObjetivo: Humanização e comprovação de qualidade (feito na hora).\nCTA: Venha conhecer.` },
-        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
-          conteudo:`Muito espaço em branco, foco total no doce/calda. Tipografia limpa.` }
-      ]
-    },
-    {
-      id:'so_0907_2', date:'2026-07-09', time:'13h00', format:'Post',
-      title:'Linha Fitness: Açaí com Whey',
-      driveFile:'0907_sorv_post1.png',
-      driveUrl:'#',
-      driveHint:'Açaí com Whey isolado em fundo limpo branco/gelo',
-      texto:`O pós-treino pode ser gostoso de verdade. 💜\n\nNossa linha Inverno Fitness com Açaí com Whey Protein continua com 20% OFF.\n\nAproveita pra repor a proteína da melhor forma possível. Sabor incrível e zero desculpas.\n\n📍 Loja de fábrica, buffet com mais de 40 sabores e cardápio gourmet\n\n#sorvetesguriturvo #invernofitness #acaicomwhey #turvopr #marcalocal`,
-      secoes:[
-        { num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Post Feed Instagram\nDimensões: 1080 × 1350px (4:5)\nRegra 60-30-10: 60% Fundo Branco/Gelo, 30% Detalhes roxos, 10% Selo Verde (20% OFF).\nTexto max 20%.` },
-        { num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Oferta / Produto do dia\nObjetivo: Vender a linha Inverno Fitness e reforçar promoção.\nCTA: Vem provar.` },
-        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
-          conteudo:`Muito negative space (respiro). Produto perfeitamente centralizado com alto contraste.` }
-      ]
-    },
-    {
-      id:'so_0907_3', date:'2026-07-09', time:'18h30', format:'Story',
-      title:'Fim de tarde: Buffet 40 Sabores',
-      driveFile:'0907_sorv_story2.png',
-      driveUrl:'#',
-      driveHint:'Visual quente de pôr do sol na vitrine',
-      texto:`Final de tarde pede aquela taça merecida. 🌅🍦\n\nJá estamos te esperando.\n\n#sorvetesguriturvo #fimdetarde #turvopr`,
-      secoes:[
-        { num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Story Instagram\nDimensões: 1080 × 1920px (9:16)\nRegra 60-30-10: 60% Tons quentes/Laranja, 30% Marrom, 10% Pin de Localização.` },
-        { num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Gatilho / Lifestyle\nObjetivo: Atrair cliente pós-expediente.\nCTA: Clique no local.` },
-        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
-          conteudo:`Foco emocional, luz de entardecer. Texto curtíssimo.` }
-      ]
-    },
-    {
-      id:'so_0907_4', date:'2026-07-09', time:'21h00', format:'Post',
-      title:'Promoção Pós-Jantar',
-      driveFile:'0907_sorv_post2.png',
-      driveUrl:'#',
-      driveHint:'Fundo escuro elegante com detalhes dourados',
-      texto:`A sobremesa oficial do seu final de noite. ✨\n\nNosso cardápio gourmet tá cheio de opções que fecham o dia com chave de ouro. Pede agora pelo WhatsApp que levamos até você.\n\n📍 Loja de fábrica, buffet com mais de 40 sabores e cardápio gourmet\n\n#sorvetesguriturvo #sobremesagourmet #deliveryturvo #turvopr #marcalocal`,
-      secoes:[
-        { num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Post Feed Instagram\nDimensões: 1080 × 1350px (4:5)\nRegra 60-30-10: 60% Fundo escuro (preto/chumbo), 30% Dourado/Amarelo, 10% CTA Amarelo vibrante.` },
-        { num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Venda / Delivery\nObjetivo: Estimular pedido noturno pelo whats.\nCTA: Pede no WhatsApp.` },
-        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
-          conteudo:`Elegante, contrastante. O foco tem que ser o apetite appeal noturno. Sem textos longos na imagem.` }
-      ]
-    },
-    {
-      id:'so_1007_1', date:'2026-07-10', time:'10h00', format:'Post',
-      title:'Sabores Especiais do Fim de Semana',
-      driveFile:'1007_sorv_post1.png',
-      driveUrl:'#',
-      driveHint:'Fundo amarelo claro, produto rosa (morango/frutas vermelhas)',
-      texto:`O final de semana começou oficialmente por aqui! 🍓💛\n\nJá viu as novidades frescas da vitrine hoje? Todo dia uma produção própria caprichada, saindo direto da nossa loja de fábrica.\n\nVem escolher o seu favorito!\n\n📍 Loja de fábrica, buffet com mais de 40 sabores e cardápio gourmet\n\n#sorvetesguriturvo #sextou #turvopr #marcalocal #sorvetefresco`,
-      secoes:[
-        { num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Post Feed Instagram\nDimensões: 1080 × 1350px (4:5)\nRegra 60-30-10: 60% Amarelo claro, 30% Rosa, 10% Selo CTA Verde menta.\nTexto max: 15%.` },
-        { num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Awareness / Produto\nObjetivo: Anunciar novidades e qualidade "loja de fábrica".\nCTA: Vem escolher.` },
-        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
-          conteudo:`Mínimo ruído visual. O sorvete tem que ser o herói absoluto da peça.` }
-      ]
-    },
-    {
-      id:'so_1007_2', date:'2026-07-10', time:'14h00', format:'Story',
-      title:'Enquete de Sabores (Clássico x Fitness)',
-      driveFile:'1007_sorv_story1.png',
-      driveUrl:'#',
-      driveHint:'Tela dividida, branco dominante',
-      texto:`E aí, qual o mood dessa sexta?\n\n[Enquete: Açaí com Whey | Taça Supreme Chocolate]\n\n#sorvetesguriturvo #enquete #turvopr`,
-      secoes:[
-        { num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Story Instagram\nDimensões: 1080 × 1920px (9:16)\nRegra 60-30-10: 60% Branco, 30% Roxos/Marrons, 10% Caixas de votação.` },
-        { num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Interação\nObjetivo: Gerar resposta interativa.\nCTA: Votar na enquete.` },
-        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
-          conteudo:`Deixar o espaço 100% otimizado para as caixas de enquete do Insta nativo.` }
-      ]
-    },
-    {
-      id:'so_1007_3', date:'2026-07-10', time:'18h00', format:'Carrossel',
-      title:'Convite para a Loja de Fábrica',
-      driveFile:'1007_sorv_carrossel1.png',
-      driveUrl:'#',
-      driveHint:'Cores pasteis, 60% branco, foco no ambiente e cardápio',
-      texto:`Você sabia que somos Loja de Fábrica? 🏭🚫 MENTIRA, AQUI NÃO É FÁBRICA, É MUITO MELHOR! 😉\n\nAqui na Sorvetes Guri a produção é caseira, minuciosa e focada no sabor real.\n\nSão mais de 40 sabores no buffet esperando por você nesse final de semana.\n\n📍 Loja de fábrica, buffet com mais de 40 sabores e cardápio gourmet\n\n#sorvetesguriturvo #lojadefabrica #turvopr #marcalocal #sorveteriaturvo`,
-      secoes:[
-        { num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Carrossel\nDimensões: 1080 × 1350px (4:5)\nRegra 60-30-10: 60% Branco, 30% Marrom chocolate, 10% Amarelo CTA.` },
-        { num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Institucional\nObjetivo: Reforçar o diferencial "Loja de Fábrica (que não é fábrica)".\nCTA: Venha nos visitar.` },
-        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
-          conteudo:`Uso intenso de negative space para não cansar a leitura em slides sequenciais.` }
-      ]
-    },
-    {
-      id:'so_1007_4', date:'2026-07-10', time:'21h30', format:'Reel',
-      title:'Destaque do Buffet Completo',
-      driveFile:'1007_sorv_reel1.mp4',
-      driveUrl:'#',
-      driveHint:'Vídeo do buffet, capa escura',
-      texto:`Um buffet de respeito. É impossível escolher um só! 🤤\n\nQual a sua combinação perfeita? A gente tá aqui esperando você até mais tarde.\n\n📍 Loja de fábrica, buffet com mais de 40 sabores e cardápio gourmet\n\n#sorvetesguriturvo #buffetdesorvete #turvopr #sobremesaperfeita`,
-      secoes:[
-        { num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Reel\nDimensões: 1080 × 1920px (9:16)\nRegra 60-30-10 (Capa): 60% Escuro, 30% Foco, 10% Título Laranja.` },
-        { num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Desejo / Reel\nObjetivo: Apetite appeal total, som imersivo ASMR.\nCTA: Qual sua combinação?` },
-        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
-          conteudo:`Capa forte com contraste de branco em fundo escuro, garantindo leitura hiper-rápida (max 15% da área).` }
-      ]
-    },
-
-    {hex:'#003f6b',name:'Azul escuro'},
-    {hex:'#00b4d8',name:'Azul turquesa'},
-    {hex:'#f5c800',name:'Amarelo'},
-    {hex:'#ffffff',name:'Branco'}
-  ],
-  gympulse:[
-    {
-      id:'gp_0907_1', date:'2026-07-09', time:'15h00', format:'Carrossel',
-      title:'Dica de Gestão para Academias',
-      driveFile:'0907_gym_carrossel1.png',
-      driveUrl:'#',
-      driveHint:'Design limpo em tons de azul escuro',
-      texto:`Retenção é a métrica que separa donos de academia estressados de gestores prósperos. 📈\n\nNão basta atrair o aluno, você precisa engajá-old. E como se faz isso? Com dados, não achismos.\n\nVeja no carrossel 3 táticas que usam a GympulsePro para triplicar a interação dos alunos na primeira semana.\n\n🚀 Agende uma demonstração em gympulse.pro\n\n#gympulsepro #gestaoacademia #retencaodealunos #fitnessbusiness`,
-      secoes:[
-        { num:'01', cor:'#f5c200', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Carrossel\nDimensões: 1080 × 1350px (4:5)\nRegra 60-30-10: 60% Azul escuro, 30% Blocos Azul claro, 10% CTA Laranja.\nTexto max 20%.` },
-        { num:'02', cor:'#a78bfa', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Educação / B2B\nObjetivo: Autoridade em gestão.\nCTA: Agendar demonstração.` },
-        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
-          conteudo:`Design muito clean corporativo/tech. Evitar blocos massivos de texto nos cards. 40% de respiro obrigatório.` }
-      ]
-    },
-    {
-      id:'gp_0907_2', date:'2026-07-09', time:'19h30', format:'Post',
-      title:'Prova Social: Retenção Aumentada',
-      driveFile:'0907_gym_post1.png',
-      driveUrl:'#',
-      driveHint:'Gráfico central simples',
-      texto:`Os números falam por si. 📊\n\nNossos parceiros reportam um aumento médio de 42% na retenção de novos alunos no primeiro trimestre após implementação da GympulsePro.\n\nGestão por dados + Gamificação.\n\nGympulsePro | Solução inteligente para Academias.\n\n#gympulsepro #b2bfitness #retencao #dados #softwareacademia`,
-      secoes:[
-        { num:'01', cor:'#f5c200', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Post Feed Instagram\nDimensões: 1080 × 1350px (4:5)\nRegra 60-30-10: 60% Grafite/Chumbo, 30% Gráficos azuis, 10% CTA Verde/Laranja.` },
-        { num:'02', cor:'#a78bfa', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Prova Social B2B\nObjetivo: Construir confiança no mercado B2B.\nCTA: Visite gympulse.pro.` },
-        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
-          conteudo:`Uma única métrica gigante centralizada. Texto ocupa 15%. Resto vazio e sofisticado.` }
-      ]
-    },
-    {
-      id:'gp_1007_1', date:'2026-07-10', time:'15h30', format:'Post',
-      title:'Novo Feature: Painel de Engajamento',
-      driveFile:'1007_gym_post1.png',
-      driveUrl:'#',
-      driveHint:'Interface de software estilizada em perspectiva 3D',
-      texto:`Enxergar quem está quase desistindo antes mesmo do aluno faltar 3 vezes. 👁️‍🗨️\n\nCom o nosso novo Painel de Engajamento, você prevê churns e atua cirurgicamente nos alunos de risco.\n\nIsso é gestão de comunidade ativa.\n\n🚀 Agende um trial em gympulse.pro\n\n#gympulsepro #engajamento #tecnologiafitness #softwaregestao #inovacao`,
-      secoes:[
-        { num:'01', cor:'#f5c200', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Post Feed Instagram\nDimensões: 1080 × 1350px (4:5)\nRegra 60-30-10: 60% Azul petróleo, 30% UI mockups, 10% Botão de CTA.` },
-        { num:'02', cor:'#a78bfa', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Produto / Showcase\nObjetivo: Mostrar valor palpável da UI do software.\nCTA: Agendar Trial.` },
-        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
-          conteudo:`A tela da plataforma deve ser linda e estar em foco. Texto da arte limitado a título curto e incisivo.` }
-      ]
-    },
-    {
-      id:'gp_1007_2', date:'2026-07-10', time:'19h30', format:'Story',
-      title:'Bastidores / Call com cliente',
-      driveFile:'1007_gym_story1.png',
-      driveUrl:'#',
-      driveHint:'Filtro escuro sobre ambiente tech corporativo',
-      texto:`Fechando a semana alinhando estratégias com mais um parceiro incrível no interior de SP. 🤝🚀\n\nSemana que vem tem mais!\n\n#gympulsepro #bastidores #partnership`,
-      secoes:[
-        { num:'01', cor:'#f5c200', titulo:'FORMATO E ESPECIFICAÇÕES',
-          conteudo:`Tipo: Story Instagram\nDimensões: 1080 × 1920px (9:16)\nRegra 60-30-10: 60% Foto Escurecida, 30% Texto branco limpo, 10% Sticker.` },
-        { num:'02', cor:'#a78bfa', titulo:'INTENÇÃO DA POSTAGEM',
-          conteudo:`Tipo: Networking / Social\nObjetivo: Mostrar movimento e crescimento real da empresa.\nCTA: Nenhum (brand awareness).` },
-        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
-          conteudo:`Cena profissional orgânica. Foco na autoridade.` }
-      ]
-    },
-
-    {hex:'#f5c200',name:'Amarelo'},
-    {hex:'#ffffff',name:'Branco'},
-    {hex:'#0d0d0d',name:'Preto'},
-    {hex:'#1c1c1c',name:'Cinza escuro'}
-  ]
-};
-
-const CONTENT = {
-  academia:[
     {
       id:'ac1', date:'2026-06-16', time:'08h', format:'Story',
       title:'Prova Social — Pequenas vitórias reais',
@@ -5067,6 +4875,134 @@ Tom tranquilo, fotografia real.`
   ],
 
   sorveteria:[
+    {
+      id:'so_0907_1', date:'2026-07-09', time:'09h00', format:'Story',
+      title:'Bastidores (Produção)',
+      driveFile:'0907_sorv_story1.png',
+      driveUrl:'#',
+      driveHint:'Vídeo ou foto da produção de caldas.',
+      texto:`Começando o dia preparando a magia de sempre! 🍫💛\n\nTudo fresco e com muito amor.\n\n#sorvetesguriturvo #turvopr #producaopropria`,
+      secoes:[
+        { num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Story Instagram\nDimensões: 1080 × 1920px (9:16)\nRegra 60-30-10: 60% Amarelo claro, 30% Marrom, 10% CTA Vermelho.\nTexto max: 20%.` },
+        { num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Bastidores\nObjetivo: Humanização e comprovação de qualidade (feito na hora).\nCTA: Venha conhecer.` },
+        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
+          conteudo:`Muito espaço em branco, foco total no doce/calda. Tipografia limpa.` }
+      ]
+    },
+    {
+      id:'so_0907_2', date:'2026-07-09', time:'13h00', format:'Post',
+      title:'Linha Fitness: Açaí com Whey',
+      driveFile:'0907_sorv_post1.png',
+      driveUrl:'#',
+      driveHint:'Açaí com Whey isolado em fundo limpo branco/gelo',
+      texto:`O pós-treino pode ser gostoso de verdade. 💜\n\nNossa linha Inverno Fitness com Açaí com Whey Protein continua com 20% OFF.\n\nAproveita pra repor a proteína da melhor forma possível. Sabor incrível e zero desculpas.\n\n📍 Loja de fábrica, buffet com mais de 40 sabores e cardápio gourmet\n\n#sorvetesguriturvo #invernofitness #acaicomwhey #turvopr #marcalocal`,
+      secoes:[
+        { num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Post Feed Instagram\nDimensões: 1080 × 1350px (4:5)\nRegra 60-30-10: 60% Fundo Branco/Gelo, 30% Detalhes roxos, 10% Selo Verde (20% OFF).\nTexto max 20%.` },
+        { num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Oferta / Produto do dia\nObjetivo: Vender a linha Inverno Fitness e reforçar promoção.\nCTA: Vem provar.` },
+        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
+          conteudo:`Muito negative space (respiro). Produto perfeitamente centralizado com alto contraste.` }
+      ]
+    },
+    {
+      id:'so_0907_3', date:'2026-07-09', time:'18h30', format:'Story',
+      title:'Fim de tarde: Buffet 40 Sabores',
+      driveFile:'0907_sorv_story2.png',
+      driveUrl:'#',
+      driveHint:'Visual quente de pôr do sol na vitrine',
+      texto:`Final de tarde pede aquela taça merecida. 🌅🍦\n\nJá estamos te esperando.\n\n#sorvetesguriturvo #fimdetarde #turvopr`,
+      secoes:[
+        { num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Story Instagram\nDimensões: 1080 × 1920px (9:16)\nRegra 60-30-10: 60% Tons quentes/Laranja, 30% Marrom, 10% Pin de Localização.` },
+        { num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Gatilho / Lifestyle\nObjetivo: Atrair cliente pós-expediente.\nCTA: Clique no local.` },
+        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
+          conteudo:`Foco emocional, luz de entardecer. Texto curtíssimo.` }
+      ]
+    },
+    {
+      id:'so_0907_4', date:'2026-07-09', time:'21h00', format:'Post',
+      title:'Promoção Pós-Jantar',
+      driveFile:'0907_sorv_post2.png',
+      driveUrl:'#',
+      driveHint:'Fundo escuro elegante com detalhes dourados',
+      texto:`A sobremesa oficial do seu final de noite. ✨\n\nNosso cardápio gourmet tá cheio de opções que fecham o dia com chave de ouro. Pede agora pelo WhatsApp que levamos até você.\n\n📍 Loja de fábrica, buffet com mais de 40 sabores e cardápio gourmet\n\n#sorvetesguriturvo #sobremesagourmet #deliveryturvo #turvopr #marcalocal`,
+      secoes:[
+        { num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Post Feed Instagram\nDimensões: 1080 × 1350px (4:5)\nRegra 60-30-10: 60% Fundo escuro (preto/chumbo), 30% Dourado/Amarelo, 10% CTA Amarelo vibrante.` },
+        { num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Venda / Delivery\nObjetivo: Estimular pedido noturno pelo whats.\nCTA: Pede no WhatsApp.` },
+        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
+          conteudo:`Elegante, contrastante. O foco tem que ser o apetite appeal noturno. Sem textos longos na imagem.` }
+      ]
+    },
+    {
+      id:'so_1007_1', date:'2026-07-10', time:'10h00', format:'Post',
+      title:'Sabores Especiais do Fim de Semana',
+      driveFile:'1007_sorv_post1.png',
+      driveUrl:'#',
+      driveHint:'Fundo amarelo claro, produto rosa (morango/frutas vermelhas)',
+      texto:`O final de semana começou oficialmente por aqui! 🍓💛\n\nJá viu as novidades frescas da vitrine hoje? Todo dia uma produção própria caprichada, saindo direto da nossa loja de fábrica.\n\nVem escolher o seu favorito!\n\n📍 Loja de fábrica, buffet com mais de 40 sabores e cardápio gourmet\n\n#sorvetesguriturvo #sextou #turvopr #marcalocal #sorvetefresco`,
+      secoes:[
+        { num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Post Feed Instagram\nDimensões: 1080 × 1350px (4:5)\nRegra 60-30-10: 60% Amarelo claro, 30% Rosa, 10% Selo CTA Verde menta.\nTexto max: 15%.` },
+        { num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Awareness / Produto\nObjetivo: Anunciar novidades e qualidade "loja de fábrica".\nCTA: Vem escolher.` },
+        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
+          conteudo:`Mínimo ruído visual. O sorvete tem que ser o herói absoluto da peça.` }
+      ]
+    },
+    {
+      id:'so_1007_2', date:'2026-07-10', time:'14h00', format:'Story',
+      title:'Enquete de Sabores (Clássico x Fitness)',
+      driveFile:'1007_sorv_story1.png',
+      driveUrl:'#',
+      driveHint:'Tela dividida, branco dominante',
+      texto:`E aí, qual o mood dessa sexta?\n\n[Enquete: Açaí com Whey | Taça Supreme Chocolate]\n\n#sorvetesguriturvo #enquete #turvopr`,
+      secoes:[
+        { num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Story Instagram\nDimensões: 1080 × 1920px (9:16)\nRegra 60-30-10: 60% Branco, 30% Roxos/Marrons, 10% Caixas de votação.` },
+        { num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Interação\nObjetivo: Gerar resposta interativa.\nCTA: Votar na enquete.` },
+        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
+          conteudo:`Deixar o espaço 100% otimizado para as caixas de enquete do Insta nativo.` }
+      ]
+    },
+    {
+      id:'so_1007_3', date:'2026-07-10', time:'18h00', format:'Carrossel',
+      title:'Convite para a Loja de Fábrica',
+      driveFile:'1007_sorv_carrossel1.png',
+      driveUrl:'#',
+      driveHint:'Cores pasteis, 60% branco, foco no ambiente e cardápio',
+      texto:`Você sabia que somos Loja de Fábrica? 🏭🚫 MENTIRA, AQUI NÃO É FÁBRICA, É MUITO MELHOR! 😉\n\nAqui na Sorvetes Guri a produção é caseira, minuciosa e focada no sabor real.\n\nSão mais de 40 sabores no buffet esperando por você nesse final de semana.\n\n📍 Loja de fábrica, buffet com mais de 40 sabores e cardápio gourmet\n\n#sorvetesguriturvo #lojadefabrica #turvopr #marcalocal #sorveteriaturvo`,
+      secoes:[
+        { num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Carrossel\nDimensões: 1080 × 1350px (4:5)\nRegra 60-30-10: 60% Branco, 30% Marrom chocolate, 10% Amarelo CTA.` },
+        { num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Institucional\nObjetivo: Reforçar o diferencial "Loja de Fábrica (que não é fábrica)".\nCTA: Venha nos visitar.` },
+        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
+          conteudo:`Uso intenso de negative space para não cansar a leitura em slides sequenciais.` }
+      ]
+    },
+    {
+      id:'so_1007_4', date:'2026-07-10', time:'21h30', format:'Reel',
+      title:'Destaque do Buffet Completo',
+      driveFile:'1007_sorv_reel1.mp4',
+      driveUrl:'#',
+      driveHint:'Vídeo do buffet, capa escura',
+      texto:`Um buffet de respeito. É impossível escolher um só! 🤤\n\nQual a sua combinação perfeita? A gente tá aqui esperando você até mais tarde.\n\n📍 Loja de fábrica, buffet com mais de 40 sabores e cardápio gourmet\n\n#sorvetesguriturvo #buffetdesorvete #turvopr #sobremesaperfeita`,
+      secoes:[
+        { num:'01', cor:'#f5c800', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Reel\nDimensões: 1080 × 1920px (9:16)\nRegra 60-30-10 (Capa): 60% Escuro, 30% Foco, 10% Título Laranja.` },
+        { num:'02', cor:'#00b4d8', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Desejo / Reel\nObjetivo: Apetite appeal total, som imersivo ASMR.\nCTA: Qual sua combinação?` },
+        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
+          conteudo:`Capa forte com contraste de branco em fundo escuro, garantindo leitura hiper-rápida (max 15% da área).` }
+      ]
+    },
     {
       id:'so1', date:'2026-06-16', time:'09h', format:'Story',
       title:'Produto do Dia — Abertura de semana',
@@ -10367,6 +10303,70 @@ Leve, animado.`
   ],
 
   gympulse:[
+    {
+      id:'gp_0907_1', date:'2026-07-09', time:'15h00', format:'Carrossel',
+      title:'Dica de Gestão para Academias',
+      driveFile:'0907_gym_carrossel1.png',
+      driveUrl:'#',
+      driveHint:'Design limpo em tons de azul escuro',
+      texto:`Retenção é a métrica que separa donos de academia estressados de gestores prósperos. 📈\n\nNão basta atrair o aluno, você precisa engajá-old. E como se faz isso? Com dados, não achismos.\n\nVeja no carrossel 3 táticas que usam a GympulsePro para triplicar a interação dos alunos na primeira semana.\n\n🚀 Agende uma demonstração em gympulse.pro\n\n#gympulsepro #gestaoacademia #retencaodealunos #fitnessbusiness`,
+      secoes:[
+        { num:'01', cor:'#f5c200', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Carrossel\nDimensões: 1080 × 1350px (4:5)\nRegra 60-30-10: 60% Azul escuro, 30% Blocos Azul claro, 10% CTA Laranja.\nTexto max 20%.` },
+        { num:'02', cor:'#a78bfa', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Educação / B2B\nObjetivo: Autoridade em gestão.\nCTA: Agendar demonstração.` },
+        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
+          conteudo:`Design muito clean corporativo/tech. Evitar blocos massivos de texto nos cards. 40% de respiro obrigatório.` }
+      ]
+    },
+    {
+      id:'gp_0907_2', date:'2026-07-09', time:'19h30', format:'Post',
+      title:'Prova Social: Retenção Aumentada',
+      driveFile:'0907_gym_post1.png',
+      driveUrl:'#',
+      driveHint:'Gráfico central simples',
+      texto:`Os números falam por si. 📊\n\nNossos parceiros reportam um aumento médio de 42% na retenção de novos alunos no primeiro trimestre após implementação da GympulsePro.\n\nGestão por dados + Gamificação.\n\nGympulsePro | Solução inteligente para Academias.\n\n#gympulsepro #b2bfitness #retencao #dados #softwareacademia`,
+      secoes:[
+        { num:'01', cor:'#f5c200', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Post Feed Instagram\nDimensões: 1080 × 1350px (4:5)\nRegra 60-30-10: 60% Grafite/Chumbo, 30% Gráficos azuis, 10% CTA Verde/Laranja.` },
+        { num:'02', cor:'#a78bfa', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Prova Social B2B\nObjetivo: Construir confiança no mercado B2B.\nCTA: Visite gympulse.pro.` },
+        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
+          conteudo:`Uma única métrica gigante centralizada. Texto ocupa 15%. Resto vazio e sofisticado.` }
+      ]
+    },
+    {
+      id:'gp_1007_1', date:'2026-07-10', time:'15h30', format:'Post',
+      title:'Novo Feature: Painel de Engajamento',
+      driveFile:'1007_gym_post1.png',
+      driveUrl:'#',
+      driveHint:'Interface de software estilizada em perspectiva 3D',
+      texto:`Enxergar quem está quase desistindo antes mesmo do aluno faltar 3 vezes. 👁️‍🗨️\n\nCom o nosso novo Painel de Engajamento, você prevê churns e atua cirurgicamente nos alunos de risco.\n\nIsso é gestão de comunidade ativa.\n\n🚀 Agende um trial em gympulse.pro\n\n#gympulsepro #engajamento #tecnologiafitness #softwaregestao #inovacao`,
+      secoes:[
+        { num:'01', cor:'#f5c200', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Post Feed Instagram\nDimensões: 1080 × 1350px (4:5)\nRegra 60-30-10: 60% Azul petróleo, 30% UI mockups, 10% Botão de CTA.` },
+        { num:'02', cor:'#a78bfa', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Produto / Showcase\nObjetivo: Mostrar valor palpável da UI do software.\nCTA: Agendar Trial.` },
+        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
+          conteudo:`A tela da plataforma deve ser linda e estar em foco. Texto da arte limitado a título curto e incisivo.` }
+      ]
+    },
+    {
+      id:'gp_1007_2', date:'2026-07-10', time:'19h30', format:'Story',
+      title:'Bastidores / Call com cliente',
+      driveFile:'1007_gym_story1.png',
+      driveUrl:'#',
+      driveHint:'Filtro escuro sobre ambiente tech corporativo',
+      texto:`Fechando a semana alinhando estratégias com mais um parceiro incrível no interior de SP. 🤝🚀\n\nSemana que vem tem mais!\n\n#gympulsepro #bastidores #partnership`,
+      secoes:[
+        { num:'01', cor:'#f5c200', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo:`Tipo: Story Instagram\nDimensões: 1080 × 1920px (9:16)\nRegra 60-30-10: 60% Foto Escurecida, 30% Texto branco limpo, 10% Sticker.` },
+        { num:'02', cor:'#a78bfa', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo:`Tipo: Networking / Social\nObjetivo: Mostrar movimento e crescimento real da empresa.\nCTA: Nenhum (brand awareness).` },
+        { num:'03', cor:'#2c3e50', titulo:'BRIEFING CRIATIVO (IA)',
+          conteudo:`Cena profissional orgânica. Foco na autoridade.` }
+      ]
+    },
     {
       id:'gy2', date:'2026-06-16', time:'10h', format:'Post',
       title:'Funcionalidade — Monitor ao vivo',
