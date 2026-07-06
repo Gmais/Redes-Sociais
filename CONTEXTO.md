@@ -18,7 +18,7 @@ Painel web privado para planejamento, execução e histórico de conteúdo Insta
    - Campanha ativa (jun/jul 2026): "Mês do Amigo" (20% desc para referenciador + novo aluno, meta 50-60 novos)
 
 2. **Sorvetes Guri** (Turvo/PR)
-   - Sorveteria com buffet, loja de fábrica e cardápio gourmet
+   - Sorveteria com buffet, loja de fábrica (não é fábrica) e cardápio gourmet
    - Instagram: @sorvetesguriturvo_
    - Website: www.sorvetesguriturvo.com.br
    - Campanha ativa (jun/jul 2026): "Inverno Fitness" (açaí com whey, linha zero açúcar, 20% desc)
@@ -115,6 +115,22 @@ Painel web privado para planejamento, execução e histórico de conteúdo Insta
 - ✅ **Mix de formatos** (Post, Carrossel, Story, Reel)
 - ✅ **Humanização com staff:** cada colaborador apresentado individualmente
 - ✅ **Posicionamento indireto:** referenciar diferenças sem citar concorrentes
+
+### Diretrizes Visuais e de Leitura (Aplicáveis a todas as marcas)
+*O objetivo principal é garantir o equilíbrio visual e a leitura rápida.*
+
+**1. Proporção de Cores (Regra 60-30-10):**
+- **60% Cor Dominante:** Geralmente o fundo. Serve como base visual da peça.
+- **30% Cor Secundária:** Estrutura o design e dá suporte à marca (textos secundários, caixas, grafismos).
+- **10% Cor de Destaque:** Usada exclusivamente para o CTA (Call to Action) e botões de conversão.
+
+**2. Proporção de Textos:**
+- **Anúncios Digitais (Meta/Google):** O texto deve ocupar, no máximo, 20% da área total da imagem. Mais do que isso reduz a entrega e o engajamento.
+- **Hierarquia de Leitura:** 70% do impacto do texto deve vir do título principal (headline), deixando o restante para subtítulos e corpo.
+
+**3. Boas Práticas Visuais:**
+- **Espaço em Branco:** Pelo menos 30% a 40% da peça deve ser "vazia" (respiro) para não cansar os olhos.
+- **Contraste Forte:** Texto escuro em fundo claro (ou vice-versa). Nunca use cores parecidas para fundo e tipografia.
 
 ### Staff para Posts de Humanização
 **Academia:**

@@ -1,726 +1,4 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel de Conteúdo — Gilson</title>
-<meta name="build-id" content="2026-07-03-03">
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
-:root {
-  --bg: #08080d;
-  --s1: #101018;
-  --s2: #18181f;
-  --border: #26262f;
-  --done: #00e676;
-  --txt: #f5f5fa;
-  --txt2: #9999bb;
-  --txt3: #44445a;
-}
-
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-body { background: var(--bg); color: var(--txt); font-family: 'Inter', sans-serif; min-height: 100vh; overflow-x: hidden; }
-
-.hero { position: relative; padding: 28px 24px 0; overflow: hidden; }
-.hero-bg {
-  position: absolute; inset: 0;
-  background: radial-gradient(ellipse 600px 300px at 80% -20%, rgba(230,57,0,0.15) 0%, transparent 70%),
-              radial-gradient(ellipse 400px 200px at -10% 50%, rgba(245,194,0,0.08) 0%, transparent 70%);
-  pointer-events: none;
-}
-.hero-top { display: flex; align-items: center; justify-content: space-between; position: relative; }
-.brand { display: flex; align-items: center; gap: 10px; }
-.brand-icon { width:36px; height:36px; background: linear-gradient(135deg,#e63900,#003f6b); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; }
-.brand-text { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:0.08em; line-height:1; }
-.brand-text span { color: #e63900; }
-.date-pill { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:var(--txt3); background:var(--s2); border:1px solid var(--border); padding:6px 12px; border-radius:20px; }
-
-.sync-indicator {
-  display:flex; align-items:center; gap:6px;
-  font-size:10px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;
-  color:var(--txt3); background:var(--s2); border:1px solid var(--border);
-  padding:6px 10px; border-radius:20px; margin-left:8px;
-}
-.sync-dot {
-  width:8px; height:8px; border-radius:50%; flex-shrink:0;
-  background:#f5a623; transition:background 0.3s;
-}
-.sync-dot.synced { background:#00e676; }
-.sync-dot.syncing {
-  background:#f5a623;
-  animation: pulse-sync 1s ease-in-out infinite;
-}
-@keyframes pulse-sync {
-  0%, 100% { opacity:1; }
-  50% { opacity:0.4; }
-}
-
-#updateBanner {
-  position:fixed; top:0; left:0; right:0; z-index:9999;
-  background:#e63900; color:#fff; text-align:center;
-  font-family:'Inter',sans-serif; font-weight:700; font-size:13px;
-  padding:10px 16px; cursor:pointer; letter-spacing:0.02em;
-  box-shadow:0 2px 12px rgba(0,0,0,0.4);
-  animation:update-banner-pulse 1.4s ease-in-out infinite;
-}
-#updateBanner:hover { background:#ff4d1a; }
-@keyframes update-banner-pulse {
-  0%, 100% { opacity:1; }
-  50% { opacity:0.85; }
-}
-
-.copy-all-btn {
-  font-size:10px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase;
-  color:#0d0d0d; background:#f5c200; border:1px solid #f5c200;
-  border-radius:6px; padding:7px 12px; cursor:pointer; font-family:'Inter',sans-serif;
-  transition:all 0.15s; display:inline-flex; align-items:center; gap:6px;
-  margin-top:8px;
-}
-.copy-all-btn:hover { background:#ffd700; }
-
-.publish-block { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:8px 0 0; padding:0 0; }
-.publish-btn {
-  font-size:10px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase;
-  color:#fff; background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);
-  border:none; border-radius:6px; padding:8px 14px; cursor:pointer; font-family:'Inter',sans-serif;
-  transition:opacity 0.15s;
-}
-.publish-btn:hover { opacity:0.85; }
-.publish-badge {
-  font-size:10px; font-weight:700; letter-spacing:0.04em; padding:6px 10px; border-radius:6px;
-  display:inline-flex; align-items:center; gap:4px;
-}
-.publish-badge.ok { background:#0d2e1f; color:#4ade80; border:1px solid #1e5a3a; }
-.publish-badge.publishing { background:#2e2410; color:#f5c200; border:1px solid #5a4a1e; }
-.publish-badge.error { background:#2e1212; color:#ff6b6b; border:1px solid #5a1e1e; }
-.publish-badge.pending { background:#1c1c1c; color:#999; border:1px solid #333; }
-.publish-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-.publish-row + .publish-row { margin-top:8px; }
-.review-toggle {
-  display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700;
-  color:#ccc; cursor:pointer; user-select:none; background:#1c1c1c; border:1px solid #333;
-  border-radius:6px; padding:6px 10px;
-}
-.review-toggle input { accent-color:#4ade80; cursor:pointer; }
-
-.tabs-wrap { position:sticky; top:0; z-index:50; background:var(--bg); border-bottom:1px solid var(--border); margin-top:20px; }
-.tabs { display:flex; overflow-x:auto; scrollbar-width:none; padding:0 24px; gap:4px; }
-.tabs::-webkit-scrollbar { display:none; }
-.tab { position:relative; padding:14px 18px 12px; font-size:13px; font-weight:700; color:var(--txt3); cursor:pointer; white-space:nowrap; background:none; border:none; font-family:'Inter',sans-serif; transition:color 0.2s; }
-.tab::after { content:''; position:absolute; bottom:-1px; left:0; right:0; height:2px; border-radius:2px 2px 0 0; opacity:0; transition:opacity 0.2s; }
-.tab[data-p="academia"].on { color:#e63900; }
-.tab[data-p="academia"].on::after { background:linear-gradient(90deg,#e63900,#003f6b); opacity:1; }
-.tab[data-p="sorveteria"].on { color:#f5c800; }
-.tab[data-p="sorveteria"].on::after { background:linear-gradient(90deg,#003f6b,#00b4d8,#f5c800); opacity:1; }
-.tab[data-p="gympulse"].on { color:#f5c200; }
-.tab[data-p="gympulse"].on::after { background:linear-gradient(90deg,#f5c200,#fff); opacity:1; }
-.tab[data-p="historico"].on { color:var(--txt); }
-.tab[data-p="historico"].on::after { background:linear-gradient(90deg,#e63900,#f5c800,#f5c200); opacity:1; }
-.tab[data-p="estrategia"].on { color:#a78bfa; }
-.tab[data-p="estrategia"].on::after { background:linear-gradient(90deg,#a78bfa,#6d28d9); opacity:1; }
-
-main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
-.panel { display:none; }
-.panel.on { display:block; }
-
-.stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:28px; }
-.stat { background:var(--s1); border:1px solid var(--border); border-radius:10px; padding:14px 12px; text-align:center; }
-.stat-n { font-family:'Bebas Neue',sans-serif; font-size:30px; line-height:1; }
-.stat-l { font-size:9px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--txt3); margin-top:4px; }
-
-.dgroup { margin-bottom:36px; }
-.dlabel { font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--txt3); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
-.dlabel::after { content:''; flex:1; height:1px; background:var(--border); }
-
-.card { background:var(--s1); border:1px solid var(--border); border-radius:14px; margin-bottom:10px; overflow:hidden; transition:transform 0.15s; }
-.card:hover { transform:translateY(-1px); }
-.card[data-p="academia"] { border-left:3px solid #e63900; }
-.card[data-p="sorveteria"] { border-left:3px solid #f5c800; }
-.card[data-p="gympulse"] { border-left:3px solid #f5c200; }
-.card.done { opacity:0.45; filter:saturate(0.3); }
-
-.chead { display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer; user-select:none; transition:background 0.15s; }
-.chead:hover { background:var(--s2); }
-.chk { width:24px; height:24px; border-radius:7px; border:2px solid var(--border); background:transparent; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:white; transition:all 0.15s; font-family:'Inter',sans-serif; }
-.chk:hover { border-color:var(--done); }
-.card.done .chk { background:var(--done); border-color:var(--done); }
-.cmeta { flex:1; display:flex; align-items:center; gap:8px; min-width:0; }
-.ctag { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; padding:4px 9px; border-radius:5px; flex-shrink:0; }
-.card[data-p="academia"] .ctag { background:rgba(230,57,0,0.15); color:#e63900; }
-.card[data-p="sorveteria"] .ctag { background:rgba(245,200,0,0.15); color:#f5c800; }
-.card[data-p="gympulse"] .ctag { background:rgba(245,194,0,0.15); color:#f5c200; }
-.cfmt { font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--txt3); background:var(--s2); padding:4px 8px; border-radius:4px; flex-shrink:0; }
-.cfmt.ready {
-  color:#0d0d0d; background:#39ff14; box-shadow:0 0 8px #39ff14, 0 0 2px #39ff14 inset;
-  animation: neon-pulse 1.8s ease-in-out infinite;
-}
-.cfmt.published {
-  color:#0d0d0d; background:#00e5ff; box-shadow:0 0 8px #00e5ff, 0 0 2px #00e5ff inset;
-  animation: neon-pulse-blue 1.8s ease-in-out infinite;
-}
-@keyframes neon-pulse {
-  0%, 100% { box-shadow:0 0 6px #39ff14; }
-  50% { box-shadow:0 0 14px #39ff14, 0 0 4px #fff inset; }
-}
-@keyframes neon-pulse-blue {
-  0%, 100% { box-shadow:0 0 6px #00e5ff; }
-  50% { box-shadow:0 0 14px #00e5ff, 0 0 4px #fff inset; }
-}
-.ctitle { font-size:13px; font-weight:600; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.cchev { font-size:10px; color:var(--txt3); flex-shrink:0; transition:transform 0.2s; }
-.card.open .cchev { transform:rotate(180deg); }
-
-.cbody { display:none; padding:0 16px 18px; border-top:1px solid var(--border); }
-.card.open .cbody { display:block; }
-
-/* BLOCOS */
-.block { margin-top:16px; }
-.blabel { font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
-
-/* Drive */
-.drive-ref { display:flex; align-items:center; gap:10px; background:rgba(0,180,216,0.06); border:1px solid rgba(0,180,216,0.15); border-radius:8px; padding:10px 12px; }
-
-/* ── IMAGE UPLOAD WIDGET ── */
-.upload-box {
-  border:1.5px dashed rgba(0,180,216,0.35); border-radius:10px;
-  padding:16px; text-align:center; cursor:pointer;
-  background:rgba(0,180,216,0.04); transition:all 0.15s;
-}
-.upload-box:hover { border-color:#00b4d8; background:rgba(0,180,216,0.08); }
-.upload-box.dragover { border-color:#00b4d8; background:rgba(0,180,216,0.12); }
-.upload-box-icon { font-size:22px; margin-bottom:6px; }
-.upload-box-text { font-size:12px; color:var(--txt2,#ccc); font-weight:600; }
-.upload-box-hint { font-size:10px; color:var(--txt3,#777); margin-top:2px; }
-.upload-box input[type="file"] { display:none; }
-.upload-box.needs-image, .upload-preview.needs-image {
-  border-color:#ff6b6b !important;
-  box-shadow:0 0 0 3px rgba(255,107,107,0.25);
-  animation: needsImageShake 0.45s ease;
-}
-@keyframes needsImageShake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-6px); }
-  40% { transform: translateX(6px); }
-  60% { transform: translateX(-4px); }
-  80% { transform: translateX(4px); }
-}
-
-.upload-preview {
-  display:flex; align-items:center; gap:10px;
-  background:rgba(0,180,216,0.06); border:1px solid rgba(0,180,216,0.15);
-  border-radius:8px; padding:10px 12px;
-}
-.upload-thumb {
-  width:44px; height:44px; border-radius:6px; object-fit:cover; flex-shrink:0;
-  background:#0a0f0a; border:1px solid rgba(0,180,216,0.2);
-}
-.upload-preview-svg {
-  display:flex; flex-direction:column; gap:10px;
-  background:rgba(0,180,216,0.06); border:1px solid rgba(0,180,216,0.15);
-  border-radius:8px; padding:10px 12px;
-}
-.upload-preview-svg img {
-  width:100%; border-radius:6px; object-fit:contain;
-  background:#0a0f0a; border:1px solid rgba(0,180,216,0.15);
-  cursor:pointer;
-}
-.upload-preview-svg .svg-label { font-size:11px; color:#4ade80; font-weight:600; }
-.upload-preview-svg .svg-actions { display:flex; gap:8px; align-items:center; }
-.upload-thumb-icon { font-size:20px; flex-shrink:0; }
-.upload-info { flex:1; min-width:0; }
-.upload-name { font-size:12.5px; font-weight:600; color:var(--txt,#fff); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.upload-status { font-size:10.5px; color:#4ade80; margin-top:2px; }
-.upload-status.zernio-ok { color:#4ade80; }
-.upload-status.zernio-error { color:#ff6b6b; }
-.upload-status.zernio-error .upload-replace { margin-left:6px; }
-.upload-status.error { color:#ff6b6b; }
-.upload-status.loading { color:#f5c200; }
-.upload-actions { display:flex; gap:6px; flex-shrink:0; }
-.upload-link, .upload-replace {
-  font-size:10px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase;
-  padding:6px 10px; border-radius:6px; cursor:pointer; text-decoration:none;
-  border:1px solid rgba(0,180,216,0.3); color:#00b4d8; background:transparent;
-  font-family:'Inter',sans-serif; white-space:nowrap;
-}
-.upload-link:hover, .upload-replace:hover { background:rgba(0,180,216,0.12); }
-
-.drive-name { font-size:12px; font-weight:600; color:#00b4d8; }
-.drive-hint { font-size:11px; color:var(--txt3); margin-top:2px; }
-.drive-link { font-size:10px; font-weight:700; color:#00b4d8; text-decoration:none; background:rgba(0,180,216,0.1); padding:4px 8px; border-radius:4px; white-space:nowrap; flex-shrink:0; }
-
-/* Texto */
-.tbox { background:var(--s2); border:1px solid var(--border); border-radius:9px; padding:13px 14px; font-size:13px; line-height:1.75; color:var(--txt); white-space:pre-wrap; }
-
-/* Prompt sections */
-.prompt-wrap { background:#080c08; border:1px solid #1a281a; border-radius:12px; overflow:hidden; }
-
-.prompt-section { border-bottom:1px solid #1a281a; }
-.prompt-section:last-child { border:none; }
-
-.psec-header { display:flex; align-items:center; gap:8px; padding:10px 14px; background:#0a0f0a; cursor:pointer; user-select:none; }
-.psec-header:hover { background:#0d130d; }
-.psec-num { width:22px; height:22px; border-radius:50%; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.psec-title { font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; flex:1; }
-.psec-chev { font-size:9px; color:#2a4a2a; transition:transform 0.2s; }
-.prompt-section.open .psec-chev { transform:rotate(180deg); }
-
-.psec-body { display:none; padding:12px 14px; }
-.prompt-section.open .psec-body { display:block; }
-
-.psec-content { font-family:'JetBrains Mono',monospace; font-size:11.5px; line-height:1.75; color:#4ade80; white-space:pre-wrap; }
-
-/* Paleta */
-.palette-bar { display:flex; gap:6px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
-.pchip { display:flex; align-items:center; gap:5px; background:var(--s2); border:1px solid var(--border); border-radius:5px; padding:4px 8px; }
-.pchip-dot { width:14px; height:14px; border-radius:3px; flex-shrink:0; }
-.pchip-hex { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--txt3); }
-.pchip-name { font-size:10px; color:var(--txt2); }
-
-
-
-.copybtn { margin-top:8px; display:block; margin-left:auto; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--txt3); background:var(--s2); border:1px solid var(--border); border-radius:5px; padding:5px 10px; cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.15s; }
-.copybtn:hover { color:var(--txt); border-color:var(--txt3); }
-
-/* Histórico */
-.hentry { display:flex; align-items:center; gap:12px; background:var(--s1); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:8px; }
-.hdot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
-.hinfo { flex:1; min-width:0; }
-.htitle { font-size:13px; font-weight:600; }
-.hsub { font-size:11px; color:var(--txt3); margin-top:2px; }
-.hbadge { font-size:9px; font-weight:800; letter-spacing:0.1em; padding:4px 9px; border-radius:4px; flex-shrink:0; }
-.hbadge.done { background:rgba(0,230,118,0.12); color:var(--done); }
-.hbadge.pend { background:var(--s2); color:var(--txt3); }
-
-.empty { text-align:center; padding:70px 20px; color:var(--txt3); }
-.empty .eico { font-size:40px; margin-bottom:14px; }
-
-@media(max-width:600px) {
-  .stats { grid-template-columns:repeat(2,1fr); }
-  main { padding:20px 14px 80px; }
-}
-
-/* ── EDITOR MODAL ── */
-.edit-btn {
-  font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
-  color:var(--txt3); background:var(--s2); border:1px solid var(--border);
-  border-radius:5px; padding:5px 10px; cursor:pointer; font-family:'Inter',sans-serif;
-  transition:all 0.15s; display:inline-flex; align-items:center; gap:5px;
-  margin-top:8px;
-}
-.edit-btn:hover { color:#f5c200; border-color:#f5c200; }
-.edit-btn-primary {
-  color:#0d0d0d; background:#f5c200; border-color:#f5c200;
-}
-.edit-btn-primary:hover { background:#ffd700; border-color:#ffd700; }
-
-.modal-overlay {
-  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
-  z-index:1000; align-items:flex-start; justify-content:center;
-  padding:20px; overflow-y:auto;
-}
-.modal-overlay.on { display:flex; }
-
-.modal {
-  background:var(--s1); border:1px solid var(--border); border-radius:16px;
-  width:100%; max-width:700px; margin:auto;
-  animation: modalIn 0.2s ease;
-}
-
-@keyframes modalIn {
-  from { opacity:0; transform:translateY(-16px); }
-  to   { opacity:1; transform:translateY(0); }
-}
-
-.modal-header {
-  display:flex; align-items:center; justify-content:space-between;
-  padding:18px 20px; border-bottom:1px solid var(--border);
-  position:sticky; top:0; background:var(--s1); border-radius:16px 16px 0 0; z-index:1;
-}
-
-.modal-title {
-  font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:0.06em;
-}
-
-.modal-close {
-  width:32px; height:32px; border-radius:8px; border:1px solid var(--border);
-  background:var(--s2); color:var(--txt2); cursor:pointer; font-size:16px;
-  display:flex; align-items:center; justify-content:center;
-  font-family:'Inter',sans-serif; transition:all 0.15s;
-}
-.modal-close:hover { color:var(--txt); border-color:var(--txt3); }
-
-.modal-body { padding:20px; display:flex; flex-direction:column; gap:18px; }
-
-.modal-footer {
-  display:flex; gap:10px; justify-content:flex-end;
-  padding:16px 20px; border-top:1px solid var(--border);
-  position:sticky; bottom:0; background:var(--s1);
-  border-radius:0 0 16px 16px;
-}
-
-.field-group { display:flex; flex-direction:column; gap:6px; }
-
-.field-label {
-  font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
-  display:flex; align-items:center; gap:6px;
-}
-
-.field-input {
-  background:var(--s2); border:1px solid var(--border); border-radius:8px;
-  color:var(--txt); font-family:'Inter',sans-serif; font-size:13px;
-  padding:10px 12px; width:100%; line-height:1.6; resize:vertical;
-  transition:border-color 0.15s;
-}
-.field-input:focus { outline:none; border-color:#f5c200; }
-
-.field-input.mono {
-  font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#4ade80;
-  background:#080c08; border-color:#1a281a;
-}
-.field-input.mono:focus { border-color:#4ade80; }
-
-.field-hint { font-size:11px; color:var(--txt3); }
-
-.saved-toast {
-  position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
-  background:#f5c200; color:#0d0d0d; font-weight:700; font-size:13px;
-  padding:10px 20px; border-radius:8px; z-index:2000;
-  opacity:0; transition:all 0.3s; pointer-events:none; white-space:nowrap;
-}
-.saved-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-
-.field-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-@media(max-width:500px) { .field-row { grid-template-columns:1fr; } }
-
-
-/* ── ESTRATÉGIA ── */
-.strat-profile { margin-bottom:40px; }
-
-.strat-profile-header {
-  display:flex; align-items:center; gap:12px;
-  margin-bottom:20px; padding-bottom:12px;
-  border-bottom:2px solid var(--border);
-}
-
-.strat-profile-dot {
-  width:12px; height:12px; border-radius:50%; flex-shrink:0;
-}
-
-.strat-profile-name {
-  font-family:'Bebas Neue',sans-serif; font-size:22px;
-  letter-spacing:0.06em;
-}
-
-.strat-profile-handle {
-  font-size:12px; color:var(--txt3); font-family:'JetBrains Mono',monospace;
-}
-
-.strat-section { margin-bottom:16px; }
-
-.strat-label {
-  font-size:10px; font-weight:700; letter-spacing:0.12em;
-  text-transform:uppercase; margin-bottom:8px;
-  display:flex; align-items:center; gap:6px;
-}
-
-.strat-box {
-  background:var(--s2); border:1px solid var(--border);
-  border-radius:9px; padding:14px;
-  font-size:13px; line-height:1.75; color:var(--txt);
-  white-space:pre-wrap;
-}
-
-.strat-box.bio {
-  font-family:'JetBrains Mono',monospace; font-size:12px;
-  color:#4ade80; background:#080c08; border-color:#1a281a;
-}
-
-.strat-box.hashtags {
-  font-size:12px; color:var(--txt2); line-height:2;
-}
-
-.strat-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-
-.strat-card {
-  background:var(--s2); border:1px solid var(--border);
-  border-radius:9px; padding:14px;
-}
-
-.strat-card-label {
-  font-size:10px; font-weight:700; letter-spacing:0.1em;
-  text-transform:uppercase; color:var(--txt3); margin-bottom:8px;
-}
-
-.strat-card-value {
-  font-family:'Bebas Neue',sans-serif; font-size:28px;
-  line-height:1; margin-bottom:4px;
-}
-
-.strat-card-sub { font-size:11px; color:var(--txt3); }
-
-.strat-cta-list { display:flex; flex-direction:column; gap:6px; }
-
-.strat-cta-item {
-  display:flex; align-items:flex-start; gap:10px;
-  background:var(--s2); border:1px solid var(--border);
-  border-radius:8px; padding:10px 12px;
-}
-
-.strat-cta-type {
-  font-size:9px; font-weight:800; letter-spacing:0.08em;
-  padding:3px 7px; border-radius:4px; flex-shrink:0; margin-top:1px;
-}
-
-.strat-cta-text { font-size:12.5px; color:var(--txt2); line-height:1.4; }
-
-.strat-action-list { display:flex; flex-direction:column; gap:6px; }
-
-.strat-action {
-  display:flex; align-items:center; gap:10px;
-  background:var(--s2); border:1px solid var(--border);
-  border-radius:8px; padding:10px 14px;
-  font-size:13px; color:var(--txt);
-}
-
-.strat-action-num {
-  width:22px; height:22px; border-radius:50%; flex-shrink:0;
-  display:flex; align-items:center; justify-content:center;
-  font-size:10px; font-weight:800;
-}
-
-.strat-divider {
-  height:1px; background:var(--border); margin:32px 0;
-}
-
-@media(max-width:500px) { .strat-grid { grid-template-columns:1fr; } }
-
-.drive-connect-btn {
-  font-size:11px; font-weight:700; letter-spacing:0.03em;
-  padding:6px 12px; border-radius:7px; cursor:pointer;
-  border:1px solid rgba(0,180,216,0.35); background:rgba(0,180,216,0.08);
-  color:#00b4d8; font-family:'Inter',sans-serif; transition:all 0.15s;
-  white-space:nowrap;
-}
-.drive-connect-btn:hover { background:rgba(0,180,216,0.15); }
-.drive-connect-btn.connected {
-  border-color:rgba(74,222,128,0.4); background:rgba(74,222,128,0.1); color:#4ade80;
-}
-
-/* ── HIDE COMPLETED FILTER ── */
-.filter-bar {
-  display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:12px; padding:12px 0 0; width:100%;
-}
-.hide-done-check {
-  display:inline-flex; align-items:center; gap:8px; cursor:pointer;
-  user-select:none; padding:8px 14px; border-radius:8px;
-  background:var(--s2,#151515); border:1px solid var(--border,#262626);
-  transition:border-color 0.15s;
-}
-.hide-done-check:hover { border-color:#f5c200; }
-.hide-done-check input[type="checkbox"] { display:none; }
-.hide-done-check .checkmark {
-  width:18px; height:18px; border-radius:4px; border:2px solid var(--txt3,#666);
-  display:inline-flex; align-items:center; justify-content:center;
-  flex-shrink:0; transition:all 0.15s; font-size:12px; color:#0d0d0d;
-}
-.hide-done-check input[type="checkbox"]:checked + .checkmark {
-  background:#f5c200; border-color:#f5c200;
-}
-.hide-done-check input[type="checkbox"]:checked + .checkmark::after {
-  content:'✓'; font-weight:700;
-}
-.hide-done-label {
-  font-size:12px; font-weight:600; letter-spacing:0.02em; color:var(--txt2,#ccc);
-}
-
-
-/* Melhorias v3 */
-.clone-btn {
-  font-size:10px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase;
-  color:#fff; background:#6366f1; border:1px solid #6366f1;
-  border-radius:6px; padding:7px 12px; cursor:pointer; font-family:'Inter',sans-serif;
-  transition:all 0.15s; display:inline-flex; align-items:center; gap:4px;
-}
-.clone-btn:hover { background:#818cf8; border-color:#818cf8; }
-
-.carousel-slides {
-  margin-top:10px; padding:10px; background:var(--s2);
-  border:1px solid var(--border); border-radius:8px;
-}
-.carousel-label {
-  font-size:11px; font-weight:700; color:var(--txt2);
-  margin-bottom:8px; text-transform:uppercase; letter-spacing:0.06em;
-}
-.carousel-slide {
-  display:flex; align-items:center; justify-content:space-between;
-  padding:6px 10px; margin:4px 0; background:var(--s1);
-  border-radius:4px; font-size:12px; color:var(--txt2);
-}
-.slide-ok { color:#4ade80; font-weight:700; }
-.slide-remove {
-  background:none; border:none; color:#ff6b6b;
-  cursor:pointer; font-size:14px; padding:2px 6px;
-}
-.slide-add-btn {
-  width:100%; margin-top:6px; padding:8px;
-  background:transparent; border:1px dashed var(--border);
-  color:var(--txt3); border-radius:4px; cursor:pointer;
-  font-size:12px; font-weight:600; transition:all 0.2s;
-}
-.slide-add-btn:hover { border-color:#f5c200; color:#f5c200; }
-
-.hist-group { margin-bottom:2px; }
-.hist-group-header {
-  display:flex; align-items:center; justify-content:space-between;
-  padding:14px 20px; background:var(--s2); cursor:pointer;
-  font-weight:700; font-size:14px; color:var(--txt);
-  border:1px solid var(--border); border-radius:8px;
-  transition:background 0.2s; user-select:none;
-}
-.hist-group-header:hover { background:var(--s1); }
-.hist-group-meta { display:flex; align-items:center; gap:10px; }
-.hist-group-count { font-size:11px; font-weight:600; color:var(--txt3); }
-.hist-group-chev {
-  display:inline-block; font-size:12px; color:var(--txt3);
-  transition:transform 0.3s;
-}
-.hist-group-body {
-  padding:4px 0 8px;
-}
-
-
-.clone-ref {
-  background:var(--s2); border:1px solid var(--border); border-radius:8px;
-  padding:12px 14px; margin-bottom:16px;
-}
-.clone-ref-label { font-size:10px; font-weight:700; color:var(--txt3); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px; }
-.clone-ref-title { font-size:14px; font-weight:600; color:var(--txt); }
-#cloneModal { display:none; }
-#cloneModal.open { display:flex; }
-
-.delete-btn {
-  font-size:10px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase;
-  color:#ff6b6b; background:transparent; border:1px solid #ff6b6b33;
-  border-radius:6px; padding:7px 12px; cursor:pointer; font-family:'Inter',sans-serif;
-  transition:all 0.15s; display:inline-flex; align-items:center; gap:4px;
-}
-.delete-btn:hover { background:#ff6b6b22; border-color:#ff6b6b; }
-
-.new-post-btn {
-  font-size:12px; font-weight:800; letter-spacing:0.06em;
-  color:#0d0d0d; background:linear-gradient(135deg,#4ade80,#22c55e);
-  border:none; border-radius:8px; padding:10px 18px; cursor:pointer;
-  font-family:'Inter',sans-serif; transition:all 0.15s;
-  display:inline-flex; align-items:center; gap:6px;
-  box-shadow:0 0 12px rgba(74,222,128,0.3);
-}
-.new-post-btn:hover { background:linear-gradient(135deg,#22c55e,#16a34a); box-shadow:0 0 20px rgba(74,222,128,0.5); }
-#newPostModal { display:none; }
-#newPostModal.open { display:flex; }
-.np-profile-bar { display:flex; gap:6px; margin-bottom:16px; }
-.np-profile-opt {
-  flex:1; padding:10px 8px; border-radius:6px; border:2px solid var(--border);
-  background:var(--s2); color:var(--txt2); font-size:12px; font-weight:700;
-  cursor:pointer; text-align:center; font-family:'Inter',sans-serif; transition:all 0.2s;
-}
-.np-profile-opt.np-profile-active { border-color:var(--pc); color:var(--pc); background:color-mix(in srgb, var(--pc) 10%, var(--s1)); }
-.np-profile-opt:hover { border-color:var(--pc); }
-.np-media-area { padding:12px; background:var(--s2); border:1px solid var(--border); border-radius:8px; }
-.np-media-btn {
-  width:100%; padding:12px; background:transparent; border:1px dashed var(--border);
-  color:var(--txt2); border-radius:6px; cursor:pointer; font-size:13px; font-weight:600;
-  transition:all 0.2s; font-family:'Inter',sans-serif;
-}
-.np-media-btn:hover { border-color:#f5c200; color:#f5c200; }
-.np-media-hint { font-size:11px; color:var(--txt3); margin-top:6px; text-align:center; }
-.np-media-list { margin-top:8px; display:flex; flex-direction:column; gap:4px; }
-.np-divider { height:1px; background:var(--border); margin:16px 0; }
-.np-schedule-toggle {
-  display:flex; align-items:center; gap:8px; cursor:pointer;
-  font-size:13px; font-weight:600; color:var(--txt); user-select:none;
-}
-.np-schedule-toggle input { accent-color:#f5a623; width:18px; height:18px; cursor:pointer; }
-.np-extra-dates { display:flex; flex-direction:column; gap:6px; margin-bottom:8px; }
-
-#upload-progress-bar {
-  display:none; position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
-  z-index:9999; background:#1a1a2e; border:1px solid #333; border-radius:12px;
-  padding:12px 20px; min-width:320px; flex-direction:column; gap:8px;
-  box-shadow:0 8px 32px rgba(0,0,0,0.6);
-}
-.up-inner {
-  width:100%; height:8px; background:#262626; border-radius:4px; overflow:hidden;
-}
-.up-fill {
-  height:100%; width:0%; background:linear-gradient(90deg,#4ade80,#22c55e);
-  border-radius:4px; transition:width 0.3s;
-}
-.up-text {
-  font-size:12px; color:#ccc; text-align:center; font-weight:600;
-}
-
-.unpublish-btn {
-  font-size:10px; font-weight:700; letter-spacing:0.04em;
-  color:#fbbf24; background:transparent; border:1px solid #fbbf2433;
-  border-radius:6px; padding:6px 10px; cursor:pointer; font-family:'Inter',sans-serif;
-  transition:all 0.15s; white-space:nowrap;
-}
-.unpublish-btn:hover { background:#fbbf2422; border-color:#fbbf24; }
-
-.unpublish-btn {
-  font-size:10px; font-weight:700; color:#fbbf24; background:transparent;
-  border:1px solid #fbbf2433; border-radius:6px; padding:6px 10px;
-  cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.15s;
-}
-.unpublish-btn:hover { background:#fbbf2422; border-color:#fbbf24; }
-</style>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-</head>
-<body>
-
-<div class="hero">
-  <div class="hero-bg"></div>
-  <div class="hero-top">
-    <div class="brand">
-      <div class="brand-icon">🎯</div>
-      <div class="brand-text">PAINEL <span>GILSON</span></div>
-    </div>
-    <div class="date-pill" id="datepill"></div>
-    <div class="sync-indicator">
-      <div class="sync-dot syncing" id="syncDot"></div>
-      <span id="syncLabel">Sincronizando</span>
-    </div>
-    <button class="drive-connect-btn" id="driveConnectBtn" onclick="connectGoogleDrive()">🔗 Conectar Drive</button>
-  </div>
-</div>
-
-<div class="tabs-wrap">
-  <div class="tabs">
-    <button class="tab on" data-p="academia" onclick="go('academia',this)">🏋️ Academia</button>
-    <button class="tab" data-p="sorveteria" onclick="go('sorveteria',this)">🍦 Sorveteria</button>
-    <button class="tab" data-p="gympulse" onclick="go('gympulse',this)">🎮 GympulsePro</button>
-    <button class="tab" data-p="historico" onclick="go('historico',this)">📋 Histórico</button>
-  </div>
-</div>
-
-<div class="filter-bar">
-  <label class="hide-done-check">
-    <input type="checkbox" id="hideDoneCheck" onchange="toggleHideDone()">
-    <span class="checkmark"></span>
-    <span class="hide-done-label">Esconder ações já realizadas</span>
-  </label>
-  <button class="new-post-btn" id="newPostBtn" onclick="openNewPostModal()">＋ Nova Postagem</button>
-</div>
-
-<main>
-  <div class="panel on" id="p-academia"></div>
-  <div class="panel" id="p-sorveteria"></div>
-  <div class="panel" id="p-gympulse"></div>
-  <div class="panel" id="p-historico"></div>
-</main>
-
-<script>
 
 // ╔══════════════════════════════════════════════════════════════╗
 // ║  PAINEL GILSON — VERSÃO ESTÁVEL COM TODAS AS CORREÇÕES      ║
@@ -13791,19 +13069,59 @@ async function pullRemoteState() {
   }
 }
 
+// ── FALLBACK: merge manual via read-merge-write ──
+// Usado quando a RPC merge_panel_state não existe ou falha.
+async function manualMergePatches(patches) {
+  // 1. Ler estado atual do Supabase
+  const res = await supabaseFetch('painel_gilson_state?select=key,value');
+  if (!res.ok) throw new Error('Falha ao ler estado para merge manual');
+  const rows = await res.json();
+  const getRow = (k) => (rows.find(r => r.key === k) || {}).value || {};
+  const getArr = (k) => { const v = (rows.find(r => r.key === k) || {}).value; return Array.isArray(v) ? v : []; };
+
+  // 2. Mesclar cada chave
+  const upserts = [];
+  const now = new Date().toISOString();
+  if (patches.done) {
+    const merged = { ...getRow('done'), ...patches.done };
+    upserts.push({ key: 'done', value: merged, updated_at: now });
+  }
+  if (patches.edits) {
+    const merged = { ...getRow('edits'), ...patches.edits };
+    upserts.push({ key: 'edits', value: merged, updated_at: now });
+  }
+  if (patches.images) {
+    const merged = { ...getRow('images'), ...patches.images };
+    upserts.push({ key: 'images', value: merged, updated_at: now });
+  }
+  if (patches.published) {
+    const merged = { ...getRow('published'), ...patches.published };
+    upserts.push({ key: 'published', value: merged, updated_at: now });
+  }
+  if (patches.reviewed) {
+    const merged = { ...getRow('reviewed'), ...patches.reviewed };
+    upserts.push({ key: 'reviewed', value: merged, updated_at: now });
+  }
+  if (patches.deleted) {
+    const merged = Array.from(new Set([...getArr('deleted'), ...patches.deleted]));
+    upserts.push({ key: 'deleted', value: merged, updated_at: now });
+  }
+
+  // 3. Gravar tudo de volta
+  if (upserts.length > 0) {
+    const writeRes = await supabaseFetch('painel_gilson_state', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(upserts)
+    });
+    if (!writeRes.ok) throw new Error('Falha no merge manual: ' + writeRes.status);
+  }
+}
+
 async function pushRemoteState() {
   setSyncStatus('syncing');
   try {
-    // Antigamente essa função lia o estado remoto inteiro, mesclava as
-    // mudanças locais por cima e regravava o blob inteiro de volta. Isso
-    // cria uma corrida clássica de leia-modifique-grave: se dois aparelhos
-    // fazem esse ciclo ao mesmo tempo, quem grava por último apaga
-    // silenciosamente o que o outro tinha acabado de salvar (foi assim que
-    // um "done" sumiu e um card excluído voltou). Agora só mandamos o DELTA
-    // (só o que este aparelho realmente mudou) e quem mescla é o Postgres,
-    // atomicamente, via merge_panel_state — sem essa janela de corrida.
-
-    // 1. Coletar apenas o delta local (o que está pendente de sync)
+    // Coleta o delta local (o que está pendente de sync)
     const localEdits = {};
     const localImages = {};
     const localPublished = {};
@@ -13815,15 +13133,12 @@ async function pushRemoteState() {
         if (item.date !== today) return;
         if (seenInManifest.has(item.id)) return;
         seenInManifest.add(item.id);
-        
-        // Manifesto: dados que o servidor (cron) precisa pra publicar sem
-        // depender do navegador. item.texto/format já refletem edições aplicadas.
-        // O status "done" (S[item.id]) é visual e não deve impedir auto-publicação.
-        // Evitamos enviar se já foi publicado (status 'ok').
+        // FIX 2: Manifesto inclui TODOS os posts de hoje que ainda não foram
+        // publicados no Instagram — independente do status "done" (checklist).
+        // O "done" é controle visual do operador, não deve impedir publicação.
         const pubData = getPublishData(item.id);
-        if (pubData && pubData.status === 'ok') return;
-
-        if (ZERNIO_PROFILES.includes(profile)) {
+        const alreadyPublished = !!(pubData && pubData.status === 'ok');
+        if (!alreadyPublished && ZERNIO_PROFILES.includes(profile)) {
           manifest[item.id] = { profile, date: item.date, time: item.time, format: item.format, caption: item.texto };
         }
       });
@@ -13856,13 +13171,24 @@ async function pushRemoteState() {
     if (Object.keys(reviewedPatch).length) patches.reviewed = reviewedPatch;
     if (deletedPatch.length) patches.deleted = deletedPatch;
 
-    // 2. Mesclar o delta atomicamente no servidor (RPC = uma única transação)
+    // FIX 1: Tenta RPC merge_panel_state; se falhar, usa fallback manual.
     if (Object.keys(patches).length > 0) {
-      const mergeRes = await supabaseFetch('rpc/merge_panel_state', {
-        method: 'POST',
-        body: JSON.stringify({ patches })
-      });
-      if (!mergeRes.ok) throw new Error('merge_panel_state falhou: ' + await mergeRes.text());
+      let rpcOk = false;
+      try {
+        const mergeRes = await supabaseFetch('rpc/merge_panel_state', {
+          method: 'POST',
+          body: JSON.stringify({ patches })
+        });
+        rpcOk = mergeRes.ok;
+        if (!rpcOk) {
+          console.warn('⚠️ merge_panel_state falhou (status ' + mergeRes.status + '), usando fallback manual');
+        }
+      } catch (rpcErr) {
+        console.warn('⚠️ merge_panel_state indisponível, usando fallback manual:', rpcErr.message);
+      }
+      if (!rpcOk) {
+        await manualMergePatches(patches);
+      }
     }
 
     // Manifesto continua sendo uma foto completa (não um delta) — é só um
@@ -13873,15 +13199,14 @@ async function pushRemoteState() {
       body: JSON.stringify([{ key: 'manifest', value: manifest, updated_at: new Date().toISOString() }])
     });
 
-    // 3. Sucesso — pode limpar a fila local
+    // Sucesso — pode limpar a fila local
     PENDING.done.clear();
     PENDING.edits.clear();
     PENDING.images.clear();
     PENDING.published.clear();
     PENDING.reviewed.clear();
 
-    // 4. Puxar o estado consolidado do servidor (já mesclado com o que
-    // qualquer outro aparelho tiver mandado) e aplicar localmente.
+    // Puxar o estado consolidado do servidor e aplicar localmente.
     await pullRemoteState();
     renderAll();
     if (typeof buildHist === 'function') buildHist();
@@ -13894,28 +13219,89 @@ async function pushRemoteState() {
 }
 
 let pushTimer = null;
+let pushInProgress = false;
 function scheduleSync() {
   if (pushTimer) clearTimeout(pushTimer);
   setSyncStatus('syncing');
   pushTimer = setTimeout(pushRemoteState, 800);
 }
 
-// Flush any pending sync immediately if the user navigates away, switches
-// tabs, or closes the page before the 800ms debounce fires. This is the
-// fix for "I saved but it didn't show up on the other PC" — previously a
-// quick tab switch/close within 800ms of saving silently dropped the sync.
-function flushSyncNow() {
+// FIX 3: Envia o estado pendente de forma confiável ao fechar/trocar aba.
+// Usa keepalive no fetch (visibilitychange) e sendBeacon como último recurso
+// (pagehide/beforeunload) — o browser garante delivery mesmo após tab close.
+function buildBeaconPayload() {
+  // Monta o manifesto atual pra enviar via sendBeacon
+  const manifest = {};
+  const today = todayBR();
+  const seen = new Set();
+  for (const profile of ['academia','sorveteria','gympulse']) {
+    CONTENT[profile].forEach(item => {
+      if (item.date !== today || seen.has(item.id)) return;
+      seen.add(item.id);
+      const pubData = getPublishData(item.id);
+      const alreadyPublished = !!(pubData && pubData.status === 'ok');
+      if (!alreadyPublished && ZERNIO_PROFILES.includes(profile)) {
+        manifest[item.id] = { profile, date: item.date, time: item.time, format: item.format, caption: item.texto };
+      }
+    });
+  }
+  return JSON.stringify([{ key: 'manifest', value: manifest, updated_at: new Date().toISOString() }]);
+}
+
+function flushSyncNow(useKeepalive) {
+  if (!pushTimer && !hasPendingSync()) return;
   if (pushTimer) {
     clearTimeout(pushTimer);
     pushTimer = null;
+  }
+  if (useKeepalive) {
+    // visibilitychange: fetch com keepalive garante que o browser completa
+    // o request mesmo com a aba em background
+    try {
+      fetch(`${SUPABASE_URL}/rest/v1/painel_gilson_state`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates,return=minimal'
+        },
+        body: buildBeaconPayload(),
+        keepalive: true
+      }).catch(() => {});
+    } catch(e) {}
+    // Agenda o push completo pro momento em que a aba voltar ao foco
+    pushTimer = setTimeout(pushRemoteState, 100);
+  } else {
+    // pagehide/beforeunload: sendBeacon como último recurso
+    try {
+      const blob = new Blob([buildBeaconPayload()], { type: 'application/json' });
+      navigator.sendBeacon(
+        `${SUPABASE_URL}/rest/v1/painel_gilson_state?apikey=${SUPABASE_KEY}`,
+        blob
+      );
+    } catch(e) {}
+    // Tenta push normal também (pode completar se o browser permitir)
     pushRemoteState();
   }
 }
+
+function hasPendingSync() {
+  return PENDING.done.size > 0 || PENDING.edits.size > 0 ||
+         PENDING.images.size > 0 || PENDING.published.size > 0 ||
+         PENDING.reviewed.size > 0;
+}
+
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') flushSyncNow();
+  if (document.visibilityState === 'hidden') {
+    flushSyncNow(true); // keepalive
+  } else {
+    // FIX 4: Ao voltar ao foco, re-sincroniza imediatamente
+    syncWithRemote();
+  }
 });
-window.addEventListener('pagehide', flushSyncNow);
-window.addEventListener('beforeunload', flushSyncNow);
+window.addEventListener('pagehide', () => flushSyncNow(false));
+window.addEventListener('beforeunload', () => flushSyncNow(false));
 
 // ── COPIAR TUDO ──────────────────────────────────────────────────────────
 function copyAll(id) {
@@ -14124,9 +13510,10 @@ async function syncWithRemote() {
   if (now - lastRemoteSync < 30000) return;
   lastRemoteSync = now;
   try {
-    // Retenta enviar as edições locais se houver algo pendente na fila
-    const pendingCount = PENDING.done.size + PENDING.edits.size + PENDING.images.size + PENDING.published.size + PENDING.reviewed.size;
-    if (pendingCount > 0) {
+    // FIX 4: Se há PENDING acumulado (push anterior falhou), retenta o push
+    // completo em vez de só puxar. Isso garante retry automático sem depender
+    // de ação do usuário.
+    if (hasPendingSync()) {
       await pushRemoteState();
     } else {
       await pullRemoteState();
@@ -14143,10 +13530,6 @@ pullRemoteState().then(() => {
 
 // Polling a cada 30s enquanto página está ativa
 setInterval(syncWithRemote, 30000);
-// Sincronizar quando volta pro foco
-document.addEventListener('visibilitychange', function() {
-  if (!document.hidden) syncWithRemote();
-});
 
 // ── DETECTOR DE VERSÃO DESATUALIZADA ────────────────────────────────────
 // Abas abertas há muito tempo sem F5 ficam presas rodando um HTML/JS antigo
@@ -14862,240 +14245,3 @@ if (!localStorage.getItem('lastCleanup') || new Date(localStorage.getItem('lastC
   cleanupOldPosts();
   localStorage.setItem('lastCleanup', new Date().toISOString());
 }
-</script>
-
-<!-- EDIT MODAL -->
-<div class="modal-overlay" id="editModal" onclick="closeModal(event)">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title" id="modalTitle">EDITAR CARD</div>
-      <button class="modal-close" onclick="closeModalDirect()">✕</button>
-    </div>
-    <div class="modal-body">
-
-      <div class="field-row">
-        <div class="field-group">
-          <div class="field-label" style="color:#f5a623">🕐 Horário</div>
-          <input class="field-input" id="edit-time" type="text" placeholder="ex: 08h">
-        </div>
-        <div class="field-group">
-          <div class="field-label" style="color:#f5a623">📐 Formato</div>
-          <select class="field-input" id="edit-format">
-            <option value="Story">Story (1080×1920px)</option>
-            <option value="Post">Post Feed (1080×1080px)</option>
-            <option value="Carrossel">Carrossel (1080×1080px/slide)</option>
-            <option value="Reel">Reel (1080×1920px)</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="field-group">
-        <div class="field-label" style="color:#f5a623">📌 Título do card</div>
-        <input class="field-input" id="edit-title" type="text" placeholder="Título do card">
-      </div>
-
-      <div class="field-group">
-        <div class="field-label" style="color:#f5a623">📝 Texto da postagem</div>
-        <textarea class="field-input" id="edit-texto" rows="6" placeholder="Texto completo da postagem..."></textarea>
-        <div class="field-hint">Esse é o texto que vai para o Instagram</div>
-      </div>
-
-      <div class="field-group">
-        <div class="field-label" style="color:#e63900">01 — Formato e Especificações</div>
-        <textarea class="field-input mono" id="edit-sec01" rows="5" placeholder="Dimensões, DPI, zona segura, estilo visual..."></textarea>
-      </div>
-
-      <div class="field-group">
-        <div class="field-label" style="color:#f5a623">02 — Intenção da Postagem</div>
-        <textarea class="field-input mono" id="edit-sec02" rows="6" placeholder="Tipo, objetivo, funil, ação esperada..."></textarea>
-      </div>
-
-      <div class="field-group">
-        <div class="field-label" style="color:#4ade80">03 — Briefing Criativo Detalhado</div>
-        <textarea class="field-input mono" id="edit-sec03" rows="14" placeholder="Conceito central, composição, paleta, estilo, restrições..."></textarea>
-        <div class="field-hint">Esse é o briefing completo para o ChatGPT/DALL-E 3</div>
-      </div>
-
-    </div>
-    <div class="modal-footer">
-      <button class="edit-btn" onclick="closeModalDirect()">Cancelar</button>
-      <button class="edit-btn edit-btn-primary" onclick="saveEdit()">💾 Salvar alterações</button>
-    </div>
-  </div>
-</div>
-
-<div class="saved-toast" id="savedToast">✓ Alterações salvas!</div>
-
-
-<div class="modal-overlay" id="cloneModal" onclick="closeCloneModal(event)">
-  <div class="modal-box" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      <div class="modal-title">🔄 Reaproveitar Postagem</div>
-      <button class="modal-close" onclick="closeCloneModal({target:document.getElementById('cloneModal'),currentTarget:document.getElementById('cloneModal')})">✕</button>
-    </div>
-    <div class="modal-body">
-
-      <div class="clone-ref">
-        <div class="clone-ref-label">Postagem original:</div>
-        <div class="clone-ref-title" id="clone-ref-title"></div>
-      </div>
-
-      <div class="field-group">
-        <div class="field-label" style="color:#4ade80">📅 Data da postagem</div>
-        <input class="field-input" id="clone-date" type="date">
-      </div>
-
-      <div class="field-group">
-        <div class="field-label" style="color:#00b4d8">🕐 Horário</div>
-        <select class="field-input" id="clone-time">
-          <option value="06h">06h</option>
-          <option value="07h">07h</option>
-          <option value="08h">08h</option>
-          <option value="09h">09h</option>
-          <option value="10h">10h</option>
-          <option value="11h">11h</option>
-          <option value="11h30">11h30</option>
-          <option value="12h">12h</option>
-          <option value="13h">13h</option>
-          <option value="14h">14h</option>
-          <option value="15h">15h</option>
-          <option value="16h">16h</option>
-          <option value="17h">17h</option>
-          <option value="18h">18h</option>
-          <option value="19h">19h</option>
-          <option value="20h">20h</option>
-          <option value="21h">21h</option>
-        </select>
-      </div>
-
-      <div class="field-group">
-        <div class="field-label" style="color:#f5a623">🔁 Repetição</div>
-        <select class="field-input" id="clone-repeat" onchange="updateRepeatInfo()">
-          <option value="none">Não repetir — apenas 1 vez</option>
-          <option value="weekly">Semanal — repetir por 4 semanas</option>
-          <option value="monthly">Mensal — repetir por 3 meses</option>
-        </select>
-        <div class="field-hint" id="clone-repeat-info">Será criado apenas 1 card na data selecionada.</div>
-      </div>
-
-    </div>
-    <div class="modal-footer">
-      <button class="edit-btn" onclick="closeCloneModal({target:document.getElementById('cloneModal'),currentTarget:document.getElementById('cloneModal')})">Cancelar</button>
-      <button class="edit-btn edit-btn-primary" onclick="executeClone()">🔄 Criar postagem(ns)</button>
-    </div>
-  </div>
-</div>
-
-
-<div class="modal-overlay" id="newPostModal" onclick="closeNewPostModal(event)">
-  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:520px">
-    <div class="modal-header">
-      <div class="modal-title">＋ Nova Postagem</div>
-      <button class="modal-close" onclick="closeNewPostModal({target:document.getElementById('newPostModal'),currentTarget:document.getElementById('newPostModal')})">✕</button>
-    </div>
-    <div class="modal-body" style="max-height:70vh;overflow-y:auto">
-
-      <div class="np-profile-bar" id="np-profile-bar"></div>
-
-      <div class="field-group">
-        <div class="field-label" style="color:#4ade80">📅 Data</div>
-        <input class="field-input" id="np-date" type="date">
-      </div>
-
-      <div class="field-group">
-        <div class="field-label" style="color:#00b4d8">🕐 Horário</div>
-        <select class="field-input" id="np-time">
-          <option value="06h">06h</option><option value="07h">07h</option>
-          <option value="08h">08h</option><option value="09h">09h</option>
-          <option value="10h">10h</option><option value="11h">11h</option>
-          <option value="11h30">11h30</option><option value="12h">12h</option>
-          <option value="13h">13h</option><option value="14h">14h</option>
-          <option value="15h">15h</option><option value="16h">16h</option>
-          <option value="17h">17h</option><option value="18h">18h</option>
-          <option value="19h">19h</option><option value="20h">20h</option>
-          <option value="21h">21h</option>
-        </select>
-      </div>
-
-      <div class="field-group">
-        <div class="field-label" style="color:#f5a623">📐 Formato</div>
-        <select class="field-input" id="np-format" onchange="npFormatChanged()">
-          <option value="Story">Story (1080×1920px)</option>
-          <option value="Post">Post Feed (1080×1080px)</option>
-          <option value="Carrossel">Carrossel (1080×1080px/slide)</option>
-          <option value="Reel">Reel (1080×1920px)</option>
-        </select>
-      </div>
-
-      <div class="field-group">
-        <div class="field-label" style="color:#e63900">📌 Título</div>
-        <input class="field-input" id="np-title" type="text" placeholder="Ex: Prova Social — Resultados reais">
-      </div>
-
-      <div class="field-group">
-        <div class="field-label" style="color:#00b4d8">📝 Texto da postagem</div>
-        <textarea class="field-input" id="np-texto" rows="5" placeholder="Texto que vai para o Instagram..."></textarea>
-      </div>
-
-      <div class="field-group">
-        <div class="field-label" style="color:#f5c200">📎 Mídia</div>
-        <div class="np-media-area" id="np-media-area">
-          <button class="np-media-btn" onclick="npSelectMedia()">📤 Selecionar arquivo(s)</button>
-          <div class="np-media-hint" id="np-media-hint">Imagem ou vídeo. Para Carrossel, selecione vários.</div>
-          <div class="np-media-list" id="np-media-list"></div>
-        </div>
-        <input type="file" id="np-media-input" style="display:none" accept="image/*,video/*" onchange="npMediaSelected(this)">
-      </div>
-
-      <div class="np-divider"></div>
-
-      <div class="field-group">
-        <label class="np-schedule-toggle">
-          <input type="checkbox" id="np-schedule-check" onchange="npToggleSchedule()">
-          <span>📆 Agendar para outros dias?</span>
-        </label>
-      </div>
-
-      <div id="np-schedule-section" style="display:none">
-        <div class="field-group">
-          <div class="field-label" style="color:#f5a623">🔁 Repetição</div>
-          <select class="field-input" id="np-repeat" onchange="npRepeatChanged()">
-            <option value="none">Sem repetição — escolher dias manualmente</option>
-            <option value="weekly">Semanal</option>
-            <option value="monthly">Mensal</option>
-          </select>
-        </div>
-
-        <div id="np-manual-days" style="display:none">
-          <div class="field-group">
-            <div class="field-label" style="color:#4ade80">Selecione os dias adicionais</div>
-            <div class="np-extra-dates" id="np-extra-dates">
-              <input class="field-input np-extra-date" type="date">
-            </div>
-            <button class="slide-add-btn" onclick="npAddExtraDate()">+ Adicionar dia</button>
-          </div>
-        </div>
-
-        <div id="np-repeat-range" style="display:none">
-          <div class="field-group">
-            <div class="field-label" style="color:#4ade80">📅 Data de início</div>
-            <input class="field-input" id="np-repeat-start" type="date">
-          </div>
-          <div class="field-group">
-            <div class="field-label" style="color:#ff6b6b">📅 Data de término</div>
-            <input class="field-input" id="np-repeat-end" type="date">
-          </div>
-          <div class="field-hint" id="np-repeat-info"></div>
-        </div>
-      </div>
-
-    </div>
-    <div class="modal-footer">
-      <button class="edit-btn" onclick="closeNewPostModal({target:document.getElementById('newPostModal'),currentTarget:document.getElementById('newPostModal')})">Cancelar</button>
-      <button class="edit-btn edit-btn-primary" onclick="executeNewPost()">✅ Criar Postagem</button>
-    </div>
-  </div>
-</div>
-
-</body>
-</html>
