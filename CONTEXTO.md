@@ -115,6 +115,7 @@ Painel web privado para planejamento, execução e histórico de conteúdo Insta
 - ✅ **Mix de formatos** (Post, Carrossel, Story, Reel)
 - ✅ **Humanização com staff:** cada colaborador apresentado individualmente
 - ✅ **Posicionamento indireto:** referenciar diferenças sem citar concorrentes
+- ⚠️ **Academia — reforçar diferenciais com frequência:** Gilson notou (10/07) que os posts recentes estão com poucas postagens de diferencial competitivo. Ao planejar a semana da Academia, incluir pelo menos 1 post de diferencial a cada poucos dias, alternando entre: equipe 100% CREF, estrutura aeróbica completa, ambiente seguro para mulheres, atendimento próximo/personalizado (conhece seu nome), mensalidade única para todas as modalidades (vs. várias mensalidades avulsas), 27 anos de história/tradição em Turvo. Não deixar esse tipo de post cair de lado em favor só de humanização/prova social/convite.
 
 ### Diretrizes Visuais e de Leitura (Aplicáveis a todas as marcas)
 *O objetivo principal é garantir o equilíbrio visual e a leitura rápida.*
@@ -158,6 +159,11 @@ Painel web privado para planejamento, execução e histórico de conteúdo Insta
 - **Produtos:** Açaí com whey protein, linha zero açúcar
 - **Oferta:** 20% de desconto
 - **Duração:** Junho/Julho
+
+### Sorveteria: Férias Escolares (13 a 24/07)
+- **Período:** 13/07 a 24/07/2026 são dias de férias escolares em Turvo/PR
+- **Ação necessária:** pensar em postagens específicas para esse período — público muda (crianças/famílias com mais tempo livre durante a semana, não só fim de semana), oportunidade de reforçar visitas em dias úteis, combos família, brincadeiras/atividades para crianças na loja, horários alternativos de pico
+- Ao gerar conteúdo da Sorveteria para datas entre 13/07 e 24/07, priorizar ângulo de férias escolares em vez do mix padrão de dia útil
 
 ---
 
