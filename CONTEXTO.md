@@ -160,6 +160,13 @@ Painel web privado para planejamento, execução e histórico de conteúdo Insta
 - **Oferta:** 20% de desconto
 - **Duração:** Junho/Julho
 
+### Sorveteria: "Não Fuja da Dieta!" (lançamento jul/2026)
+- **Slogan:** "Não fuja da dieta!"
+- **Produto:** Linha de Smoothies Proteicos Guri — 3 sabores: Zero Baunilha, Zero Chocolate e Açaí Zero, todos com 21g de proteína
+- **Preço de lançamento:** R$19,90
+- **Status:** Lançada em julho/2026, é uma extensão/evolução da linha fitness já existente (Inverno Fitness — açaí com whey, zero açúcar)
+- **Ação necessária:** priorizar essa campanha no conteúdo da Sorveteria a partir do lançamento (19/07), mantendo a linha "Inverno Fitness" como pano de fundo da mesma proposta (sorvete que cabe na dieta)
+
 ### Sorveteria: Férias Escolares (13 a 24/07)
 - **Período:** 13/07 a 24/07/2026 são dias de férias escolares em Turvo/PR
 - **Ação necessária:** pensar em postagens específicas para esse período — público muda (crianças/famílias com mais tempo livre durante a semana, não só fim de semana), oportunidade de reforçar visitas em dias úteis, combos família, brincadeiras/atividades para crianças na loja, horários alternativos de pico
