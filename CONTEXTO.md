@@ -167,6 +167,13 @@ Painel web privado para planejamento, execução e histórico de conteúdo Insta
 - **Status:** Lançada em julho/2026, é uma extensão/evolução da linha fitness já existente (Inverno Fitness — açaí com whey, zero açúcar)
 - **Ação necessária:** priorizar essa campanha no conteúdo da Sorveteria a partir do lançamento (19/07), mantendo a linha "Inverno Fitness" como pano de fundo da mesma proposta (sorvete que cabe na dieta)
 
+### Sorveteria: "Queridinhos do Papai" (Ago/2026)
+- **Contexto:** Agosto é o mês dos Pais
+- **Produtos:** Linha Leve para Casa — sabores Flocos, Brigadeiro e Napolitano
+- **Preço promocional:** R$24,90 (cada sabor)
+- **Duração:** Mês de agosto/2026 inteiro
+- **Ação necessária:** priorizar essa campanha no conteúdo da Sorveteria a partir de 01/08, mas com espaçamento — não repetir a promoção todos os dias pra não ficar cansativo. Seguir a regra geral de cadência de campanha (~1 post a cada 3 dias), variando o ângulo (lançamento, sabor em destaque, praticidade de ter em casa, etc.), e manter o mix normal (produto do dia com outros sabores, construção de marca, relacionamento) rodando nos demais posts
+
 ### Sorveteria: Férias Escolares (13 a 24/07)
 - **Período:** 13/07 a 24/07/2026 são dias de férias escolares em Turvo/PR
 - **Ação necessária:** pensar em postagens específicas para esse período — público muda (crianças/famílias com mais tempo livre durante a semana, não só fim de semana), oportunidade de reforçar visitas em dias úteis, combos família, brincadeiras/atividades para crianças na loja, horários alternativos de pico
