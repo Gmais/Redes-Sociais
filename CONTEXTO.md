@@ -3,6 +3,16 @@
 ## 🎯 Visão Geral
 Painel web privado para planejamento, execução e histórico de conteúdo Instagram das três marcas de Gilson Caetano. Ferramenta operacional de execução diária, não de planejamento estratégico. Síncrono entre dispositivos via Supabase + auto-publish para Instagram via API Zernio.
 
+## 🔒 Regra fixa — Dimensões de imagem por formato
+
+Esta regra é fixa e vale para todas as três marcas (Academia, Sorveteria, GympulsePro) e para todos os templates de briefing de imagem:
+
+- **Post / Carrossel**: 1080×1350px (proporção 4:5)
+- **Story**: 1080×1920px (proporção 9:16)
+- **Nunca gerar imagem fora da faixa 0.75:1 a 1.91:1 para posts de feed** (Post/Carrossel)
+- Sem texto sobreposto na imagem (todo copy vai na legenda)
+
+
 ---
 
 ## 🏢 Contexto do Negócio
@@ -93,8 +103,9 @@ Painel web privado para planejamento, execução e histórico de conteúdo Insta
 ```
 01. FORMATO / SPECS
    - Tipo: Post, Carrossel, Story, Reel
-   - Dimensões: 1080×1350px (4:5 portrait) para Post/Carrossel
-   - Regra hashtags: 5 hashtags em Post, 0 em Story/Carrossel
+  - Dimensões (regra fixa — Academia, Sorveteria, GympulsePro): Post/Carrossel = 1080×1350px (4:5) | Story = 1080×1920px (9:16)
+      - Nunca gerar imagem fora da faixa 0.75:1 a 1.91:1 para posts de feed (Post/Carrossel)
+      - Regra hashtags: 5 hashtags em Post, 0 em Story/Carrossel
 
 02. INTENÇÃO DO POST
    - Objetivo: tráfego, engajamento, humanização, promo, educação, etc.
