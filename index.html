@@ -19510,6 +19510,29 @@ function copyAll(id) {
 let editingId = null;
 let editingProfile = null;
 
+// Especificações técnicas oficiais por formato — fonte única usada tanto ao
+// criar posts novos (formatSpec) quanto ao sincronizar a seção "01 — Formato
+// e Especificações" com o dropdown de Formato no editor (applyFormatSpec).
+const FORMAT_SPECS = {
+  Story:     { tipo: 'Story Instagram',     dimensoes: '1080 × 1920px (9:16)' },
+  Post:      { tipo: 'Post Feed Instagram', dimensoes: '1080 × 1350px (4:5)' },
+  Carrossel: { tipo: 'Carrossel',           dimensoes: '1080 × 1350px (4:5)' },
+  Reel:      { tipo: 'Reel',                dimensoes: '1080 × 1920px (9:16)' }
+};
+
+// Reescreve só as 2 primeiras linhas (Tipo/Dimensões) da seção 01, preservando
+// o resto (Regra 60-30-10, Texto max etc) que é específico de cada card.
+function applyFormatSpec() {
+  const format = document.getElementById('edit-format').value;
+  const spec = FORMAT_SPECS[format];
+  if (!spec) return;
+  const field = document.getElementById('edit-sec01');
+  const lines = field.value.split('\n');
+  lines[0] = 'Tipo: ' + spec.tipo;
+  lines[1] = 'Dimensões: ' + spec.dimensoes;
+  field.value = lines.join('\n');
+}
+
 function findItem(id) {
   for (const profile of ['academia','sorveteria','gympulse']) {
     const item = CONTENT[profile].find(i => i.id === id);
@@ -20259,13 +20282,8 @@ async function executeNewPost() {
 }
 
 function formatSpec(fmt) {
-  const specs = {
-    'Story': 'Tipo: Story Instagram\nDimensões: 1080 × 1920px (proporção 9:16)\nResolução: 72 DPI\nZona segura: manter elementos entre 150px das bordas superior e inferior',
-    'Post': 'Tipo: Post Feed Instagram\nDimensões: 1080 × 1080px (proporção 1:1)\nResolução: 72 DPI',
-    'Carrossel': 'Tipo: Carrossel Instagram\nDimensões: 1080 × 1080px por slide (proporção 1:1)\nResolução: 72 DPI\nMáximo: 10 slides',
-    'Reel': 'Tipo: Reel Instagram\nDimensões: 1080 × 1920px (proporção 9:16)\nResolução: 72 DPI\nDuração: até 90 segundos'
-  };
-  return specs[fmt] || specs['Post'];
+  const s = FORMAT_SPECS[fmt] || FORMAT_SPECS['Post'];
+  return 'Tipo: ' + s.tipo + '\nDimensões: ' + s.dimensoes + '\nRegra 60-30-10: a definir\nTexto max: 20%.';
 }
 
 // Atualizar info quando datas mudam
@@ -20451,12 +20469,13 @@ if (!localStorage.getItem('lastCleanup') || new Date(localStorage.getItem('lastC
         </div>
         <div class="field-group">
           <div class="field-label" style="color:#f5a623">📐 Formato</div>
-          <select class="field-input" id="edit-format">
-            <option value="Story">Story (1080×1920px)</option>
-            <option value="Post">Post Feed (1080×1080px)</option>
-            <option value="Carrossel">Carrossel (1080×1080px/slide)</option>
-            <option value="Reel">Reel (1080×1920px)</option>
+          <select class="field-input" id="edit-format" onchange="applyFormatSpec()">
+            <option value="Story">Story (1080×1920px, 9:16)</option>
+            <option value="Post">Post Feed (1080×1350px, 4:5)</option>
+            <option value="Carrossel">Carrossel (1080×1350px/slide, 4:5)</option>
+            <option value="Reel">Reel (1080×1920px, 9:16)</option>
           </select>
+          <div class="field-hint">Ao trocar o formato, a seção 01 (Tipo/Dimensões) é atualizada automaticamente</div>
         </div>
       </div>
 
@@ -20591,10 +20610,10 @@ if (!localStorage.getItem('lastCleanup') || new Date(localStorage.getItem('lastC
       <div class="field-group">
         <div class="field-label" style="color:#f5a623">📐 Formato</div>
         <select class="field-input" id="np-format" onchange="npFormatChanged()">
-          <option value="Story">Story (1080×1920px)</option>
-          <option value="Post">Post Feed (1080×1080px)</option>
-          <option value="Carrossel">Carrossel (1080×1080px/slide)</option>
-          <option value="Reel">Reel (1080×1920px)</option>
+          <option value="Story">Story (1080×1920px, 9:16)</option>
+          <option value="Post">Post Feed (1080×1350px, 4:5)</option>
+          <option value="Carrossel">Carrossel (1080×1350px/slide, 4:5)</option>
+          <option value="Reel">Reel (1080×1920px, 9:16)</option>
         </select>
       </div>
 
