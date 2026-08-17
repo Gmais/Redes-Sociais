@@ -19040,7 +19040,8 @@ const PENDING = {
   edits: makePersistentSet('pending_edits'),
   images: makePersistentSet('pending_images'),
   published: makePersistentSet('pending_published'),
-  reviewed: makePersistentSet('pending_reviewed')
+  reviewed: makePersistentSet('pending_reviewed'),
+  bestcontent: makePersistentSet('pending_bestcontent')
 };
 const save=()=>localStorage.setItem(SK,JSON.stringify(S));
 const done=id=>!!S[id];
@@ -19114,6 +19115,42 @@ function applySavedReviewed(){
   }
 }
 
+// ── AGENDAMENTO EXTERNO (BestContent) ──
+// Card marcado como BestContent tem o agendamento/publicação feito por fora
+// (outra plataforma) — o painel só reflete visualmente: verde (🟢 programado)
+// até o horário do card chegar, azul (🔵 publicado) automaticamente depois.
+function getBestContent(id){ return localStorage.getItem('bestcontent_'+id) === '1'; }
+function setBestContent(id, val){
+  localStorage.setItem('bestcontent_'+id, val ? '1' : '0');
+  PENDING.bestcontent.add(id);
+}
+function toggleBestContent(id){
+  const nv = !getBestContent(id);
+  setBestContent(id, nv);
+  rerenderPublishBlock(id);
+  scheduleSync();
+}
+// "08h" -> {h:8,m:0} / "11h30" -> {h:11,m:30} / "08:00" -> {h:8,m:0} — mesmo parser do api/auto-publish.js
+function parseTimeStr(timeStr){
+  const s = (timeStr || '').trim();
+  let m = /^(\d{1,2})h(\d{2})?$/.exec(s);
+  if (m) return { h: parseInt(m[1], 10), m: m[2] ? parseInt(m[2], 10) : 0 };
+  m = /^(\d{1,2}):(\d{2})$/.exec(s);
+  if (m) return { h: parseInt(m[1], 10), m: parseInt(m[2], 10) };
+  return null;
+}
+// Brasil não tem horário de verão desde 2019: America/Sao_Paulo é UTC-3 fixo.
+function scheduledUtcMs(dateStr, timeStr){
+  const t = parseTimeStr(timeStr);
+  if (!t) return null;
+  const [y, mo, d] = dateStr.split('-').map(Number);
+  return Date.UTC(y, mo - 1, d, t.h + 3, t.m);
+}
+function isBestContentDue(item){
+  const due = scheduledUtcMs(item.date, item.time);
+  return due !== null && Date.now() >= due;
+}
+
 function getPublishData(id){
   try { return JSON.parse(localStorage.getItem('pub_'+id) || 'null'); } catch(e) { return null; }
 }
@@ -19134,12 +19171,14 @@ function rerenderPublishBlock(id){
 function updateReadyBadge(id){
   const found = findItem(id);
   if (!found) return;
-  const { profile } = found;
+  const { item, profile } = found;
   const pubData = getPublishData(id);
-  const isPublishedNow = ZERNIO_PROFILES.includes(profile) && !!(pubData && pubData.status === 'ok');
+  const isBestContent = getBestContent(id);
+  const bestContentDue = isBestContent && isBestContentDue(item);
+  const isPublishedNow = (ZERNIO_PROFILES.includes(profile) && !!(pubData && pubData.status === 'ok')) || bestContentDue;
   const imgData2 = getImageData(id);
   const isDriveReady = !!(imgData2 && imgData2.status === 'ok') && getReviewed(id);
-  const isReadyToShow = !isPublishedNow && isDriveReady;
+  const isReadyToShow = !isPublishedNow && (isDriveReady || isBestContent);
   const badgeEl = document.getElementById('cfmt-'+id);
   if (badgeEl) {
     badgeEl.classList.toggle('ready', isReadyToShow);
@@ -19150,6 +19189,23 @@ function publishBlockHTML(id){
   const pub = getPublishData(id);
   const reviewed = getReviewed(id);
   const ready = isReadyForAutoPublish(id);
+  const isBestContent = getBestContent(id);
+
+  const bestContentToggle = `
+    <button type="button" class="review-toggle" id="bcbtn-${id}" onclick="event.stopPropagation(); toggleBestContent('${id}');" style="${isBestContent?'background:#0d3b4a;border-color:#00e5ff;color:#00e5ff;':''}">
+      <span>${isBestContent?'✅':'⬜'} BestContent</span>
+    </button>`;
+
+  if (isBestContent) {
+    const found = findItem(id);
+    const due = found && isBestContentDue(found.item);
+    const statusBadge = due
+      ? `<span class="publish-badge ok">🔵 Horário atingido — publicação por conta do BestContent</span>`
+      : `<span class="publish-badge pending">🟢 Agendado no BestContent — não precisa fazer nada aqui</span>`;
+    return `<div class="publish-block" id="pubblock-${id}">
+      <div class="publish-row">${bestContentToggle}${statusBadge}</div>
+    </div>`;
+  }
 
   const reviewToggle = `
     <button type="button" class="review-toggle" id="revbtn-${id}" onclick="event.stopPropagation(); toggleReviewed('${id}');" style="${reviewed?'background:#14532d;border-color:#4ade80;color:#4ade80;':''}">
@@ -19186,7 +19242,7 @@ function publishBlockHTML(id){
   }
 
   return `<div class="publish-block" id="pubblock-${id}">
-    <div class="publish-row">${reviewToggle}${(!pub || pub.status!=='ok') ? readyBadge : ''}</div>
+    <div class="publish-row">${reviewToggle}${bestContentToggle}${(!pub || pub.status!=='ok') ? readyBadge : ''}</div>
     <div class="publish-row">${actionHTML}</div>
   </div>`;
 }
@@ -19731,10 +19787,12 @@ function cardHTML(item,profile){
 
   const acColor={academia:'#e63900',sorveteria:'#f5c800',gympulse:'#f5c200'}[profile];
   const pubData = getPublishData(item.id);
-  const isPublishedNow = ZERNIO_PROFILES.includes(profile) && !!(pubData && pubData.status === 'ok');
+  const isBestContent = getBestContent(item.id);
+  const bestContentDue = isBestContent && isBestContentDue(item);
+  const isPublishedNow = (ZERNIO_PROFILES.includes(profile) && !!(pubData && pubData.status === 'ok')) || bestContentDue;
   const _img = getImageData(item.id);
   const isDriveReady = !!(_img && _img.status === 'ok') && getReviewed(item.id);
-  const isReadyToShow = !isPublishedNow && isDriveReady;
+  const isReadyToShow = !isPublishedNow && (isDriveReady || isBestContent);
   const cfmtClass = isPublishedNow ? ' published' : (isReadyToShow ? ' ready' : '');
 
   return `
@@ -20261,6 +20319,7 @@ async function pullRemoteState() {
     const imagesRow = rows.find(r => r.key === 'images');
     const publishedRow = rows.find(r => r.key === 'published');
     const reviewedRow = rows.find(r => r.key === 'reviewed');
+    const bestcontentRow = rows.find(r => r.key === 'bestcontent');
     const dynamicRow = rows.find(r => r.key === 'gympulse_dynamic_cards');
     const deletedRow = rows.find(r => r.key === 'deleted');
 
@@ -20282,6 +20341,7 @@ async function pullRemoteState() {
             localStorage.removeItem('edits_' + id);
             localStorage.removeItem('pub_' + id);
             localStorage.removeItem('reviewed_' + id);
+            localStorage.removeItem('bestcontent_' + id);
           }
         }
       });
@@ -20361,7 +20421,14 @@ async function pullRemoteState() {
         }
       });
     }
-    // 🔐 'reviewed' é sincronizado aqui para que as mudanças cheguem em todos os lugares
+    if (bestcontentRow && bestcontentRow.value) {
+      Object.keys(bestcontentRow.value).forEach(id => {
+        if (!PENDING.bestcontent.has(id)) {
+          setBestContent(id, !!bestcontentRow.value[id]);
+        }
+      });
+    }
+    // 🔐 'reviewed'/'bestcontent' são sincronizados aqui para que as mudanças cheguem em todos os lugares
     // desde que não tenha edição pendente no PENDING
     setSyncStatus('synced');
   } catch (e) {
@@ -20423,6 +20490,8 @@ async function pushRemoteState() {
     PENDING.done.forEach(id => { donePatch[id] = !!S[id]; });
     const reviewedPatch = {};
     PENDING.reviewed.forEach(id => { reviewedPatch[id] = getReviewed(id); });
+    const bestcontentPatch = {};
+    PENDING.bestcontent.forEach(id => { bestcontentPatch[id] = getBestContent(id); });
     // Só ids excluídos depois do congelamento de legado (ver getSyncableDeletedIds) —
     // exclusão é monotônica, o merge no servidor só faz união, nunca some.
     const deletedPatch = getSyncableDeletedIds();
@@ -20433,6 +20502,7 @@ async function pushRemoteState() {
     if (Object.keys(localImages).length) patches.images = localImages;
     if (Object.keys(localPublished).length) patches.published = localPublished;
     if (Object.keys(reviewedPatch).length) patches.reviewed = reviewedPatch;
+    if (Object.keys(bestcontentPatch).length) patches.bestcontent = bestcontentPatch;
     if (deletedPatch.length) patches.deleted = deletedPatch;
 
     // 2. Mesclar o delta atomicamente no servidor (RPC = uma única transação)
@@ -20458,6 +20528,7 @@ async function pushRemoteState() {
     PENDING.images.clear();
     PENDING.published.clear();
     PENDING.reviewed.clear();
+    PENDING.bestcontent.clear();
 
     // 4. Puxar o estado consolidado do servidor (já mesclado com o que
     // qualquer outro aparelho tiver mandado) e aplicar localmente.
@@ -20727,7 +20798,7 @@ async function syncWithRemote() {
   lastRemoteSync = now;
   try {
     // Retenta enviar as edições locais se houver algo pendente na fila
-    const pendingCount = PENDING.done.size + PENDING.edits.size + PENDING.images.size + PENDING.published.size + PENDING.reviewed.size;
+    const pendingCount = PENDING.done.size + PENDING.edits.size + PENDING.images.size + PENDING.published.size + PENDING.reviewed.size + PENDING.bestcontent.size;
     if (pendingCount > 0) {
       await pushRemoteState();
     } else {
@@ -20749,6 +20820,16 @@ setInterval(syncWithRemote, 30000);
 document.addEventListener('visibilitychange', function() {
   if (!document.hidden) syncWithRemote();
 });
+
+// Cards marcados como BestContent viram azul sozinhos assim que o horário
+// agendado chega — sem precisar de nenhuma ação do Gilson. Verifica a cada minuto.
+setInterval(function() {
+  for (const profile of ['academia','sorveteria','gympulse']) {
+    CONTENT[profile].forEach(item => {
+      if (getBestContent(item.id)) updateReadyBadge(item.id);
+    });
+  }
+}, 60000);
 
 // ── DETECTOR DE VERSÃO DESATUALIZADA ────────────────────────────────────
 // Abas abertas há muito tempo sem F5 ficam presas rodando um HTML/JS antigo
@@ -21004,6 +21085,7 @@ function deleteCard(id, profile) {
     localStorage.removeItem('edits_' + id);
     localStorage.removeItem('pub_' + id);
     localStorage.removeItem('reviewed_' + id);
+    localStorage.removeItem('bestcontent_' + id);
     delete S[id];
     // Marcar como deletado para não voltar do Supabase
     var deleted = [];
