@@ -157,6 +157,39 @@ Esta regra é fixa e vale para todas as três marcas (Academia, Sorveteria, Gymp
 
 ---
 
+## 🍦 Sorveteria — Estrutura Diária de Conteúdo (regra fixa, atualizada em 18/08/2026)
+
+Substitui a estrutura anterior (2 Post + 2 Story fixos por horário, ver histórico do index.html até 17/08/2026). A partir daqui, aplicar sempre:
+
+### Regra de formatos
+- **Apenas 1 Post por dia.** As demais postagens do dia (geralmente 3) alternam entre **Story** e **Reel**.
+
+### Pilares obrigatórios (dentro dos 4 posts diários)
+1. **Produto da loja — todo dia, sempre em Story.** Fala sobre um produto da lista **Loja** abaixo (descrição, variedade, preço).
+2. **Produto do buffet — todo dia, alternando Story/Post dia a dia.** Fala sobre um produto da lista **Buffet** abaixo (descrição, variedade, preço). Quando o dia cair em "Post" nessa alternância, esse é o único Post do dia (ocupa a cota da regra acima).
+3. **Carrinho de Sorvete para eventos — pelo menos 1 dia por semana.** Post ou Story sobre o serviço de locação do Carrinho de Sorvete Guri para festas de aniversário e eventos.
+4. **Humanização — 1x por semana, de preferência sexta-feira.** Apresentar um dos colaboradores da Sorveteria (Maria Júlia, Maria Clara, Bruna, Luiza Helena — ver lista acima).
+5. **Demais slots do dia:** seguem o mix padrão já existente (Bastidores, Enquete, Construção de Marca, Relacionamento, Promoção de campanha ativa quando houver), em Story ou Reel.
+
+### ⚠️ Preços não disponíveis
+A lista de produtos enviada por Gilson (`produtos - produtos.csv`, 18/08/2026) veio com a coluna de preço em branco. **Não inventar valores** — perguntar a Gilson o preço antes de citar um número específico num post, ou usar linguagem sem valor até ele fornecer.
+
+### Lista de Produtos — Loja (todo item SEM "Caixa 7L sorvete sabor" na descrição, uso: Story diário do pilar 1)
+**Picolés de fruta:** abacaxi com hortelã, abacaxi, açaí 50g, água de coco 50g, groselha, limão, maracujá 50g, melancia 50g, morango, tangerina, uva.
+**Picolés de leite:** café com chocolate, chocolate, coco branco, coco queimado, leite condensado, leitinho, maçã verde, mamão, maracujá, melão chinês, milho verde, morango, torta de limão 50g, uva 50g, manga 50g.
+**Picolés especiais:** paçoca cremosa, uva ao creme, Bonello (choco menta, creme de avelã, iogurte grego com frutas do bosque, pistache), cookie crocante, brownie, doce de leite, alfajor, brigadeiro, flocos, Skimo, tablete, Pinta Língua, unicórnio, Supremo Bianco, Supremo Nero, pé de moleque, Supremo moranguinho, açaí com leitinho 50g, zero açúcar (baunilha, chocolate).
+**Sorvete Guri Gurt:** chiclete, leite condensado, maracujá, morango, uva.
+**Copas, potes e cones (embalagem individual/família):** Copa sorvete 90ml Boca Loca, Copa sundae baunilha trufado, Copa sorvete 80g uva ao creme, Copa 160g açaí zero açúcar, Pote 1L uva ao creme, Pote 400ml Guri + Chanty morango, Pote 400ml Guri + leite trufado, Pote 1kg açaí com guaraná, Pote 1kg açaí com leitinho, Cone confete, Cone torta alemã, Casquinha La Morena, Mini açaí 105g, Mini bombom coco.
+**Baldes 5L/2L (venda para casa):** 5L (alfajor, Choco Dream, clássico bombom, iogurte grego com frutas, marula com brigadeiro artesanal, Guri + Chanty morango, Guri + iogurte com amora, Guri + leite trufado, Gelakuka brigadeiro e leite condensado, Gelakuka creme, Gelakuka napolitano); Pote 2L (choco menta, cookie crocante, floresta negra, Mon Laté, olho de sogra, pavê latino, romeu e julieta, torta alemã, torta de limão, mousse de maracujá trufado, cocada cremosa, paçoca cremosa, abacaxi e coco, abacaxi, brigadeiro, chocolate branco, creme, flocos, napolitano, passas ao rum).
+**Baldone:** Chocolitano, Flocos, Napolitano.
+**Sobremesas e salgados:** Petit gateau chocolate 240g, Petit gateau doce de leite 240g, assado de calabresa com queijo cheddar, bauru de frango, bauru de presunto e queijo, calzone de frango, calzone de palmito, doguinho, hambúrguer.
+
+### Lista de Produtos — Buffet (todo item "Caixa 7L", uso: pilar 2, Story/Post alternado)
+Todos vendidos em caixa de 7 litros para reposição do buffet self-service — inclui as variações "sorvete sabor", "açaí", "gelatto" e "premium"/"zero açúcar":
+Açaí tradicional, açaí com leitinho, açaí com avelã, açaí zero açúcar, gelatto sabor pistache, sorvete sabor: chocolate belga, coco com abóbora, fubá com goiabada, manga com abacaxi e hortelã, manga com maracujá, mousse de maracujá trufado, abacaxi, banana caramelizada, Blue Ice, brigadeiro, café com brigadeiro, chiclete, chocolate branco, chocolate, choco menta, clássico bombom, cocada cremosa, coco branco, cookie crocante, creme, creme de cupuaçu, doce de leite, flocos, floresta negra, iogurte grego com frutas do bosque, leite condensado, maracujá, marula com brigadeiro artesanal, milho verde, Mon Laté, morango, nata, olho de sogra, paçoca cremosa, passas ao rum, pavê latino, pistache, romeu e julieta, torta alemã, torta de limão, uva, uva ao creme; sorvete premium sabor alfajor, sorvete premium sabor Choco Dream; sorvete zero açúcar sabor baunilha, sorvete zero açúcar sabor chocolate.
+
+---
+
 ## 🎬 Campanhas Ativas (Jun/Jul 2026)
 
 ### Academia: "Mês do Amigo"
