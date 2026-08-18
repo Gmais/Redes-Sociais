@@ -19895,7 +19895,7 @@ const save=()=>localStorage.setItem(SK,JSON.stringify(S));
 const done=id=>!!S[id];
 const toggle=id=>{
   const willBeDone = !S[id];
-  if (willBeDone && !hasValidImage(id)) {
+  if (willBeDone && !getBestContent(id) && !hasValidImage(id)) {
     showToast('⚠️ Anexe uma mídia antes de validar como executado');
     flashImageBox(id);
     return;
@@ -20646,7 +20646,7 @@ function cardHTML(item,profile){
   return `
 <div class="card ${d?'done':''}" data-p="${profile}" id="card-${item.id}">
   <div class="chead" onclick="expand('${item.id}')">
-    <button class="chk" title="${hasValidImage(item.id)?'Marcar como executado':'Anexe uma imagem para poder validar'}" onclick="event.stopPropagation();toggle('${item.id}')">${d?'✓':''}</button>
+    <button class="chk" title="${(getBestContent(item.id) || hasValidImage(item.id))?'Marcar como executado':'Anexe uma imagem para poder validar'}" onclick="event.stopPropagation();toggle('${item.id}')">${d?'✓':''}</button>
     <div class="cmeta">
       <span class="ctag">${item.time}</span>
       <span class="cfmt${cfmtClass}" id="cfmt-${item.id}">${item.format}</span>
