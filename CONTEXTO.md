@@ -157,6 +157,27 @@ Esta regra é fixa e vale para todas as três marcas (Academia, Sorveteria, Gymp
 
 ---
 
+## 🏋️ Academia — Estrutura Semanal de Conteúdo (regra fixa, atualizada em 19/08/2026)
+
+Ajusta a cadência de Humanização (deixa de ser diária), adiciona um pilar de "Modalidade" e substitui, só para a Academia, a regra genérica de cadência de campanha por uma cadência baseada na semana do mês.
+
+### Humanização (equipe) — não é mais diária
+- **1 Post por semana, sempre quinta-feira.**
+- **+ 1 Story por semana** (qualquer outro dia).
+- Mantém a mesma ordem de rodízio dos colaboradores já usada (ver [[project_gilson_negocios]] "Rotação de humanização da Academia") — só a cadência muda (2 aparições/semana em vez de quase diária), não a ordem.
+
+### Modalidade — pelo menos 1x por semana
+- Falar sobre uma das modalidades (Musculação, Dança, Spinning, Funcional, Jump, HIIT, aulas do Prof. Wellinton) pelo menos 1x por semana.
+- Alterna o formato a cada semana: numa semana em Story, na semana seguinte em Post.
+
+### Campanha ativa — cadência por semana do mês (substitui, só para a Academia, a regra genérica de "~1 post a cada 3 dias")
+- **1ª semana do mês (dias 1-7):** campanha aparece **todo dia** (Story, Reel ou Post, variando o formato e o ângulo).
+- **2ª e 3ª semanas (dias 8-21, aprox.):** campanha aparece **~3x por semana**.
+- **Última semana do mês (dia 22 até o fim do mês):** campanha aparece **todo dia** de novo.
+- Vale para qualquer campanha ativa da Academia (a atual, "Agosto Vale Mais na Planeta", encerrou em 31/08 — aplicar essa cadência assim que a próxima campanha for definida).
+
+---
+
 ## 🍦 Sorveteria — Estrutura Diária de Conteúdo (regra fixa, atualizada em 18/08/2026)
 
 Substitui a estrutura anterior (2 Post + 2 Story fixos por horário, ver histórico do index.html até 17/08/2026). A partir daqui, aplicar sempre:
