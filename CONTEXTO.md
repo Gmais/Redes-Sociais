@@ -211,7 +211,43 @@ Açaí tradicional, açaí com leitinho, açaí com avelã, açaí zero açúcar
 
 ---
 
-## 🎬 Campanhas Ativas (Jun/Jul 2026)
+## 🎬 Campanhas
+
+### 🟢 ATIVA — Academia: "Cuidado que se Multiplica" (Setembro Amarelo, 01-30/09/2026)
+Substitui "Agosto Vale Mais na Planeta" (encerrada 31/08/2026). Kit completo colado por Gilson em 19/08/2026, confirmando que esse é o padrão oficial de campanha (visão geral + pilares + script de vendas + WhatsApp + calendário + posts/stories/reels). Fonte: www.planetacorpoclubmais.com.br/campanha.
+
+**Mecânica:** plano trimestral/semestral/anual = desconto especial + "Tempo de Cuidado" (trimestral 7 dias, semestral 15 dias, anual 1 mês) — a pessoa usa no próprio plano ou presenteia alguém (aluna ativa ou alguém novo, que tem até 30 dias pra iniciar). Anual pago no cartão também ganha fone Bluetooth (brinde limitado). Público: novas matrículas, rematrículas, ex-alunos.
+
+**3 pilares (1 por foco de semana):**
+1. "Você também merece cuidado" (autocuidado não é egoísmo) — semana 1
+2. "Cuidado que se multiplica" (benefício pode ser presenteado) — semanas 2-3
+3. "Setembro é o momento" (urgência, só vale em setembro) — semana 4
+
+**⚠️ Regra de sensibilidade (Setembro Amarelo):** post do dia 10/09 é institucional sobre saúde mental (CVV 188), **sem oferta comercial nem CTA de venda**. Nunca dizer que treino substitui terapia/atendimento profissional.
+
+**Calendário (por semana — distribuir nos dias respeitando a cadência de "🏋️ Academia — Estrutura Semanal de Conteúdo" acima):**
+| Semana | Foco | Feed | Stories | Reels |
+|---|---|---|---|---|
+| 1 (1-6) | Lançamento e conceito | Post 1 — anúncio oficial | Teaser + explicação da escolha | Reel 1 — "Você também merece cuidado" |
+| 2 (7-13) | Setembro Amarelo e autocuidado | Post 2 — carrossel "Para quem vai seu Tempo de Cuidado?" | Enquete + dia 10 institucional | Reel 2 — "Cuidado que se multiplica" |
+| 3 (14-20) | Benefícios e prova social | Post 3 — anual no cartão + fone | Fone, rotina, depoimento | Reel 3 — "O que cabe na sua rotina?" |
+| 4 (21-30) | Fechamento com urgência | Post 4 — últimos dias | Contagem regressiva | — |
+
+**Copy pronta:**
+- Post 1: "VOCÊ CUIDA DE TODO MUNDO. MAS QUEM CUIDA DE VOCÊ?" — legenda sobre Tempo de Cuidado (usar ou presentear) + fone no anual no cartão.
+- Post 2 (carrossel 6 cards): "Em setembro, o cuidado se multiplica." → "Fechou plano? Você ganha Tempo de Cuidado." → "Trimestral: 7 dias. Semestral: 15 dias. Anual: 1 mês." → "Pode ser para você." → "Ou para alguém que você quer ver se cuidando também." → "Escolha seu plano, aproveite o desconto especial e compartilhe cuidado."
+- Post 3: "PLANO ANUAL NO CARTÃO — Desconto especial + 1 mês de Tempo de Cuidado + fone Bluetooth" — "válido durante setembro ou enquanto durarem os fones".
+- Post 4: "ÚLTIMOS DIAS PARA MULTIPLICAR CUIDADO." — "Não deixe você para depois."
+- Stories (12, temas não datados): teaser → "quem cuida de você?" → benefício → enquete (mim/alguém especial) → tabela 7/15/30 dias → detalhe do anual → rotina real → **dia 10: institucional CVV 188** → caixinha de pergunta → resposta a objeção → fone real → fechamento com contagem regressiva.
+- Reel 1 "Você também merece cuidado" (20s): clipes reais + convite pra se colocar na agenda.
+- Reel 2 "Para quem vai o seu Tempo de Cuidado?" (15s): treino individual vs. presentear amiga.
+- Reel 3 "O plano anual é para quem decidiu se priorizar" (20s): professor falando + cortes de aula, termina com desconto+1mês+fone.
+
+*(Script de vendas/WhatsApp/objeções e checklist operacional do Gilson não entram como card do painel — são material interno das consultoras, guardado à parte na memória do projeto.)*
+
+---
+
+## 🎬 Campanhas Encerradas (histórico)
 
 ### Academia: "Mês do Amigo"
 - **Slogan:** "Amigo que treina junto, economiza junto."
