@@ -3,6 +3,17 @@
 // Lê o estado sincronizado no Supabase (manifest + reviewed + images + published)
 // e publica no Instagram qualquer post que esteja 100% pronto e já tenha
 // passado do horário agendado.
+//
+// IMPORTANTE: aceitar a publicação (Zernio retornar 200 com um postId) não
+// significa que o post já está no ar — a Zernio processa a publicação de
+// forma assíncrona. Por isso todo post recém-enviado entra como status:'sent'
+// (não 'ok'). A cada execução deste cron, ANTES de enviar posts novos, o
+// script primeiro reconsulta GET /v1/posts/{postId} de tudo que está 'sent'
+// e só promove pra status:'ok' (badge azul) quando a própria Zernio confirma
+// platforms[].status === 'published' pra Instagram. Se a Zernio confirmar
+// falha (status 'failed'/'partial'), vira status:'error' (badge vermelho).
+// Esse é o padrão que a própria doc da Zernio recomenda ("fetch via GET
+// /v1/posts/{postId} after publish time").
 
 const PROFILE_CONFIG = {
   academia: { accountId: '6a3915825f7d1751ab4af026', apiKeyEnv: 'ZERNIO_API_KEY' },
@@ -11,6 +22,9 @@ const PROFILE_CONFIG = {
 };
 
 const ZERNIO_BASE = 'https://zernio.com/api/v1';
+// ~2h de tentativas (24 execuções x 5min) antes de desistir de confirmar e
+// marcar como erro pedindo verificação manual.
+const MAX_VERIFY_ATTEMPTS = 24;
 const SUPABASE_URL = 'https://ndzbfvxnallshfiouszk.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_cEA3C8OvJgZfeZmbnfVYJg_3wuW1YAt';
 
@@ -71,6 +85,28 @@ async function postToInstagram(profile, caption, format, mediaUrl) {
   return data.post ? data.post._id : data._id;
 }
 
+// GET /v1/posts/{id} — status real do post, com resultado por plataforma
+// (platformPostUrl, errorMessage etc). Ver components/schemas/Post no
+// openapi da Zernio: post.status = draft|scheduled|publishing|published|
+// failed|partial; post.platforms[].status = pending|publishing|published|failed.
+async function fetchZernioPost(profile, postId) {
+  const config = PROFILE_CONFIG[profile];
+  const apiKey = process.env[config.apiKeyEnv] || process.env.ZERNIO_API_KEY;
+  if (!apiKey) throw new Error(config.apiKeyEnv + ' não configurada');
+
+  const res = await fetch(`${ZERNIO_BASE}/posts/${postId}`, {
+    headers: { 'Authorization': `Bearer ${apiKey}` }
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || JSON.stringify(data));
+  return data.post || data;
+}
+
+function instagramResultOf(zernioPost) {
+  const platforms = zernioPost.platforms || [];
+  return platforms.find(p => p.platform === 'instagram') || null;
+}
+
 module.exports = async (req, res) => {
   const secret = req.headers['x-auto-publish-secret'];
   if (!process.env.AUTO_PUBLISH_SECRET || secret !== process.env.AUTO_PUBLISH_SECRET) {
@@ -92,12 +128,65 @@ module.exports = async (req, res) => {
     const newlyPublished = {};
     const skipped = [];
 
+    // ── PASSO 1: reconciliar posts 'sent' (aceitos pela Zernio, ainda não
+    // confirmados) contra o status real em GET /v1/posts/{id}. Só isso pode
+    // promover um card pra status:'ok' (badge azul).
+    for (const id of Object.keys(published)) {
+      const pub = published[id];
+      if (!pub || pub.status !== 'sent' || !pub.postId) continue;
+      const item = manifest[id];
+      if (!item || !PROFILE_CONFIG[item.profile]) continue;
+
+      try {
+        const zpost = await fetchZernioPost(item.profile, pub.postId);
+        const ig = instagramResultOf(zpost);
+        const igStatus = (ig && ig.status || '').toLowerCase();
+
+        if (igStatus === 'published') {
+          newlyPublished[id] = {
+            ...pub, status: 'ok', confirmedAt: new Date().toISOString(),
+            permalink: ig.platformPostUrl || pub.permalink || null,
+            platformPostId: ig.platformPostId || pub.platformPostId || null
+          };
+          results.push({ id, ok: true, verified: true, postId: pub.postId });
+        } else if (igStatus === 'failed') {
+          newlyPublished[id] = {
+            ...pub, status: 'error',
+            errorMsg: ig.errorMessage || 'Zernio reportou falha na publicação.',
+            errorCategory: ig.errorCategory || null,
+            failedAt: new Date().toISOString()
+          };
+          results.push({ id, ok: false, verified: true, error: ig.errorMessage });
+        } else {
+          // ainda pending/publishing do lado da Zernio — continua tentando.
+          const attempts = (pub.verifyAttempts || 0) + 1;
+          if (attempts >= MAX_VERIFY_ATTEMPTS) {
+            newlyPublished[id] = {
+              ...pub, status: 'error',
+              errorMsg: 'Não foi possível confirmar a publicação após ' + attempts + ' tentativas (~2h) — verifique manualmente no Instagram.',
+              verifyAttempts: attempts, timedOut: true
+            };
+            results.push({ id, ok: false, verified: false, timeout: true });
+          } else {
+            newlyPublished[id] = { ...pub, verifyAttempts: attempts, lastCheckedAt: new Date().toISOString() };
+            skipped.push({ id, reason: 'aguardando confirmação da Zernio (tentativa ' + attempts + '/' + MAX_VERIFY_ATTEMPTS + ')' });
+          }
+        }
+      } catch (e) {
+        skipped.push({ id, reason: 'erro ao verificar status na Zernio: ' + e.message });
+      }
+    }
+
+    // ── PASSO 2: publicar posts novos que estão prontos e já passaram do horário.
     for (const id of Object.keys(manifest)) {
       const item = manifest[id];
       const img = images[id];
       const isReviewed = !!reviewed[id];
       const hasReadyImage = !!(img && img.status === 'ok' && img.zernioStatus === 'ok' && img.zernioUrl);
-      const alreadyPublished = !!(published[id] && published[id].status === 'ok');
+      const currentPub = newlyPublished[id] || published[id];
+      // 'sent' também conta como "já em andamento" — sem isso o cron republicaria
+      // (post duplicado no Instagram) a cada 5min enquanto a confirmação não chega.
+      const alreadySent = !!(currentPub && (currentPub.status === 'ok' || currentPub.status === 'sent'));
       const due = scheduledUtcMs(item.date, item.time);
 
       // Log detalhado de cada post para debug
@@ -107,7 +196,7 @@ module.exports = async (req, res) => {
         skipped.push({ id, reason: 'imagem não pronta (' + imgStatus + ')' });
         continue;
       }
-      if (alreadyPublished) { skipped.push({ id, reason: 'já publicado' }); continue; }
+      if (alreadySent) { skipped.push({ id, reason: currentPub.status === 'ok' ? 'já publicado (confirmado)' : 'já enviado, aguardando confirmação' }); continue; }
       if (due === null) { skipped.push({ id, reason: 'horário inválido: ' + item.time }); continue; }
       if (nowMs < due) {
         const minLeft = Math.round((due - nowMs) / 60000);
@@ -118,8 +207,8 @@ module.exports = async (req, res) => {
 
       try {
         const postId = await postToInstagram(item.profile, item.caption, item.format, img.zernioUrl);
-        newlyPublished[id] = { status: 'ok', postId, publishedAt: new Date().toISOString(), via: 'auto' };
-        results.push({ id, ok: true, postId });
+        newlyPublished[id] = { status: 'sent', postId, sentAt: new Date().toISOString(), via: 'auto', verifyAttempts: 0 };
+        results.push({ id, ok: true, postId, verified: false });
       } catch (e) {
         newlyPublished[id] = { status: 'error', errorMsg: e.message, lastTriedAt: new Date().toISOString(), via: 'auto' };
         results.push({ id, ok: false, error: e.message });

@@ -159,6 +159,10 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   color:#0d0d0d; background:#00e5ff; box-shadow:0 0 8px #00e5ff, 0 0 2px #00e5ff inset;
   animation: neon-pulse-blue 1.8s ease-in-out infinite;
 }
+.cfmt.unverified {
+  color:#fff; background:#ff3b3b; box-shadow:0 0 8px #ff3b3b, 0 0 2px #ff3b3b inset;
+  animation: neon-pulse-red 1.8s ease-in-out infinite;
+}
 @keyframes neon-pulse {
   0%, 100% { box-shadow:0 0 6px #39ff14; }
   50% { box-shadow:0 0 14px #39ff14, 0 0 4px #fff inset; }
@@ -166,6 +170,10 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 @keyframes neon-pulse-blue {
   0%, 100% { box-shadow:0 0 6px #00e5ff; }
   50% { box-shadow:0 0 14px #00e5ff, 0 0 4px #fff inset; }
+}
+@keyframes neon-pulse-red {
+  0%, 100% { box-shadow:0 0 6px #ff3b3b; }
+  50% { box-shadow:0 0 14px #ff3b3b, 0 0 4px #fff inset; }
 }
 .ctitle { font-size:13px; font-weight:600; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .cchev { font-size:10px; color:var(--txt3); flex-shrink:0; transition:transform 0.2s; }
@@ -20775,14 +20783,24 @@ function updateReadyBadge(id){
   const pubData = getPublishData(id);
   const isBestContent = getBestContent(id);
   const bestContentDue = isBestContent && isBestContentDue(item);
-  const isPublishedNow = (ZERNIO_PROFILES.includes(profile) && !!(pubData && pubData.status === 'ok')) || bestContentDue;
+  // Azul só quando a própria Zernio CONFIRMOU a publicação (status:'ok' vindo
+  // de GET /v1/posts/{id}, ver api/auto-publish.js e verifyPublishStatus()) —
+  // não basta a Zernio ter aceito o envio. BestContent continua sendo um
+  // indício por horário (não tem como este painel verificar publicação feita
+  // por fora), então mantém o comportamento anterior nesse caso.
+  const isConfirmedPublished = (ZERNIO_PROFILES.includes(profile) && !!(pubData && pubData.status === 'ok')) || bestContentDue;
+  // Vermelho pulsante: já foi enviado à Zernio mas ainda sem confirmação
+  // ('sent'), ou a Zernio confirmou que falhou ('error') — nos dois casos
+  // NÃO está garantido que o post está no ar.
+  const isUnverified = !bestContentDue && ZERNIO_PROFILES.includes(profile) && !!pubData && (pubData.status === 'sent' || pubData.status === 'error');
   const imgData2 = getImageData(id);
   const isDriveReady = !!(imgData2 && imgData2.status === 'ok') && getReviewed(id);
-  const isReadyToShow = !isPublishedNow && (isDriveReady || isBestContent);
+  const isReadyToShow = !isConfirmedPublished && !isUnverified && (isDriveReady || isBestContent);
   const badgeEl = document.getElementById('cfmt-'+id);
   if (badgeEl) {
     badgeEl.classList.toggle('ready', isReadyToShow);
-    badgeEl.classList.toggle('published', isPublishedNow);
+    badgeEl.classList.toggle('published', isConfirmedPublished);
+    badgeEl.classList.toggle('unverified', isUnverified);
   }
 }
 function publishBlockHTML(id){
@@ -20824,27 +20842,59 @@ function publishBlockHTML(id){
       return '⏳ Envie a mídia para liberar';
     })() : '⚠️ Marque como revisado pra liberar a automação'}</span>`;
 
+  const found = findItem(id);
+  const profile = found ? found.profile : null;
+
   let actionHTML;
   if (pub && pub.status === 'publishing') {
     actionHTML = `<span class="publish-badge publishing">⏳ Publicando no Instagram...</span>`;
-  } else if (pub && pub.status === 'ok') {
-    const pubTime = pub.publishedAt ? ' em ' + new Date(pub.publishedAt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+  } else if (pub && pub.status === 'sent') {
+    const sentTime = pub.sentAt ? ' em ' + new Date(pub.sentAt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
     actionHTML = `
-      <span class="publish-badge ok">✓ Publicado no Instagram${pubTime}</span>
+      <span class="publish-badge publishing">📤 Enviado à Zernio${sentTime} — aguardando confirmação real no Instagram</span>
+      <button class="publish-btn" onclick="event.stopPropagation();verifyPublishStatus('${id}','${profile}')">🔄 Verificar agora</button>
+      <button class="unpublish-btn" onclick="event.stopPropagation();unpublishCard('${id}')">↩️ Não foi publicado</button>`;
+  } else if (pub && pub.status === 'ok') {
+    const pubTime = (pub.confirmedAt || pub.publishedAt) ? ' em ' + new Date(pub.confirmedAt || pub.publishedAt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+    const permalinkHTML = pub.permalink ? ` — <a href="${pub.permalink}" target="_blank" rel="noopener" onclick="event.stopPropagation();" style="color:#00e5ff;">ver post</a>` : '';
+    actionHTML = `
+      <span class="publish-badge ok">✓ Confirmado no Instagram${pubTime}${permalinkHTML}</span>
       <button class="publish-btn" onclick="event.stopPropagation();publishToInstagram('${id}')">Republicar</button>
       <button class="unpublish-btn" onclick="event.stopPropagation();unpublishCard('${id}')">↩️ Não foi publicado</button>`;
   } else if (pub && pub.status === 'error') {
+    const hint = zernioErrorHint(pub.errorCategory);
+    const retryBtn = pub.postId
+      ? `<button class="publish-btn" onclick="event.stopPropagation();retryPublish('${id}','${profile}')">Tentar de novo</button>`
+      : `<button class="publish-btn" onclick="event.stopPropagation();publishToInstagram('${id}')">Tentar de novo</button>`;
     actionHTML = `
-      <span class="publish-badge error">⚠️ Falha ao publicar: ${pub.errorMsg || ''}</span>
-      <button class="publish-btn" onclick="event.stopPropagation();publishToInstagram('${id}')">Tentar de novo</button>`;
+      <span class="publish-badge error">⚠️ Falha ao publicar: ${pub.errorMsg || ''}${hint ? ' — ' + hint : ''}</span>
+      ${retryBtn}`;
   } else {
     actionHTML = `<button class="publish-btn" onclick="event.stopPropagation();publishToInstagram('${id}')">📤 Publicar agora no Instagram</button>`;
   }
 
   return `<div class="publish-block" id="pubblock-${id}">
-    <div class="publish-row">${reviewToggle}${bestContentToggle}${(!pub || pub.status!=='ok') ? readyBadge : ''}</div>
+    <div class="publish-row">${reviewToggle}${bestContentToggle}${(!pub || (pub.status!=='ok' && pub.status!=='sent')) ? readyBadge : ''}</div>
     <div class="publish-row">${actionHTML}</div>
   </div>`;
+}
+
+// Mensagens curtas por errorCategory da Zernio (ver components/schemas/
+// PlatformTarget no openapi) — ajuda Gilson a saber se vale tentar de novo
+// ou se precisa agir fora do painel (ex: reconectar conta).
+function zernioErrorHint(category){
+  const hints = {
+    auth_expired: 'reconecte a conta no Zernio.',
+    user_content: 'formato/texto da mídia inválido pro Instagram.',
+    user_abuse: 'limite de postagens/spam atingido, aguarde um pouco.',
+    account_issue: 'problema de configuração na conta conectada.',
+    platform_rejected: 'o Instagram recusou o post (política).',
+    platform_error: 'instabilidade no Instagram, tente novamente.',
+    platform_rate_limit: 'Instagram limitando por taxa, a Zernio já retenta sozinha.',
+    quota_exhausted: 'cota diária da API do Instagram esgotada.',
+    system_error: 'erro interno da Zernio.'
+  };
+  return hints[category] || '';
 }
 
 function blobToBase64(blob){
@@ -20895,10 +20945,14 @@ async function publishToInstagram(id){
       });
       const data = await resp.json();
       if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha desconhecida ao publicar.');
-      setPublishData(id, { status: 'ok', postId: data.postId, publishedAt: new Date().toISOString() });
+      // A Zernio aceitou o envio, mas isso ainda não é confirmação de que o
+      // post está no ar (publicação assíncrona) — fica 'sent' até
+      // verifyPublishStatus() (ou o cron auto-publish.js) confirmar de fato.
+      setPublishData(id, { status: 'sent', postId: data.postId, sentAt: new Date().toISOString() });
       rerenderPublishBlock(id);
-      showToast('✅ Publicado no Instagram!');
+      showToast('📤 Enviado à Zernio — confirmando publicação...');
       pushRemoteState();
+      verifyPublishStatus(id, profile);
     } catch (e) {
       setPublishData(id, { status: 'error', errorMsg: e.message || 'Erro de conexão' });
       rerenderPublishBlock(id);
@@ -20929,15 +20983,108 @@ async function publishToInstagram(id){
       if (!resp.ok || !data.ok) {
         throw new Error(data.error || 'Falha desconhecida ao publicar.');
       }
-      setPublishData(id, { status: 'ok', postId: data.postId, publishedAt: new Date().toISOString() });
+      setPublishData(id, { status: 'sent', postId: data.postId, sentAt: new Date().toISOString() });
       rerenderPublishBlock(id);
-      showToast('✅ Publicado no Instagram!');
+      showToast('📤 Enviado à Zernio — confirmando publicação...');
       pushRemoteState();
+      verifyPublishStatus(id, profile);
     } catch (e) {
       setPublishData(id, { status: 'error', errorMsg: e.message || 'Erro de conexão' });
       rerenderPublishBlock(id);
     }
   });
+}
+
+// Confirma no servidor (via GET /v1/posts/{id} na Zernio, ver
+// api/zernio-post-status.js) se um post 'sent' realmente saiu no Instagram.
+// Chamada logo após publicar manualmente, com algumas tentativas espaçadas —
+// se nenhuma confirmar a tempo, o card fica 'sent' (badge vermelho) até o
+// cron auto-publish.js (a cada ~5min) resolver.
+async function verifyPublishStatus(id, profile, attempt){
+  attempt = attempt || 0;
+  const pub = getPublishData(id);
+  if (!pub || pub.status !== 'sent' || !pub.postId) return;
+
+  try {
+    const resp = await fetch('/api/zernio-post-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile, postId: pub.postId })
+    });
+    const data = await resp.json();
+    if (resp.ok && data.ok && data.instagram) {
+      const igStatus = (data.instagram.status || '').toLowerCase();
+      if (igStatus === 'published') {
+        setPublishData(id, { ...pub, status: 'ok', confirmedAt: new Date().toISOString(),
+          permalink: data.instagram.platformPostUrl || null, platformPostId: data.instagram.platformPostId || null });
+        rerenderPublishBlock(id);
+        showToast('✅ Publicação confirmada no Instagram!');
+        pushRemoteState();
+        return;
+      }
+      if (igStatus === 'failed') {
+        setPublishData(id, { ...pub, status: 'error',
+          errorMsg: data.instagram.errorMessage || 'Zernio reportou falha na publicação.',
+          errorCategory: data.instagram.errorCategory || null, failedAt: new Date().toISOString() });
+        rerenderPublishBlock(id);
+        showToast('⚠️ A Zernio reportou falha na publicação.');
+        pushRemoteState();
+        return;
+      }
+    }
+  } catch (e) { /* tenta de novo abaixo, ou deixa pro cron */ }
+
+  // Tenta mais algumas vezes (~25s no total) antes de deixar pro cron de 5min.
+  if (attempt < 5) {
+    setTimeout(() => verifyPublishStatus(id, profile, attempt + 1), 5000);
+  }
+}
+
+// Republica um post que a Zernio já confirmou como falho, reaproveitando o
+// MESMO postId via POST /v1/posts/{id}/retry (api/zernio-retry-post.js) em
+// vez de criar um post novo do zero — evita duplicar no Instagram.
+async function retryPublish(id, profile){
+  const pub = getPublishData(id);
+  if (!pub || !pub.postId) { publishToInstagram(id); return; }
+
+  setPublishData(id, { ...pub, status: 'sent', retriedAt: new Date().toISOString() });
+  rerenderPublishBlock(id);
+  showToast('🔁 Tentando republicar via Zernio...');
+
+  try {
+    const resp = await fetch('/api/zernio-retry-post', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile, postId: pub.postId })
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha ao tentar republicar.');
+
+    const igStatus = data.instagram && (data.instagram.status || '').toLowerCase();
+    if (igStatus === 'published') {
+      setPublishData(id, { ...pub, status: 'ok', confirmedAt: new Date().toISOString(),
+        permalink: data.instagram.platformPostUrl || null, platformPostId: data.instagram.platformPostId || null });
+      rerenderPublishBlock(id);
+      showToast('✅ Publicação confirmada no Instagram!');
+      pushRemoteState();
+      return;
+    }
+    if (igStatus === 'failed') {
+      setPublishData(id, { ...pub, status: 'error',
+        errorMsg: data.instagram.errorMessage || 'Zernio reportou falha na publicação.',
+        errorCategory: data.instagram.errorCategory || null, failedAt: new Date().toISOString() });
+      rerenderPublishBlock(id);
+      showToast('⚠️ A Zernio reportou falha na publicação.');
+      pushRemoteState();
+      return;
+    }
+    // Ainda processando — deixa 'sent' e confirma em background.
+    pushRemoteState();
+    verifyPublishStatus(id, profile);
+  } catch (e) {
+    setPublishData(id, { ...pub, status: 'error', errorMsg: e.message || 'Erro de conexão' });
+    rerenderPublishBlock(id);
+  }
 }
 
 // ── IMAGE UPLOAD (Google Drive via service account) ──
@@ -21389,11 +21536,13 @@ function cardHTML(item,profile){
   const pubData = getPublishData(item.id);
   const isBestContent = getBestContent(item.id);
   const bestContentDue = isBestContent && isBestContentDue(item);
+  // Mesma lógica de updateReadyBadge(): azul só com confirmação real da Zernio.
   const isPublishedNow = (ZERNIO_PROFILES.includes(profile) && !!(pubData && pubData.status === 'ok')) || bestContentDue;
+  const isUnverifiedNow = !bestContentDue && ZERNIO_PROFILES.includes(profile) && !!pubData && (pubData.status === 'sent' || pubData.status === 'error');
   const _img = getImageData(item.id);
   const isDriveReady = !!(_img && _img.status === 'ok') && getReviewed(item.id);
-  const isReadyToShow = !isPublishedNow && (isDriveReady || isBestContent);
-  const cfmtClass = isPublishedNow ? ' published' : (isReadyToShow ? ' ready' : '');
+  const isReadyToShow = !isPublishedNow && !isUnverifiedNow && (isDriveReady || isBestContent);
+  const cfmtClass = isPublishedNow ? ' published' : (isUnverifiedNow ? ' unverified' : (isReadyToShow ? ' ready' : ''));
 
   return `
 <div class="card ${d?'done':''}" data-p="${profile}" id="card-${item.id}">
