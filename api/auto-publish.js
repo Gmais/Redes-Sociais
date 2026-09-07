@@ -25,8 +25,8 @@ const ZERNIO_BASE = 'https://zernio.com/api/v1';
 // ~2h de tentativas (24 execuções x 5min) antes de desistir de confirmar e
 // marcar como erro pedindo verificação manual.
 const MAX_VERIFY_ATTEMPTS = 24;
-const SUPABASE_URL = 'https://ndzbfvxnallshfiouszk.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_cEA3C8OvJgZfeZmbnfVYJg_3wuW1YAt';
+const SUPABASE_URL = 'https://ggphrgfgckpsspbsguhp.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGhyZ2ZnY2twc3NwYnNndWhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3NzE2NDUsImV4cCI6MjEwNDM0NzY0NX0.t_dF5I6c0wCBqOnJd6ko6Jpu_ZQyQ5ulA8buRYLAMMk';
 
 function supabaseFetch(path, options = {}) {
   return fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
