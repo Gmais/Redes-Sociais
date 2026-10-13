@@ -19,14 +19,17 @@ const path = require('path');
 const PROFILES = {
   academia: {
     nome: 'Academia Planeta Corpo',
+    typo: 'limpa, humana e acolhedora (sans-serif arredondada ou semi-arredondada), em cores claras sobre fundo escuro ou laranja, com UMA palavra-chave em destaque na cor de acento.',
     style: 'Fotografia editorial esportiva REALISTA, luz natural quente e acolhedora, pessoas reais (adultos de 30 a 45 anos, expressões genuínas e sorridentes), ambiente de academia limpo, organizado e bem iluminado. Tom acolhedor e de bem-estar, focado em saúde e rotina — nunca estética agressiva, nada de corpos "perfeitos" de capa de revista, nada intimidador. Cores dominantes: laranja, azul-petróleo, preto e branco.'
   },
   sorveteria: {
     nome: 'Sorveteria Guri',
+    typo: 'amigável e divertida (manuscrita/brush ou arredondada bold), título em branco com a parte final em amarelo de destaque e um sublinhado curvo amarelo; linha de apoio menor, também manuscrita.',
     style: 'Estilo festivo, familiar e gostoso: cores quentes e vibrantes, produto super apetitoso (sorvete cremoso, com textura, gotas, brilho e condensação), em close/macro ou como herói grande. Fundo limpo ou ambiente aconchegante de sorveteria, com iluminação suave. Se houver mascote 3D, mantenha o MESMO estilo de render 3D (iluminação, materiais, proporções) no resto da cena, para tudo parecer uma única cena coerente.'
   },
   gympulse: {
     nome: 'GympulsePro',
+    typo: 'geométrica sans-serif BOLD, alto contraste, destaque em amarelo, muito espaço negativo ao redor.',
     style: 'B2B tecnológico, premium e minimalista: fundo escuro/preto com detalhes em amarelo, tipografia limpa, formas geométricas sutis e muito espaço negativo. NÃO invente interface de aplicativo, números ou gráficos com texto; se precisar sugerir uma tela, use só formas abstratas (blocos, barras, linhas) sem texto. Se o cliente anexar capturas de tela reais, use-as fielmente.'
   }
 };
@@ -174,49 +177,70 @@ async function generateWithGemini({ apiKey, prompt, refs, aspect, premium }) {
   throw new Error(lastError);
 }
 
-// OpenAI gpt-image-1. Com referências (ex.: mascote) usa /images/edits; sem
-// nenhuma, /images/generations.
-async function generateWithOpenAI({ apiKey, prompt, refs, timeoutMs, quality }) {
-  const signal = AbortSignal.timeout(timeoutMs || 50000);
-  let aiRes;
-  if (refs && refs.length) {
-    const form = new FormData();
-    form.append('model', 'gpt-image-1');
-    form.append('prompt', prompt);
-    form.append('size', '1024x1536');
-    form.append('quality', quality || 'high');
-    form.append('output_format', 'jpeg');
-    form.append('n', '1');
-    refs.forEach((r) => {
-      form.append('image[]', new Blob([r.buffer], { type: r.mime }), r.fileName);
-    });
-    aiRes = await fetch(OPENAI_URL + '/images/edits', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + apiKey },
-      body: form,
-      signal
-    });
-  } else {
-    aiRes = await fetch(OPENAI_URL + '/images/generations', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'gpt-image-1', prompt, size: '1024x1536', quality: quality || 'high', output_format: 'jpeg', n: 1 }),
-      signal
-    });
+// OpenAI GPT Image. Com referências (logo, mascote, anexos) usa /images/edits; sem
+// nenhuma, /images/generations. Tenta os modelos em ordem (o primeiro que o
+// OpenAI aceitar). Tamanhos próprios pro formato do Instagram (múltiplos de 16).
+async function generateWithOpenAI({ apiKey, prompt, refs, timeoutMs, isFeed, quality }) {
+  const started = Date.now();
+  const hasRefs = !!(refs && refs.length);
+  // sunburst = melhor em edição com referências (logo/mascote fiéis); flare = rápido no dia a dia.
+  const models = [...new Set([process.env.OPENAI_IMAGE_MODEL,
+    hasRefs ? 'gpt-image-2.5-sunburst' : 'gpt-image-2.5-flare', 'gpt-image-2.5-flare', 'gpt-image-1'].filter(Boolean))];
+  const q = quality || process.env.OPENAI_IMAGE_QUALITY || 'high';
+  let lastError = 'sem resposta';
+
+  for (const model of models) {
+    const remaining = (timeoutMs || 100000) - (Date.now() - started);
+    if (remaining < 5000) throw new Error('a IA demorou demais. Tente de novo ou use o motor Nano Banana (mais rápido).');
+    const legacy = model === 'gpt-image-1';
+    const size = legacy ? '1024x1536' : (isFeed ? '1088x1360' : '1088x1920');
+    const signal = AbortSignal.timeout(remaining);
+    let aiRes;
+    try {
+      if (hasRefs) {
+        const form = new FormData();
+        form.append('model', model);
+        form.append('prompt', prompt);
+        form.append('size', size);
+        form.append('quality', q);
+        form.append('output_format', 'jpeg');
+        form.append('n', '1');
+        refs.forEach((r) => {
+          form.append('image[]', new Blob([r.buffer], { type: r.mime }), r.fileName);
+        });
+        aiRes = await fetch(OPENAI_URL + '/images/edits', { method: 'POST', headers: { 'Authorization': 'Bearer ' + apiKey }, body: form, signal });
+      } else {
+        aiRes = await fetch(OPENAI_URL + '/images/generations', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model, prompt, size, quality: q, output_format: 'jpeg', n: 1 }),
+          signal
+        });
+      }
+    } catch (e) {
+      if (e && (e.name === 'TimeoutError' || e.name === 'AbortError')) {
+        throw new Error('a IA demorou demais. Tente de novo ou use o motor Nano Banana (mais rápido).');
+      }
+      throw e;
+    }
+    let data = {};
+    try { data = await aiRes.json(); } catch (e) { /* corpo não-JSON */ }
+    if (aiRes.ok) {
+      const b64 = data.data && data.data[0] && data.data[0].b64_json;
+      if (!b64) { lastError = 'a IA não devolveu imagem'; continue; }
+      console.log('[openai] ok', model, size, q, (Date.now() - started) + 'ms', 'b64=' + b64.length);
+      return { b64, mime: 'image/jpeg', model };
+    }
+    lastError = (data && data.error && data.error.message) || ('status ' + aiRes.status);
+    console.log('[openai] erro', model, size, aiRes.status, String(lastError).slice(0, 300), (Date.now() - started) + 'ms');
+    // chave/cota/tempo: não adianta trocar de modelo. Modelo/tamanho inválido (4xx): tenta o próximo.
+    if (aiRes.status === 401 || aiRes.status === 403 || aiRes.status === 429 || aiRes.status >= 500) throw new Error(lastError);
   }
-  const data = await aiRes.json();
-  if (!aiRes.ok) {
-    throw new Error((data && data.error && data.error.message) || JSON.stringify(data));
-  }
-  const b64 = data.data && data.data[0] && data.data[0].b64_json;
-  if (!b64) throw new Error('a IA não devolveu imagem');
-  return { b64, mime: 'image/jpeg', model: 'gpt-image-1' };
+  throw new Error(lastError);
 }
 
 // Briefing de direção de arte, em seções. O LOGO NÃO é pedido à IA: o painel o
-// aplica por cima, idêntico ao original e uma única vez (a IA, quando recebe o
-// logo, tende a desenhá-lo duas vezes ou deformá-lo). Por isso a faixa inferior
-// é reservada.
+// aplica por cima, idêntico ao original e uma única vez (modo "painel").
 function buildPrompt({ cfg, isFeed, mascot, attachCount, palette, title, caption, brief, headline, subline }) {
   // Regras que o card define e a IA costuma ignorar: viram exigências explícitas.
   const mRule = /regra\s*60\s*[-–]\s*30\s*[-–]\s*10\s*:\s*([^\n]+)/i.exec(brief);
@@ -300,6 +324,66 @@ function buildPrompt({ cfg, isFeed, mascot, attachCount, palette, title, caption
   return lines.filter((l) => l !== null).join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
+// Prompt do modo "designer" (padrão): a IA recebe logo + mascote + anexos como
+// referência e monta a ARTE INTEIRA — logo em destaque, mascote grande, título
+// com tipografia da marca — como um designer de agência faria.
+function buildDesignPrompt({ cfg, isFeed, mascot, attachCount, palette, title, brief, headline, subline }) {
+  const mRule = /regra\s*60\s*[-–]\s*30\s*[-–]\s*10\s*:\s*([^\n]+)/i.exec(brief);
+  const colorRule = mRule ? mRule[1].trim().replace(/[.;]+$/, '') : '';
+  const noCta = /CTA\s*:\s*(nenhum|n[aã]o\s+h[aá]|sem\b)/i.test(brief);
+
+  const refs = ['LOGO OFICIAL da marca "' + cfg.nome + '"'];
+  if (mascot) refs.push('MASCOTE OFICIAL da marca');
+  for (let i = 1; i <= attachCount; i++) refs.push('imagem do cliente nº ' + i + ' (ex.: produto da promoção)');
+
+  const lines = [
+    'Crie a ARTE FINAL, pronta para publicar, de ' + (isFeed ? 'um post de feed do Instagram (vertical 4:5)' : 'um story do Instagram (vertical 9:16)') +
+      ' da marca "' + cfg.nome + '", exatamente como um designer sênior de agência faria: composição completa, rica e profissional, com acabamento de campanha — nunca um mockup simples ou uma cena solta.',
+    '',
+    'IMAGENS DE REFERÊNCIA ANEXADAS (nesta ordem):',
+    ...refs.map((t, i) => (i + 1) + '. ' + t),
+    '',
+    'CONTEÚDO (use todos os blocos do card):',
+    title ? '- Tema do post: ' + title : null,
+    '- O briefing abaixo traz os blocos do card (os que existirem): TEXTO DA POSTAGEM (a legenda — a cena e o título devem comunicar a mesma ideia), FORMATO E ESPECIFICAÇÕES (proporção e regras de composição — obedeça), INTENÇÃO DA POSTAGEM (objetivo e clima) e BRIEFING CRIATIVO / O QUE A IMAGEM DEVE MOSTRAR (cena e estilo — siga com fidelidade).',
+    '',
+    brief,
+    '',
+    'TEXTO NA ARTE:',
+    headline
+      ? '- Título (escreva EXATAMENTE assim, sem trocar nenhuma palavra ou letra — é a frase do próprio post): "' + headline + '".'
+      : '- Crie UM título curto e chamativo em português do Brasil (máx. 8 palavras), usando as palavras do TEXTO DA POSTAGEM.',
+    subline ? '- Linha de apoio, menor, abaixo do título (EXATAMENTE assim): "' + subline + '".' : null,
+    '- Tipografia: ' + (cfg.typo || 'forte, legível e com personalidade da marca') + ' Título GRANDE e bem legível no celular, no máximo 3 linhas, alto contraste com o fundo.',
+    '- Nenhum outro texto além do título, da linha de apoio e do que o briefing pedir de forma explícita. Todo texto em português do Brasil, escrito corretamente, sem letras inventadas.',
+    '',
+    'LOGO E MARCA:',
+    '- Use o LOGO da imagem de referência 1, FIEL ao original (mesmas formas, cores e letras — não redesenhe nem distorça), UMA única vez, em destaque e em tamanho confortável (cerca de 30–40% da largura), na posição que equilibrar melhor a composição (em geral topo centralizado).' + (mascot ? ' O mascote de referência pode já ter o logo no boné, uniforme ou produto: mantenha como está, mas não repita o logo como elemento solto.' : ' Não repita o logo como elemento solto em outros lugares.'),
+    '',
+    'COMPOSIÇÃO E IMPACTO:',
+    mascot
+      ? '- O MASCOTE (referência 2) é o herói da cena: GRANDE e expressivo (cerca de 40–55% da altura da arte, plano médio ou close), FIEL ao original (mesmo personagem, proporções, roupa e cores — não recrie nem reinterprete), interagindo com o produto/cena e com o clima do texto (gestos, olhar e expressão que conectem com a mensagem).'
+      : '- O elemento herói (produto ou cena principal) é GRANDE, nítido e bem iluminado, ocupando cerca de 35–50% da altura da arte.',
+    attachCount > 0
+      ? '- As imagens do cliente (referências ' + (mascot ? '3' : '2') + (attachCount > 1 ? ' a ' + ((mascot ? 2 : 1) + attachCount) : '') + ') entram em destaque, FIÉIS ao original (mesma embalagem, rótulo, formato e cores — não redesenhe nem troque por outro produto), uma vez cada.'
+      : null,
+    '- Hierarquia clara: logo → título → herói. Elementos decorativos coerentes com o tema (ex.: estrelas, lua, formas curvas na cor de destaque, luzes, texturas), para dar acabamento e movimento — sem poluir.',
+    '- Cenário e iluminação coerentes com o texto (momento do dia, clima), com profundidade de campo e cores bem harmonizadas.',
+    colorRule
+      ? '- REGRA DE CORES OBRIGATÓRIA (60-30-10): ' + colorRule + '. Distribua as cores exatamente nessa proporção da área visível; a cor de 30% precisa aparecer em áreas grandes e marcantes, e a de 10% nos textos/acentos. Tem prioridade sobre qualquer outra escolha de cor.'
+      : (palette ? '- Paleta oficial da marca: ' + palette + '. Use essas cores como dominantes.' : null),
+    noCta ? '- Este post NÃO tem chamada para ação: sem botão, seta, "saiba mais" ou texto de CTA.' : null,
+    isFeed
+      ? '- Mantenha tudo que é importante na área central da imagem (as bordas de cima e de baixo podem ser cortadas).'
+      : '- Deixe o topo (cerca de 8%) e a base (cerca de 12%) sem texto importante: a interface do Instagram cobre essas áreas.',
+    '',
+    'ESTILO DA MARCA: ' + (cfg.style || 'visual profissional e limpo.'),
+    '',
+    'PROIBIDO: logo duplicado como elemento solto, marcas d\'água, marcas de terceiros, interface de aplicativo inventada, molduras/bordas, texto com erro ou inventado, mãos/dedos deformados, elementos repetidos sem motivo.'
+  ];
+  return lines.filter((l) => l !== null).join('\n').replace(/\n{3,}/g, '\n\n');
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Método não permitido' });
@@ -307,7 +391,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { profile, prompt, format, palette, includeMascot, title, texto, headline, subline, extraRefs, quality } = JSON.parse(await readBody(req));
+    const { profile, prompt, format, palette, includeMascot, title, texto, headline, subline, extraRefs, quality, engine, logoMode } = JSON.parse(await readBody(req));
 
     const cfg = PROFILES[profile];
     if (!cfg) {
@@ -325,6 +409,12 @@ module.exports = async (req, res) => {
       return;
     }
 
+    // Motor: 'openai' (GPT Image — padrão), 'gemini' (Nano Banana) ou 'gemini-pro' (Nano Banana Pro).
+    let eng = engine || (quality === 'premium' ? 'gemini-pro' : 'openai');
+    if (eng === 'openai' && !openaiKey) eng = 'gemini';
+    if (eng !== 'openai' && !geminiKey) eng = 'openai';
+    const useOpenAI = eng === 'openai';
+
     const brand = await loadBrandFromSupabase(profile);
     const logo = brand.logo || loadRef(profile, 'logo');
     if (!logo) {
@@ -334,8 +424,11 @@ module.exports = async (req, res) => {
     const mascot = includeMascot ? (brand.mascote || loadRef(profile, 'mascote')) : null;
 
     const isFeed = String(format || '').toLowerCase() === 'post';
-    // O logo NÃO vai pra IA (ela o duplica/deforma): o painel aplica o original.
+    // logoMode 'panel': o logo NÃO vai pra IA e o painel aplica o original por cima.
+    // Padrão ('ai'): o logo vai como referência 1 e a IA o integra na arte.
+    const aiLogo = logoMode !== 'panel';
     const refs = [];
+    if (aiLogo) refs.push(logo);
     if (mascot) refs.push(mascot);
     // Imagens que o cliente anexou no painel pra compor a arte (ex.: o produto da promoção).
     let attachCount = 0;
@@ -346,34 +439,34 @@ module.exports = async (req, res) => {
       attachCount++;
     });
 
-    const fullPrompt = buildPrompt({
+    const common = {
       cfg, isFeed, mascot: !!mascot, attachCount, palette,
       title: title ? String(title).slice(0, 200) : '',
-      caption: '', // o texto da postagem já vai dentro do briefing (bloco TEXTO DA POSTAGEM)
       headline: headline ? String(headline).trim().slice(0, 120) : '',
       subline: subline ? String(subline).trim().slice(0, 100) : '',
       brief: String(prompt).trim().slice(0, 7000)
-    });
+    };
+    const fullPrompt = aiLogo
+      ? buildDesignPrompt(common)
+      : buildPrompt({ ...common, caption: '' }); // o texto da postagem já vai dentro do briefing
 
     const t0 = Date.now();
     let result, provider;
+    const runOpenAI = (timeoutMs, q) => generateWithOpenAI({ apiKey: openaiKey, prompt: fullPrompt, refs, timeoutMs, isFeed, quality: q });
+    const runGemini = (premium) => generateWithGemini({ apiKey: geminiKey, prompt: fullPrompt, refs, aspect: isFeed ? '4:5' : '9:16', premium });
     try {
-      if (geminiKey) {
-        provider = 'gemini';
-        result = await generateWithGemini({ apiKey: geminiKey, prompt: fullPrompt, refs, aspect: isFeed ? '4:5' : '9:16', premium: quality === 'premium' });
-      } else {
-        provider = 'openai';
-        result = await generateWithOpenAI({ apiKey: openaiKey, prompt: fullPrompt, refs, timeoutMs: 100000 });
-      }
+      if (useOpenAI) { provider = 'openai'; result = await runOpenAI(105000); }
+      else { provider = 'gemini'; result = await runGemini(eng === 'gemini-pro'); }
     } catch (e) {
       console.log('[generate-image] falhou', provider, String(e.message).slice(0, 300), (Date.now() - t0) + 'ms');
-      // Gemini falhou RÁPIDO e existe reserva: tenta a OpenAI. Se já gastou
-      // tempo (ex.: timeout), não há folga pra reserva — responde o erro.
+      // Falhou RÁPIDO e existe o outro motor: tenta nele. Se já gastou tempo
+      // (ex.: timeout), não há folga pra reserva — responde o erro.
       const spent = Date.now() - t0;
-      if (provider === 'gemini' && openaiKey && spent < 25000) {
+      const other = provider === 'gemini' ? !!openaiKey : !!geminiKey;
+      if (other && spent < 25000) {
         try {
-          provider = 'openai';
-          result = await generateWithOpenAI({ apiKey: openaiKey, prompt: fullPrompt, refs, timeoutMs: 100000 - spent - 5000, quality: 'medium' });
+          if (provider === 'gemini') { provider = 'openai'; result = await runOpenAI(100000 - spent - 5000, 'medium'); }
+          else { provider = 'gemini'; result = await runGemini(false); }
         } catch (e2) {
           res.status(502).json({ error: 'A IA recusou o pedido: ' + e.message + ' | reserva: ' + e2.message });
           return;
@@ -390,7 +483,7 @@ module.exports = async (req, res) => {
     }
     res.status(200).json({
       ok: true, imageBase64: result.b64, mime: result.mime,
-      usedLogo: false, logoOverlay: true, usedMascot: !!mascot, usedAttachments: attachCount, provider, model: result.model
+      usedLogo: aiLogo, logoOverlay: !aiLogo, usedMascot: !!mascot, usedAttachments: attachCount, provider, model: result.model
     });
   } catch (e) {
     res.status(500).json({ error: e.message || 'Erro inesperado ao gerar a imagem.' });
@@ -398,5 +491,6 @@ module.exports = async (req, res) => {
 };
 
 module.exports.buildPrompt = buildPrompt;
+module.exports.buildDesignPrompt = buildDesignPrompt;
 module.exports.findImageData = findImageData;
 module.exports.generateWithGemini = generateWithGemini;

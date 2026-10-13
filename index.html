@@ -26145,6 +26145,10 @@ function ensureGenModal(){
           <span class="mascot-txt"><b>Incluir o mascote na arte</b><small id="gen-mascot-hint">quando a marca tiver mascote</small></span>
           <span class="mascot-mini" id="gen-mascot-mini"></span>
         </label>
+        <label class="mascot-row" for="gen-logoai">
+          <input type="checkbox" id="gen-logoai" checked onchange="try{localStorage.setItem('genLogoAI',this.checked?'1':'0')}catch(e){}">
+          <span class="mascot-txt"><b>A IA integra o logo na arte</b><small>desmarque para o painel aplicar o logo original por cima (posição automática)</small></span>
+        </label>
         <label class="sx-field"><span>Título escrito na arte <small>(sugerido a partir do texto da postagem — edite à vontade; vazio: a IA cria um)</small></span>
           <input type="text" id="gen-headline" maxlength="90" placeholder="Ex.: QUAL SABOR VOCÊ NUNCA DEIXA DE PEDIR?"></label>
         <label class="sx-field"><span>Linha de apoio na arte <small>(opcional — letras menores, abaixo do título)</small></span>
@@ -26156,10 +26160,11 @@ function ensureGenModal(){
           <button type="button" class="brand-btn" id="gen-attach-btn" onclick="document.getElementById('gen-attach-file').click()">＋ Anexar imagem</button>
           <input type="file" id="gen-attach-file" accept="image/*" multiple style="display:none" onchange="onGenAttach(this)">
         </div>
-        <label class="sx-field"><span>Qualidade da imagem</span>
-          <select id="gen-quality" class="gen-select" onchange="try{localStorage.setItem('genQuality',this.value)}catch(e){}">
-            <option value="standard">Padrão — rápido (~US$ 0,05 por imagem)</option>
-            <option value="premium">Premium — Nano Banana Pro, mais caprichado e mais lento (~US$ 0,13)</option>
+        <label class="sx-field"><span>Motor de imagem</span>
+          <select id="gen-engine" class="gen-select" onchange="try{localStorage.setItem('genEngine',this.value)}catch(e){}">
+            <option value="openai">GPT Image (OpenAI) — melhor resultado, estilo ChatGPT (mais caro, até ~US$ 0,25)</option>
+            <option value="gemini">Nano Banana (Gemini) — rápido e barato (~US$ 0,05)</option>
+            <option value="gemini-pro">Nano Banana Pro (Gemini) — premium (~US$ 0,13)</option>
           </select></label>
         <div class="brand-box collapsed" id="brand-box">
           <div class="brand-title brand-toggle" onclick="toggleBrandBox()">
@@ -26235,7 +26240,11 @@ function openGenImage(id, profile){
   const go = document.getElementById('gen-go'); go.disabled = false; go.textContent = '✨ Gerar';
   _genResult = null;
   _genAttach = [];
-  try { document.getElementById('gen-quality').value = localStorage.getItem('genQuality') === 'premium' ? 'premium' : 'standard'; } catch (e) {}
+  try {
+    const eng = localStorage.getItem('genEngine');
+    document.getElementById('gen-engine').value = ['openai', 'gemini', 'gemini-pro'].includes(eng) ? eng : 'openai';
+    document.getElementById('gen-logoai').checked = localStorage.getItem('genLogoAI') !== '0';
+  } catch (e) {}
   renderGenAttach();
   el.dataset.skipSimilar = '';
   el.classList.add('on');
@@ -26268,13 +26277,13 @@ async function runGenerateImage(){
     return;
   }
   btn.disabled = true; btn.textContent = '⏳ Gerando...'; el.dataset.busy = '1';
-  status.textContent = document.getElementById('gen-quality').value === 'premium' ? 'A IA (modelo Premium) está criando a imagem — pode levar até 90 segundos. Não feche esta janela.' : 'A IA está criando a imagem — leva de 20 a 60 segundos. Não feche esta janela.';
+  status.textContent = document.getElementById('gen-engine').value === 'gemini' ? 'A IA está criando a imagem — leva de 20 a 60 segundos. Não feche esta janela.' : 'A IA está criando a imagem com mais capricho — pode levar até 100 segundos. Não feche esta janela.';
   document.getElementById('gen-use').style.display = 'none';
   try {
     const palette = (PALETTES[profile] || []).map(c => c.hex + ' (' + c.name + ')').join(', ');
     const resp = await fetch('/api/generate-image', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ profile, prompt, format: found.item.format, palette, title: found.item.title, texto: stripHtml(found.item.texto), headline: document.getElementById('gen-headline').value.trim(), subline: document.getElementById('gen-subline').value.trim(), includeMascot: document.getElementById('gen-mascot').checked, extraRefs: _genAttach.map(a => ({ mime: a.mime, data: a.data })), quality: document.getElementById('gen-quality').value })
+      body: JSON.stringify({ profile, prompt, format: found.item.format, palette, title: found.item.title, texto: stripHtml(found.item.texto), headline: document.getElementById('gen-headline').value.trim(), subline: document.getElementById('gen-subline').value.trim(), includeMascot: document.getElementById('gen-mascot').checked, extraRefs: _genAttach.map(a => ({ mime: a.mime, data: a.data })), engine: document.getElementById('gen-engine').value, logoMode: document.getElementById('gen-logoai').checked ? 'ai' : 'panel' })
     });
     const rawText = await resp.text();
     let data;
@@ -26282,14 +26291,15 @@ async function runGenerateImage(){
     catch (e) { throw new Error('O servidor não respondeu direito (' + resp.status + '): ' + rawText.slice(0, 120)); }
     if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha ao gerar a imagem.');
     const rawSrc = 'data:' + data.mime + ';base64,' + data.imageBase64;
-    const composed = await composeFinalImage(rawSrc, found.item.format, profile, 'auto', true);
-    _genResult = { id, profile, format: found.item.format, src: composed.url, raw: rawSrc, pos: composed.pos };
+    const logoAI = !!data.usedLogo;
+    const composed = await composeFinalImage(rawSrc, found.item.format, profile, 'auto', true, logoAI);
+    _genResult = { id, profile, format: found.item.format, src: composed.url, raw: rawSrc, pos: composed.pos, logoAI };
     const opts = Object.keys(LOGO_POS).map(k => `<option value="${k}">${LOGO_POS[k]}</option>`).join('');
     document.getElementById('gen-preview').innerHTML =
-      `<img class="gen-img" id="gen-preview-img" src="${_genResult.src}" alt="Imagem gerada">
-       <div class="pos-wrap"><label class="pos-row">Posição do logo: <select id="gen-pos" onchange="recomposeLogo()">${opts}</select></label>
-       <label class="pos-row"><input type="checkbox" id="gen-cut" checked onchange="recomposeLogo()"> Recortar o fundo do logo</label></div>`;
-    status.textContent = '✓ ' + (data.provider === 'gemini' ? (/pro/.test(data.model || '') ? 'Gemini Pro' : 'Gemini') : 'OpenAI') + ' — logo oficial aplicado (' + LOGO_POS[composed.pos].toLowerCase() + ')' + (data.usedAttachments ? ' + ' + data.usedAttachments + ' imagem(ns) anexada(s)' : '') + (data.usedMascot ? ' + mascote' : (document.getElementById('gen-mascot').checked ? ' (esta marca ainda não tem mascote cadastrado)' : '')) + '. Gostou? Use a imagem ou gere outra.';
+      `<img class="gen-img" id="gen-preview-img" src="${_genResult.src}" alt="Imagem gerada">` + (logoAI ? '' :
+       `<div class="pos-wrap"><label class="pos-row">Posição do logo: <select id="gen-pos" onchange="recomposeLogo()">${opts}</select></label>
+       <label class="pos-row"><input type="checkbox" id="gen-cut" checked onchange="recomposeLogo()"> Recortar o fundo do logo</label></div>`);
+    status.textContent = '✓ ' + (data.provider === 'gemini' ? (/pro/.test(data.model || '') ? 'Nano Banana Pro' : 'Nano Banana') : 'GPT Image') + (logoAI ? ' — logo integrado pela IA' : ' — logo oficial aplicado (' + LOGO_POS[composed.pos].toLowerCase() + ')') + (data.usedAttachments ? ' + ' + data.usedAttachments + ' imagem(ns) anexada(s)' : '') + (data.usedMascot ? ' + mascote' : (document.getElementById('gen-mascot').checked ? ' (esta marca ainda não tem mascote cadastrado)' : '')) + '. Gostou? Use a imagem ou gere outra.';
     document.getElementById('gen-use').style.display = '';
   } catch (e) {
     status.textContent = '⚠️ ' + e.message;
@@ -26368,7 +26378,7 @@ function regionStats(canvas, x, y, w, h){
 // Recorta no formato exato (1080×1920 Story/Reel, 1080×1350 Post) e aplica o LOGO
 // ORIGINAL da marca UMA vez, no melhor lugar (a região mais calma da arte) ou na
 // posição escolhida. A IA não desenha o logo.
-async function composeFinalImage(src, format, profile, pos, cut){
+async function composeFinalImage(src, format, profile, pos, cut, skipLogo){
   const target = GEN_TARGET[format] || GEN_TARGET.Post;
   const img = await loadImageEl(src);
   const canvas = document.createElement('canvas');
@@ -26379,7 +26389,7 @@ async function composeFinalImage(src, format, profile, pos, cut){
   ctx.drawImage(img, (target.w - w) / 2, (target.h - h) / 2, w, h);
 
   let used = null;
-  const asset = brandGet(profile, 'logo');
+  const asset = skipLogo ? null : brandGet(profile, 'logo');
   if (asset) {
     const logo = cut ? await logoCutout(asset) : await loadImageEl('data:' + asset.mime + ';base64,' + asset.data);
     const lnw = logo.naturalWidth || logo.width, lnh = logo.naturalHeight || logo.height;
