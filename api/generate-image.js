@@ -387,6 +387,103 @@ function buildDesignPrompt({ cfg, isFeed, mascot, attachCount, attachUses, palet
   return lines.filter((l) => l !== null).join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
+// ── EDITAR IMAGEM POR IA (mode:'edit') ─────────────────────────────────────
+// Recebe uma imagem pronta (base64 ou URL) + o que precisa mudar, e devolve a
+// imagem editada. Mantém todo o resto idêntico.
+const EDIT_URL_HOSTS = [/(^|\.)zernio\.com$/i, /\.supabase\.co$/i];
+
+async function fetchBaseUrl(url) {
+  let u;
+  try { u = new URL(String(url)); } catch (e) { throw new Error('Endereço da imagem inválido.'); }
+  if (u.protocol !== 'https:' || !EDIT_URL_HOSTS.some((re) => re.test(u.hostname))) {
+    throw new Error('Só é possível editar imagens hospedadas na Zernio ou no Supabase.');
+  }
+  const r = await fetch(u.toString(), { signal: AbortSignal.timeout(15000) });
+  if (!r.ok) throw new Error('A imagem original não está mais disponível (' + r.status + '). Abra a versão do Drive, baixe e anexe.');
+  const mime = (r.headers.get('content-type') || 'image/jpeg').split(';')[0].trim();
+  if (!/^image\/(png|jpeg|webp)$/.test(mime)) throw new Error('Formato de imagem não suportado: ' + mime);
+  const buffer = Buffer.from(await r.arrayBuffer());
+  if (buffer.length > 8 * 1024 * 1024) throw new Error('Imagem original grande demais para editar.');
+  return { buffer, mime, fileName: 'base.' + (mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg') };
+}
+
+function buildEditPrompt({ cfg, isFeed, instruction }) {
+  return [
+    'Você é um editor de imagem sênior. Edite a imagem de referência 1 (uma arte de ' + (isFeed ? 'post de feed 4:5' : 'story 9:16') +
+      ' da marca "' + cfg.nome + '") aplicando SOMENTE a alteração pedida abaixo.',
+    '',
+    'ALTERAÇÃO PEDIDA: ' + instruction,
+    '',
+    'REGRAS:',
+    '- Mantenha todo o resto IDÊNTICO: composição, enquadramento, cores, estilo, personagens, logo e todos os textos que não foram citados na alteração.',
+    '- Não adicione elementos novos além do pedido e não remova o que não foi mencionado.',
+    '- Se precisar escrever ou alterar texto, use português do Brasil, escrito corretamente, com a mesma tipografia e cor da arte.',
+    '- Mantenha a proporção ' + (isFeed ? '4:5' : '9:16') + ' da imagem original, sem cortar nem esticar.',
+    '- Preserve o logo exatamente como está, uma única vez.'
+  ].join('\n');
+}
+
+async function handleEdit(body, res) {
+  const { profile, format, instruction, engine, baseImage, baseUrl } = body;
+  const cfg = PROFILES[profile];
+  if (!cfg) { res.status(400).json({ error: 'Perfil inválido: ' + profile }); return; }
+  const ins = String(instruction || '').replace(/\s+/g, ' ').trim().slice(0, 800);
+  if (!ins) { res.status(400).json({ error: 'Descreva o que precisa mudar na imagem.' }); return; }
+  const isFeed = ['post', 'carrossel'].includes(String(format || '').toLowerCase());
+  const prompt = buildEditPrompt({ cfg, isFeed, instruction: ins });
+
+  // Modo manual (ChatGPT): só devolve o prompt de edição.
+  if (engine === 'chatgpt') {
+    res.status(200).json({ ok: true, promptOnly: true, prompt });
+    return;
+  }
+
+  const geminiKey = process.env.GEMINI_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (!geminiKey && !openaiKey) { res.status(500).json({ error: 'Nenhuma chave de IA configurada no Vercel (GEMINI_API_KEY ou OPENAI_API_KEY).' }); return; }
+
+  let base;
+  if (baseImage && typeof baseImage.data === 'string' && baseImage.data.length > 100) {
+    if (baseImage.data.length > 3000000) { res.status(413).json({ error: 'Imagem base grande demais.' }); return; }
+    const mime = /^image\/(png|jpeg|webp)$/.test(baseImage.mime || '') ? baseImage.mime : 'image/jpeg';
+    base = { buffer: Buffer.from(baseImage.data, 'base64'), mime, fileName: 'base.' + (mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg') };
+  } else if (baseUrl) {
+    try { base = await fetchBaseUrl(baseUrl); }
+    catch (e) { res.status(400).json({ error: e.message }); return; }
+  } else {
+    res.status(400).json({ error: 'Imagem base ausente.' });
+    return;
+  }
+
+  let eng = engine || 'openai';
+  if (eng === 'openai' && !openaiKey) eng = 'gemini';
+  if (eng !== 'openai' && !geminiKey) eng = 'openai';
+  const refs = [base];
+  const t0 = Date.now();
+  let result, provider;
+  const runOpenAI = (timeoutMs, q) => generateWithOpenAI({ apiKey: openaiKey, prompt, refs, timeoutMs, isFeed, quality: q });
+  const runGemini = (premium) => generateWithGemini({ apiKey: geminiKey, prompt, refs, aspect: isFeed ? '4:5' : '9:16', premium });
+  try {
+    if (eng === 'openai') { provider = 'openai'; result = await runOpenAI(105000); }
+    else { provider = 'gemini'; result = await runGemini(eng === 'gemini-pro'); }
+  } catch (e) {
+    console.log('[edit] falhou', provider, String(e.message).slice(0, 300), (Date.now() - t0) + 'ms');
+    const spent = Date.now() - t0;
+    const other = provider === 'gemini' ? !!openaiKey : !!geminiKey;
+    if (other && spent < 25000) {
+      try {
+        if (provider === 'gemini') { provider = 'openai'; result = await runOpenAI(100000 - spent - 5000, 'medium'); }
+        else { provider = 'gemini'; result = await runGemini(false); }
+      } catch (e2) { res.status(502).json({ error: 'A IA recusou o pedido: ' + e.message + ' | reserva: ' + e2.message }); return; }
+    } else { res.status(502).json({ error: 'A IA recusou o pedido: ' + e.message }); return; }
+  }
+  if (result.b64.length > 4200000) {
+    res.status(502).json({ error: 'A imagem editada ficou grande demais para enviar. Tente de novo.' });
+    return;
+  }
+  res.status(200).json({ ok: true, imageBase64: result.b64, mime: result.mime, provider, model: result.model, edited: true });
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Método não permitido' });
@@ -394,7 +491,9 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { profile, prompt, format, palette, includeMascot, title, texto, headline, subline, extraRefs, quality, engine, logoMode } = JSON.parse(await readBody(req));
+    const body = JSON.parse(await readBody(req));
+    if (body.mode === 'edit') { await handleEdit(body, res); return; }
+    const { profile, prompt, format, palette, includeMascot, title, texto, headline, subline, extraRefs, quality, engine, logoMode } = body;
 
     const cfg = PROFILES[profile];
     if (!cfg) {
@@ -507,3 +606,5 @@ module.exports.buildPrompt = buildPrompt;
 module.exports.buildDesignPrompt = buildDesignPrompt;
 module.exports.findImageData = findImageData;
 module.exports.generateWithGemini = generateWithGemini;
+module.exports.buildEditPrompt = buildEditPrompt;
+module.exports.fetchBaseUrl = fetchBaseUrl;

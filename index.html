@@ -829,6 +829,21 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .attach-hint { font-size:11px; color:var(--txt3); }
 .attach-box:focus { outline:1px solid #2563eb; }
 .attach-box.drag { border-color:#2563eb; background:rgba(37,99,235,0.08); }
+.reuse-btn { font-size:11px; font-weight:800; border:none; border-radius:8px; padding:6px 12px; cursor:pointer; font-family:'Inter',sans-serif; color:#0d0d0d; }
+.reuse-btn:hover { opacity:0.85; }
+.reuse-y { background:#f5c200; }
+.reuse-g { background:#22c55e; }
+.ru-tabs { display:flex; gap:6px; flex-wrap:wrap; }
+.ru-tabs:empty { display:none; }
+.ru-meta { font-size:12px; color:var(--txt3); display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.ru-meta b { color:var(--txt); font-size:13px; }
+.ru-badge { font-weight:800; padding:2px 9px; border-radius:999px; color:#0d0d0d; }
+.ru-badge.y { background:#f5c200; }
+.ru-badge.g { background:#22c55e; }
+.ru-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.edit-box { border:1px solid var(--border); border-radius:10px; padding:10px; background:var(--s2); display:flex; flex-direction:column; gap:8px; }
+.edit-box textarea { background:var(--s1); border:1px solid var(--border); color:var(--txt); border-radius:8px; padding:10px; font-size:13px; font-family:'Inter',sans-serif; resize:vertical; }
+#gen-use[style*="none"] ~ #gen-editbtn { display:none; }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -24095,6 +24110,7 @@ const DRIVE_FOLDER_MAP = {
 function rerenderImageBox(id, profile){
   const box = document.getElementById('imgbox-'+id);
   if (box) box.innerHTML = imageBlockHTML(id, profile);
+  updateReuseButton(id);
 }
 
 // ── GOOGLE OAUTH (browser-side, direct upload to Drive) ──
@@ -24476,13 +24492,12 @@ function cardHTML(item,profile){
     <div class="block" style="display:flex;justify-content:flex-end;margin-top:12px;gap:6px;flex-wrap:wrap;">
       <button class="edit-btn" onclick="event.stopPropagation();openEdit('${item.id}')">✏️ Editar card</button>
       <button class="copy-all-btn" onclick="event.stopPropagation();copyAll('${item.id}')">📋 Copiar tudo</button>
-      <button class="clone-btn" onclick="event.stopPropagation();cloneCard('${item.id}','${profile}')">🔄 Reaproveitar</button>
       <button class="delete-btn" onclick="event.stopPropagation();deleteCard('${item.id}','${profile}')">🗑️ Excluir</button>
     </div>
     ${ZERNIO_PROFILES.includes(profile) ? publishBlockHTML(item.id) : ''}
     <div class="block">
       <div class="blabel" style="color:#00b4d8">📎 Mídia a ser Publicada
-        ${(item.format==='Story'||item.format==='Post'||item.format==='Reel') ? `<button class="gen-img-btn" style="margin-left:auto" onclick="event.stopPropagation();openGenImage('${item.id}','${profile}')">✨ Gerar imagem</button>` : ''}
+        ${(item.format==='Story'||item.format==='Post'||item.format==='Reel') ? `<button class="reuse-btn reuse-y" id="reuse-${item.id}" style="display:none;margin-left:auto" onclick="event.stopPropagation();openReuseViewer('${item.id}','${profile}')">♻️ Reaproveitar imagem</button><button class="gen-img-btn" id="genbtn-${item.id}" style="margin-left:auto" onclick="event.stopPropagation();openGenImage('${item.id}','${profile}')">✨ Gerar imagem</button>` : ''}
         <a class="upload-link" style="${(item.format==='Story'||item.format==='Post'||item.format==='Reel')?'margin-left:8px':'margin-left:auto'}" href="https://drive.google.com/drive/folders/${DRIVE_FOLDER_MAP[profile]}" target="_blank" onclick="event.stopPropagation()">🔍 Buscar imagem</a>
       </div>
       <div id="imgbox-${item.id}">${imageBlockHTML(item.id, profile)}</div>
@@ -24631,7 +24646,7 @@ function toggleHistGroup(el){
   }
 }
 
-function expand(id){document.getElementById('card-'+id).classList.toggle('open');}
+function expand(id){const c=document.getElementById('card-'+id);c.classList.toggle('open');if(c.classList.contains('open'))updateReuseButton(id);}
 function toggleSec(cardId,idx){document.getElementById(`ps-${cardId}-${idx}`).classList.toggle('open');}
 
 function cp(id,btn){
@@ -26489,11 +26504,14 @@ async function removeBrand(profile, kind){
   } catch (e) { showToast('⚠️ ' + e.message); }
 }
 
-// ── Histórico: reaproveitar imagem parecida antes de gerar (economiza crédito) ──
-// O "histórico de criação" são os próprios cards que já têm imagem (geradas por
-// IA ou anexadas): compara o briefing novo com o de cada um, da mesma marca e do
-// mesmo formato (vertical 9:16 ou feed 4:5), e oferece reutilizar.
-const SIM_THRESHOLD = 0.85; // calibrado nos cards reais: >=0.9 são recorrentes idênticos; <=0.75 já mistura sabores/pessoas diferentes
+// ── Reaproveitar imagem: botão na área de mídia (amarelo 75–89% / verde 90%+) ──
+// O "histórico de criação" são os próprios cards que já têm imagem (geradas por IA ou
+// anexadas): compara o briefing do card com o de cada um, da mesma marca e do mesmo
+// formato (vertical 9:16 ou feed 4:5). Se achar parecida, aparece o botão
+// "Reaproveitar imagem" ao lado de "Gerar imagem", que abre a imagem citada com as
+// opções de usar como está ou editar por IA.
+const SIM_MIN = 0.75;    // a partir daqui o botão aparece (amarelo)
+const SIM_GREEN = 0.90;  // a partir daqui o botão fica verde
 const SIM_STOP = new Set(('para com uma que dos das nao sem por mais como mas seu sua isso esta este foi ser tem ate sobre entre pos ' +
   'tipo objetivo cta formato dimensoes regra texto max cena estilo intencao post story instagram feed imagem mostrar deve ' +
   'especificacoes tecnicas postagem reel carrossel').split(' '));
@@ -26505,8 +26523,12 @@ function simTokens(text){
 }
 function fmtGroup(f){ f = String(f || '').toLowerCase(); return (f === 'story' || f === 'reel') ? 'vertical' : 'feed'; }
 function cardSimText(item){ return item.title + '\n' + buildDetailedBrief(item, true); }
-// Devolve até `limit` cards com imagem pronta cujo briefing é parecido (score 0–1).
-function findSimilarImages(id, profile, format, currentText, limit){
+
+// Índice (tokens e pesos de cada card), refeito só quando o nº de cards muda.
+let _simIdx = null;
+function simIndex(){
+  const total = CONTENT.academia.length + CONTENT.sorveteria.length + CONTENT.gympulse.length;
+  if (_simIdx && _simIdx.total === total) return _simIdx;
   const docs = [];
   for (const p of ['academia', 'sorveteria', 'gympulse']) {
     for (const it of CONTENT[p]) docs.push({ id: it.id, profile: p, item: it, set: new Set(simTokens(cardSimText(it))) });
@@ -26516,77 +26538,353 @@ function findSimilarImages(id, profile, format, currentText, limit){
   const N = docs.length;
   const idf = w => Math.log((N + 1) / ((df.get(w) || 0) + 1)) + 0.05; // palavra rara pesa mais que "cores", "design"...
   const norm = set => Math.sqrt([...set].reduce((a, w) => a + idf(w) * idf(w), 0)) || 1;
+  docs.forEach(d => { d.n = norm(d.set); });
+  _simIdx = { total, docs, idf, norm };
+  return _simIdx;
+}
+// Devolve até `limit` cards com imagem pronta cujo briefing é parecido (score 0–1).
+function findSimilarImages(id, profile, format, currentText, limit){
+  const ix = simIndex();
   const cur = new Set(simTokens(currentText));
-  const curN = norm(cur);
+  const curN = ix.norm(cur);
   const out = [];
-  for (const d of docs) {
+  for (const d of ix.docs) {
     if (d.id === id || d.profile !== profile) continue;
     if (fmtGroup(d.item.format) !== fmtGroup(format)) continue;
     const img = getImageData(d.id);
     if (!img || img.status !== 'ok' || !(img.zernioUrl || img.fileId)) continue;
     let dot = 0, shared = 0;
-    cur.forEach(w => { if (d.set.has(w)) { dot += idf(w) * idf(w); shared++; } });
-    const score = dot / (curN * norm(d.set));
-    if (shared >= 4 && score >= SIM_THRESHOLD) out.push({ d, score, img });
+    cur.forEach(w => { if (d.set.has(w)) { dot += ix.idf(w) * ix.idf(w); shared++; } });
+    const score = dot / (curN * d.n);
+    if (shared >= 4 && score >= SIM_MIN) out.push({ d, score, img });
   }
   out.sort((a, b) => b.score - a.score);
   return out.slice(0, limit || 3);
 }
-function renderSimilarPanel(sims){
-  const box = document.getElementById('gen-preview');
-  const rows = sims.map(s => {
-    const pub = getPublishData(s.d.id);
-    const used = (pub && pub.status === 'ok') ? ' · ✅ já publicada' : '';
-    const thumb = s.img.thumbnailLink
-      ? `<img class="sim-thumb" src="${s.img.thumbnailLink}" alt="" loading="lazy" onerror="this.style.display='none'">`
-      : `<div class="sim-thumb sim-nothumb">🖼️</div>`;
-    const title = String(s.d.item.title || '').replace(/</g, '&lt;');
-    return `<div class="sim-row">${thumb}
-      <div class="sim-info"><div class="sim-title">${title}</div>
-      <div class="sim-meta">${fmtDate(s.d.item.date)} · ${s.d.item.format} · ${Math.round(s.score * 100)}% parecida${used}</div>
-      <a class="sim-link" href="${s.img.viewUrl || '#'}" target="_blank" rel="noopener">abrir imagem ↗</a></div>
-      <button class="edit-btn edit-btn-primary" onclick="reuseImage('${s.d.id}')">♻️ Usar esta</button></div>`;
-  }).join('');
-  box.innerHTML = `<div class="sim-box">
-    <div class="sim-head">♻️ Já existe imagem parecida — reaproveitar não gasta crédito</div>${rows}
-    <button class="edit-btn" onclick="genAnyway()">✨ Gerar uma nova mesmo assim</button></div>`;
+function reuseCandidates(id){
+  const found = findItem(id);
+  if (!found) return [];
+  const img = getImageData(id);
+  if (img && (img.status === 'ok' || img.status === 'uploading')) return []; // já tem imagem
+  return findSimilarImages(id, found.profile, found.item.format, cardSimText(found.item), 3);
 }
-function genAnyway(){
-  const el = document.getElementById('genModal');
-  el.dataset.skipSimilar = '1';
-  document.getElementById('gen-preview').innerHTML = '';
-  runGenerateImage();
+// Mostra/esconde o botão "Reaproveitar imagem" do card (amarelo ou verde, com a %).
+function updateReuseButton(id){
+  const btn = document.getElementById('reuse-' + id);
+  if (!btn) return;
+  const gen = document.getElementById('genbtn-' + id);
+  const sims = reuseCandidates(id);
+  if (!sims.length) { btn.style.display = 'none'; if (gen) gen.style.marginLeft = 'auto'; return; }
+  const best = sims[0];
+  const green = best.score >= SIM_GREEN;
+  btn.className = 'reuse-btn ' + (green ? 'reuse-g' : 'reuse-y');
+  btn.textContent = '♻️ Reaproveitar imagem · ' + Math.round(best.score * 100) + '%';
+  btn.title = green ? 'Imagem muito parecida (90% ou mais)' : 'Imagem parecida (75% a 89%)';
+  btn.style.display = '';
+  btn.style.marginLeft = 'auto';
+  if (gen) gen.style.marginLeft = '8px';
 }
-// Copia a imagem de outro card (Drive + link da Zernio) pro card atual.
-function reuseImage(fromId){
-  const el = document.getElementById('genModal');
-  const id = el.dataset.id, profile = el.dataset.profile;
+
+function testImgLoad(url, ms){
+  return new Promise(res => {
+    if (!url) return res(false);
+    const i = new Image();
+    const t = setTimeout(() => res(false), ms || 8000);
+    i.onload = () => { clearTimeout(t); res(true); };
+    i.onerror = () => { clearTimeout(t); res(false); };
+    i.src = url;
+  });
+}
+// Copia a imagem de outro card (Drive + link da Zernio) pro card alvo. Se o link temporário da
+// Zernio não carrega mais, renova a partir do arquivo do Drive.
+async function reuseImageTo(id, profile, fromId){
   const src = getImageData(fromId);
   const from = findItem(fromId);
-  if (!src || !from) { showToast('⚠️ Imagem de origem não encontrada.'); return; }
+  if (!src || !from) { showToast('⚠️ Imagem de origem não encontrada.'); return false; }
+  const urlOk = src.zernioUrl ? await testImgLoad(src.zernioUrl) : false;
   setImageData(id, {
     status: 'ok', fileId: src.fileId, viewUrl: src.viewUrl, thumbnailLink: src.thumbnailLink || '',
-    fileName: src.fileName, uploadedAt: new Date().toISOString(),
-    zernioStatus: src.zernioStatus, zernioUrl: src.zernioUrl, reusedFrom: fromId
+    fileName: src.fileName, uploadedAt: new Date().toISOString(), reusedFrom: fromId,
+    zernioStatus: urlOk ? 'ok' : (src.fileId ? 'pending' : 'error'),
+    zernioUrl: urlOk ? src.zernioUrl : undefined
   });
   rerenderImageBox(id, profile);
   rerenderPublishBlock(id);
   pushRemoteState();
-  closeGenImage();
-  showToast('♻️ Imagem reaproveitada de "' + from.item.title + '"');
-}
-function genCurrentSimText(){
-  return document.getElementById('gen-prompt').value + '\n' + document.getElementById('gen-headline').value;
-}
-function showSimilarIfAny(){
-  const el = document.getElementById('genModal');
-  const found = findItem(el.dataset.id);
-  if (!found) return false;
-  const sims = findSimilarImages(el.dataset.id, el.dataset.profile, found.item.format, found.item.title + '\n' + genCurrentSimText());
-  if (!sims.length) return false;
-  renderSimilarPanel(sims);
+  if (!urlOk && src.fileId) { retryZernioUpload(id, profile); showToast('♻️ Imagem reaproveitada — renovando o link de publicação na Zernio...'); }
+  else showToast('♻️ Imagem reaproveitada de "' + from.item.title + '"');
   return true;
 }
+
+// ── Utilitários de imagem pra edição ──
+async function shrinkToJpegB64(dataUrl, max){
+  const img = await loadImageEl(dataUrl);
+  const sc = Math.min(1, (max || 1280) / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(img.naturalWidth * sc)); c.height = Math.max(1, Math.round(img.naturalHeight * sc));
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.9).split(',')[1];
+}
+async function driveImageBase64(fileId){
+  const err = await new Promise(r => ensureDriveAuth(r));
+  if (err) throw new Error(err.message);
+  const blob = await downloadDriveFile(fileId);
+  const url = URL.createObjectURL(blob);
+  try { return { mime: 'image/jpeg', data: await shrinkToJpegB64(url) }; } finally { URL.revokeObjectURL(url); }
+}
+// Entrega uma imagem final (data URL) ao fluxo de upload do card (Drive + Zernio), já no formato exato.
+async function useImageForCard(id, profile, dataUrl, tag){
+  const found = findItem(id);
+  const out = await composeFinalImage(dataUrl, found.item.format, profile, 'auto', true, true); // só recorta, sem logo
+  const blob = await (await fetch(out.url)).blob();
+  const stamp = new Date().toISOString().slice(5, 10).replace('-', '');
+  const file = new File([blob], stamp + '_' + profile + '_' + (tag || 'ia') + '_' + id + '.jpg', { type: 'image/jpeg' });
+  const input = document.getElementById('imgfile-' + id);
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  input.files = dt.files;
+  handleImageSelect(id, profile, input);
+}
+
+// ── Editar imagem por IA (painel reutilizado no visualizador "ru" e na janela Gerar imagem "ge") ──
+const ENGINE_OPTIONS_HTML = `
+  <option value="chatgpt">ChatGPT (manual) — usa a sua assinatura, sem custo por imagem</option>
+  <option value="openai">GPT Image (via API) — automático, até ~US$ 0,25</option>
+  <option value="gemini">Nano Banana (Gemini) — rápido e barato (~US$ 0,05)</option>
+  <option value="gemini-pro">Nano Banana Pro (Gemini) — premium (~US$ 0,13)</option>`;
+function editPanelHTML(p){
+  return `<div class="edit-box">
+    <label class="sx-field"><span>O que precisa mudar na imagem?</span>
+      <textarea id="${p}-instr" rows="3" placeholder="Ex.: trocar o título para &quot;Quinta de outubro&quot;, deixar o fundo mais claro, tirar o texto de baixo"></textarea></label>
+    <label class="sx-field"><span>Motor da edição</span><select id="${p}-eng" class="gen-select">${ENGINE_OPTIONS_HTML}</select></label>
+    <div class="edit-actions"><button type="button" class="edit-btn edit-btn-primary" id="${p}-apply" onclick="applyEdit('${p}')">✨ Aplicar edição</button></div>
+    <div class="sx-hint" id="${p}-status"></div>
+    <div id="${p}-out"></div>
+  </div>`;
+}
+function initEditPanelEngine(p){
+  try {
+    const sel = document.getElementById(p + '-eng');
+    const eng = localStorage.getItem('genEngine2');
+    if (sel) sel.value = ['chatgpt', 'openai', 'gemini', 'gemini-pro'].includes(eng) ? eng : 'openai';
+  } catch (e) {}
+}
+function editCtx(p){
+  if (p === 'ru') {
+    const c = _ru.sims[_ru.idx];
+    const found = findItem(_ru.id);
+    return {
+      profile: _ru.profile, format: found.item.format,
+      base: async () => {
+        if (_ru.edited) return { baseImage: { mime: 'image/jpeg', data: await shrinkToJpegB64(_ru.edited) } };
+        if (c.img.zernioUrl) return { baseUrl: c.img.zernioUrl };
+        return { baseImage: await driveImageBase64(c.img.fileId) };
+      },
+      onResult: (url) => { _ru.edited = url; ruRefresh(); }
+    };
+  }
+  const el = document.getElementById('genModal');
+  const found = findItem(el.dataset.id);
+  return {
+    profile: el.dataset.profile, format: found.item.format,
+    base: async () => ({ baseImage: { mime: 'image/jpeg', data: await shrinkToJpegB64(_genResult.raw) } }),
+    onResult: async (url) => {
+      _genResult.raw = url;
+      const sel = document.getElementById('gen-pos'), cut = document.getElementById('gen-cut');
+      const r = await composeFinalImage(url, _genResult.format, _genResult.profile, sel ? sel.value : 'auto', cut ? cut.checked : true, _genResult.logoAI);
+      _genResult.src = r.url; _genResult.pos = r.pos;
+      const im = document.getElementById('gen-preview-img');
+      if (im) im.src = r.url;
+    }
+  };
+}
+async function applyEdit(p){
+  const instr = document.getElementById(p + '-instr').value.trim();
+  const eng = document.getElementById(p + '-eng').value;
+  const status = document.getElementById(p + '-status');
+  const btn = document.getElementById(p + '-apply');
+  if (!instr) { status.textContent = '⚠️ Descreva o que precisa mudar.'; return; }
+  if (p === 'ge' && !_genResult) { status.textContent = '⚠️ Gere uma imagem primeiro.'; return; }
+  const ctx = editCtx(p);
+  btn.disabled = true; btn.textContent = '⏳ Editando...';
+  status.textContent = eng === 'chatgpt' ? 'Montando o prompt de edição...' : 'A IA está editando a imagem — pode levar até 100 segundos. Não feche esta janela.';
+  try {
+    try { localStorage.setItem('genEngine2', eng); } catch (e) {}
+    const base = await ctx.base();
+    const resp = await fetch('/api/generate-image', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'edit', profile: ctx.profile, format: ctx.format, instruction: instr, engine: eng, ...base })
+    });
+    const rawText = await resp.text();
+    let data;
+    try { data = JSON.parse(rawText); } catch (e) { throw new Error('O servidor não respondeu direito (' + resp.status + '): ' + rawText.slice(0, 120)); }
+    if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha ao editar a imagem.');
+    if (data.promptOnly) { showEditManual(p, data.prompt, base); status.textContent = '✓ Prompt de edição pronto. Siga os passos abaixo.'; return; }
+    await ctx.onResult('data:' + data.mime + ';base64,' + data.imageBase64);
+    status.textContent = '✓ Edição aplicada (' + (data.provider === 'gemini' ? 'Nano Banana' : 'GPT Image') + '). Gostou? Use a imagem ou peça outra mudança.';
+    document.getElementById(p + '-out').innerHTML = '';
+    window._editWait = null;
+  } catch (e) {
+    status.textContent = '⚠️ ' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = '✨ Aplicar edição';
+  }
+}
+function showEditManual(p, prompt, base){
+  window._cgEditPrompt = prompt;
+  window._editWait = p;
+  const link = base.baseImage
+    ? `<a class="brand-btn" download="imagem-original.jpg" href="data:${base.baseImage.mime};base64,${base.baseImage.data}">⬇ Baixar a imagem original</a>`
+    : `<a class="brand-btn" href="${String(base.baseUrl).replace(/"/g, '&quot;')}" target="_blank" rel="noopener">⬇ Abrir a imagem original</a>`;
+  document.getElementById(p + '-out').innerHTML = `
+    <div class="cg-box edit-manual">
+      <div class="cg-title">💬 Editar pelo ChatGPT <span>(sem custo de API)</span></div>
+      <ol class="cg-steps">
+        <li><b>Copie o prompt</b> <button type="button" class="edit-btn edit-btn-primary" onclick="editCopyPrompt('${p}')">📋 Copiar prompt</button> <span id="${p}-copied"></span></li>
+        <li><b>Abra o ChatGPT</b> e cole o prompt <a class="edit-btn" href="https://chatgpt.com/" target="_blank" rel="noopener">Abrir ChatGPT ↗</a></li>
+        <li><b>Anexe a imagem original</b> no ChatGPT: ${link}</li>
+        <li><b>Quando a imagem editada sair</b>, copie ela e <b>cole aqui (Ctrl+V)</b>, ou
+          <label class="edit-btn" style="cursor:pointer">📥 envie o arquivo<input type="file" accept="image/*" style="display:none" onchange="editReceiveInput('${p}',this)"></label></li>
+      </ol>
+    </div>`;
+}
+async function editCopyPrompt(p){
+  let ok = false;
+  try { await navigator.clipboard.writeText(window._cgEditPrompt || ''); ok = true; } catch (e) {}
+  const c = document.getElementById(p + '-copied');
+  if (c) c.textContent = ok ? '✅ Prompt copiado!' : '⚠️ Não consegui copiar automaticamente.';
+}
+function editReceiveInput(p, input){ const f = input.files && input.files[0]; input.value = ''; if (f) editReceiveFile(p, f); }
+async function editReceiveFile(p, file){
+  const status = document.getElementById(p + '-status');
+  try {
+    status.textContent = '⏳ Preparando a imagem editada...';
+    const raw = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = () => rej(new Error('Não consegui ler a imagem.')); fr.readAsDataURL(file); });
+    await editCtx(p).onResult(raw);
+    document.getElementById(p + '-out').innerHTML = '';
+    window._editWait = null;
+    status.textContent = '✓ Imagem editada recebida. Gostou? Use a imagem ou peça outra mudança.';
+  } catch (e) { status.textContent = '⚠️ ' + e.message; }
+}
+
+// ── Janela Gerar imagem: botão "Editar com IA" ao lado de "Gerar outra" ──
+function geToggleEdit(){
+  const box = document.getElementById('gen-edit');
+  if (!box) return;
+  if (box.innerHTML.trim()) { box.innerHTML = ''; window._editWait = null; return; }
+  box.innerHTML = editPanelHTML('ge');
+  initEditPanelEngine('ge');
+  document.getElementById('ge-instr').focus();
+}
+
+// ── Visualizador "Reaproveitar imagem" ──
+let _ru = null; // { id, profile, sims, idx, edited }
+function ensureReuseModal(){
+  let el = document.getElementById('reuseModal');
+  if (el) return el;
+  el = document.createElement('div');
+  el.className = 'sx-overlay';
+  el.id = 'reuseModal';
+  el.onclick = (e) => { if (e.target === el) closeReuseViewer(); };
+  el.innerHTML = `
+    <div class="sx-box" style="max-width:640px" onclick="event.stopPropagation()">
+      <div class="sx-head"><div class="sx-title">♻️ Reaproveitar imagem</div><button class="sx-close" onclick="closeReuseViewer()">✕</button></div>
+      <div class="sx-body">
+        <div class="ru-tabs" id="ru-tabs"></div>
+        <div class="ru-meta" id="ru-meta"></div>
+        <div id="ru-imgwrap"></div>
+        <div class="sx-hint" id="ru-warn"></div>
+        <div class="ru-actions">
+          <button class="edit-btn edit-btn-primary" id="ru-use" onclick="ruUse()">✅ Usar esta imagem</button>
+          <button class="edit-btn" id="ru-editbtn" onclick="ruToggleEdit()">✏️ Editar com IA</button>
+          <button class="edit-btn" id="ru-back" style="display:none" onclick="ruBack()">↩️ Voltar para a original</button>
+        </div>
+        <div id="ru-edit"></div>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  return el;
+}
+function openReuseViewer(id, profile){
+  const sims = reuseCandidates(id);
+  if (!sims.length) { showToast('Nenhuma imagem parecida encontrada.'); updateReuseButton(id); return; }
+  _ru = { id, profile, sims, idx: 0, edited: null };
+  window._editWait = null;
+  const el = ensureReuseModal();
+  document.getElementById('ru-edit').innerHTML = '';
+  el.classList.add('on');
+  ruRefresh();
+}
+function closeReuseViewer(){
+  const el = document.getElementById('reuseModal');
+  if (el) el.classList.remove('on');
+  window._editWait = null;
+}
+function ruPick(i){ _ru.idx = i; _ru.edited = null; ruRefresh(); }
+function ruRefresh(){
+  const c = _ru.sims[_ru.idx];
+  const pct = Math.round(c.score * 100);
+  const cls = c.score >= SIM_GREEN ? 'g' : 'y';
+  document.getElementById('ru-tabs').innerHTML = _ru.sims.length > 1
+    ? _ru.sims.map((s, i) => `<button class="cal-filter${i === _ru.idx ? ' on' : ''}" onclick="ruPick(${i})">${i + 1} · ${Math.round(s.score * 100)}%</button>`).join('') : '';
+  const pub = getPublishData(c.d.id);
+  const title = String(c.d.item.title || '').replace(/</g, '&lt;');
+  document.getElementById('ru-meta').innerHTML =
+    `<span class="ru-badge ${cls}">${pct}% parecida</span><b>${title}</b><span>${fmtDate(c.d.item.date)} · ${c.d.item.format}${(pub && pub.status === 'ok') ? ' · ✅ já publicada' : ''}</span>`;
+  const url = _ru.edited || c.img.zernioUrl || c.img.thumbnailLink || '';
+  document.getElementById('ru-imgwrap').innerHTML = url
+    ? `<img class="gen-img" id="ru-img" src="${url.replace(/"/g, '&quot;')}" alt="Imagem parecida" onerror="ruImgError()">`
+    : '<div class="sx-hint">Sem prévia disponível para esta imagem.</div>';
+  const drive = c.img.viewUrl ? ` <a class="sim-link" href="${c.img.viewUrl}" target="_blank" rel="noopener">abrir no Drive ↗</a>` : '';
+  document.getElementById('ru-warn').innerHTML = _ru.edited ? '✏️ Esta é a versão editada (ainda não foi aplicada ao card).' + drive : (drive ? 'Original:' + drive : '');
+  document.getElementById('ru-use').textContent = _ru.edited ? '✅ Usar a imagem editada' : '✅ Usar esta imagem';
+  document.getElementById('ru-back').style.display = _ru.edited ? '' : 'none';
+}
+function ruImgError(){
+  const w = document.getElementById('ru-warn');
+  if (w) w.innerHTML = '⚠️ A prévia não carregou (o link temporário pode ter expirado). ' + (_ru.sims[_ru.idx].img.viewUrl ? `<a class="sim-link" href="${_ru.sims[_ru.idx].img.viewUrl}" target="_blank" rel="noopener">Abrir no Drive ↗</a>` : '');
+}
+function ruToggleEdit(){
+  const box = document.getElementById('ru-edit');
+  if (box.innerHTML.trim()) { box.innerHTML = ''; window._editWait = null; return; }
+  box.innerHTML = editPanelHTML('ru');
+  initEditPanelEngine('ru');
+  document.getElementById('ru-instr').focus();
+}
+function ruBack(){ _ru.edited = null; ruRefresh(); }
+async function ruUse(){
+  const { id, profile } = _ru;
+  const c = _ru.sims[_ru.idx];
+  const edited = _ru.edited;
+  closeReuseViewer();
+  if (edited) { await useImageForCard(id, profile, edited, 'editada'); showToast('✅ Imagem editada enviada pro card'); }
+  else await reuseImageTo(id, profile, c.d.id);
+}
+
+// Ctrl+V com uma imagem na área de transferência:
+// 1) edição manual (ChatGPT) aguardando a imagem editada => é a imagem editada;
+// 2) janela "Gerar imagem": dentro da caixa de anexos (ou logo depois de clicar nela) => anexo;
+//    com o passo a passo do ChatGPT aberto => é a imagem gerada no ChatGPT; senão => anexo.
+window._attachArmed = false;
+document.addEventListener('pointerdown', function (e) {
+  window._attachArmed = !!(e.target && e.target.closest && e.target.closest('.attach-box'));
+}, true);
+document.addEventListener('paste', function (e) {
+  const files = e.clipboardData && e.clipboardData.files;
+  if (!(files && files[0] && files[0].type.startsWith('image/'))) return;
+  const ruEl = document.getElementById('reuseModal'), gm = document.getElementById('genModal');
+  const ruOpen = !!(ruEl && ruEl.classList.contains('on')), gmOpen = !!(gm && gm.classList.contains('on'));
+  if (!ruOpen && !gmOpen) return;
+  const inAttach = !!(e.target && e.target.closest && e.target.closest('.attach-box'));
+  const w = window._editWait;
+  if (w && ((w === 'ru' && ruOpen) || (w === 'ge' && gmOpen)) && !inAttach && !window._attachArmed) {
+    e.preventDefault(); editReceiveFile(w, files[0]); return;
+  }
+  if (!gmOpen) return;
+  const toResult = !!document.getElementById('cg-box') && !inAttach && !window._attachArmed;
+  e.preventDefault();
+  if (toResult) cgReceiveImage(files[0]); else addGenAttachFile(files[0]);
+});
 
 // ── Imagens anexadas pra compor a arte (só nesta geração, não ficam salvas) ──
 let _genAttach = []; // [{ mime, data, name }]
@@ -26690,7 +26988,7 @@ async function prepareChatGpt(found, profile, prompt){
   const el = document.getElementById('genModal');
   const btn = document.getElementById('gen-go');
   const status = document.getElementById('gen-status');
-  btn.disabled = true; btn.textContent = '⏳ Montando o prompt...';
+  btn.disabled = true; btn.textContent = '⏳ Montando o prompt...'; document.getElementById('gen-edit').innerHTML = ''; window._editWait = null;
   try {
     const palette = (PALETTES[profile] || []).map(c => c.hex + ' (' + c.name + ')').join(', ');
     const logoAI = document.getElementById('gen-logoai').checked;
@@ -26774,25 +27072,6 @@ async function cgReceiveImage(file){
     status.textContent = '⚠️ ' + e.message;
   }
 }
-// Ctrl+V com uma imagem na área de transferência, com a janela "Gerar imagem" aberta:
-// - dentro da caixa de anexos (ou logo depois de clicar nela) => vira anexo;
-// - com o passo a passo do ChatGPT aberto => é a imagem gerada no ChatGPT;
-// - nos demais casos => vira anexo.
-window._attachArmed = false;
-document.addEventListener('pointerdown', function (e) {
-  window._attachArmed = !!(e.target && e.target.closest && e.target.closest('.attach-box'));
-}, true);
-document.addEventListener('paste', function (e) {
-  const modal = document.getElementById('genModal');
-  if (!modal || !modal.classList.contains('on')) return;
-  const files = e.clipboardData && e.clipboardData.files;
-  if (!(files && files[0] && files[0].type.startsWith('image/'))) return;
-  const inAttach = !!(e.target && e.target.closest && e.target.closest('.attach-box'));
-  const toResult = !!document.getElementById('cg-box') && !inAttach && !window._attachArmed;
-  e.preventDefault();
-  if (toResult) cgReceiveImage(files[0]); else addGenAttachFile(files[0]);
-});
-
 // ── Gerar imagem com IA (logo + mascote sempre incluídos) ──
 const GEN_TARGET = { Story: { w: 1080, h: 1920 }, Reel: { w: 1080, h: 1920 }, Post: { w: 1080, h: 1350 } };
 let _genResult = null;
@@ -26851,10 +27130,12 @@ function ensureGenModal(){
         </div>
         <div id="gen-status" class="sx-hint"></div>
         <div id="gen-preview"></div>
+        <div id="gen-edit"></div>
       </div>
       <div class="sx-foot">
         <button class="edit-btn" onclick="closeGenImage()">Fechar</button>
         <button class="edit-btn" id="gen-use" style="display:none" onclick="useGeneratedImage()">✅ Usar esta imagem</button>
+        <button class="edit-btn" id="gen-editbtn" onclick="geToggleEdit()">✏️ Editar com IA</button>
         <button class="edit-btn edit-btn-primary" id="gen-go" onclick="runGenerateImage()">✨ Gerar</button>
       </div>
     </div>`;
@@ -26911,6 +27192,8 @@ function openGenImage(id, profile){
   document.getElementById('gen-subline').value = sug.subline;
   document.getElementById('gen-status').textContent = '';
   document.getElementById('gen-preview').innerHTML = '';
+  document.getElementById('gen-edit').innerHTML = '';
+  window._editWait = null;
   document.getElementById('gen-use').style.display = 'none';
   const go = document.getElementById('gen-go'); go.disabled = false; go.textContent = '✨ Gerar';
   _genResult = null;
@@ -26922,9 +27205,7 @@ function openGenImage(id, profile){
   } catch (e) {}
   updateEngineUI();
   renderGenAttach();
-  el.dataset.skipSimilar = '';
   el.classList.add('on');
-  showSimilarIfAny();
   renderBrandGrid();
   loadBrandAssets().then(renderBrandGrid);
 }
@@ -26940,12 +27221,6 @@ async function runGenerateImage(){
   if (!prompt) { showToast('Descreva a imagem primeiro.'); return; }
   const btn = document.getElementById('gen-go');
   const status = document.getElementById('gen-status');
-  const skipSimilar = el.dataset.skipSimilar === '1';
-  el.dataset.skipSimilar = '';
-  if (!skipSimilar && !_genResult && !_genAttach.length && showSimilarIfAny()) {
-    status.textContent = '♻️ Conferi o histórico: já existe imagem parecida. Reutilize uma delas ou gere uma nova mesmo assim.';
-    return;
-  }
   await loadBrandAssets();
   if (!brandGet(profile, 'logo')) {
     status.textContent = '⚠️ Anexe o logo desta marca na seção "Logos e mascotes" acima antes de gerar.';
@@ -26953,7 +27228,7 @@ async function runGenerateImage(){
     return;
   }
   if (document.getElementById('gen-engine').value === 'chatgpt') { await prepareChatGpt(found, profile, prompt); return; }
-  btn.disabled = true; btn.textContent = '⏳ Gerando...'; el.dataset.busy = '1';
+  btn.disabled = true; btn.textContent = '⏳ Gerando...'; el.dataset.busy = '1'; document.getElementById('gen-edit').innerHTML = ''; window._editWait = null;
   status.textContent = document.getElementById('gen-engine').value === 'gemini' ? 'A IA está criando a imagem — leva de 20 a 60 segundos. Não feche esta janela.' : 'A IA está criando a imagem com mais capricho — pode levar até 100 segundos. Não feche esta janela.';
   document.getElementById('gen-use').style.display = 'none';
   try {
