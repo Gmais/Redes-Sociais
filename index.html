@@ -682,6 +682,69 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.15s;
 }
 .unpublish-btn:hover { background:#fbbf2422; border-color:#fbbf24; }
+
+/* ── Módulo Publicação: agendar, calendário, gerar imagem ── */
+.publish-badge.scheduled { background:#0d2a3a; color:#00e5ff; border:1px solid #1e4a5a; }
+.gen-img-btn { font-size:11px; font-weight:700; color:#fff; background:linear-gradient(135deg,#7c3aed,#2563eb); border:none; border-radius:8px; padding:6px 12px; cursor:pointer; font-family:'Inter',sans-serif; }
+.gen-img-btn:hover { opacity:0.85; }
+.cal-open-btn { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:#fff; background:#2563eb; border:none; border-radius:10px; padding:10px 16px; cursor:pointer; font-family:'Inter',sans-serif; }
+.cal-open-btn:hover { background:#1d4ed8; }
+.sx-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1100; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto; }
+.sx-overlay.on { display:flex; }
+.sx-box { background:var(--s1); border:1px solid var(--border); border-radius:16px; width:100%; margin:auto; }
+.sx-head { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); }
+.sx-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.06em; }
+.sx-close { background:none; border:none; color:var(--txt3); font-size:18px; cursor:pointer; }
+.sx-body { padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+.sx-foot { display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; padding:14px 20px; border-top:1px solid var(--border); }
+.sx-sub { font-size:13px; font-weight:600; color:var(--txt); }
+.sx-hint { font-size:12px; color:var(--txt3); }
+.sx-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.sx-field { display:flex; flex-direction:column; gap:6px; font-size:12px; font-weight:700; color:var(--txt3); }
+.sx-field input, .sx-field textarea { background:var(--s2); border:1px solid var(--border); color:var(--txt); border-radius:8px; padding:10px; font-size:14px; font-family:'Inter',sans-serif; }
+.sx-field textarea { resize:vertical; line-height:1.4; }
+.gen-mascot { display:inline-flex; align-items:center; gap:4px; margin-left:8px; cursor:pointer; }
+.gen-img { width:100%; max-height:60vh; object-fit:contain; border-radius:10px; border:1px solid var(--border); background:#000; }
+.cal-bar { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.cal-nav { display:flex; align-items:center; gap:8px; }
+.cal-month { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:0.05em; min-width:170px; text-align:center; }
+.cal-navbtn { background:var(--s2); border:1px solid var(--border); color:var(--txt); border-radius:8px; padding:6px 12px; cursor:pointer; font-size:14px; }
+.cal-filters { display:flex; gap:6px; flex-wrap:wrap; }
+.cal-filter { background:var(--s2); border:1px solid var(--border); color:var(--txt3); border-radius:999px; padding:6px 12px; font-size:12px; font-weight:600; cursor:pointer; }
+.cal-filter.on { background:#2563eb; border-color:#2563eb; color:#fff; }
+.cal-legend { display:flex; gap:8px; flex-wrap:wrap; font-size:11px; font-weight:600; }
+.cal-lg { padding:3px 8px; border-radius:999px; border:1px solid var(--border); }
+.cal-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px; }
+.cal-dow { text-align:center; font-size:11px; font-weight:700; color:var(--txt3); text-transform:uppercase; padding:4px 0; }
+.cal-cell { min-height:110px; background:var(--s2); border:1px solid var(--border); border-radius:10px; padding:6px; display:flex; flex-direction:column; gap:4px; min-width:0; }
+.cal-cell.cal-empty { background:transparent; border-color:transparent; }
+.cal-cell.cal-today { border-color:#2563eb; box-shadow:0 0 0 1px #2563eb inset; }
+.cal-daynum { font-size:12px; font-weight:800; color:var(--txt3); }
+.cal-chip { display:flex; gap:6px; align-items:center; padding:4px 6px; border-radius:8px; border:1px solid var(--border); border-left-width:3px; background:var(--s1); cursor:pointer; min-width:0; }
+.cal-chip:hover { filter:brightness(1.2); }
+.cal-chip-txt { display:flex; flex-direction:column; min-width:0; font-size:10px; line-height:1.25; }
+.cal-time { font-weight:800; color:var(--txt); }
+.cal-ttl { color:var(--txt3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cal-st { font-weight:700; }
+.cal-thumb { width:30px; height:30px; object-fit:cover; border-radius:6px; flex-shrink:0; }
+.cal-dotp { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.cal-p-academia { background:#e63900; }
+.cal-p-sorveteria { background:#f5c800; }
+.cal-p-gympulse { background:#f5c200; }
+.cal-published { border-color:#22c55e; }
+.cal-published .cal-st, .cal-lg.cal-published { color:#4ade80; }
+.cal-scheduled { border-color:#3b82f6; }
+.cal-scheduled .cal-st, .cal-lg.cal-scheduled { color:#60a5fa; }
+.cal-sending { border-color:#f59e0b; }
+.cal-sending .cal-st, .cal-lg.cal-sending { color:#fbbf24; }
+.cal-failed { border-color:#ef4444; }
+.cal-failed .cal-st, .cal-lg.cal-failed { color:#f87171; }
+.cal-auto { border-color:#14b8a6; }
+.cal-auto .cal-st, .cal-lg.cal-auto { color:#2dd4bf; }
+.cal-pending { border-color:#555; }
+.cal-pending .cal-st, .cal-lg.cal-pending { color:#999; }
+.cal-more { background:none; border:none; color:#60a5fa; font-size:10px; font-weight:700; cursor:pointer; text-align:left; padding:0 2px; }
+@media(max-width:700px){ .cal-cell{min-height:70px;padding:3px;} .cal-ttl,.cal-thumb{display:none;} .cal-month{min-width:120px;font-size:18px;} .sx-row{grid-template-columns:1fr;} }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -718,6 +781,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
     <span class="checkmark"></span>
     <span class="hide-done-label">Esconder ações já realizadas</span>
   </label>
+  <button class="cal-open-btn" id="calOpenBtn" onclick="openCalendar()">📅 Calendário</button>
   <button class="new-post-btn" id="newPostBtn" onclick="openNewPostModal()">＋ Nova Postagem</button>
 </div>
 
@@ -23176,10 +23240,10 @@ function updateReadyBadge(id){
   // Vermelho pulsante: já foi enviado à Zernio mas ainda sem confirmação
   // ('sent'), ou a Zernio confirmou que falhou ('error') — nos dois casos
   // NÃO está garantido que o post está no ar.
-  const isUnverified = !bestContentDue && ZERNIO_PROFILES.includes(profile) && !!pubData && (pubData.status === 'sent' || pubData.status === 'error');
+  const isUnverified = !bestContentDue && ZERNIO_PROFILES.includes(profile) && !!pubData && (pubData.status === 'sent' || pubData.status === 'error') && !isScheduledFuture(pubData);
   const imgData2 = getImageData(id);
   const isDriveReady = !!(imgData2 && imgData2.status === 'ok') && getReviewed(id);
-  const isReadyToShow = !isConfirmedPublished && !isUnverified && (isDriveReady || isBestContent);
+  const isReadyToShow = !isConfirmedPublished && !isUnverified && (isDriveReady || isBestContent || isScheduledFuture(pubData));
   const badgeEl = document.getElementById('cfmt-'+id);
   if (badgeEl) {
     badgeEl.classList.toggle('ready', isReadyToShow);
@@ -23232,6 +23296,11 @@ function publishBlockHTML(id){
   let actionHTML;
   if (pub && pub.status === 'publishing') {
     actionHTML = `<span class="publish-badge publishing">⏳ Publicando no Instagram...</span>`;
+  } else if (isScheduledFuture(pub)) {
+    actionHTML = `
+      <span class="publish-badge scheduled">📅 Agendado para ${fmtSched(pub.scheduledFor)} — a Zernio publica sozinha</span>
+      <button class="publish-btn" onclick="event.stopPropagation();openScheduleModal('${id}')">🗓️ Reagendar</button>
+      <button class="unpublish-btn" onclick="event.stopPropagation();cancelSchedule('${id}','${profile}')">✖ Cancelar agendamento</button>`;
   } else if (pub && pub.status === 'sent') {
     const sentTime = pub.sentAt ? ' em ' + new Date(pub.sentAt).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
     actionHTML = `
@@ -23243,7 +23312,7 @@ function publishBlockHTML(id){
     const permalinkHTML = pub.permalink ? ` — <a href="${pub.permalink}" target="_blank" rel="noopener" onclick="event.stopPropagation();" style="color:#00e5ff;">ver post</a>` : '';
     actionHTML = `
       <span class="publish-badge ok">✓ Confirmado no Instagram${pubTime}${permalinkHTML}</span>
-      <button class="publish-btn" onclick="event.stopPropagation();publishToInstagram('${id}')">Republicar</button>
+      <button class="publish-btn" onclick="event.stopPropagation();openScheduleModal('${id}')">Republicar</button>
       <button class="unpublish-btn" onclick="event.stopPropagation();unpublishCard('${id}')">↩️ Não foi publicado</button>`;
   } else if (pub && pub.status === 'error') {
     const hint = zernioErrorHint(pub.errorCategory);
@@ -23254,7 +23323,7 @@ function publishBlockHTML(id){
       <span class="publish-badge error">⚠️ Falha ao publicar: ${pub.errorMsg || ''}${hint ? ' — ' + hint : ''}</span>
       ${retryBtn}`;
   } else {
-    actionHTML = `<button class="publish-btn" onclick="event.stopPropagation();publishToInstagram('${id}')">📤 Publicar agora no Instagram</button>`;
+    actionHTML = `<button class="publish-btn" onclick="event.stopPropagation();openScheduleModal('${id}')">📤 Publicar no Instagram</button>`;
   }
 
   return `<div class="publish-block" id="pubblock-${id}">
@@ -23298,7 +23367,7 @@ async function downloadDriveFile(fileId){
   return await res.blob();
 }
 
-async function publishToInstagram(id){
+async function publishToInstagram(id, scheduledFor){
   const found = findItem(id);
   if (!found) return;
   const { item, profile } = found;
@@ -23325,18 +23394,14 @@ async function publishToInstagram(id){
       const resp = await fetch('/api/publish-zernio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profile, caption: item.texto, format: item.format, zernioUrl: img.zernioUrl })
+        body: JSON.stringify({ profile, caption: item.texto, format: item.format, zernioUrl: img.zernioUrl, scheduledFor: scheduledFor || undefined })
       });
       const data = await resp.json();
       if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha desconhecida ao publicar.');
       // A Zernio aceitou o envio, mas isso ainda não é confirmação de que o
       // post está no ar (publicação assíncrona) — fica 'sent' até
       // verifyPublishStatus() (ou o cron auto-publish.js) confirmar de fato.
-      setPublishData(id, { status: 'sent', postId: data.postId, sentAt: new Date().toISOString() });
-      rerenderPublishBlock(id);
-      showToast('📤 Enviado à Zernio — confirmando publicação...');
-      pushRemoteState();
-      verifyPublishStatus(id, profile);
+      afterPublishAccepted(id, profile, data);
     } catch (e) {
       setPublishData(id, { status: 'error', errorMsg: e.message || 'Erro de conexão' });
       rerenderPublishBlock(id);
@@ -23361,17 +23426,13 @@ async function publishToInstagram(id){
       const resp = await fetch('/api/publish-zernio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profile, caption: item.texto, fileName, mimeType, base64, format: item.format })
+        body: JSON.stringify({ profile, caption: item.texto, fileName, mimeType, base64, format: item.format, scheduledFor: scheduledFor || undefined })
       });
       const data = await resp.json();
       if (!resp.ok || !data.ok) {
         throw new Error(data.error || 'Falha desconhecida ao publicar.');
       }
-      setPublishData(id, { status: 'sent', postId: data.postId, sentAt: new Date().toISOString() });
-      rerenderPublishBlock(id);
-      showToast('📤 Enviado à Zernio — confirmando publicação...');
-      pushRemoteState();
-      verifyPublishStatus(id, profile);
+      afterPublishAccepted(id, profile, data);
     } catch (e) {
       setPublishData(id, { status: 'error', errorMsg: e.message || 'Erro de conexão' });
       rerenderPublishBlock(id);
@@ -23388,6 +23449,7 @@ async function verifyPublishStatus(id, profile, attempt){
   attempt = attempt || 0;
   const pub = getPublishData(id);
   if (!pub || pub.status !== 'sent' || !pub.postId) return;
+  if (isScheduledFuture(pub)) return; // agendado: a Zernio publica no horário
 
   try {
     const resp = await fetch('/api/zernio-post-status', {
@@ -23922,10 +23984,10 @@ function cardHTML(item,profile){
   const bestContentDue = isBestContent && isBestContentDue(item);
   // Mesma lógica de updateReadyBadge(): azul só com confirmação real da Zernio.
   const isPublishedNow = (ZERNIO_PROFILES.includes(profile) && !!(pubData && pubData.status === 'ok')) || bestContentDue;
-  const isUnverifiedNow = !bestContentDue && ZERNIO_PROFILES.includes(profile) && !!pubData && (pubData.status === 'sent' || pubData.status === 'error');
+  const isUnverifiedNow = !bestContentDue && ZERNIO_PROFILES.includes(profile) && !!pubData && (pubData.status === 'sent' || pubData.status === 'error') && !isScheduledFuture(pubData);
   const _img = getImageData(item.id);
   const isDriveReady = !!(_img && _img.status === 'ok') && getReviewed(item.id);
-  const isReadyToShow = !isPublishedNow && !isUnverifiedNow && (isDriveReady || isBestContent);
+  const isReadyToShow = !isPublishedNow && !isUnverifiedNow && (isDriveReady || isBestContent || isScheduledFuture(pubData));
   const cfmtClass = isPublishedNow ? ' published' : (isUnverifiedNow ? ' unverified' : (isReadyToShow ? ' ready' : ''));
 
   return `
@@ -23950,7 +24012,8 @@ function cardHTML(item,profile){
     ${ZERNIO_PROFILES.includes(profile) ? publishBlockHTML(item.id) : ''}
     <div class="block">
       <div class="blabel" style="color:#00b4d8">📎 Mídia a ser Publicada
-        <a class="upload-link" style="margin-left:auto" href="https://drive.google.com/drive/folders/${DRIVE_FOLDER_MAP[profile]}" target="_blank" onclick="event.stopPropagation()">🔍 Buscar imagem</a>
+        ${(item.format==='Story'||item.format==='Post'||item.format==='Reel') ? `<button class="gen-img-btn" style="margin-left:auto" onclick="event.stopPropagation();openGenImage('${item.id}','${profile}')">✨ Gerar imagem</button>` : ''}
+        <a class="upload-link" style="${(item.format==='Story'||item.format==='Post'||item.format==='Reel')?'margin-left:8px':'margin-left:auto'}" href="https://drive.google.com/drive/folders/${DRIVE_FOLDER_MAP[profile]}" target="_blank" onclick="event.stopPropagation()">🔍 Buscar imagem</a>
       </div>
       <div id="imgbox-${item.id}">${imageBlockHTML(item.id, profile)}</div>
       <input type="file" accept="image/*,video/*" id="imgfile-${item.id}" style="display:none" ${item.format==='Carrossel'?'multiple':''} onchange="handleImageSelect('${item.id}','${profile}',this)">
@@ -24120,6 +24183,8 @@ function go(tab,el){
   // Esconder botão Nova Postagem no Histórico/Estratégia
   const npBtn = document.getElementById('newPostBtn');
   if(npBtn) npBtn.style.display = ['historico','estrategia'].includes(tab) ? 'none' : 'flex';
+  const calBtn = document.getElementById('calOpenBtn');
+  if(calBtn) calBtn.style.display = ['historico','estrategia'].includes(tab) ? 'none' : 'flex';
   if(tab==='historico') buildHist();
   if(tab==='estrategia') buildEstrategia();
 }
@@ -25530,6 +25595,433 @@ function unpublishCard(id) {
   buildHist();
   scheduleSync();
   showToast('Status revertido — card pendente novamente');
+}
+
+// ── MÓDULO PUBLICAÇÃO: agendar, calendário e gerar imagem ──────────────────
+// Horários sempre no fuso de Brasília (UTC-3 fixo, ver scheduledUtcMs()).
+
+function isScheduledFuture(pub){
+  return !!(pub && pub.status === 'sent' && pub.scheduledFor && Date.parse(pub.scheduledFor) > Date.now());
+}
+// ISO UTC -> { date:'YYYY-MM-DD', time:'HH:MM' } no horário de Brasília
+function brParts(isoOrMs){
+  const ms = typeof isoOrMs === 'number' ? isoOrMs : Date.parse(isoOrMs);
+  const s = new Date(ms - 3 * 3600000).toISOString();
+  return { date: s.slice(0, 10), time: s.slice(11, 16) };
+}
+function fmtSched(iso){
+  const p = brParts(iso);
+  const [y, m, d] = p.date.split('-');
+  return d + '/' + m + ' às ' + p.time;
+}
+function toInputTime(timeStr){
+  const t = parseTimeStr(timeStr);
+  return t ? String(t.h).padStart(2, '0') + ':' + String(t.m).padStart(2, '0') : '09:00';
+}
+
+// ── Publicar no Instagram: escolher dia e horário ──
+function ensureScheduleModal(){
+  let el = document.getElementById('schedModal');
+  if (el) return el;
+  el = document.createElement('div');
+  el.className = 'sx-overlay';
+  el.id = 'schedModal';
+  el.onclick = (e) => { if (e.target === el) closeScheduleModal(); };
+  el.innerHTML = `
+    <div class="sx-box" style="max-width:440px" onclick="event.stopPropagation()">
+      <div class="sx-head"><div class="sx-title">📤 Publicar no Instagram</div><button class="sx-close" onclick="closeScheduleModal()">✕</button></div>
+      <div class="sx-body">
+        <div class="sx-sub" id="sched-sub"></div>
+        <div class="sx-row">
+          <label class="sx-field"><span>📅 Dia</span><input type="date" id="sched-date"></label>
+          <label class="sx-field"><span>🕐 Horário</span><input type="time" id="sched-time" step="300"></label>
+        </div>
+        <div class="sx-hint" id="sched-hint">Já vem preenchido com o sugerido pro card — pode mudar.</div>
+      </div>
+      <div class="sx-foot">
+        <button class="edit-btn" onclick="closeScheduleModal()">Cancelar</button>
+        <button class="edit-btn" onclick="confirmSchedule(true)">🚀 Publicar agora</button>
+        <button class="edit-btn edit-btn-primary" id="sched-ok" onclick="confirmSchedule(false)">📅 Agendar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  ['sched-date', 'sched-time'].forEach(i => document.getElementById(i).addEventListener('input', updateScheduleHint));
+  return el;
+}
+function openScheduleModal(id){
+  const found = findItem(id);
+  if (!found) return;
+  if (!hasValidImage(id)) {
+    showToast('⚠️ Anexe uma imagem antes de publicar');
+    flashImageBox(id);
+    return;
+  }
+  const { item } = found;
+  const pub = getPublishData(id);
+  const el = ensureScheduleModal();
+  el.dataset.id = id;
+  let date = item.date, time = toInputTime(item.time);
+  if (pub && pub.scheduledFor) { const p = brParts(pub.scheduledFor); date = p.date; time = p.time; }
+  document.getElementById('sched-date').value = date;
+  document.getElementById('sched-time').value = time;
+  document.getElementById('sched-sub').textContent = item.title;
+  updateScheduleHint();
+  el.classList.add('on');
+}
+function closeScheduleModal(){
+  const el = document.getElementById('schedModal');
+  if (el) el.classList.remove('on');
+}
+function schedChosenMs(){
+  const d = document.getElementById('sched-date').value;
+  const t = document.getElementById('sched-time').value;
+  if (!d || !t) return null;
+  return scheduledUtcMs(d, t);
+}
+function updateScheduleHint(){
+  const ms = schedChosenMs();
+  const hint = document.getElementById('sched-hint');
+  const ok = document.getElementById('sched-ok');
+  if (ms === null) { hint.textContent = 'Escolha o dia e o horário.'; ok.disabled = true; return; }
+  ok.disabled = false;
+  if (ms <= Date.now() + 60000) {
+    hint.textContent = '⚠️ Esse horário já passou — "Agendar" vai publicar agora.';
+  } else {
+    hint.textContent = '✅ A Zernio publica sozinha no horário, mesmo com o painel fechado.';
+  }
+}
+async function confirmSchedule(now){
+  const el = document.getElementById('schedModal');
+  const id = el && el.dataset.id;
+  if (!id) return;
+  const found = findItem(id);
+  if (!found) return;
+  const ms = schedChosenMs();
+  if (!now && ms === null) { showToast('Escolha o dia e o horário.'); return; }
+  const scheduledFor = (!now && ms > Date.now() + 60000) ? new Date(ms).toISOString() : null;
+
+  // Reagendando: cancela antes o agendamento anterior na Zernio (senão sairia 2x).
+  const pub = getPublishData(id);
+  if (pub && pub.status === 'sent' && pub.postId && isScheduledFuture(pub)) {
+    try {
+      const resp = await fetch('/api/zernio-cancel-post', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile: found.profile, postId: pub.postId })
+      });
+      const data = await resp.json();
+      if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha ao cancelar o agendamento anterior.');
+    } catch (e) {
+      showToast('⚠️ ' + e.message);
+      return;
+    }
+  }
+  closeScheduleModal();
+  publishToInstagram(id, scheduledFor);
+}
+async function cancelSchedule(id, profile){
+  const pub = getPublishData(id);
+  if (!pub || !pub.postId) return;
+  if (!confirm('Cancelar o agendamento deste post na Zernio?')) return;
+  try {
+    const resp = await fetch('/api/zernio-cancel-post', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile, postId: pub.postId })
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha ao cancelar.');
+  } catch (e) {
+    showToast('⚠️ ' + e.message);
+    return;
+  }
+  localStorage.removeItem('pub_' + id);
+  rerenderPublishBlock(id);
+  renderAll();
+  buildHist();
+  scheduleSync();
+  showToast('Agendamento cancelado — card pendente novamente');
+}
+// Chamado depois que a Zernio aceita o post (agendado ou imediato).
+function afterPublishAccepted(id, profile, data){
+  if (data.scheduledFor) {
+    setPublishData(id, { status: 'sent', postId: data.postId, sentAt: new Date().toISOString(), scheduledFor: data.scheduledFor });
+    rerenderPublishBlock(id);
+    showToast('📅 Agendado para ' + fmtSched(data.scheduledFor));
+    pushRemoteState();
+    return;
+  }
+  setPublishData(id, { status: 'sent', postId: data.postId, sentAt: new Date().toISOString() });
+  rerenderPublishBlock(id);
+  showToast('📤 Enviado à Zernio — confirmando publicação...');
+  pushRemoteState();
+  verifyPublishStatus(id, profile);
+}
+// Quando o horário de um post agendado chega, confirma na Zernio (uma vez por
+// sessão por post; o cron de 5 min também faz isso).
+const _schedChecked = new Set();
+setInterval(() => {
+  for (const profile of ['academia', 'sorveteria', 'gympulse']) {
+    for (const item of CONTENT[profile]) {
+      const pub = getPublishData(item.id);
+      if (pub && pub.status === 'sent' && pub.scheduledFor && pub.postId
+          && Date.parse(pub.scheduledFor) <= Date.now() && !_schedChecked.has(item.id)) {
+        _schedChecked.add(item.id);
+        rerenderPublishBlock(item.id);
+        verifyPublishStatus(item.id, profile);
+      }
+    }
+  }
+}, 60000);
+
+// ── Calendário de publicações ──
+let calMonth = null;      // 'YYYY-MM'
+let calProfile = 'all';
+const calExpanded = new Set();
+const CAL_STATUS = {
+  published: { label: 'Publicado', cls: 'published' },
+  scheduled: { label: 'Agendado', cls: 'scheduled' },
+  sending:   { label: 'Confirmando', cls: 'sending' },
+  failed:    { label: 'Falhou', cls: 'failed' },
+  auto:      { label: 'Pronto', cls: 'auto' },
+  pending:   { label: 'Pendente', cls: 'pending' }
+};
+function calEntry(item, profile){
+  const pub = getPublishData(item.id);
+  let ms = (pub && pub.scheduledFor) ? Date.parse(pub.scheduledFor) : scheduledUtcMs(item.date, item.time);
+  if (ms === null || isNaN(ms)) ms = scheduledUtcMs(item.date, '00:00');
+  const p = brParts(ms);
+  let status = 'pending';
+  if (getBestContent(item.id)) status = isBestContentDue(item) ? 'published' : 'scheduled';
+  else if (pub && pub.status === 'ok') status = 'published';
+  else if (pub && pub.status === 'error') status = 'failed';
+  else if (pub && pub.status === 'sent') status = isScheduledFuture(pub) ? 'scheduled' : 'sending';
+  else if (isReadyForAutoPublish(item.id)) status = 'auto';
+  const img = getImageData(item.id);
+  return { item, profile, ms, date: p.date, time: p.time, status, thumb: (img && img.status === 'ok' && img.thumbnailLink) || '' };
+}
+function calEntries(){
+  const out = [];
+  for (const profile of ['academia', 'sorveteria', 'gympulse']) {
+    if (calProfile !== 'all' && calProfile !== profile) continue;
+    for (const item of CONTENT[profile]) out.push(calEntry(item, profile));
+  }
+  return out;
+}
+function ensureCalendarModal(){
+  let el = document.getElementById('calModal');
+  if (el) return el;
+  el = document.createElement('div');
+  el.className = 'sx-overlay';
+  el.id = 'calModal';
+  el.onclick = (e) => { if (e.target === el) closeCalendar(); };
+  el.innerHTML = `
+    <div class="sx-box" style="max-width:1100px" onclick="event.stopPropagation()">
+      <div class="sx-head">
+        <div class="sx-title">📅 Calendário de publicações</div>
+        <button class="sx-close" onclick="closeCalendar()">✕</button>
+      </div>
+      <div class="sx-body" id="cal-body"></div>
+    </div>`;
+  document.body.appendChild(el);
+  return el;
+}
+function openCalendar(){
+  const el = ensureCalendarModal();
+  if (!calMonth) calMonth = todayBR().slice(0, 7);
+  if (calProfile === 'all' && typeof activeProfile !== 'undefined' && ['academia', 'sorveteria', 'gympulse'].includes(activeProfile)) calProfile = activeProfile;
+  renderCalendar();
+  el.classList.add('on');
+}
+function closeCalendar(){
+  const el = document.getElementById('calModal');
+  if (el) el.classList.remove('on');
+}
+function calShift(delta){
+  const [y, m] = calMonth.split('-').map(Number);
+  const d = new Date(Date.UTC(y, m - 1 + delta, 1));
+  calMonth = d.toISOString().slice(0, 7);
+  renderCalendar();
+}
+function calToday(){ calMonth = todayBR().slice(0, 7); renderCalendar(); }
+function calSetProfile(p){ calProfile = p; renderCalendar(); }
+function calToggleDay(day){ if (calExpanded.has(day)) calExpanded.delete(day); else calExpanded.add(day); renderCalendar(); }
+function renderCalendar(){
+  const body = document.getElementById('cal-body');
+  if (!body) return;
+  const [y, m] = calMonth.split('-').map(Number);
+  const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const entries = calEntries();
+  const byDay = {};
+  entries.forEach(e => { (byDay[e.date] = byDay[e.date] || []).push(e); });
+  Object.values(byDay).forEach(arr => arr.sort((a, b) => a.ms - b.ms));
+  const inMonth = entries.filter(e => e.date.startsWith(calMonth));
+  const count = s => inMonth.filter(e => e.status === s).length;
+
+  const firstDow = new Date(Date.UTC(y, m - 1, 1)).getUTCDay();
+  const daysIn = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const today = todayBR();
+  let cells = '';
+  for (let i = 0; i < firstDow; i++) cells += '<div class="cal-cell cal-empty"></div>';
+  for (let d = 1; d <= daysIn; d++) {
+    const ds = calMonth + '-' + String(d).padStart(2, '0');
+    const list = byDay[ds] || [];
+    const open = calExpanded.has(ds);
+    const shown = open ? list : list.slice(0, 3);
+    const chips = shown.map(e => {
+      const st = CAL_STATUS[e.status];
+      const title = String(e.item.title || '').replace(/</g, '&lt;');
+      const thumb = e.thumb ? `<img class="cal-thumb" src="${e.thumb}" alt="" loading="lazy" onerror="this.style.display='none'">` : `<span class="cal-dotp cal-p-${e.profile}"></span>`;
+      return `<div class="cal-chip cal-${st.cls}" title="${title} — ${st.label}" onclick="calGoto('${e.item.id}','${e.profile}')">
+        ${thumb}
+        <div class="cal-chip-txt"><span class="cal-time">${e.time}</span><span class="cal-ttl">${title}</span>
+        <span class="cal-st">${st.label}</span></div></div>`;
+    }).join('');
+    const more = list.length > 3
+      ? `<button class="cal-more" onclick="calToggleDay('${ds}')">${open ? 'Mostrar menos' : '+' + (list.length - 3) + ' mais'}</button>` : '';
+    cells += `<div class="cal-cell${ds === today ? ' cal-today' : ''}"><div class="cal-daynum">${d}</div>${chips}${more}</div>`;
+  }
+  const profBtn = (p, label) => `<button class="cal-filter${calProfile === p ? ' on' : ''}" onclick="calSetProfile('${p}')">${label}</button>`;
+  body.innerHTML = `
+    <div class="cal-bar">
+      <div class="cal-nav">
+        <button class="cal-navbtn" onclick="calShift(-1)">‹</button>
+        <div class="cal-month">${monthNames[m - 1]} ${y}</div>
+        <button class="cal-navbtn" onclick="calShift(1)">›</button>
+        <button class="cal-navbtn cal-hoje" onclick="calToday()">Hoje</button>
+      </div>
+      <div class="cal-filters">${profBtn('all', 'Todos')}${profBtn('academia', '🏋️ Academia')}${profBtn('sorveteria', '🍦 Sorveteria')}${profBtn('gympulse', '🎮 GympulsePro')}</div>
+    </div>
+    <div class="cal-legend">
+      <span class="cal-lg cal-published">${count('published')} publicados</span>
+      <span class="cal-lg cal-scheduled">${count('scheduled')} agendados</span>
+      <span class="cal-lg cal-sending">${count('sending')} confirmando</span>
+      <span class="cal-lg cal-failed">${count('failed')} com falha</span>
+      <span class="cal-lg cal-auto">${count('auto')} prontos (automático)</span>
+      <span class="cal-lg cal-pending">${count('pending')} pendentes</span>
+    </div>
+    <div class="cal-grid">
+      ${['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(n => `<div class="cal-dow">${n}</div>`).join('')}
+      ${cells}
+    </div>`;
+}
+function calGoto(id, profile){
+  closeCalendar();
+  const tab = document.querySelector('.tab[data-p="' + profile + '"]');
+  if (tab) go(profile, tab);
+  setTimeout(() => {
+    const card = document.getElementById('card-' + id);
+    if (!card) { showToast('Card não está visível (talvez escondido pelo filtro).'); return; }
+    if (!card.classList.contains('open')) expand(id);
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 80);
+}
+
+// ── Gerar imagem com IA (logo + mascote sempre incluídos) ──
+const GEN_TARGET = { Story: { w: 1080, h: 1920 }, Reel: { w: 1080, h: 1920 }, Post: { w: 1080, h: 1350 } };
+let _genResult = null;
+function ensureGenModal(){
+  let el = document.getElementById('genModal');
+  if (el) return el;
+  el = document.createElement('div');
+  el.className = 'sx-overlay';
+  el.id = 'genModal';
+  el.onclick = (e) => { if (e.target === el && !el.dataset.busy) closeGenImage(); };
+  el.innerHTML = `
+    <div class="sx-box" style="max-width:640px" onclick="event.stopPropagation()">
+      <div class="sx-head"><div class="sx-title">✨ Gerar imagem com IA</div><button class="sx-close" onclick="closeGenImage()">✕</button></div>
+      <div class="sx-body">
+        <div class="sx-sub" id="gen-sub"></div>
+        <label class="sx-field"><span>Descrição da imagem</span>
+          <textarea id="gen-prompt" rows="7" placeholder="Descreva a imagem que a IA deve criar..."></textarea></label>
+        <div class="sx-hint">✓ O <b>logo</b> da marca entra sempre na imagem. <label class="gen-mascot"><input type="checkbox" id="gen-mascot" checked> incluir o <b>mascote</b> (quando a marca tiver)</label></div>
+        <div id="gen-status" class="sx-hint"></div>
+        <div id="gen-preview"></div>
+      </div>
+      <div class="sx-foot">
+        <button class="edit-btn" onclick="closeGenImage()">Fechar</button>
+        <button class="edit-btn" id="gen-use" style="display:none" onclick="useGeneratedImage()">✅ Usar esta imagem</button>
+        <button class="edit-btn edit-btn-primary" id="gen-go" onclick="runGenerateImage()">✨ Gerar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  return el;
+}
+function stripHtml(s){ const d = document.createElement('div'); d.innerHTML = String(s || '').replace(/<br\s*\/?>/gi, '\n'); return (d.textContent || '').trim(); }
+function openGenImage(id, profile){
+  const found = findItem(id);
+  if (!found) return;
+  const { item } = found;
+  const el = ensureGenModal();
+  el.dataset.id = id; el.dataset.profile = profile; el.dataset.busy = '';
+  const brief = (item.secoes || []).find(s => /BRIEFING/i.test(s.titulo || ''));
+  const base = brief ? stripHtml(brief.conteudo) : (item.driveHint ? String(item.driveHint) : item.title);
+  document.getElementById('gen-sub').textContent = item.format + ' · ' + item.title;
+  document.getElementById('gen-prompt').value = base;
+  document.getElementById('gen-status').textContent = '';
+  document.getElementById('gen-preview').innerHTML = '';
+  document.getElementById('gen-use').style.display = 'none';
+  const go = document.getElementById('gen-go'); go.disabled = false; go.textContent = '✨ Gerar';
+  _genResult = null;
+  el.classList.add('on');
+}
+function closeGenImage(){
+  const el = document.getElementById('genModal');
+  if (el) el.classList.remove('on');
+}
+async function runGenerateImage(){
+  const el = document.getElementById('genModal');
+  const id = el.dataset.id, profile = el.dataset.profile;
+  const found = findItem(id);
+  const prompt = document.getElementById('gen-prompt').value.trim();
+  if (!prompt) { showToast('Descreva a imagem primeiro.'); return; }
+  const btn = document.getElementById('gen-go');
+  const status = document.getElementById('gen-status');
+  btn.disabled = true; btn.textContent = '⏳ Gerando...'; el.dataset.busy = '1';
+  status.textContent = 'A IA está criando a imagem — leva de 20 a 60 segundos.';
+  document.getElementById('gen-use').style.display = 'none';
+  try {
+    const palette = (PALETTES[profile] || []).map(c => c.hex + ' (' + c.name + ')').join(', ');
+    const resp = await fetch('/api/generate-image', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile, prompt, format: found.item.format, palette, includeMascot: document.getElementById('gen-mascot').checked })
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha ao gerar a imagem.');
+    _genResult = { id, profile, format: found.item.format, src: 'data:' + data.mime + ';base64,' + data.imageBase64 };
+    document.getElementById('gen-preview').innerHTML = `<img class="gen-img" src="${_genResult.src}" alt="Imagem gerada">`;
+    status.textContent = '✓ Logo incluído' + (data.usedMascot ? ' + mascote' : (document.getElementById('gen-mascot').checked ? ' (esta marca ainda não tem mascote cadastrado)' : '')) + '. Gostou? Use a imagem ou gere outra.';
+    document.getElementById('gen-use').style.display = '';
+  } catch (e) {
+    status.textContent = '⚠️ ' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = '🔁 Gerar outra'; el.dataset.busy = '';
+  }
+}
+// Recorta no formato exato (1080×1920 Story/Reel, 1080×1350 Post) e entrega pro
+// mesmo fluxo de upload de mídia (Drive + Zernio).
+async function useGeneratedImage(){
+  if (!_genResult) return;
+  const { id, profile, format, src } = _genResult;
+  const target = GEN_TARGET[format] || GEN_TARGET.Post;
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('Imagem inválida')); i.src = src; });
+    const canvas = document.createElement('canvas');
+    canvas.width = target.w; canvas.height = target.h;
+    const scale = Math.max(target.w / img.naturalWidth, target.h / img.naturalHeight);
+    const w = img.naturalWidth * scale, h = img.naturalHeight * scale;
+    canvas.getContext('2d').drawImage(img, (target.w - w) / 2, (target.h - h) / 2, w, h);
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+    if (!blob) throw new Error('Não foi possível preparar a imagem.');
+    const stamp = new Date().toISOString().slice(5, 10).replace('-', '');
+    const file = new File([blob], stamp + '_' + profile + '_ia_' + id + '.jpg', { type: 'image/jpeg' });
+    const input = document.getElementById('imgfile-' + id);
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    closeGenImage();
+    handleImageSelect(id, profile, input);
+  } catch (e) {
+    showToast('⚠️ ' + e.message);
+  }
 }
 
 // ── CONVERSÃO DE MÍDIA ──

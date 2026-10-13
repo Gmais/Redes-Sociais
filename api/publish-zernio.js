@@ -29,7 +29,7 @@ module.exports = async (req, res) => {
 
   try {
     const raw = await readBody(req);
-    const { profile, caption, fileName, mimeType, base64, format, zernioUrl } = JSON.parse(raw);
+    const { profile, caption, fileName, mimeType, base64, format, zernioUrl, scheduledFor } = JSON.parse(raw);
 
     const config = PROFILE_CONFIG[profile];
     if (!config) {
@@ -83,7 +83,19 @@ module.exports = async (req, res) => {
       publicUrl = presignData.publicUrl;
     }
 
-    // Cria o post já publicando imediatamente.
+    // Com scheduledFor (ISO, no futuro) a própria Zernio agenda e publica no
+    // horário; sem ele (ou se já passou), publica imediatamente.
+    let scheduleAt = null;
+    if (scheduledFor) {
+      const ms = Date.parse(scheduledFor);
+      if (isNaN(ms)) {
+        res.status(400).json({ error: 'Data/hora de agendamento inválida.' });
+        return;
+      }
+      if (ms > Date.now() + 60000) scheduleAt = new Date(ms).toISOString();
+    }
+
+    // Cria o post (agendado ou publicando imediatamente).
     // Stories são 9:16 e usam contentType:'story'. Posts/Carrossel ficam no
     // padrão de feed (sem platformSpecificData), que aceita proporção 0.8–1.91.
     const platformTarget = { platform: 'instagram', accountId };
@@ -101,7 +113,9 @@ module.exports = async (req, res) => {
         content: caption || '',
         mediaItems: [{ type: 'image', url: publicUrl }],
         platforms: [platformTarget],
-        publishNow: true
+        ...(scheduleAt
+          ? { scheduledFor: scheduleAt, timezone: 'America/Sao_Paulo' }
+          : { publishNow: true })
       })
     });
     const postData = await postRes.json();
@@ -110,7 +124,7 @@ module.exports = async (req, res) => {
       return;
     }
 
-    res.status(200).json({ ok: true, postId: postData.post ? postData.post._id : postData._id, raw: postData });
+    res.status(200).json({ ok: true, postId: postData.post ? postData.post._id : postData._id, scheduledFor: scheduleAt, raw: postData });
   } catch (e) {
     res.status(500).json({ error: e.message || 'Erro inesperado ao publicar.' });
   }

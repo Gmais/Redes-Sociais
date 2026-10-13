@@ -137,6 +137,13 @@ module.exports = async (req, res) => {
       const item = manifest[id];
       if (!item || !PROFILE_CONFIG[item.profile]) continue;
 
+      // Agendado pelo painel pra mais tarde: a Zernio publica sozinha no
+      // horário. Só começa a confirmar (e a contar tentativas) depois dele.
+      if (pub.scheduledFor && Date.parse(pub.scheduledFor) > nowMs) {
+        skipped.push({ id, reason: 'agendado na Zernio para ' + pub.scheduledFor });
+        continue;
+      }
+
       try {
         const zpost = await fetchZernioPost(item.profile, pub.postId);
         const ig = instagramResultOf(zpost);
