@@ -91,8 +91,14 @@ function findImageData(node) {
   return null;
 }
 
+// A função do Vercel (plano Hobby) é cortada em 60s, então o modelo padrão é o
+// rápido (Nano Banana 2.1). O Pro (gemini-3-pro-image) é mais caprichado, mas
+// costuma passar de 60s — só use via variável GEMINI_IMAGE_MODEL no Vercel.
+const DEADLINE_MS = 52000;
+
 async function generateWithGemini({ apiKey, prompt, refs, aspect }) {
-  const models = [...new Set([process.env.GEMINI_IMAGE_MODEL, 'gemini-3-pro-image', 'gemini-nano-banana-2.1'].filter(Boolean))];
+  const started = Date.now();
+  const models = [...new Set([process.env.GEMINI_IMAGE_MODEL, 'gemini-nano-banana-2.1', 'gemini-3.1-flash-image'].filter(Boolean))];
   // Do melhor pro mais simples: 2K com proporção -> proporção -> sem opções.
   const variants = [
     { aspect, size: '2K' },
@@ -110,11 +116,22 @@ async function generateWithGemini({ apiKey, prompt, refs, aspect }) {
       const input = [{ type: 'text', text: prompt }];
       refs.forEach((r) => input.push({ type: 'image', mime_type: r.mime, data: r.buffer.toString('base64') }));
 
-      const r = await fetch(GEMINI_URL, {
-        method: 'POST',
-        headers: { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model, input, response_format: responseFormat })
-      });
+      const remaining = DEADLINE_MS - (Date.now() - started);
+      if (remaining < 4000) throw new Error('a IA demorou demais (limite de 60s do servidor). Tente de novo ou simplifique a descrição.');
+      let r;
+      try {
+        r = await fetch(GEMINI_URL, {
+          method: 'POST',
+          headers: { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model, input, response_format: responseFormat }),
+          signal: AbortSignal.timeout(remaining)
+        });
+      } catch (e) {
+        if (e && (e.name === 'TimeoutError' || e.name === 'AbortError')) {
+          throw new Error('a IA demorou demais (limite de 60s do servidor). Tente de novo ou simplifique a descrição.');
+        }
+        throw e;
+      }
       let data = {};
       try { data = await r.json(); } catch (e) { /* corpo não-JSON */ }
 
@@ -259,6 +276,10 @@ module.exports = async (req, res) => {
       }
     }
 
+    if (result.b64.length > 4200000) {
+      res.status(502).json({ error: 'A imagem gerada ficou grande demais para enviar (' + Math.round(result.b64.length / 1048576) + ' MB). Gere de novo.' });
+      return;
+    }
     res.status(200).json({
       ok: true, imageBase64: result.b64, mime: result.mime,
       usedLogo: true, usedMascot: !!mascot, provider, model: result.model

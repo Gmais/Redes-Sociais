@@ -26117,7 +26117,10 @@ async function runGenerateImage(){
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ profile, prompt, format: found.item.format, palette, title: found.item.title, texto: stripHtml(found.item.texto), includeMascot: document.getElementById('gen-mascot').checked })
     });
-    const data = await resp.json();
+    const rawText = await resp.text();
+    let data;
+    try { data = JSON.parse(rawText); }
+    catch (e) { throw new Error('O servidor não respondeu direito (' + resp.status + '): ' + rawText.slice(0, 120)); }
     if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha ao gerar a imagem.');
     _genResult = { id, profile, format: found.item.format, src: 'data:' + data.mime + ';base64,' + data.imageBase64 };
     document.getElementById('gen-preview').innerHTML = `<img class="gen-img" src="${_genResult.src}" alt="Imagem gerada">`;
