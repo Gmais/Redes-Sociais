@@ -745,6 +745,24 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .cal-pending .cal-st, .cal-lg.cal-pending { color:#999; }
 .cal-more { background:none; border:none; color:#60a5fa; font-size:10px; font-weight:700; cursor:pointer; text-align:left; padding:0 2px; }
 @media(max-width:700px){ .cal-cell{min-height:70px;padding:3px;} .cal-ttl,.cal-thumb{display:none;} .cal-month{min-width:120px;font-size:18px;} .sx-row{grid-template-columns:1fr;} }
+.brand-box { border:1px solid var(--border); border-radius:10px; padding:10px; background:var(--s2); }
+.brand-title { font-size:12px; font-weight:800; color:var(--txt); margin-bottom:8px; }
+.brand-title span { font-weight:500; color:var(--txt3); }
+.brand-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.brand-col { border:1px solid var(--border); border-radius:8px; padding:6px; background:var(--s1); }
+.brand-col.brand-cur { border-color:#2563eb; }
+.brand-name { font-size:11px; font-weight:800; margin-bottom:6px; color:var(--txt); }
+.brand-slots { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.brand-slot { display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
+.brand-lbl { font-size:10px; font-weight:700; color:var(--txt3); }
+.brand-thumb { width:100%; aspect-ratio:1/1; object-fit:contain; border-radius:6px; background:repeating-conic-gradient(#222 0% 25%, #2c2c2c 0% 50%) 50%/12px 12px; }
+.brand-empty { display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--txt3); background:var(--s2); }
+.brand-acts { display:flex; gap:4px; }
+.brand-btn { font-size:10px; font-weight:700; padding:4px 8px; border-radius:6px; border:1px solid var(--border); background:var(--s2); color:var(--txt); cursor:pointer; }
+.brand-btn:hover { border-color:#2563eb; }
+.brand-rm { font-size:10px; padding:4px 6px; border-radius:6px; border:1px solid var(--border); background:var(--s2); color:#f87171; cursor:pointer; }
+.brand-warn { font-size:10px; font-weight:700; color:#f87171; margin-top:4px; text-align:center; }
+@media(max-width:700px){ .brand-grid{grid-template-columns:1fr;} }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -24509,7 +24527,7 @@ async function supabaseFetch(path, options = {}) {
 async function pullRemoteState() {
   setSyncStatus('syncing');
   try {
-    const res = await supabaseFetch('painel_gilson_state?select=key,value');
+    const res = await supabaseFetch('painel_gilson_state?key=not.like.brand_*&select=key,value');
     if (!res.ok) throw new Error('fetch failed');
     const rows = await res.json();
     const doneRow = rows.find(r => r.key === 'done');
@@ -25915,6 +25933,108 @@ function calGoto(id, profile){
   }, 80);
 }
 
+// ── Logos e mascotes por marca (salvos no Supabase, linhas brand_<marca>_<logo|mascote>) ──
+const BRAND_PROFILES = [
+  { id: 'academia', nome: '🏋️ Academia' },
+  { id: 'sorveteria', nome: '🍦 Sorveteria' },
+  { id: 'gympulse', nome: '🎮 GympulsePro' }
+];
+let _brandAssets = null; // { 'academia_logo': {mime,data}, ... }
+function brandGet(profile, kind){ return _brandAssets && _brandAssets[profile + '_' + kind]; }
+async function loadBrandAssets(force){
+  if (_brandAssets && !force) return _brandAssets;
+  try {
+    const res = await supabaseFetch('painel_gilson_state?key=like.brand_*&select=key,value');
+    if (!res.ok) throw new Error('falha ao ler');
+    const rows = await res.json();
+    const map = {};
+    rows.forEach(r => { if (r.value && r.value.data) map[r.key.replace(/^brand_/, '')] = r.value; });
+    _brandAssets = map;
+  } catch (e) {
+    if (!_brandAssets) _brandAssets = {};
+  }
+  return _brandAssets;
+}
+function renderBrandGrid(){
+  const grid = document.getElementById('brand-grid');
+  if (!grid) return;
+  const cur = (document.getElementById('genModal') || {dataset:{}}).dataset.profile;
+  const slot = (p, kind, label) => {
+    const a = brandGet(p, kind);
+    const thumb = a
+      ? `<img class="brand-thumb" src="data:${a.mime};base64,${a.data}" alt="${label}">`
+      : `<div class="brand-thumb brand-empty">${_brandAssets ? 'vazio' : '...'}</div>`;
+    const rm = (a && kind === 'mascote') ? `<button class="brand-rm" title="Remover mascote" onclick="removeBrand('${p}','${kind}')">✕</button>` : '';
+    return `<div class="brand-slot"><div class="brand-lbl">${label}</div>${thumb}
+      <div class="brand-acts"><button class="brand-btn" onclick="pickBrand('${p}','${kind}')">${a ? 'Trocar' : 'Anexar'}</button>${rm}</div></div>`;
+  };
+  grid.innerHTML = BRAND_PROFILES.map(b => `
+    <div class="brand-col${b.id === cur ? ' brand-cur' : ''}">
+      <div class="brand-name">${b.nome}</div>
+      <div class="brand-slots">${slot(b.id, 'logo', 'Logo')}${slot(b.id, 'mascote', 'Mascote')}</div>
+      ${(b.id === cur && _brandAssets && !brandGet(b.id, 'logo')) ? '<div class="brand-warn">logo obrigatório</div>' : ''}
+    </div>`).join('');
+}
+function pickBrand(profile, kind){
+  const input = document.getElementById('brand-file');
+  input.dataset.p = profile; input.dataset.k = kind;
+  input.click();
+}
+// Reduz pra no máx. 1024px mantendo transparência (PNG) pra caber bem no banco.
+async function brandResizeToPng(file){
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('Arquivo de imagem inválido.')); i.src = url; });
+    let max = 1024, b64 = '';
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.naturalWidth * scale));
+      c.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      b64 = c.toDataURL('image/png').split(',')[1];
+      if (b64.length < 1400000) break;
+      max = Math.round(max * 0.7);
+    }
+    return b64;
+  } finally { URL.revokeObjectURL(url); }
+}
+async function saveBrand(profile, kind, value){
+  const res = await supabaseFetch('painel_gilson_state', {
+    method: 'POST',
+    headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify([{ key: 'brand_' + profile + '_' + kind, value, updated_at: new Date().toISOString() }])
+  });
+  if (!res.ok) throw new Error('Não foi possível salvar (' + res.status + ').');
+}
+async function onBrandFile(input){
+  const file = input.files && input.files[0];
+  const profile = input.dataset.p, kind = input.dataset.k;
+  input.value = '';
+  if (!file || !profile) return;
+  if (!file.type.startsWith('image/')) { showToast('⚠️ Selecione um arquivo de imagem.'); return; }
+  try {
+    showToast('⏳ Salvando ' + kind + '...');
+    const data = await brandResizeToPng(file);
+    const value = { mime: 'image/png', data };
+    await saveBrand(profile, kind, value);
+    if (!_brandAssets) _brandAssets = {};
+    _brandAssets[profile + '_' + kind] = value;
+    renderBrandGrid();
+    showToast('✅ ' + (kind === 'logo' ? 'Logo' : 'Mascote') + ' salvo!');
+  } catch (e) {
+    showToast('⚠️ ' + e.message);
+  }
+}
+async function removeBrand(profile, kind){
+  if (!confirm('Remover o mascote desta marca?')) return;
+  try {
+    await saveBrand(profile, kind, null);
+    if (_brandAssets) delete _brandAssets[profile + '_' + kind];
+    renderBrandGrid();
+  } catch (e) { showToast('⚠️ ' + e.message); }
+}
+
 // ── Gerar imagem com IA (logo + mascote sempre incluídos) ──
 const GEN_TARGET = { Story: { w: 1080, h: 1920 }, Reel: { w: 1080, h: 1920 }, Post: { w: 1080, h: 1350 } };
 let _genResult = null;
@@ -25933,6 +26053,11 @@ function ensureGenModal(){
         <label class="sx-field"><span>Descrição da imagem</span>
           <textarea id="gen-prompt" rows="7" placeholder="Descreva a imagem que a IA deve criar..."></textarea></label>
         <div class="sx-hint">✓ O <b>logo</b> da marca entra sempre na imagem. <label class="gen-mascot"><input type="checkbox" id="gen-mascot" checked> incluir o <b>mascote</b> (quando a marca tiver)</label></div>
+        <div class="brand-box">
+          <div class="brand-title">🎨 Logos e mascotes <span>(ficam salvos — anexe uma vez só)</span></div>
+          <div class="brand-grid" id="brand-grid"></div>
+          <input type="file" id="brand-file" accept="image/*" style="display:none" onchange="onBrandFile(this)">
+        </div>
         <div id="gen-status" class="sx-hint"></div>
         <div id="gen-preview"></div>
       </div>
@@ -25962,6 +26087,8 @@ function openGenImage(id, profile){
   const go = document.getElementById('gen-go'); go.disabled = false; go.textContent = '✨ Gerar';
   _genResult = null;
   el.classList.add('on');
+  renderBrandGrid();
+  loadBrandAssets().then(renderBrandGrid);
 }
 function closeGenImage(){
   const el = document.getElementById('genModal');
@@ -25975,6 +26102,12 @@ async function runGenerateImage(){
   if (!prompt) { showToast('Descreva a imagem primeiro.'); return; }
   const btn = document.getElementById('gen-go');
   const status = document.getElementById('gen-status');
+  await loadBrandAssets();
+  if (!brandGet(profile, 'logo')) {
+    status.textContent = '⚠️ Anexe o logo desta marca na seção "Logos e mascotes" acima antes de gerar.';
+    renderBrandGrid();
+    return;
+  }
   btn.disabled = true; btn.textContent = '⏳ Gerando...'; el.dataset.busy = '1';
   status.textContent = 'A IA está criando a imagem — leva de 20 a 60 segundos.';
   document.getElementById('gen-use').style.display = 'none';

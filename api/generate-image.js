@@ -2,10 +2,11 @@
 // mascote da marca como imagens de referência, pra que apareçam SEMPRE na arte.
 // A chave (OPENAI_API_KEY) fica só aqui no backend, nunca no navegador.
 //
-// Referências ficam no repositório:
-//   assets/marcas/<perfil>/logo.png       (obrigatório)
-//   assets/marcas/<perfil>/mascote.png    (opcional — só marcas que têm mascote)
-// onde <perfil> = academia | sorveteria | gympulse.
+// Referências (logo obrigatório, mascote opcional) são anexadas pelo próprio
+// painel, na janela "Gerar imagem", e ficam no Supabase (linhas
+// brand_<perfil>_logo / brand_<perfil>_mascote da tabela painel_gilson_state).
+// Fallback: arquivos assets/marcas/<perfil>/logo.png e mascote.png no repo.
+// <perfil> = academia | sorveteria | gympulse.
 
 const fs = require('fs');
 const path = require('path');
@@ -17,6 +18,31 @@ const PROFILES = {
 };
 
 const OPENAI_URL = 'https://api.openai.com/v1';
+const SUPABASE_URL = 'https://ggphrgfgckpsspbsguhp.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGhyZ2ZnY2twc3NwYnNndWhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3NzE2NDUsImV4cCI6MjEwNDM0NzY0NX0.t_dF5I6c0wCBqOnJd6ko6Jpu_ZQyQ5ulA8buRYLAMMk';
+
+// Logo/mascote anexados no painel (Supabase).
+async function loadBrandFromSupabase(profile) {
+  const out = {};
+  try {
+    const keys = ['brand_' + profile + '_logo', 'brand_' + profile + '_mascote'];
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/painel_gilson_state?key=in.(${keys.join(',')})&select=key,value`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (!r.ok) return out;
+    const rows = await r.json();
+    rows.forEach((row) => {
+      if (!row.value || !row.value.data) return;
+      const kind = row.key.endsWith('_logo') ? 'logo' : 'mascote';
+      out[kind] = {
+        buffer: Buffer.from(row.value.data, 'base64'),
+        mime: row.value.mime || 'image/png',
+        fileName: kind + '.png'
+      };
+    });
+  } catch (e) { /* cai no fallback do repositório */ }
+  return out;
+}
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -63,12 +89,13 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const logo = loadRef(profile, 'logo');
+    const brand = await loadBrandFromSupabase(profile);
+    const logo = brand.logo || loadRef(profile, 'logo');
     if (!logo) {
-      res.status(400).json({ error: 'Logo de ' + cfg.nome + ' não encontrado. Coloque o arquivo em assets/marcas/' + profile + '/logo.png e publique de novo.' });
+      res.status(400).json({ error: 'Logo de ' + cfg.nome + ' não encontrado. Anexe o logo na janela "Gerar imagem" (seção Logos e mascotes).' });
       return;
     }
-    const mascot = includeMascot ? loadRef(profile, 'mascote') : null;
+    const mascot = includeMascot ? (brand.mascote || loadRef(profile, 'mascote')) : null;
 
     const isFeed = String(format || '').toLowerCase() === 'post';
     const refs = [logo];

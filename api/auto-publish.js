@@ -115,7 +115,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const stateRes = await supabaseFetch('painel_gilson_state?select=key,value');
+    const stateRes = await supabaseFetch('painel_gilson_state?key=not.like.brand_*&select=key,value');
     if (!stateRes.ok) throw new Error('Falha ao ler estado do Supabase');
     const rows = await stateRes.json();
     const manifest = (rows.find(r => r.key === 'manifest') || {}).value || {};
