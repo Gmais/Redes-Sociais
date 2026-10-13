@@ -801,6 +801,16 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .gen-select { background:var(--s2); border:1px solid var(--border); color:var(--txt); border-radius:8px; padding:10px; font-size:13px; font-family:'Inter',sans-serif; }
 .pos-wrap { display:flex; flex-wrap:wrap; gap:8px 18px; }
 .pos-row input[type=checkbox] { width:16px; height:16px; accent-color:#2563eb; }
+.attach-list { flex-direction:column; flex-wrap:nowrap; gap:10px; }
+.attach-item { display:flex; gap:10px; align-items:flex-start; }
+.attach-imgwrap { position:relative; flex-shrink:0; }
+.attach-fields { flex:1; display:flex; flex-direction:column; gap:6px; min-width:0; }
+.attach-chips { display:flex; gap:5px; flex-wrap:wrap; }
+.attach-chip { font-size:11px; font-weight:600; padding:4px 9px; border-radius:999px; border:1px solid var(--border); background:var(--s1); color:var(--txt); cursor:pointer; }
+.attach-chip:hover { border-color:#2563eb; }
+.attach-chip.on { background:#2563eb; border-color:#2563eb; color:#fff; }
+.attach-usage { background:var(--s1); border:1px solid var(--border); border-radius:8px; padding:8px 10px; color:var(--txt); font-size:13px; font-family:'Inter',sans-serif; width:100%; box-sizing:border-box; }
+.attach-usage:focus { outline:none; border-color:#2563eb; }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -26581,11 +26591,29 @@ async function genResizeJpeg(file){
     return b64;
   } finally { URL.revokeObjectURL(url); }
 }
+const ATTACH_USES = [
+  { id: 'fundo', label: 'Fundo da arte', text: 'Usar como FUNDO da arte inteira (cobrindo o formato), com título, logo e demais elementos por cima' },
+  { id: 'produto', label: 'Produto em destaque', text: 'Usar como PRODUTO herói em destaque, fiel ao original (mesma embalagem, rótulo e cores)' },
+  { id: 'tela', label: 'Captura de tela', text: 'Usar como CAPTURA DE TELA real, fiel ao original, dentro de um mockup de celular ou tela, sem inventar outra interface' },
+  { id: 'pessoa', label: 'Pessoa / foto real', text: 'Usar a PESSOA ou foto real como elemento principal, fiel à aparência, sem alterar rosto nem corpo' },
+  { id: 'estilo', label: 'Só de referência', text: 'Usar apenas como REFERÊNCIA de estilo, cores e clima, sem copiar o conteúdo da imagem' }
+];
+function setAttachUse(i, id){
+  const u = ATTACH_USES.find(x => x.id === id);
+  if (u && _genAttach[i]) { _genAttach[i].usage = u.text; renderGenAttach(); }
+}
 function renderGenAttach(){
   const list = document.getElementById('gen-attach-list');
   if (!list) return;
-  list.innerHTML = _genAttach.map((a, i) =>
-    `<div class="attach-item"><img class="attach-thumb" src="data:${a.mime};base64,${a.data}" alt=""><button class="brand-rm" title="Remover" onclick="removeGenAttach(${i})">✕</button></div>`).join('');
+  list.innerHTML = _genAttach.map((a, i) => `
+    <div class="attach-item">
+      <div class="attach-imgwrap"><img class="attach-thumb" src="data:${a.mime};base64,${a.data}" alt=""><button class="brand-rm" title="Remover" onclick="removeGenAttach(${i})">✕</button></div>
+      <div class="attach-fields">
+        <div class="attach-chips">${ATTACH_USES.map(u => `<button type="button" class="attach-chip${a.usage === u.text ? ' on' : ''}" onclick="setAttachUse(${i},'${u.id}')">${u.label}</button>`).join('')}</div>
+        <input type="text" class="attach-usage" maxlength="200" placeholder="Como usar esta imagem? Ex.: colocar como fundo da imagem" oninput="_genAttach[${i}].usage=this.value">
+      </div>
+    </div>`).join('');
+  list.querySelectorAll('.attach-usage').forEach((el, i) => { el.value = _genAttach[i].usage || ''; });
   const btn = document.getElementById('gen-attach-btn');
   if (btn) btn.style.display = _genAttach.length >= 3 ? 'none' : '';
 }
@@ -26596,7 +26624,7 @@ async function onGenAttach(input){
     if (_genAttach.length >= 3) { showToast('Máximo de 3 imagens anexadas.'); break; }
     if (!f.type.startsWith('image/')) continue;
     try {
-      _genAttach.push({ mime: 'image/jpeg', data: await genResizeJpeg(f), name: f.name });
+      _genAttach.push({ mime: 'image/jpeg', data: await genResizeJpeg(f), name: f.name, usage: '' });
     } catch (e) { showToast('⚠️ ' + e.message); }
   }
   renderGenAttach();
@@ -26635,7 +26663,7 @@ function ensureGenModal(){
           <input type="text" id="gen-subline" maxlength="70" placeholder="Ex.: Amanhã a gente se vê!"></label>
         <div class="sx-hint">✓ O <b>logo oficial</b> é aplicado automaticamente no melhor lugar da arte — idêntico ao original e uma única vez (você pode trocar a posição depois de gerar).</div>
         <div class="attach-box">
-          <div class="brand-title">📎 Imagens para compor a arte <span>(opcional — ex.: a foto do produto da promoção; até 3)</span></div>
+          <div class="brand-title">📎 Imagens para compor a arte <span>(opcional — foto do produto, um fundo, uma captura de tela; até 3 — diga como usar cada uma)</span></div>
           <div class="attach-list" id="gen-attach-list"></div>
           <button type="button" class="brand-btn" id="gen-attach-btn" onclick="document.getElementById('gen-attach-file').click()">＋ Anexar imagem</button>
           <input type="file" id="gen-attach-file" accept="image/*" multiple style="display:none" onchange="onGenAttach(this)">
@@ -26763,7 +26791,7 @@ async function runGenerateImage(){
     const palette = (PALETTES[profile] || []).map(c => c.hex + ' (' + c.name + ')').join(', ');
     const resp = await fetch('/api/generate-image', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ profile, prompt, format: found.item.format, palette, title: found.item.title, texto: stripHtml(found.item.texto), headline: document.getElementById('gen-headline').value.trim(), subline: document.getElementById('gen-subline').value.trim(), includeMascot: document.getElementById('gen-mascot').checked, extraRefs: _genAttach.map(a => ({ mime: a.mime, data: a.data })), engine: document.getElementById('gen-engine').value, logoMode: document.getElementById('gen-logoai').checked ? 'ai' : 'panel' })
+      body: JSON.stringify({ profile, prompt, format: found.item.format, palette, title: found.item.title, texto: stripHtml(found.item.texto), headline: document.getElementById('gen-headline').value.trim(), subline: document.getElementById('gen-subline').value.trim(), includeMascot: document.getElementById('gen-mascot').checked, extraRefs: _genAttach.map(a => ({ mime: a.mime, data: a.data, usage: (a.usage || '').trim() })), engine: document.getElementById('gen-engine').value, logoMode: document.getElementById('gen-logoai').checked ? 'ai' : 'panel' })
     });
     const rawText = await resp.text();
     let data;

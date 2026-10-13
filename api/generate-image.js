@@ -241,7 +241,7 @@ async function generateWithOpenAI({ apiKey, prompt, refs, timeoutMs, isFeed, qua
 
 // Briefing de direção de arte, em seções. O LOGO NÃO é pedido à IA: o painel o
 // aplica por cima, idêntico ao original e uma única vez (modo "painel").
-function buildPrompt({ cfg, isFeed, mascot, attachCount, palette, title, caption, brief, headline, subline }) {
+function buildPrompt({ cfg, isFeed, mascot, attachCount, attachUses, palette, title, caption, brief, headline, subline }) {
   // Regras que o card define e a IA costuma ignorar: viram exigências explícitas.
   const mRule = /regra\s*60\s*[-–]\s*30\s*[-–]\s*10\s*:\s*([^\n]+)/i.exec(brief);
   const colorRule = mRule ? mRule[1].trim().replace(/[.;]+$/, '') : '';
@@ -310,9 +310,9 @@ function buildPrompt({ cfg, isFeed, mascot, attachCount, palette, title, caption
     lines.push(
       '',
       '[8. IMAGENS ANEXADAS PELO CLIENTE]',
-      '- ' + (mascot ? 'As imagens de referência ' + first + (last > first ? ' a ' + last : '') : 'As imagens de referência ' + first + (last > first ? ' a ' + last : '')) +
-        ' são fotos/arte do cliente (por exemplo, o produto da promoção). Use CADA uma, FIEL ao original: mesma embalagem, rótulo, formato e cores — não redesenhe, não troque por outro produto e não invente variações.',
-      '- Coloque-as em destaque como elemento herói da cena (tamanho grande, bem iluminadas), uma única vez cada, nunca cortadas pelas bordas e fora das regiões calmas reservadas ao logo.'
+      '- As imagens de referência ' + first + (last > first ? ' a ' + last : '') + ' são fotos/arte do cliente. Siga a INSTRUÇÃO DE USO de cada uma:',
+      ...Array.from({ length: attachCount }, (_, i) => '  • Imagem ' + (first + i) + ': ' + ((attachUses && attachUses[i]) ? attachUses[i] : 'produto em destaque, FIEL ao original (mesma embalagem, rótulo, formato e cores).')),
+      '- Quando a instrução for usar como FUNDO, a imagem cobre a arte inteira (enquadrada no formato) e título e demais elementos ficam por cima, com legibilidade (pode escurecer ou suavizar levemente o fundo). Nos demais casos, use em destaque, uma única vez, nunca cortada pelas bordas e fora das regiões calmas reservadas ao logo. Nunca redesenhe nem troque o conteúdo das imagens do cliente.'
     );
   }
   lines.push(
@@ -327,14 +327,17 @@ function buildPrompt({ cfg, isFeed, mascot, attachCount, palette, title, caption
 // Prompt do modo "designer" (padrão): a IA recebe logo + mascote + anexos como
 // referência e monta a ARTE INTEIRA — logo em destaque, mascote grande, título
 // com tipografia da marca — como um designer de agência faria.
-function buildDesignPrompt({ cfg, isFeed, mascot, attachCount, palette, title, brief, headline, subline }) {
+function buildDesignPrompt({ cfg, isFeed, mascot, attachCount, attachUses, palette, title, brief, headline, subline }) {
   const mRule = /regra\s*60\s*[-–]\s*30\s*[-–]\s*10\s*:\s*([^\n]+)/i.exec(brief);
   const colorRule = mRule ? mRule[1].trim().replace(/[.;]+$/, '') : '';
   const noCta = /CTA\s*:\s*(nenhum|n[aã]o\s+h[aá]|sem\b)/i.test(brief);
 
   const refs = ['LOGO OFICIAL da marca "' + cfg.nome + '"'];
   if (mascot) refs.push('MASCOTE OFICIAL da marca');
-  for (let i = 1; i <= attachCount; i++) refs.push('imagem do cliente nº ' + i + ' (ex.: produto da promoção)');
+  for (let i = 1; i <= attachCount; i++) {
+    const u = attachUses && attachUses[i - 1];
+    refs.push('imagem do cliente nº ' + i + (u ? ' — INSTRUÇÃO DE USO: ' + u : ' (sem instrução: use como produto/elemento em destaque, fiel ao original)'));
+  }
 
   const lines = [
     'Crie a ARTE FINAL, pronta para publicar, de ' + (isFeed ? 'um post de feed do Instagram (vertical 4:5)' : 'um story do Instagram (vertical 9:16)') +
@@ -365,7 +368,7 @@ function buildDesignPrompt({ cfg, isFeed, mascot, attachCount, palette, title, b
       ? '- O MASCOTE (referência 2) é o herói da cena: GRANDE e expressivo (cerca de 40–55% da altura da arte, plano médio ou close), FIEL ao original (mesmo personagem, proporções, roupa e cores — não recrie nem reinterprete), interagindo com o produto/cena e com o clima do texto (gestos, olhar e expressão que conectem com a mensagem).'
       : '- O elemento herói (produto ou cena principal) é GRANDE, nítido e bem iluminado, ocupando cerca de 35–50% da altura da arte.',
     attachCount > 0
-      ? '- As imagens do cliente (referências ' + (mascot ? '3' : '2') + (attachCount > 1 ? ' a ' + ((mascot ? 2 : 1) + attachCount) : '') + ') entram em destaque, FIÉIS ao original (mesma embalagem, rótulo, formato e cores — não redesenhe nem troque por outro produto), uma vez cada.'
+      ? '- IMAGENS DO CLIENTE (referências ' + (mascot ? '3' : '2') + (attachCount > 1 ? ' a ' + ((mascot ? 2 : 1) + attachCount) : '') + '): siga a INSTRUÇÃO DE USO de cada uma, indicada na lista de referências acima. Se a instrução for usar como FUNDO, a imagem cobre a arte inteira (enquadrada no formato) e título, logo e demais elementos ficam por cima, com legibilidade (pode escurecer ou suavizar levemente o fundo para o texto ler bem). Sem instrução, use a imagem em destaque como elemento herói, FIEL ao original (mesma embalagem, rótulo, formato e cores), uma única vez. Nunca redesenhe nem troque o conteúdo das imagens do cliente.'
       : null,
     '- Hierarquia clara: logo → título → herói. Elementos decorativos coerentes com o tema (ex.: estrelas, lua, formas curvas na cor de destaque, luzes, texturas), para dar acabamento e movimento — sem poluir.',
     '- Cenário e iluminação coerentes com o texto (momento do dia, clima), com profundidade de campo e cores bem harmonizadas.',
@@ -432,15 +435,17 @@ module.exports = async (req, res) => {
     if (mascot) refs.push(mascot);
     // Imagens que o cliente anexou no painel pra compor a arte (ex.: o produto da promoção).
     let attachCount = 0;
+    const attachUses = []; // instrução de uso de cada imagem anexada ("colocar como fundo", etc.)
     (Array.isArray(extraRefs) ? extraRefs.slice(0, 3) : []).forEach((x, i) => {
       if (!x || typeof x.data !== 'string' || x.data.length < 100 || x.data.length > 1800000) return;
       const mime = /^image\/(png|jpeg|webp)$/.test(x.mime || '') ? x.mime : 'image/jpeg';
       refs.push({ buffer: Buffer.from(x.data, 'base64'), mime, fileName: 'anexo' + (i + 1) + '.' + (mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg') });
+      attachUses.push(typeof x.usage === 'string' ? x.usage.replace(/\s+/g, ' ').trim().slice(0, 220) : '');
       attachCount++;
     });
 
     const common = {
-      cfg, isFeed, mascot: !!mascot, attachCount, palette,
+      cfg, isFeed, mascot: !!mascot, attachCount, attachUses, palette,
       title: title ? String(title).slice(0, 200) : '',
       headline: headline ? String(headline).trim().slice(0, 120) : '',
       subline: subline ? String(subline).trim().slice(0, 100) : '',
