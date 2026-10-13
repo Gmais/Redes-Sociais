@@ -33,7 +33,7 @@ Esta regra é fixa e vale para todas as três marcas (Academia, Sorveteria, Gymp
    - Instagram: @sorvetesguriturvo_
    - Website: www.sorvetesguriturvo.com.br
    - Campanha ativa (jun/jul 2026): "Inverno Fitness" (açaí com whey, linha zero açúcar, 20% desc)
-   - Promoção ativa (outubro/2026): Dia das Crianças — Sorvete Guri Gurt por apenas R$ 0,99 (ver seção 🎬 Campanhas)
+   - Promoção ativa (outubro/2026): Dia das Crianças — Sorvete Guri Gurt por apenas R$ 0,99, **até 31/10/2026** (ver seção 🎬 Campanhas)
 
 3. **GympulsePro** (B2B SaaS)
    - Plataforma de gamificação para gestão de academias
@@ -285,7 +285,7 @@ Continuação da campanha de setembro, agora com o tema Outubro Rosa e autocuida
 ### 🟢 ATIVA — Sorveteria: Dia das Crianças — Guri Gurt por apenas R$ 0,99 (outubro/2026)
 - **Oferta:** Sorvete **Guri Gurt por apenas R$ 0,99** (informado por Gilson em 13/10/2026). Linha Guri Gurt: chiclete, leite condensado, maracujá, morango e uva (ver Lista de Produtos — Loja) — confirmar quais sabores entram na promoção.
 - **Público e tom:** crianças e famílias; festivo, familiar, comunidade de Turvo.
-- **Período e condições: NÃO informados.** O Dia das Crianças é 12/10/2026 (segunda-feira). Confirmar com Gilson início/fim da promoção e se há limite (por cliente, por dia ou de estoque) antes de citar datas ou condições nos posts.
+- **Período:** até **31/10/2026** (informado por Gilson em 13/10/2026). Limite por cliente, por dia ou de estoque NÃO foi informado — não citar condições além do preço e da data final.
 - **Ação necessária:** usar como "Promoção de campanha ativa" (item 5 dos pilares diários), com espaçamento — não repetir todos os dias; variar o ângulo (preço, sabor, criançada, família) e manter o mix normal de loja/buffet/carrinho/humanização.
 
 ### ⚪ ENCERRADA em 30/09/2026 — Academia: "Cuidado que se Multiplica" (Setembro Amarelo, 01-30/09/2026)
