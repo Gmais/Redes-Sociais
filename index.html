@@ -23123,15 +23123,13 @@ const PENDING = {
   done: makePersistentSet('pending_done'),
   edits: makePersistentSet('pending_edits'),
   images: makePersistentSet('pending_images'),
-  published: makePersistentSet('pending_published'),
-  reviewed: makePersistentSet('pending_reviewed'),
-  bestcontent: makePersistentSet('pending_bestcontent')
+  published: makePersistentSet('pending_published')
 };
 const save=()=>localStorage.setItem(SK,JSON.stringify(S));
 const done=id=>!!S[id];
 const toggle=id=>{
   const willBeDone = !S[id];
-  if (willBeDone && !getBestContent(id) && !hasValidImage(id)) {
+  if (willBeDone && !hasValidImage(id)) {
     showToast('⚠️ Anexe uma mídia antes de validar como executado');
     flashImageBox(id);
     return;
@@ -23173,47 +23171,6 @@ function toggleHideDone(){
 // Academia, Sorveteria e GympulsePro têm conta conectada no Zernio.
 const ZERNIO_PROFILES = ['academia','sorveteria','gympulse'];
 
-function getReviewed(id){ return localStorage.getItem('reviewed_'+id) === '1'; }
-function setReviewed(id, val){
-  localStorage.setItem('reviewed_'+id, val ? '1' : '0');
-  PENDING.reviewed.add(id);
-}
-function toggleReviewed(id){
-  const nv = !getReviewed(id);
-  setReviewed(id, nv);
-  const btn = document.getElementById('revbtn-'+id);
-  if (btn) {
-    btn.querySelector('span').textContent = (nv?'✅':'⬜') + ' Revisado';
-    btn.style.cssText = nv ? 'background:#14532d;border-color:#4ade80;color:#4ade80;' : '';
-  }
-  rerenderPublishBlock(id);
-  scheduleSync();
-}
-function isReadyForAutoPublish(id){
-  const img = getImageData(id);
-  return getReviewed(id) && !!(img && img.status === 'ok' && img.zernioStatus === 'ok' && img.zernioUrl);
-}
-function applySavedReviewed(){
-  for (const profile of ['academia','sorveteria','gympulse']) {
-    CONTENT[profile].forEach(item => { rerenderPublishBlock(item.id); });
-  }
-}
-
-// ── AGENDAMENTO EXTERNO (BestContent) ──
-// Card marcado como BestContent tem o agendamento/publicação feito por fora
-// (outra plataforma) — o painel só reflete visualmente: verde (🟢 programado)
-// até o horário do card chegar, azul (🔵 publicado) automaticamente depois.
-function getBestContent(id){ return localStorage.getItem('bestcontent_'+id) === '1'; }
-function setBestContent(id, val){
-  localStorage.setItem('bestcontent_'+id, val ? '1' : '0');
-  PENDING.bestcontent.add(id);
-}
-function toggleBestContent(id){
-  const nv = !getBestContent(id);
-  setBestContent(id, nv);
-  rerenderPublishBlock(id);
-  scheduleSync();
-}
 // "08h" -> {h:8,m:0} / "11h30" -> {h:11,m:30} / "08:00" -> {h:8,m:0} — mesmo parser do api/auto-publish.js
 function parseTimeStr(timeStr){
   const s = (timeStr || '').trim();
@@ -23230,11 +23187,6 @@ function scheduledUtcMs(dateStr, timeStr){
   const [y, mo, d] = dateStr.split('-').map(Number);
   return Date.UTC(y, mo - 1, d, t.h + 3, t.m);
 }
-function isBestContentDue(item){
-  const due = scheduledUtcMs(item.date, item.time);
-  return due !== null && Date.now() >= due;
-}
-
 function getPublishData(id){
   try { return JSON.parse(localStorage.getItem('pub_'+id) || 'null'); } catch(e) { return null; }
 }
@@ -23255,23 +23207,18 @@ function rerenderPublishBlock(id){
 function updateReadyBadge(id){
   const found = findItem(id);
   if (!found) return;
-  const { item, profile } = found;
+  const { profile } = found;
   const pubData = getPublishData(id);
-  const isBestContent = getBestContent(id);
-  const bestContentDue = isBestContent && isBestContentDue(item);
   // Azul só quando a própria Zernio CONFIRMOU a publicação (status:'ok' vindo
   // de GET /v1/posts/{id}, ver api/auto-publish.js e verifyPublishStatus()) —
-  // não basta a Zernio ter aceito o envio. BestContent continua sendo um
-  // indício por horário (não tem como este painel verificar publicação feita
-  // por fora), então mantém o comportamento anterior nesse caso.
-  const isConfirmedPublished = (ZERNIO_PROFILES.includes(profile) && !!(pubData && pubData.status === 'ok')) || bestContentDue;
+  // não basta a Zernio ter aceito o envio.
+  const isConfirmedPublished = ZERNIO_PROFILES.includes(profile) && !!(pubData && pubData.status === 'ok');
   // Vermelho pulsante: já foi enviado à Zernio mas ainda sem confirmação
   // ('sent'), ou a Zernio confirmou que falhou ('error') — nos dois casos
   // NÃO está garantido que o post está no ar.
-  const isUnverified = !bestContentDue && ZERNIO_PROFILES.includes(profile) && !!pubData && (pubData.status === 'sent' || pubData.status === 'error') && !isScheduledFuture(pubData);
-  const imgData2 = getImageData(id);
-  const isDriveReady = !!(imgData2 && imgData2.status === 'ok') && getReviewed(id);
-  const isReadyToShow = !isConfirmedPublished && !isUnverified && (isDriveReady || isBestContent || isScheduledFuture(pubData));
+  const isUnverified = ZERNIO_PROFILES.includes(profile) && !!pubData && (pubData.status === 'sent' || pubData.status === 'error') && !isScheduledFuture(pubData);
+  // Verde: agendado na Zernio pra mais tarde.
+  const isReadyToShow = !isConfirmedPublished && !isUnverified && isScheduledFuture(pubData);
   const badgeEl = document.getElementById('cfmt-'+id);
   if (badgeEl) {
     badgeEl.classList.toggle('ready', isReadyToShow);
@@ -23281,19 +23228,6 @@ function updateReadyBadge(id){
 }
 function publishBlockHTML(id){
   const pub = getPublishData(id);
-  const isBestContent = getBestContent(id);
-
-  // Cards já marcados como BestContent (agendados por fora) só mostram o status.
-  if (isBestContent) {
-    const found = findItem(id);
-    const due = found && isBestContentDue(found.item);
-    const statusBadge = due
-      ? `<span class="publish-badge ok">🔵 Horário atingido — publicação por conta do BestContent</span>`
-      : `<span class="publish-badge pending">🟢 Agendado no BestContent — não precisa fazer nada aqui</span>`;
-    return `<div class="publish-block" id="pubblock-${id}">
-      <div class="publish-row">${statusBadge}</div>
-    </div>`;
-  }
 
   const found = findItem(id);
   const profile = found ? found.profile : null;
@@ -23984,20 +23918,16 @@ function cardHTML(item,profile){
 
   const acColor={academia:'#e63900',sorveteria:'#f5c800',gympulse:'#f5c200'}[profile];
   const pubData = getPublishData(item.id);
-  const isBestContent = getBestContent(item.id);
-  const bestContentDue = isBestContent && isBestContentDue(item);
   // Mesma lógica de updateReadyBadge(): azul só com confirmação real da Zernio.
-  const isPublishedNow = (ZERNIO_PROFILES.includes(profile) && !!(pubData && pubData.status === 'ok')) || bestContentDue;
-  const isUnverifiedNow = !bestContentDue && ZERNIO_PROFILES.includes(profile) && !!pubData && (pubData.status === 'sent' || pubData.status === 'error') && !isScheduledFuture(pubData);
-  const _img = getImageData(item.id);
-  const isDriveReady = !!(_img && _img.status === 'ok') && getReviewed(item.id);
-  const isReadyToShow = !isPublishedNow && !isUnverifiedNow && (isDriveReady || isBestContent || isScheduledFuture(pubData));
+  const isPublishedNow = ZERNIO_PROFILES.includes(profile) && !!(pubData && pubData.status === 'ok');
+  const isUnverifiedNow = ZERNIO_PROFILES.includes(profile) && !!pubData && (pubData.status === 'sent' || pubData.status === 'error') && !isScheduledFuture(pubData);
+  const isReadyToShow = !isPublishedNow && !isUnverifiedNow && isScheduledFuture(pubData);
   const cfmtClass = isPublishedNow ? ' published' : (isUnverifiedNow ? ' unverified' : (isReadyToShow ? ' ready' : ''));
 
   return `
 <div class="card ${d?'done':''}" data-p="${profile}" id="card-${item.id}">
   <div class="chead" onclick="expand('${item.id}')">
-    <button class="chk" title="${(getBestContent(item.id) || hasValidImage(item.id))?'Marcar como executado':'Anexe uma imagem para poder validar'}" onclick="event.stopPropagation();toggle('${item.id}')">${d?'✓':''}</button>
+    <button class="chk" title="${hasValidImage(item.id)?'Marcar como executado':'Anexe uma imagem para poder validar'}" onclick="event.stopPropagation();toggle('${item.id}')">${d?'✓':''}</button>
     <div class="cmeta">
       <span class="ctag">${item.time}</span>
       <span class="cfmt${cfmtClass}" id="cfmt-${item.id}">${item.format}</span>
@@ -24520,8 +24450,6 @@ async function pullRemoteState() {
     const editsRow = rows.find(r => r.key === 'edits');
     const imagesRow = rows.find(r => r.key === 'images');
     const publishedRow = rows.find(r => r.key === 'published');
-    const reviewedRow = rows.find(r => r.key === 'reviewed');
-    const bestcontentRow = rows.find(r => r.key === 'bestcontent');
     const dynamicRow = rows.find(r => r.key === 'gympulse_dynamic_cards');
     const deletedRow = rows.find(r => r.key === 'deleted');
 
@@ -24542,8 +24470,6 @@ async function pullRemoteState() {
             localStorage.removeItem('carousel_' + id);
             localStorage.removeItem('edits_' + id);
             localStorage.removeItem('pub_' + id);
-            localStorage.removeItem('reviewed_' + id);
-            localStorage.removeItem('bestcontent_' + id);
           }
         }
       });
@@ -24616,22 +24542,6 @@ async function pullRemoteState() {
       });
       applySavedPublished();
     }
-    if (reviewedRow && reviewedRow.value) {
-      Object.keys(reviewedRow.value).forEach(id => {
-        if (!PENDING.reviewed.has(id)) {
-          setReviewed(id, !!reviewedRow.value[id]);
-        }
-      });
-    }
-    if (bestcontentRow && bestcontentRow.value) {
-      Object.keys(bestcontentRow.value).forEach(id => {
-        if (!PENDING.bestcontent.has(id)) {
-          setBestContent(id, !!bestcontentRow.value[id]);
-        }
-      });
-    }
-    // 🔐 'reviewed'/'bestcontent' são sincronizados aqui para que as mudanças cheguem em todos os lugares
-    // desde que não tenha edição pendente no PENDING
     setSyncStatus('synced');
   } catch (e) {
     console.error('❌ Erro em pushRemoteState:', e.message, e);
@@ -24690,10 +24600,6 @@ async function pushRemoteState() {
     });
     const donePatch = {};
     PENDING.done.forEach(id => { donePatch[id] = !!S[id]; });
-    const reviewedPatch = {};
-    PENDING.reviewed.forEach(id => { reviewedPatch[id] = getReviewed(id); });
-    const bestcontentPatch = {};
-    PENDING.bestcontent.forEach(id => { bestcontentPatch[id] = getBestContent(id); });
     // Só ids excluídos depois do congelamento de legado (ver getSyncableDeletedIds) —
     // exclusão é monotônica, o merge no servidor só faz união, nunca some.
     const deletedPatch = getSyncableDeletedIds();
@@ -24703,8 +24609,6 @@ async function pushRemoteState() {
     if (Object.keys(localEdits).length) patches.edits = localEdits;
     if (Object.keys(localImages).length) patches.images = localImages;
     if (Object.keys(localPublished).length) patches.published = localPublished;
-    if (Object.keys(reviewedPatch).length) patches.reviewed = reviewedPatch;
-    if (Object.keys(bestcontentPatch).length) patches.bestcontent = bestcontentPatch;
     if (deletedPatch.length) patches.deleted = deletedPatch;
 
     // 2. Mesclar o delta atomicamente no servidor (RPC = uma única transação)
@@ -24729,8 +24633,6 @@ async function pushRemoteState() {
     PENDING.edits.clear();
     PENDING.images.clear();
     PENDING.published.clear();
-    PENDING.reviewed.clear();
-    PENDING.bestcontent.clear();
 
     // 4. Puxar o estado consolidado do servidor (já mesclado com o que
     // qualquer outro aparelho tiver mandado) e aplicar localmente.
@@ -24980,7 +24882,6 @@ if (!localStorage.getItem('pending_reconcile_v1_done')) {
     if (key.startsWith('edits_')) PENDING.edits.add(key.slice('edits_'.length));
     else if (key.startsWith('img_')) PENDING.images.add(key.slice('img_'.length));
     else if (key.startsWith('pub_')) PENDING.published.add(key.slice('pub_'.length));
-    else if (key.startsWith('reviewed_')) PENDING.reviewed.add(key.slice('reviewed_'.length));
   });
   localStorage.setItem('pending_reconcile_v1_done', '1');
 }
@@ -25000,7 +24901,7 @@ async function syncWithRemote() {
   lastRemoteSync = now;
   try {
     // Retenta enviar as edições locais se houver algo pendente na fila
-    const pendingCount = PENDING.done.size + PENDING.edits.size + PENDING.images.size + PENDING.published.size + PENDING.reviewed.size + PENDING.bestcontent.size;
+    const pendingCount = PENDING.done.size + PENDING.edits.size + PENDING.images.size + PENDING.published.size;
     if (pendingCount > 0) {
       await pushRemoteState();
     } else {
@@ -25023,15 +24924,6 @@ document.addEventListener('visibilitychange', function() {
   if (!document.hidden) syncWithRemote();
 });
 
-// Cards marcados como BestContent viram azul sozinhos assim que o horário
-// agendado chega — sem precisar de nenhuma ação do Gilson. Verifica a cada minuto.
-setInterval(function() {
-  for (const profile of ['academia','sorveteria','gympulse']) {
-    CONTENT[profile].forEach(item => {
-      if (getBestContent(item.id)) updateReadyBadge(item.id);
-    });
-  }
-}, 60000);
 
 // ── DETECTOR DE VERSÃO DESATUALIZADA ────────────────────────────────────
 // Abas abertas há muito tempo sem F5 ficam presas rodando um HTML/JS antigo
@@ -25286,8 +25178,6 @@ function deleteCard(id, profile) {
     localStorage.removeItem('carousel_' + id);
     localStorage.removeItem('edits_' + id);
     localStorage.removeItem('pub_' + id);
-    localStorage.removeItem('reviewed_' + id);
-    localStorage.removeItem('bestcontent_' + id);
     delete S[id];
     // Marcar como deletado para não voltar do Supabase
     var deleted = [];
@@ -25785,7 +25675,6 @@ const CAL_STATUS = {
   scheduled: { label: 'Agendado', cls: 'scheduled' },
   sending:   { label: 'Confirmando', cls: 'sending' },
   failed:    { label: 'Falhou', cls: 'failed' },
-  auto:      { label: 'Pronto', cls: 'auto' },
   pending:   { label: 'Pendente', cls: 'pending' }
 };
 function calEntry(item, profile){
@@ -25794,11 +25683,9 @@ function calEntry(item, profile){
   if (ms === null || isNaN(ms)) ms = scheduledUtcMs(item.date, '00:00');
   const p = brParts(ms);
   let status = 'pending';
-  if (getBestContent(item.id)) status = isBestContentDue(item) ? 'published' : 'scheduled';
-  else if (pub && pub.status === 'ok') status = 'published';
+  if (pub && pub.status === 'ok') status = 'published';
   else if (pub && pub.status === 'error') status = 'failed';
   else if (pub && pub.status === 'sent') status = isScheduledFuture(pub) ? 'scheduled' : 'sending';
-  else if (isReadyForAutoPublish(item.id)) status = 'auto';
   const img = getImageData(item.id);
   return { item, profile, ms, date: p.date, time: p.time, status, thumb: (img && img.status === 'ok' && img.thumbnailLink) || '' };
 }
@@ -25899,7 +25786,6 @@ function renderCalendar(){
       <span class="cal-lg cal-scheduled">${count('scheduled')} agendados</span>
       <span class="cal-lg cal-sending">${count('sending')} confirmando</span>
       <span class="cal-lg cal-failed">${count('failed')} com falha</span>
-      <span class="cal-lg cal-auto">${count('auto')} prontos (automático)</span>
       <span class="cal-lg cal-pending">${count('pending')} pendentes</span>
     </div>
     <div class="cal-grid">
