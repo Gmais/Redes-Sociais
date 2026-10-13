@@ -811,6 +811,20 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .attach-chip.on { background:#2563eb; border-color:#2563eb; color:#fff; }
 .attach-usage { background:var(--s1); border:1px solid var(--border); border-radius:8px; padding:8px 10px; color:var(--txt); font-size:13px; font-family:'Inter',sans-serif; width:100%; box-sizing:border-box; }
 .attach-usage:focus { outline:none; border-color:#2563eb; }
+.cg-box { border:1px solid #2563eb; background:rgba(37,99,235,0.07); border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:10px; }
+.cg-title { font-size:14px; font-weight:800; color:var(--txt); }
+.cg-title span { font-weight:500; font-size:12px; color:var(--txt3); }
+.cg-steps { margin:0; padding-left:20px; display:flex; flex-direction:column; gap:12px; font-size:13px; color:var(--txt); }
+.cg-steps li { line-height:1.5; }
+.cg-steps .edit-btn { margin-left:6px; display:inline-block; }
+.cg-files { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+.cg-file { display:flex; align-items:center; gap:10px; background:var(--s1); border:1px solid var(--border); border-radius:8px; padding:6px; }
+.cg-file .attach-thumb { width:48px; height:48px; }
+.cg-file-txt { flex:1; display:flex; flex-direction:column; gap:2px; min-width:0; font-size:12px; }
+.cg-file-txt span { color:var(--txt3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cg-file .brand-btn { text-decoration:none; }
+.cg-det summary { cursor:pointer; font-size:12px; color:var(--txt3); }
+.cg-det textarea { width:100%; margin-top:6px; background:var(--s1); border:1px solid var(--border); color:var(--txt); border-radius:8px; padding:8px; font-size:12px; font-family:inherit; box-sizing:border-box; }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -26631,6 +26645,111 @@ async function onGenAttach(input){
 }
 function removeGenAttach(i){ _genAttach.splice(i, 1); renderGenAttach(); }
 
+// ── Modo ChatGPT (manual): o painel monta o prompt e as imagens de referência; a imagem é gerada
+// no ChatGPT (assinatura do usuário, sem custo de API) e volta pro painel por colar/enviar. ──
+function updateEngineUI(){
+  const btn = document.getElementById('gen-go');
+  const eng = document.getElementById('gen-engine');
+  if (!btn || !eng) return;
+  btn.textContent = eng.value === 'chatgpt' ? '💬 Preparar para o ChatGPT' : (_genResult ? '🔁 Gerar outra' : '✨ Gerar');
+}
+function dataUrlExt(mime){ return mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg'; }
+async function prepareChatGpt(found, profile, prompt){
+  const el = document.getElementById('genModal');
+  const btn = document.getElementById('gen-go');
+  const status = document.getElementById('gen-status');
+  btn.disabled = true; btn.textContent = '⏳ Montando o prompt...';
+  try {
+    const palette = (PALETTES[profile] || []).map(c => c.hex + ' (' + c.name + ')').join(', ');
+    const logoAI = document.getElementById('gen-logoai').checked;
+    const resp = await fetch('/api/generate-image', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile, prompt, format: found.item.format, palette, title: found.item.title, texto: stripHtml(found.item.texto),
+        headline: document.getElementById('gen-headline').value.trim(), subline: document.getElementById('gen-subline').value.trim(),
+        includeMascot: document.getElementById('gen-mascot').checked,
+        extraRefs: _genAttach.map(a => ({ mime: a.mime, data: '', usage: (a.usage || '').trim() })),
+        engine: 'chatgpt', logoMode: logoAI ? 'ai' : 'panel' })
+    });
+    const rawText = await resp.text();
+    let data;
+    try { data = JSON.parse(rawText); } catch (e) { throw new Error('O servidor não respondeu direito (' + resp.status + '): ' + rawText.slice(0, 120)); }
+    if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha ao montar o prompt.');
+
+    // Imagens que o usuário precisa anexar no ChatGPT, na MESMA ordem citada no prompt.
+    const files = [];
+    if (data.usedLogo) { const a = brandGet(profile, 'logo'); if (a) files.push({ label: 'Logo oficial', mime: a.mime, data: a.data, name: 'logo' }); }
+    if (data.usedMascot) { const a = brandGet(profile, 'mascote'); if (a) files.push({ label: 'Mascote oficial', mime: a.mime, data: a.data, name: 'mascote' }); }
+    _genAttach.forEach((a, i) => files.push({ label: 'Imagem do cliente ' + (i + 1) + (a.usage ? ' — ' + a.usage : ''), mime: a.mime, data: a.data, name: 'anexo' + (i + 1) }));
+    window._cgPrompt = data.prompt;
+    const rows = files.map((f, i) => `
+      <div class="cg-file"><img class="attach-thumb" src="data:${f.mime};base64,${f.data}" alt="">
+        <div class="cg-file-txt"><b>Imagem ${i + 1}</b><span>${String(f.label).replace(/</g, '&lt;')}</span></div>
+        <a class="brand-btn" download="${i + 1}-${f.name}.${dataUrlExt(f.mime)}" href="data:${f.mime};base64,${f.data}">⬇ Baixar</a></div>`).join('');
+    document.getElementById('gen-preview').innerHTML = `
+      <div class="cg-box" id="cg-box">
+        <div class="cg-title">💬 Gerar pelo ChatGPT <span>(usa a sua assinatura — sem custo de API)</span></div>
+        <ol class="cg-steps">
+          <li><b>Copie o prompt</b> <button type="button" class="edit-btn edit-btn-primary" onclick="cgCopyPrompt()">📋 Copiar prompt</button> <span id="cg-copied"></span></li>
+          <li><b>Abra o ChatGPT</b>, escolha criar imagem e cole o prompt <a class="edit-btn" href="https://chatgpt.com/" target="_blank" rel="noopener">Abrir ChatGPT ↗</a></li>
+          ${files.length ? `<li><b>Anexe as imagens abaixo no ChatGPT</b>, nesta ordem (baixe e arraste pro chat):<div class="cg-files">${rows}</div></li>` : ''}
+          <li><b>Quando a imagem sair</b>, copie ela e <b>cole aqui (Ctrl+V)</b>, ou
+            <label class="edit-btn" style="cursor:pointer">📥 envie o arquivo<input type="file" accept="image/*" style="display:none" onchange="cgReceiveFile(this)"></label></li>
+        </ol>
+        <details class="cg-det"><summary>Ver o prompt completo</summary><textarea readonly rows="8" id="cg-prompt-view"></textarea></details>
+      </div>
+      <div id="cg-result"></div>`;
+    document.getElementById('cg-prompt-view').value = data.prompt;
+    status.textContent = '✓ Prompt pronto. Siga os passos abaixo; ao colar a imagem aqui o painel recorta no formato exato e aplica o que faltar.';
+  } catch (e) {
+    status.textContent = '⚠️ ' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = '💬 Atualizar prompt';
+  }
+}
+async function cgCopyPrompt(){
+  const txt = window._cgPrompt || '';
+  let ok = false;
+  try { await navigator.clipboard.writeText(txt); ok = true; } catch (e) {}
+  if (!ok) { const ta = document.getElementById('cg-prompt-view'); if (ta) { ta.select(); try { ok = document.execCommand('copy'); } catch (e) {} } }
+  const c = document.getElementById('cg-copied');
+  if (c) c.textContent = ok ? '✅ Prompt copiado!' : '⚠️ Não consegui copiar — abra "Ver o prompt completo" e copie manualmente.';
+}
+function cgReceiveFile(input){
+  const f = input.files && input.files[0];
+  input.value = '';
+  if (f) cgReceiveImage(f);
+}
+// Recebe a imagem do ChatGPT (colada ou enviada), recorta no formato exato e mostra a prévia.
+async function cgReceiveImage(file){
+  const el = document.getElementById('genModal');
+  const id = el.dataset.id, profile = el.dataset.profile;
+  const found = findItem(id);
+  const status = document.getElementById('gen-status');
+  const logoAI = document.getElementById('gen-logoai').checked;
+  try {
+    status.textContent = '⏳ Preparando a imagem...';
+    const raw = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = () => rej(new Error('Não consegui ler a imagem.')); fr.readAsDataURL(file); });
+    const composed = await composeFinalImage(raw, found.item.format, profile, 'auto', true, logoAI);
+    _genResult = { id, profile, format: found.item.format, src: composed.url, raw, pos: composed.pos, logoAI };
+    const opts = Object.keys(LOGO_POS).map(k => `<option value="${k}">${LOGO_POS[k]}</option>`).join('');
+    document.getElementById('cg-result').innerHTML =
+      `<img class="gen-img" id="gen-preview-img" src="${_genResult.src}" alt="Imagem do ChatGPT">` + (logoAI ? '' :
+       `<div class="pos-wrap"><label class="pos-row">Posição do logo: <select id="gen-pos" onchange="recomposeLogo()">${opts}</select></label>
+       <label class="pos-row"><input type="checkbox" id="gen-cut" checked onchange="recomposeLogo()"> Recortar o fundo do logo</label></div>`);
+    status.textContent = '✓ Imagem recebida do ChatGPT e ajustada para ' + (found.item.format === 'Post' ? '1080×1350' : '1080×1920') + (logoAI ? '' : ' (logo oficial aplicado pelo painel)') + '. Gostou? Clique em "Usar esta imagem".';
+    document.getElementById('gen-use').style.display = '';
+  } catch (e) {
+    status.textContent = '⚠️ ' + e.message;
+  }
+}
+// Ctrl+V com uma imagem no clipboard (ex.: "copiar imagem" no ChatGPT) enquanto o passo a passo estiver aberto.
+document.addEventListener('paste', function (e) {
+  const modal = document.getElementById('genModal');
+  if (!modal || !modal.classList.contains('on') || !document.getElementById('cg-box')) return;
+  const files = e.clipboardData && e.clipboardData.files;
+  if (files && files[0] && files[0].type.startsWith('image/')) { e.preventDefault(); cgReceiveImage(files[0]); }
+});
+
 // ── Gerar imagem com IA (logo + mascote sempre incluídos) ──
 const GEN_TARGET = { Story: { w: 1080, h: 1920 }, Reel: { w: 1080, h: 1920 }, Post: { w: 1080, h: 1350 } };
 let _genResult = null;
@@ -26669,8 +26788,9 @@ function ensureGenModal(){
           <input type="file" id="gen-attach-file" accept="image/*" multiple style="display:none" onchange="onGenAttach(this)">
         </div>
         <label class="sx-field"><span>Motor de imagem</span>
-          <select id="gen-engine" class="gen-select" onchange="try{localStorage.setItem('genEngine',this.value)}catch(e){}">
-            <option value="openai">GPT Image (OpenAI) — melhor resultado, estilo ChatGPT (mais caro, até ~US$ 0,25)</option>
+          <select id="gen-engine" class="gen-select" onchange="try{localStorage.setItem('genEngine2',this.value)}catch(e){} updateEngineUI()">
+            <option value="chatgpt">ChatGPT (manual) — usa a sua assinatura, sem custo por imagem</option>
+            <option value="openai">GPT Image (mesmo motor do ChatGPT, via API) — automático, até ~US$ 0,25</option>
             <option value="gemini">Nano Banana (Gemini) — rápido e barato (~US$ 0,05)</option>
             <option value="gemini-pro">Nano Banana Pro (Gemini) — premium (~US$ 0,13)</option>
           </select></label>
@@ -26749,10 +26869,11 @@ function openGenImage(id, profile){
   _genResult = null;
   _genAttach = [];
   try {
-    const eng = localStorage.getItem('genEngine');
-    document.getElementById('gen-engine').value = ['openai', 'gemini', 'gemini-pro'].includes(eng) ? eng : 'openai';
+    const eng = localStorage.getItem('genEngine2');
+    document.getElementById('gen-engine').value = ['chatgpt', 'openai', 'gemini', 'gemini-pro'].includes(eng) ? eng : 'chatgpt';
     document.getElementById('gen-logoai').checked = localStorage.getItem('genLogoAI') !== '0';
   } catch (e) {}
+  updateEngineUI();
   renderGenAttach();
   el.dataset.skipSimilar = '';
   el.classList.add('on');
@@ -26784,6 +26905,7 @@ async function runGenerateImage(){
     renderBrandGrid();
     return;
   }
+  if (document.getElementById('gen-engine').value === 'chatgpt') { await prepareChatGpt(found, profile, prompt); return; }
   btn.disabled = true; btn.textContent = '⏳ Gerando...'; el.dataset.busy = '1';
   status.textContent = document.getElementById('gen-engine').value === 'gemini' ? 'A IA está criando a imagem — leva de 20 a 60 segundos. Não feche esta janela.' : 'A IA está criando a imagem com mais capricho — pode levar até 100 segundos. Não feche esta janela.';
   document.getElementById('gen-use').style.display = 'none';

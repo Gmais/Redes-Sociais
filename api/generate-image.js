@@ -407,7 +407,9 @@ module.exports = async (req, res) => {
     }
     const geminiKey = process.env.GEMINI_API_KEY;
     const openaiKey = process.env.OPENAI_API_KEY;
-    if (!geminiKey && !openaiKey) {
+    // 'chatgpt' = modo manual: só monta o prompt (a imagem é gerada pelo usuário no ChatGPT, sem custo de API).
+    const promptOnly = engine === 'chatgpt';
+    if (!promptOnly && !geminiKey && !openaiKey) {
       res.status(500).json({ error: 'Nenhuma chave de IA configurada no Vercel (GEMINI_API_KEY ou OPENAI_API_KEY).' });
       return;
     }
@@ -437,7 +439,8 @@ module.exports = async (req, res) => {
     let attachCount = 0;
     const attachUses = []; // instrução de uso de cada imagem anexada ("colocar como fundo", etc.)
     (Array.isArray(extraRefs) ? extraRefs.slice(0, 3) : []).forEach((x, i) => {
-      if (!x || typeof x.data !== 'string' || x.data.length < 100 || x.data.length > 1800000) return;
+      if (!x || typeof x.data !== 'string') return;
+      if (!promptOnly && (x.data.length < 100 || x.data.length > 1800000)) return; // no modo manual só conta (os dados não vêm)
       const mime = /^image\/(png|jpeg|webp)$/.test(x.mime || '') ? x.mime : 'image/jpeg';
       refs.push({ buffer: Buffer.from(x.data, 'base64'), mime, fileName: 'anexo' + (i + 1) + '.' + (mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg') });
       attachUses.push(typeof x.usage === 'string' ? x.usage.replace(/\s+/g, ' ').trim().slice(0, 220) : '');
@@ -454,6 +457,11 @@ module.exports = async (req, res) => {
     const fullPrompt = aiLogo
       ? buildDesignPrompt(common)
       : buildPrompt({ ...common, caption: '' }); // o texto da postagem já vai dentro do briefing
+
+    if (promptOnly) {
+      res.status(200).json({ ok: true, promptOnly: true, prompt: fullPrompt, usedLogo: aiLogo, usedMascot: !!mascot, usedAttachments: attachCount });
+      return;
+    }
 
     const t0 = Date.now();
     let result, provider;
