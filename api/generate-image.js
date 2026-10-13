@@ -94,7 +94,7 @@ function findImageData(node) {
 // A função do Vercel (plano Hobby) é cortada em 60s, então o modelo padrão é o
 // rápido (Nano Banana 2.1). O Pro (gemini-3-pro-image) é mais caprichado, mas
 // costuma passar de 60s — só use via variável GEMINI_IMAGE_MODEL no Vercel.
-const DEADLINE_MS = 52000;
+const DEADLINE_MS = 100000; // vercel.json dá 120s à função
 
 async function generateWithGemini({ apiKey, prompt, refs, aspect }) {
   const started = Date.now();
@@ -137,11 +137,16 @@ async function generateWithGemini({ apiKey, prompt, refs, aspect }) {
 
       if (r.ok) {
         const img = findImageData(data);
-        if (img) return { ...img, model };
+        if (img) {
+          console.log('[gemini] ok', model, JSON.stringify(v), (Date.now() - started) + 'ms', 'b64=' + img.b64.length);
+          return { ...img, model };
+        }
         lastError = 'a IA respondeu sem imagem';
+        console.log('[gemini] sem imagem', model, JSON.stringify(v), JSON.stringify(data).slice(0, 400));
         continue;
       }
       lastError = (data.error && (data.error.message || JSON.stringify(data.error))) || ('status ' + r.status);
+      console.log('[gemini] erro', model, JSON.stringify(v), r.status, String(lastError).slice(0, 300), (Date.now() - started) + 'ms');
       // 4xx = pedido recusado (modelo/opção inválidos): tenta a próxima variante.
       // 5xx/429 = problema do lado do Google: não adianta insistir.
       if (r.status >= 500 || r.status === 429 || r.status === 401 || r.status === 403) {
@@ -152,12 +157,12 @@ async function generateWithGemini({ apiKey, prompt, refs, aspect }) {
   throw new Error(lastError);
 }
 
-async function generateWithOpenAI({ apiKey, prompt, refs }) {
+async function generateWithOpenAI({ apiKey, prompt, refs, timeoutMs }) {
   const form = new FormData();
   form.append('model', 'gpt-image-1');
   form.append('prompt', prompt);
   form.append('size', '1024x1536');
-  form.append('quality', 'high');
+  form.append('quality', 'medium');
   form.append('output_format', 'jpeg');
   form.append('n', '1');
   refs.forEach((r) => {
@@ -167,7 +172,8 @@ async function generateWithOpenAI({ apiKey, prompt, refs }) {
   const aiRes = await fetch(OPENAI_URL + '/images/edits', {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + apiKey },
-    body: form
+    body: form,
+    signal: AbortSignal.timeout(timeoutMs || 50000)
   });
   const data = await aiRes.json();
   if (!aiRes.ok) {
@@ -252,6 +258,7 @@ module.exports = async (req, res) => {
       brief: String(prompt).trim()
     });
 
+    const t0 = Date.now();
     let result, provider;
     try {
       if (geminiKey) {
@@ -259,14 +266,17 @@ module.exports = async (req, res) => {
         result = await generateWithGemini({ apiKey: geminiKey, prompt: fullPrompt, refs, aspect: isFeed ? '4:5' : '9:16' });
       } else {
         provider = 'openai';
-        result = await generateWithOpenAI({ apiKey: openaiKey, prompt: fullPrompt, refs });
+        result = await generateWithOpenAI({ apiKey: openaiKey, prompt: fullPrompt, refs, timeoutMs: 100000 });
       }
     } catch (e) {
-      // Gemini falhou e existe reserva: tenta a OpenAI antes de desistir.
-      if (provider === 'gemini' && openaiKey) {
+      console.log('[generate-image] falhou', provider, String(e.message).slice(0, 300), (Date.now() - t0) + 'ms');
+      // Gemini falhou RÁPIDO e existe reserva: tenta a OpenAI. Se já gastou
+      // tempo (ex.: timeout), não há folga pra reserva — responde o erro.
+      const spent = Date.now() - t0;
+      if (provider === 'gemini' && openaiKey && spent < 25000) {
         try {
           provider = 'openai';
-          result = await generateWithOpenAI({ apiKey: openaiKey, prompt: fullPrompt, refs });
+          result = await generateWithOpenAI({ apiKey: openaiKey, prompt: fullPrompt, refs, timeoutMs: 100000 - spent - 5000 });
         } catch (e2) {
           res.status(502).json({ error: 'A IA recusou o pedido: ' + e.message + ' | reserva: ' + e2.message });
           return;
