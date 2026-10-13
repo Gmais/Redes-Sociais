@@ -16,7 +16,7 @@
 // Zernio recomenda ("fetch via GET /v1/posts/{postId} after publish time").
 
 const PROFILE_CONFIG = {
-  academia: { accountId: '6a3915825f7d1751ab4af026', apiKeyEnv: 'ZERNIO_API_KEY' },
+  academia: { accountId: '6ace80c0a737012bc49cb80c', apiKeyEnv: 'ZERNIO_API_KEY' },
   sorveteria: { accountId: '6a3916335f7d1751ab4afbe3', apiKeyEnv: 'ZERNIO_API_KEY' },
   gympulse: { accountId: '6a3920625f7d1751ab4b6fdc', apiKeyEnv: 'ZERNIO_API_KEY_GYMPULSE' }
 };

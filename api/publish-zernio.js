@@ -8,7 +8,7 @@
 // ZERNIO_ACCOUNT_ACADEMIA / ZERNIO_ACCOUNT_SORVETERIA / ZERNIO_ACCOUNT_GYMPULSE com o
 // ID da nova conta conectada na Zernio (sem mexer no código). Sem a variável, vale o ID abaixo.
 const PROFILE_CONFIG = {
-  academia: { accountId: process.env.ZERNIO_ACCOUNT_ACADEMIA || '6a3915825f7d1751ab4af026', apiKeyEnv: 'ZERNIO_API_KEY' },
+  academia: { accountId: process.env.ZERNIO_ACCOUNT_ACADEMIA || '6ace80c0a737012bc49cb80c', apiKeyEnv: 'ZERNIO_API_KEY' },
   sorveteria: { accountId: process.env.ZERNIO_ACCOUNT_SORVETERIA || '6a3916335f7d1751ab4afbe3', apiKeyEnv: 'ZERNIO_API_KEY' },
   gympulse: { accountId: process.env.ZERNIO_ACCOUNT_GYMPULSE || '6a3920625f7d1751ab4b6fdc', apiKeyEnv: 'ZERNIO_API_KEY_GYMPULSE' }
 };
