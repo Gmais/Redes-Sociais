@@ -26115,13 +26115,13 @@ async function runGenerateImage(){
     const palette = (PALETTES[profile] || []).map(c => c.hex + ' (' + c.name + ')').join(', ');
     const resp = await fetch('/api/generate-image', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ profile, prompt, format: found.item.format, palette, includeMascot: document.getElementById('gen-mascot').checked })
+      body: JSON.stringify({ profile, prompt, format: found.item.format, palette, title: found.item.title, texto: stripHtml(found.item.texto), includeMascot: document.getElementById('gen-mascot').checked })
     });
     const data = await resp.json();
     if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha ao gerar a imagem.');
     _genResult = { id, profile, format: found.item.format, src: 'data:' + data.mime + ';base64,' + data.imageBase64 };
     document.getElementById('gen-preview').innerHTML = `<img class="gen-img" src="${_genResult.src}" alt="Imagem gerada">`;
-    status.textContent = '✓ Logo incluído' + (data.usedMascot ? ' + mascote' : (document.getElementById('gen-mascot').checked ? ' (esta marca ainda não tem mascote cadastrado)' : '')) + '. Gostou? Use a imagem ou gere outra.';
+    status.textContent = '✓ ' + (data.provider === 'gemini' ? 'Gemini' : 'OpenAI') + ' — logo incluído' + (data.usedMascot ? ' + mascote' : (document.getElementById('gen-mascot').checked ? ' (esta marca ainda não tem mascote cadastrado)' : '')) + '. Gostou? Use a imagem ou gere outra.';
     document.getElementById('gen-use').style.display = '';
   } catch (e) {
     status.textContent = '⚠️ ' + e.message;
