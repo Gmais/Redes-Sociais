@@ -1,0 +1,9 @@
+{
+  "name": "redes-sociais",
+  "private": true,
+  "description": "Painel de Conteudo Instagram (funcoes serverless em /api)",
+  "dependencies": {
+    "@resvg/resvg-js": "2.6.2",
+    "satori": "0.10.14"
+  }
+}

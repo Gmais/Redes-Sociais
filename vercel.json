@@ -3,6 +3,10 @@
     "api/generate-image.js": {
       "maxDuration": 120,
       "includeFiles": "assets/marcas/**"
+    },
+    "api/gympulse-ranking.js": {
+      "maxDuration": 60,
+      "includeFiles": "assets/fonts/**"
     }
   }
 }
