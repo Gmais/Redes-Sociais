@@ -218,16 +218,20 @@ function buildPrompt({ cfg, isFeed, mascot, palette, title, caption, brief, head
     '[2. LOGO — REGRA CRÍTICA]',
     '- NÃO desenhe, escreva ou imite o logo, o nome da marca, selos ou símbolos de marca em NENHUM lugar da arte. Zero logos. Nenhum elemento decorativo pode lembrar o logo.',
     '',
-    '[3. CONTEÚDO]',
+    '[3. BRIEFING DO CLIENTE — USE TODOS OS BLOCOS]',
     title ? '- Tema do post: ' + title : null,
-    caption ? '- Legenda do post (apenas contexto, não copie na arte): ' + caption : null,
-    '- Briefing do cliente:',
+    '- O texto abaixo traz os blocos do card do post (os que existirem). Leia e aplique TODOS:',
+    '  • TEXTO DA POSTAGEM: a legenda que vai junto da imagem. A cena e o título da arte devem comunicar a ideia central dela (não copie o texto inteiro na arte).',
+    '  • FORMATO E ESPECIFICAÇÕES: dimensões, proporção e regras de composição (ex.: regra 60-30-10, limite de texto na imagem). Obedeça — têm prioridade sobre os padrões gerais abaixo, EXCETO as regras de LOGO e de FAIXA INFERIOR RESERVADA. Se pedirem um elemento de CTA na arte, inclua-o.',
+    '  • INTENÇÃO DA POSTAGEM: tipo, objetivo e CTA. O clima, a hierarquia visual e o destaque da arte devem servir a esse objetivo.',
+    '  • BRIEFING CRIATIVO / O QUE A IMAGEM DEVE MOSTRAR: a cena, o estilo e as restrições visuais. Siga com fidelidade.',
+    '',
     brief,
     '',
     '[4. TÍTULO NA ARTE]',
     headline
       ? '- Escreva EXATAMENTE este título, sem alterar nenhuma letra: "' + headline + '".'
-      : '- Crie UM título curto e chamativo em português do Brasil (máximo 6 palavras), tirado do tema do post.',
+      : '- Crie UM título curto e chamativo em português do Brasil (máximo 6 palavras), que resuma a ideia central do TEXTO DA POSTAGEM (ou do tema do post, se não houver texto).',
     '- Tipografia forte, em caixa alta ou negrito, alto contraste com o fundo, na parte superior (terço de cima). Margem lateral mínima de 8%: nenhuma letra pode encostar nas bordas nem ser cortada — quebre em linhas menores se precisar.',
     '- Nenhum outro texto na arte além do título (e do que o briefing pedir de forma explícita). Texto escrito corretamente, sem letras inventadas ou erros de ortografia.',
     '',
@@ -296,9 +300,9 @@ module.exports = async (req, res) => {
     const fullPrompt = buildPrompt({
       cfg, isFeed, mascot: !!mascot, palette,
       title: title ? String(title).slice(0, 200) : '',
-      caption: texto ? String(texto).slice(0, 600) : '',
+      caption: '', // o texto da postagem já vai dentro do briefing (bloco TEXTO DA POSTAGEM)
       headline: headline ? String(headline).trim().slice(0, 120) : '',
-      brief: String(prompt).trim().slice(0, 3500)
+      brief: String(prompt).trim().slice(0, 7000)
     });
 
     const t0 = Date.now();

@@ -26036,7 +26036,7 @@ function simTokens(text){
     .map(w => w.slice(0, 6));
 }
 function fmtGroup(f){ f = String(f || '').toLowerCase(); return (f === 'story' || f === 'reel') ? 'vertical' : 'feed'; }
-function cardSimText(item){ return item.title + '\n' + buildDetailedBrief(item); }
+function cardSimText(item){ return item.title + '\n' + buildDetailedBrief(item, true); }
 // Devolve até `limit` cards com imagem pronta cujo briefing é parecido (score 0–1).
 function findSimilarImages(id, profile, format, currentText, limit){
   const docs = [];
@@ -26135,8 +26135,8 @@ function ensureGenModal(){
       <div class="sx-head"><div class="sx-title">✨ Gerar imagem com IA</div><button class="sx-close" onclick="closeGenImage()">✕</button></div>
       <div class="sx-body">
         <div class="sx-sub" id="gen-sub"></div>
-        <label class="sx-field"><span>Briefing da imagem <small>(montado a partir do card — detalhe o quanto quiser)</small></span>
-          <textarea id="gen-prompt" rows="9" placeholder="Descreva a imagem que a IA deve criar..."></textarea></label>
+        <label class="sx-field"><span>Briefing da imagem <small>(montado com texto da postagem, formato e especificações, intenção e briefing criativo do card — pode editar)</small></span>
+          <textarea id="gen-prompt" rows="14" placeholder="Descreva a imagem que a IA deve criar..."></textarea></label>
         <label class="sx-field"><span>Título escrito na arte <small>(opcional — vazio: a IA cria um título curto)</small></span>
           <input type="text" id="gen-headline" maxlength="80" placeholder="Ex.: QUAL SABOR VOCÊ NUNCA DEIXA DE PEDIR?"></label>
         <div class="sx-hint">✓ O <b>logo oficial</b> é aplicado automaticamente no rodapé — idêntico ao original e uma única vez. <label class="gen-mascot"><input type="checkbox" id="gen-mascot" checked> incluir o <b>mascote</b> (quando a marca tiver)</label></div>
@@ -26158,16 +26158,22 @@ function ensureGenModal(){
   return el;
 }
 function stripHtml(s){ const d = document.createElement('div'); d.innerHTML = String(s || '').replace(/<br\s*\/?>/gi, '\n'); return (d.textContent || '').trim(); }
-// Monta o briefing a partir de TODAS as seções do card (cena, intenção do post
-// e especificações), pra IA receber contexto de verdade e não só 1 frase.
-function buildDetailedBrief(item){
+// Monta o briefing a partir dos 4 campos do card: texto da postagem, formato e
+// especificações, intenção da postagem e briefing criativo (+ "o que mostrar").
+// forSim=true monta a versão usada só pra comparar com o histórico (sem o texto
+// da legenda, que muda a cada card mesmo quando a imagem pode ser a mesma).
+function buildDetailedBrief(item, forSim){
   const sec = (re) => (item.secoes || []).find(x => re.test(x.titulo || ''));
   const scene = sec(/BRIEFING/i), intent = sec(/INTEN/i), spec = sec(/FORMATO/i);
   const parts = [];
-  parts.push('CENA E ESTILO: ' + (scene ? stripHtml(scene.conteudo) : (item.driveHint || item.title)));
-  if (item.driveHint && scene) parts.push('O QUE A IMAGEM DEVE MOSTRAR: ' + String(item.driveHint));
-  if (intent) parts.push('INTENÇÃO DO POST: ' + stripHtml(intent.conteudo));
-  if (spec) parts.push('ESPECIFICAÇÕES TÉCNICAS: ' + stripHtml(spec.conteudo));
+  if (!forSim && item.texto) {
+    const txt = stripHtml(item.texto).replace(/#\S+/g, '').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim().slice(0, 1500);
+    if (txt) parts.push('TEXTO DA POSTAGEM:\n' + txt);
+  }
+  if (spec) parts.push('FORMATO E ESPECIFICAÇÕES:\n' + stripHtml(spec.conteudo));
+  if (intent) parts.push('INTENÇÃO DA POSTAGEM:\n' + stripHtml(intent.conteudo));
+  parts.push('BRIEFING CRIATIVO:\n' + (scene ? stripHtml(scene.conteudo) : (item.driveHint || item.title)));
+  if (item.driveHint && scene) parts.push('O QUE A IMAGEM DEVE MOSTRAR:\n' + String(item.driveHint));
   return parts.join('\n\n');
 }
 function openGenImage(id, profile){
