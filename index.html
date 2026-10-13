@@ -764,6 +764,15 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .brand-warn { font-size:10px; font-weight:700; color:#f87171; margin-top:4px; text-align:center; }
 @media(max-width:700px){ .brand-grid{grid-template-columns:1fr;} }
 .sx-field small { font-weight:500; color:var(--txt3); }
+.sim-box { border:1px solid #14532d; background:#0d1f16; border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:8px; }
+.sim-head { font-size:12px; font-weight:800; color:#4ade80; }
+.sim-row { display:flex; gap:10px; align-items:center; background:var(--s1); border:1px solid var(--border); border-radius:8px; padding:8px; }
+.sim-thumb { width:56px; height:56px; object-fit:cover; border-radius:6px; flex-shrink:0; background:var(--s2); }
+.sim-nothumb { display:flex; align-items:center; justify-content:center; font-size:22px; }
+.sim-info { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.sim-title { font-size:12px; font-weight:700; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sim-meta { font-size:11px; color:var(--txt3); }
+.sim-link { font-size:11px; color:#60a5fa; text-decoration:none; }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -26036,6 +26045,105 @@ async function removeBrand(profile, kind){
   } catch (e) { showToast('⚠️ ' + e.message); }
 }
 
+// ── Histórico: reaproveitar imagem parecida antes de gerar (economiza crédito) ──
+// O "histórico de criação" são os próprios cards que já têm imagem (geradas por
+// IA ou anexadas): compara o briefing novo com o de cada um, da mesma marca e do
+// mesmo formato (vertical 9:16 ou feed 4:5), e oferece reutilizar.
+const SIM_THRESHOLD = 0.85; // calibrado nos cards reais: >=0.9 são recorrentes idênticos; <=0.75 já mistura sabores/pessoas diferentes
+const SIM_STOP = new Set(('para com uma que dos das nao sem por mais como mas seu sua isso esta este foi ser tem ate sobre entre pos ' +
+  'tipo objetivo cta formato dimensoes regra texto max cena estilo intencao post story instagram feed imagem mostrar deve ' +
+  'especificacoes tecnicas postagem reel carrossel').split(' '));
+function simTokens(text){
+  return String(text || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+    .filter(w => w.length > 2 && !SIM_STOP.has(w) && !/^\d+$/.test(w))
+    .map(w => w.slice(0, 6));
+}
+function fmtGroup(f){ f = String(f || '').toLowerCase(); return (f === 'story' || f === 'reel') ? 'vertical' : 'feed'; }
+function cardSimText(item){ return item.title + '\n' + buildDetailedBrief(item); }
+// Devolve até `limit` cards com imagem pronta cujo briefing é parecido (score 0–1).
+function findSimilarImages(id, profile, format, currentText, limit){
+  const docs = [];
+  for (const p of ['academia', 'sorveteria', 'gympulse']) {
+    for (const it of CONTENT[p]) docs.push({ id: it.id, profile: p, item: it, set: new Set(simTokens(cardSimText(it))) });
+  }
+  const df = new Map();
+  docs.forEach(d => d.set.forEach(w => df.set(w, (df.get(w) || 0) + 1)));
+  const N = docs.length;
+  const idf = w => Math.log((N + 1) / ((df.get(w) || 0) + 1)) + 0.05; // palavra rara pesa mais que "cores", "design"...
+  const norm = set => Math.sqrt([...set].reduce((a, w) => a + idf(w) * idf(w), 0)) || 1;
+  const cur = new Set(simTokens(currentText));
+  const curN = norm(cur);
+  const out = [];
+  for (const d of docs) {
+    if (d.id === id || d.profile !== profile) continue;
+    if (fmtGroup(d.item.format) !== fmtGroup(format)) continue;
+    const img = getImageData(d.id);
+    if (!img || img.status !== 'ok' || !(img.zernioUrl || img.fileId)) continue;
+    let dot = 0, shared = 0;
+    cur.forEach(w => { if (d.set.has(w)) { dot += idf(w) * idf(w); shared++; } });
+    const score = dot / (curN * norm(d.set));
+    if (shared >= 4 && score >= SIM_THRESHOLD) out.push({ d, score, img });
+  }
+  out.sort((a, b) => b.score - a.score);
+  return out.slice(0, limit || 3);
+}
+function renderSimilarPanel(sims){
+  const box = document.getElementById('gen-preview');
+  const rows = sims.map(s => {
+    const pub = getPublishData(s.d.id);
+    const used = (pub && pub.status === 'ok') ? ' · ✅ já publicada' : '';
+    const thumb = s.img.thumbnailLink
+      ? `<img class="sim-thumb" src="${s.img.thumbnailLink}" alt="" loading="lazy" onerror="this.style.display='none'">`
+      : `<div class="sim-thumb sim-nothumb">🖼️</div>`;
+    const title = String(s.d.item.title || '').replace(/</g, '&lt;');
+    return `<div class="sim-row">${thumb}
+      <div class="sim-info"><div class="sim-title">${title}</div>
+      <div class="sim-meta">${fmtDate(s.d.item.date)} · ${s.d.item.format} · ${Math.round(s.score * 100)}% parecida${used}</div>
+      <a class="sim-link" href="${s.img.viewUrl || '#'}" target="_blank" rel="noopener">abrir imagem ↗</a></div>
+      <button class="edit-btn edit-btn-primary" onclick="reuseImage('${s.d.id}')">♻️ Usar esta</button></div>`;
+  }).join('');
+  box.innerHTML = `<div class="sim-box">
+    <div class="sim-head">♻️ Já existe imagem parecida — reaproveitar não gasta crédito</div>${rows}
+    <button class="edit-btn" onclick="genAnyway()">✨ Gerar uma nova mesmo assim</button></div>`;
+}
+function genAnyway(){
+  const el = document.getElementById('genModal');
+  el.dataset.skipSimilar = '1';
+  document.getElementById('gen-preview').innerHTML = '';
+  runGenerateImage();
+}
+// Copia a imagem de outro card (Drive + link da Zernio) pro card atual.
+function reuseImage(fromId){
+  const el = document.getElementById('genModal');
+  const id = el.dataset.id, profile = el.dataset.profile;
+  const src = getImageData(fromId);
+  const from = findItem(fromId);
+  if (!src || !from) { showToast('⚠️ Imagem de origem não encontrada.'); return; }
+  setImageData(id, {
+    status: 'ok', fileId: src.fileId, viewUrl: src.viewUrl, thumbnailLink: src.thumbnailLink || '',
+    fileName: src.fileName, uploadedAt: new Date().toISOString(),
+    zernioStatus: src.zernioStatus, zernioUrl: src.zernioUrl, reusedFrom: fromId
+  });
+  rerenderImageBox(id, profile);
+  rerenderPublishBlock(id);
+  pushRemoteState();
+  closeGenImage();
+  showToast('♻️ Imagem reaproveitada de "' + from.item.title + '"');
+}
+function genCurrentSimText(){
+  return document.getElementById('gen-prompt').value + '\n' + document.getElementById('gen-headline').value;
+}
+function showSimilarIfAny(){
+  const el = document.getElementById('genModal');
+  const found = findItem(el.dataset.id);
+  if (!found) return false;
+  const sims = findSimilarImages(el.dataset.id, el.dataset.profile, found.item.format, found.item.title + '\n' + genCurrentSimText());
+  if (!sims.length) return false;
+  renderSimilarPanel(sims);
+  return true;
+}
+
 // ── Gerar imagem com IA (logo + mascote sempre incluídos) ──
 const GEN_TARGET = { Story: { w: 1080, h: 1920 }, Reel: { w: 1080, h: 1920 }, Post: { w: 1080, h: 1350 } };
 let _genResult = null;
@@ -26100,7 +26208,9 @@ function openGenImage(id, profile){
   document.getElementById('gen-use').style.display = 'none';
   const go = document.getElementById('gen-go'); go.disabled = false; go.textContent = '✨ Gerar';
   _genResult = null;
+  el.dataset.skipSimilar = '';
   el.classList.add('on');
+  showSimilarIfAny();
   renderBrandGrid();
   loadBrandAssets().then(renderBrandGrid);
 }
@@ -26116,6 +26226,12 @@ async function runGenerateImage(){
   if (!prompt) { showToast('Descreva a imagem primeiro.'); return; }
   const btn = document.getElementById('gen-go');
   const status = document.getElementById('gen-status');
+  const skipSimilar = el.dataset.skipSimilar === '1';
+  el.dataset.skipSimilar = '';
+  if (!skipSimilar && !_genResult && showSimilarIfAny()) {
+    status.textContent = '♻️ Conferi o histórico: já existe imagem parecida. Reutilize uma delas ou gere uma nova mesmo assim.';
+    return;
+  }
   await loadBrandAssets();
   if (!brandGet(profile, 'logo')) {
     status.textContent = '⚠️ Anexe o logo desta marca na seção "Logos e mascotes" acima antes de gerar.';
