@@ -188,10 +188,11 @@ function buildPrompt({ cfg, isFeed, mascot, palette, title, caption, brief }) {
     '- Composição completa e profissional, com ponto focal forte, iluminação realista e acabamento de agência. NÃO entregue mockup cru, wireframe, fundo liso ou slide genérico.',
     '- Use fotografia realista de alta qualidade ou ilustração/3D polida, conforme o briefing. Cores vivas e contraste alto, legível no celular.',
     '- Inclua um título curto e chamativo em português do Brasil (no máximo 6 palavras), tirado do tema do post, com tipografia forte e legível. Todo texto deve estar escrito corretamente, sem letras inventadas.',
+    '- Margens: deixe pelo menos 8% de espaço livre nas laterais, e nenhum texto pode encostar nas bordas nem ser cortado. Quebre o título em linhas menores se precisar.',
     '- Sem marcas d\'água, sem logos de terceiros, sem interface de aplicativo inventada.',
     '',
     'Marca:',
-    '- A PRIMEIRA imagem de referência é o LOGO oficial: coloque-o bem visível (rodapé ou canto), IDÊNTICO ao original — mesmas formas, cores e letras, sem redesenhar nem distorcer.',
+    '- A PRIMEIRA imagem de referência é o LOGO oficial: coloque-o UMA ÚNICA vez, bem visível (rodapé ou canto), IDÊNTICO ao original — mesmas formas, cores e letras, sem redesenhar nem distorcer. Não repita o símbolo do logo como elemento decorativo em outro lugar da arte.',
     mascot ? '- A SEGUNDA imagem de referência é o MASCOTE oficial: inclua-o na cena, fiel ao original (mesmo personagem, proporções e cores).' : null,
     palette ? '- Paleta oficial: ' + palette + '. Não use cores fora dela.' : null,
     isFeed
