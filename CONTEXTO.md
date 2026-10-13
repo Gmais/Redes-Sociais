@@ -63,7 +63,8 @@ Esta regra é fixa e vale para todas as três marcas (Academia, Sorveteria, Gymp
 
 ### Publishing (Instagram)
 - **Zernio API:** Publishing automático para Instagram
-- **IDs de Conta:**
+- **Trocar a conta de Instagram de uma marca:** conectar a nova conta na Zernio e criar no Vercel a variável `ZERNIO_ACCOUNT_ACADEMIA` / `ZERNIO_ACCOUNT_SORVETERIA` / `ZERNIO_ACCOUNT_GYMPULSE` com o ID novo (depois, Redeploy). Sem a variável vale o ID padrão abaixo. Posts já agendados na conta antiga continuam saindo nela — cancelar/reagendar antes.
+- **IDs de Conta (padrão):**
   - Academia: `6a3915825f7d1751ab4af026`
   - Sorveteria: `6a3916335f7d1751ab4afbe3`
   - GympulsePro: `6a3920625f7d1751ab4b6fdc`

@@ -4,10 +4,13 @@
 // Não é segredo: são apenas os IDs das contas já conectadas no Zernio.
 // Academia e Sorveteria estão na mesma conta Zernio (ZERNIO_API_KEY).
 // GympulsePro está numa conta Zernio separada (ZERNIO_API_KEY_GYMPULSE).
+// Pra trocar a conta de Instagram de uma marca, basta criar no Vercel a variável
+// ZERNIO_ACCOUNT_ACADEMIA / ZERNIO_ACCOUNT_SORVETERIA / ZERNIO_ACCOUNT_GYMPULSE com o
+// ID da nova conta conectada na Zernio (sem mexer no código). Sem a variável, vale o ID abaixo.
 const PROFILE_CONFIG = {
-  academia: { accountId: '6a3915825f7d1751ab4af026', apiKeyEnv: 'ZERNIO_API_KEY' },
-  sorveteria: { accountId: '6a3916335f7d1751ab4afbe3', apiKeyEnv: 'ZERNIO_API_KEY' },
-  gympulse: { accountId: '6a3920625f7d1751ab4b6fdc', apiKeyEnv: 'ZERNIO_API_KEY_GYMPULSE' }
+  academia: { accountId: process.env.ZERNIO_ACCOUNT_ACADEMIA || '6a3915825f7d1751ab4af026', apiKeyEnv: 'ZERNIO_API_KEY' },
+  sorveteria: { accountId: process.env.ZERNIO_ACCOUNT_SORVETERIA || '6a3916335f7d1751ab4afbe3', apiKeyEnv: 'ZERNIO_API_KEY' },
+  gympulse: { accountId: process.env.ZERNIO_ACCOUNT_GYMPULSE || '6a3920625f7d1751ab4b6fdc', apiKeyEnv: 'ZERNIO_API_KEY_GYMPULSE' }
 };
 
 const ZERNIO_BASE = 'https://zernio.com/api/v1';
