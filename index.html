@@ -23281,15 +23281,9 @@ function updateReadyBadge(id){
 }
 function publishBlockHTML(id){
   const pub = getPublishData(id);
-  const reviewed = getReviewed(id);
-  const ready = isReadyForAutoPublish(id);
   const isBestContent = getBestContent(id);
 
-  const bestContentToggle = `
-    <button type="button" class="review-toggle" id="bcbtn-${id}" onclick="event.stopPropagation(); toggleBestContent('${id}');" style="${isBestContent?'background:#0d3b4a;border-color:#00e5ff;color:#00e5ff;':''}">
-      <span>${isBestContent?'✅':'⬜'} BestContent</span>
-    </button>`;
-
+  // Cards já marcados como BestContent (agendados por fora) só mostram o status.
   if (isBestContent) {
     const found = findItem(id);
     const due = found && isBestContentDue(found.item);
@@ -23297,26 +23291,9 @@ function publishBlockHTML(id){
       ? `<span class="publish-badge ok">🔵 Horário atingido — publicação por conta do BestContent</span>`
       : `<span class="publish-badge pending">🟢 Agendado no BestContent — não precisa fazer nada aqui</span>`;
     return `<div class="publish-block" id="pubblock-${id}">
-      <div class="publish-row">${bestContentToggle}${statusBadge}</div>
+      <div class="publish-row">${statusBadge}</div>
     </div>`;
   }
-
-  const reviewToggle = `
-    <button type="button" class="review-toggle" id="revbtn-${id}" onclick="event.stopPropagation(); toggleReviewed('${id}');" style="${reviewed?'background:#14532d;border-color:#4ade80;color:#4ade80;':''}">
-      <span>${reviewed?'✅':'⬜'} Revisado</span>
-    </button>`;
-
-  const readyBadge = ready
-    ? `<span class="publish-badge ok">✅ 100% pronto — será publicado automaticamente no horário</span>`
-    : `<span class="publish-badge pending">${reviewed ? (function(){
-      const _img = getImageData(id);
-      if (_img && _img.status === 'ok') {
-        if (_img.zernioStatus === 'pending') return '⏳ Preparando automação Zernio...';
-        if (_img.zernioStatus === 'error') return '⚠️ Falha no Zernio — tente substituir a mídia';
-        return '⏳ Sincronizando com Zernio...';
-      }
-      return '⏳ Envie a mídia para liberar';
-    })() : '⚠️ Marque como revisado pra liberar a automação'}</span>`;
 
   const found = findItem(id);
   const profile = found ? found.profile : null;
@@ -23355,7 +23332,6 @@ function publishBlockHTML(id){
   }
 
   return `<div class="publish-block" id="pubblock-${id}">
-    <div class="publish-row">${reviewToggle}${bestContentToggle}${(!pub || (pub.status!=='ok' && pub.status!=='sent')) ? readyBadge : ''}</div>
     <div class="publish-row">${actionHTML}</div>
   </div>`;
 }
