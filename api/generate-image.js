@@ -157,24 +157,36 @@ async function generateWithGemini({ apiKey, prompt, refs, aspect }) {
   throw new Error(lastError);
 }
 
+// OpenAI gpt-image-1. Com referências (ex.: mascote) usa /images/edits; sem
+// nenhuma, /images/generations.
 async function generateWithOpenAI({ apiKey, prompt, refs, timeoutMs }) {
-  const form = new FormData();
-  form.append('model', 'gpt-image-1');
-  form.append('prompt', prompt);
-  form.append('size', '1024x1536');
-  form.append('quality', 'medium');
-  form.append('output_format', 'jpeg');
-  form.append('n', '1');
-  refs.forEach((r) => {
-    form.append('image[]', new Blob([r.buffer], { type: r.mime }), r.fileName);
-  });
-
-  const aiRes = await fetch(OPENAI_URL + '/images/edits', {
-    method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + apiKey },
-    body: form,
-    signal: AbortSignal.timeout(timeoutMs || 50000)
-  });
+  const signal = AbortSignal.timeout(timeoutMs || 50000);
+  let aiRes;
+  if (refs && refs.length) {
+    const form = new FormData();
+    form.append('model', 'gpt-image-1');
+    form.append('prompt', prompt);
+    form.append('size', '1024x1536');
+    form.append('quality', 'high');
+    form.append('output_format', 'jpeg');
+    form.append('n', '1');
+    refs.forEach((r) => {
+      form.append('image[]', new Blob([r.buffer], { type: r.mime }), r.fileName);
+    });
+    aiRes = await fetch(OPENAI_URL + '/images/edits', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + apiKey },
+      body: form,
+      signal
+    });
+  } else {
+    aiRes = await fetch(OPENAI_URL + '/images/generations', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'gpt-image-1', prompt, size: '1024x1536', quality: 'high', output_format: 'jpeg', n: 1 }),
+      signal
+    });
+  }
   const data = await aiRes.json();
   if (!aiRes.ok) {
     throw new Error((data && data.error && data.error.message) || JSON.stringify(data));
@@ -184,33 +196,59 @@ async function generateWithOpenAI({ apiKey, prompt, refs, timeoutMs }) {
   return { b64, mime: 'image/jpeg', model: 'gpt-image-1' };
 }
 
-function buildPrompt({ cfg, isFeed, mascot, palette, title, caption, brief }) {
+// Briefing de direção de arte, em seções. O LOGO NÃO é pedido à IA: o painel o
+// aplica por cima, idêntico ao original e uma única vez (a IA, quando recebe o
+// logo, tende a desenhá-lo duas vezes ou deformá-lo). Por isso a faixa inferior
+// é reservada.
+function buildPrompt({ cfg, isFeed, mascot, palette, title, caption, brief, headline }) {
   const lines = [
-    'Você é um diretor de arte sênior de social media. Crie a ARTE FINAL, pronta para publicar, de ' +
-      (isFeed ? 'um post de feed do Instagram (vertical 4:5)' : 'um story do Instagram (vertical 9:16)') +
-      ' da marca "' + cfg.nome + '".',
+    'Você é um diretor de arte sênior de agência. Crie a ARTE FINAL, pronta para publicar, de ' +
+      (isFeed ? 'um post de feed do Instagram' : 'um story do Instagram') + ' da marca "' + cfg.nome + '". ' +
+      'Siga o briefing abaixo à risca, seção por seção.',
     '',
-    'Qualidade esperada:',
-    '- Composição completa e profissional, com ponto focal forte, iluminação realista e acabamento de agência. NÃO entregue mockup cru, wireframe, fundo liso ou slide genérico.',
-    '- Use fotografia realista de alta qualidade ou ilustração/3D polida, conforme o briefing. Cores vivas e contraste alto, legível no celular.',
-    '- Inclua um título curto e chamativo em português do Brasil (no máximo 6 palavras), tirado do tema do post, com tipografia forte e legível. Todo texto deve estar escrito corretamente, sem letras inventadas.',
-    '- Margens: deixe pelo menos 8% de espaço livre nas laterais, e nenhum texto pode encostar nas bordas nem ser cortado. Quebre o título em linhas menores se precisar.',
-    '- Sem marcas d\'água, sem logos de terceiros, sem interface de aplicativo inventada.',
-    '',
-    'Marca:',
-    '- A PRIMEIRA imagem de referência é o LOGO oficial: coloque-o UMA ÚNICA vez, bem visível (rodapé ou canto), IDÊNTICO ao original — mesmas formas, cores e letras, sem redesenhar nem distorcer. Não repita o símbolo do logo como elemento decorativo em outro lugar da arte.',
-    mascot ? '- A SEGUNDA imagem de referência é o MASCOTE oficial: inclua-o na cena, fiel ao original (mesmo personagem, proporções e cores).' : null,
-    palette ? '- Paleta oficial: ' + palette + '. Não use cores fora dela.' : null,
+    '[1. FORMATO]',
     isFeed
-      ? '- Mantenha tudo que é importante dentro da área central: as bordas de cima e de baixo podem ser cortadas.'
-      : '- Deixe margem segura no topo e na base (a interface do Instagram cobre essas áreas).',
+      ? '- Vertical 4:5 (1080×1350 px). Mantenha tudo que é importante na área central: as bordas de cima e de baixo podem ser cortadas.'
+      : '- Vertical 9:16 (1080×1920 px). Deixe margem segura no topo (12%) pois a interface do Instagram cobre essa área.',
+    '- FAIXA INFERIOR RESERVADA: os últimos ' + (isFeed ? '15' : '24') + '% da altura devem ficar LIVRES — apenas fundo/ambiente contínuo, sem texto, sem produto e sem personagem. O logo oficial será aplicado ali depois, por outro sistema.',
     '',
-    title ? 'Tema do post: ' + title : null,
-    caption ? 'Legenda do post (contexto, não precisa copiar na arte): ' + caption : null,
+    '[2. LOGO — REGRA CRÍTICA]',
+    '- NÃO desenhe, escreva ou imite o logo, o nome da marca, selos ou símbolos de marca em NENHUM lugar da arte. Zero logos. Nenhum elemento decorativo pode lembrar o logo.',
     '',
-    'Briefing da arte:',
-    brief
+    '[3. CONTEÚDO]',
+    title ? '- Tema do post: ' + title : null,
+    caption ? '- Legenda do post (apenas contexto, não copie na arte): ' + caption : null,
+    '- Briefing do cliente:',
+    brief,
+    '',
+    '[4. TÍTULO NA ARTE]',
+    headline
+      ? '- Escreva EXATAMENTE este título, sem alterar nenhuma letra: "' + headline + '".'
+      : '- Crie UM título curto e chamativo em português do Brasil (máximo 6 palavras), tirado do tema do post.',
+    '- Tipografia forte, em caixa alta ou negrito, alto contraste com o fundo, na parte superior (terço de cima). Margem lateral mínima de 8%: nenhuma letra pode encostar nas bordas nem ser cortada — quebre em linhas menores se precisar.',
+    '- Nenhum outro texto na arte além do título (e do que o briefing pedir de forma explícita). Texto escrito corretamente, sem letras inventadas ou erros de ortografia.',
+    '',
+    '[5. COMPOSIÇÃO]',
+    '- Um único ponto focal forte no centro (o produto/assunto "herói"), com primeiro plano, plano médio e fundo bem definidos, profundidade de campo e espaço de respiro ao redor.',
+    '- Hierarquia clara: título → elemento herói → (faixa inferior livre).',
+    '',
+    '[6. ESTILO]',
+    '- Fotografia publicitária realista de alta qualidade (iluminação de estúdio suave, texturas nítidas, cores vivas e contraste alto), ou ilustração/3D polida se o briefing pedir. Acabamento de agência; legível no celular. NÃO entregue mockup cru, wireframe, fundo liso ou slide genérico.',
+    palette ? '- Paleta oficial da marca: ' + palette + '. Use essas cores como dominantes; não use cores fora dela.' : null
   ];
+  if (mascot) {
+    lines.push(
+      '',
+      '[7. MASCOTE]',
+      '- A imagem de referência anexada é o MASCOTE oficial da marca. Inclua-o UMA única vez, FIEL ao original (mesmo personagem, proporções, roupa e cores — não recrie nem reinterprete), com cerca de 25–35% da altura da arte, interagindo naturalmente com o produto/cena (expressão alegre), nunca cortado pelas bordas e fora da faixa inferior reservada.'
+    );
+  }
+  lines.push(
+    '',
+    '[PROIBIDO]',
+    '- Logos, marcas d\'água, marcas de terceiros, interface de aplicativo inventada, molduras/bordas.',
+    '- Elementos duplicados (cada objeto, personagem ou texto aparece uma única vez), mãos/dedos deformados, anatomia estranha.'
+  );
   return lines.filter((l) => l !== null).join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
@@ -221,7 +259,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { profile, prompt, format, palette, includeMascot, title, texto } = JSON.parse(await readBody(req));
+    const { profile, prompt, format, palette, includeMascot, title, texto, headline } = JSON.parse(await readBody(req));
 
     const cfg = PROFILES[profile];
     if (!cfg) {
@@ -248,14 +286,16 @@ module.exports = async (req, res) => {
     const mascot = includeMascot ? (brand.mascote || loadRef(profile, 'mascote')) : null;
 
     const isFeed = String(format || '').toLowerCase() === 'post';
-    const refs = [logo];
+    // O logo NÃO vai pra IA (ela o duplica/deforma): o painel aplica o original.
+    const refs = [];
     if (mascot) refs.push(mascot);
 
     const fullPrompt = buildPrompt({
       cfg, isFeed, mascot: !!mascot, palette,
       title: title ? String(title).slice(0, 200) : '',
       caption: texto ? String(texto).slice(0, 600) : '',
-      brief: String(prompt).trim()
+      headline: headline ? String(headline).trim().slice(0, 120) : '',
+      brief: String(prompt).trim().slice(0, 3500)
     });
 
     const t0 = Date.now();
@@ -293,7 +333,7 @@ module.exports = async (req, res) => {
     }
     res.status(200).json({
       ok: true, imageBase64: result.b64, mime: result.mime,
-      usedLogo: true, usedMascot: !!mascot, provider, model: result.model
+      usedLogo: false, logoOverlay: true, usedMascot: !!mascot, provider, model: result.model
     });
   } catch (e) {
     res.status(500).json({ error: e.message || 'Erro inesperado ao gerar a imagem.' });
