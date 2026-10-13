@@ -791,6 +791,13 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .attach-item .brand-rm { position:absolute; top:-6px; right:-6px; }
 .pos-row { display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; color:var(--txt3); }
 .pos-row select { background:var(--s2); border:1px solid var(--border); color:var(--txt); border-radius:6px; padding:5px 8px; font-size:12px; }
+.mascot-row { display:flex; align-items:center; gap:12px; padding:12px 14px; border:1px solid var(--border); border-radius:10px; background:var(--s2); cursor:pointer; }
+.mascot-row input { width:22px; height:22px; accent-color:#2563eb; flex-shrink:0; cursor:pointer; }
+.mascot-row:has(input:checked) { border-color:#2563eb; background:rgba(37,99,235,0.08); }
+.mascot-txt { display:flex; flex-direction:column; gap:2px; font-size:15px; color:var(--txt); }
+.mascot-txt small { font-size:12px; color:var(--txt3); }
+.mascot-mini { margin-left:auto; display:flex; }
+.mascot-img { width:40px; height:40px; object-fit:contain; border-radius:6px; background:repeating-conic-gradient(#222 0% 25%, #2c2c2c 0% 50%) 50%/8px 8px; }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -25887,7 +25894,19 @@ function toggleBrandBox(){
   applyBrandBoxState();
 }
 // Linha-resumo (aparece com a caixa recolhida): miniaturas da marca do card aberto.
+function renderMascotRow(){
+  const hint = document.getElementById('gen-mascot-hint');
+  const mini = document.getElementById('gen-mascot-mini');
+  if (!hint || !mini) return;
+  const cur = (document.getElementById('genModal') || { dataset: {} }).dataset.profile;
+  const b = BRAND_PROFILES.find(x => x.id === cur);
+  const a = cur && brandGet(cur, 'mascote');
+  if (!_brandAssets || !b) { hint.textContent = 'quando a marca tiver mascote'; mini.innerHTML = ''; return; }
+  hint.textContent = a ? 'mascote de ' + b.nome.replace(/^\S+\s/, '') + ' cadastrado' : b.nome.replace(/^\S+\s/, '') + ' ainda não tem mascote cadastrado';
+  mini.innerHTML = a ? `<img class="mascot-img" src="data:${a.mime};base64,${a.data}" alt="mascote">` : '';
+}
 function renderBrandSummary(){
+  renderMascotRow();
   const el = document.getElementById('brand-sum');
   if (!el) return;
   const cur = (document.getElementById('genModal') || { dataset: {} }).dataset.profile;
@@ -26118,9 +26137,14 @@ function ensureGenModal(){
         <div class="sx-sub" id="gen-sub"></div>
         <label class="sx-field"><span>Briefing da imagem <small>(montado com texto da postagem, formato e especificações, intenção e briefing criativo do card — pode editar)</small></span>
           <textarea id="gen-prompt" rows="14" placeholder="Descreva a imagem que a IA deve criar..."></textarea></label>
+        <label class="mascot-row" for="gen-mascot">
+          <input type="checkbox" id="gen-mascot" checked>
+          <span class="mascot-txt"><b>Incluir o mascote na arte</b><small id="gen-mascot-hint">quando a marca tiver mascote</small></span>
+          <span class="mascot-mini" id="gen-mascot-mini"></span>
+        </label>
         <label class="sx-field"><span>Título escrito na arte <small>(opcional — vazio: a IA cria um título curto)</small></span>
           <input type="text" id="gen-headline" maxlength="80" placeholder="Ex.: QUAL SABOR VOCÊ NUNCA DEIXA DE PEDIR?"></label>
-        <div class="sx-hint">✓ O <b>logo oficial</b> é aplicado automaticamente no melhor lugar da arte — idêntico ao original e uma única vez (você pode trocar a posição depois de gerar). <label class="gen-mascot"><input type="checkbox" id="gen-mascot" checked> incluir o <b>mascote</b> (quando a marca tiver)</label></div>
+        <div class="sx-hint">✓ O <b>logo oficial</b> é aplicado automaticamente no melhor lugar da arte — idêntico ao original e uma única vez (você pode trocar a posição depois de gerar).</div>
         <div class="attach-box">
           <div class="brand-title">📎 Imagens para compor a arte <span>(opcional — ex.: a foto do produto da promoção; até 3)</span></div>
           <div class="attach-list" id="gen-attach-list"></div>
