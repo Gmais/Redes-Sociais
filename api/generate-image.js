@@ -15,10 +15,20 @@
 const fs = require('fs');
 const path = require('path');
 
+// style = direção de arte de cada marca (tom, cenário, tratamento de imagem).
 const PROFILES = {
-  academia: { nome: 'Academia Planeta Corpo' },
-  sorveteria: { nome: 'Sorveteria Guri' },
-  gympulse: { nome: 'GympulsePro' }
+  academia: {
+    nome: 'Academia Planeta Corpo',
+    style: 'Fotografia editorial esportiva REALISTA, luz natural quente e acolhedora, pessoas reais (adultos de 30 a 45 anos, expressões genuínas e sorridentes), ambiente de academia limpo, organizado e bem iluminado. Tom acolhedor e de bem-estar, focado em saúde e rotina — nunca estética agressiva, nada de corpos "perfeitos" de capa de revista, nada intimidador. Cores dominantes: laranja, azul-petróleo, preto e branco.'
+  },
+  sorveteria: {
+    nome: 'Sorveteria Guri',
+    style: 'Estilo festivo, familiar e gostoso: cores quentes e vibrantes, produto super apetitoso (sorvete cremoso, com textura, gotas, brilho e condensação), em close/macro ou como herói grande. Fundo limpo ou ambiente aconchegante de sorveteria, com iluminação suave. Se houver mascote 3D, mantenha o MESMO estilo de render 3D (iluminação, materiais, proporções) no resto da cena, para tudo parecer uma única cena coerente.'
+  },
+  gympulse: {
+    nome: 'GympulsePro',
+    style: 'B2B tecnológico, premium e minimalista: fundo escuro/preto com detalhes em amarelo, tipografia limpa, formas geométricas sutis e muito espaço negativo. NÃO invente interface de aplicativo, números ou gráficos com texto; se precisar sugerir uma tela, use só formas abstratas (blocos, barras, linhas) sem texto. Se o cliente anexar capturas de tela reais, use-as fielmente.'
+  }
 };
 
 const OPENAI_URL = 'https://api.openai.com/v1';
@@ -98,9 +108,13 @@ function findImageData(node) {
 // mas deixa o story mais "macio". GEMINI_IMAGE_MODEL troca o modelo (ex.: Pro).
 const DEADLINE_MS = 100000; // vercel.json dá 120s à função
 
-async function generateWithGemini({ apiKey, prompt, refs, aspect }) {
+async function generateWithGemini({ apiKey, prompt, refs, aspect, premium }) {
   const started = Date.now();
-  const models = [...new Set([process.env.GEMINI_IMAGE_MODEL, 'gemini-nano-banana-2.1', 'gemini-3.1-flash-image'].filter(Boolean))];
+  // Premium = Nano Banana Pro (mais caprichado em composição e texto, ~US$0,13/imagem, mais lento).
+  const order = premium
+    ? ['gemini-3-pro-image', 'gemini-nano-banana-2.1']
+    : ['gemini-nano-banana-2.1', 'gemini-3.1-flash-image'];
+  const models = [...new Set([process.env.GEMINI_IMAGE_MODEL, ...order].filter(Boolean))];
   // Do melhor pro mais simples: 2K com proporção -> proporção -> sem opções.
   const size = ['1K', '2K'].includes(process.env.GEMINI_IMAGE_SIZE) ? process.env.GEMINI_IMAGE_SIZE : '2K';
   const variants = [
@@ -203,7 +217,11 @@ async function generateWithOpenAI({ apiKey, prompt, refs, timeoutMs, quality }) 
 // aplica por cima, idêntico ao original e uma única vez (a IA, quando recebe o
 // logo, tende a desenhá-lo duas vezes ou deformá-lo). Por isso a faixa inferior
 // é reservada.
-function buildPrompt({ cfg, isFeed, mascot, attachCount, palette, title, caption, brief, headline }) {
+function buildPrompt({ cfg, isFeed, mascot, attachCount, palette, title, caption, brief, headline, subline }) {
+  // Regras que o card define e a IA costuma ignorar: viram exigências explícitas.
+  const mRule = /regra\s*60\s*[-–]\s*30\s*[-–]\s*10\s*:\s*([^\n]+)/i.exec(brief);
+  const colorRule = mRule ? mRule[1].trim().replace(/[.;]+$/, '') : '';
+  const noCta = /CTA\s*:\s*(nenhum|n[aã]o\s+h[aá]|sem\b)/i.test(brief);
   const lines = [
     'Você é um diretor de arte sênior de agência. Crie a ARTE FINAL, pronta para publicar, de ' +
       (isFeed ? 'um post de feed do Instagram' : 'um story do Instagram') + ' da marca "' + cfg.nome + '". ' +
@@ -230,17 +248,29 @@ function buildPrompt({ cfg, isFeed, mascot, attachCount, palette, title, caption
     '',
     '[4. TÍTULO NA ARTE]',
     headline
-      ? '- Escreva EXATAMENTE este título, sem alterar nenhuma letra: "' + headline + '".'
-      : '- Crie UM título curto e chamativo em português do Brasil (máximo 6 palavras), que resuma a ideia central do TEXTO DA POSTAGEM (ou do tema do post, se não houver texto).',
-    '- Tipografia forte, em caixa alta ou negrito, alto contraste com o fundo, na parte superior (terço de cima). Margem lateral mínima de 8%: nenhuma letra pode encostar nas bordas nem ser cortada — quebre em linhas menores se precisar.',
+      ? '- Escreva EXATAMENTE este título, sem alterar nenhuma letra, pontuação ou palavra (é a frase do próprio post, não reescreva nem invente outro): "' + headline + '".'
+      : '- Crie UM título curto e chamativo em português do Brasil (máximo 6 palavras), usando as PALAVRAS do TEXTO DA POSTAGEM (ou do tema do post, se não houver texto). Não invente um assunto diferente do texto.',
+    subline
+      ? '- Abaixo do título, em tamanho bem menor (cerca de 1/3 do título), escreva EXATAMENTE esta linha de apoio: "' + subline + '".'
+      : null,
+    '- Tipografia de impacto: sans-serif condensada e BOLD, em caixa alta, GRANDE (cada linha ocupando cerca de 70–85% da largura útil), no máximo 3 linhas, com contraste forte (letra clara sobre área escura ou o contrário) e leve sombra/contorno para destacar do fundo. Alinhamento consistente (centralizado ou à esquerda), entrelinha justa, posição no terço de cima. Margem lateral mínima de 8%: nenhuma letra pode encostar nas bordas nem ser cortada — quebre em linhas menores se precisar. Pode destacar UMA palavra-chave do título em cor de destaque da paleta.',
     '- Nenhum outro texto na arte além do título (e do que o briefing pedir de forma explícita). Texto escrito corretamente, sem letras inventadas ou erros de ortografia.',
     '',
     '[5. COMPOSIÇÃO]',
     '- Um único ponto focal forte no centro (o produto/assunto "herói"), com primeiro plano, plano médio e fundo bem definidos, profundidade de campo e espaço de respiro ao redor.',
     '- Hierarquia clara: título → elemento herói → (regiões calmas livres para o logo).',
+    '- A CENA deve ilustrar a situação descrita no TEXTO DA POSTAGEM (o momento, o clima e o produto citados nele), e o clima deve combinar com a INTENÇÃO DA POSTAGEM.',
+    colorRule
+      ? '- REGRA DE CORES OBRIGATÓRIA (60-30-10): ' + colorRule + '. Distribua as cores da arte exatamente nessa proporção da área visível. A cor de 30% precisa ser CLARAMENTE visível e marcante (grandes áreas, não só pequenos detalhes) e a cor de 10% aparece só nos textos/acentos. Isso tem prioridade sobre qualquer outra escolha de cor.'
+      : null,
+    noCta
+      ? '- Este post NÃO tem chamada para ação: não inclua botão, seta, "saiba mais", "clique" nem qualquer texto de CTA.'
+      : null,
     '',
-    '[6. ESTILO]',
-    '- Fotografia publicitária realista de alta qualidade (iluminação de estúdio suave, texturas nítidas, cores vivas e contraste alto), ou ilustração/3D polida se o briefing pedir. Acabamento de agência; legível no celular. NÃO entregue mockup cru, wireframe, fundo liso ou slide genérico.',
+    '[6. ESTILO E ACABAMENTO]',
+    '- Direção de arte da marca: ' + (cfg.style || 'visual profissional e limpo.'),
+    '- Acabamento de campanha publicitária premium: iluminação cinematográfica com luz de contorno (rim light), profundidade de campo com fundo levemente desfocado, color grading harmonioso e consistente, texturas realistas, sombras suaves e reflexos naturais. O elemento herói é GRANDE (cerca de 30–45% da altura), nítido e bem iluminado; o resto da cena apoia sem poluir.',
+    '- Composição limpa, equilibrada e legível no celular: poucos elementos, bem escolhidos. Evite aspecto "plástico", excesso de brilho/neon, saturação estourada, ruído e objetos aleatórios espalhados. NÃO entregue mockup cru, wireframe, fundo liso ou slide genérico.',
     palette ? '- Paleta oficial da marca: ' + palette + '. Use essas cores como dominantes; não use cores fora dela.' : null
   ];
   if (mascot) {
@@ -277,7 +307,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { profile, prompt, format, palette, includeMascot, title, texto, headline, extraRefs } = JSON.parse(await readBody(req));
+    const { profile, prompt, format, palette, includeMascot, title, texto, headline, subline, extraRefs, quality } = JSON.parse(await readBody(req));
 
     const cfg = PROFILES[profile];
     if (!cfg) {
@@ -321,6 +351,7 @@ module.exports = async (req, res) => {
       title: title ? String(title).slice(0, 200) : '',
       caption: '', // o texto da postagem já vai dentro do briefing (bloco TEXTO DA POSTAGEM)
       headline: headline ? String(headline).trim().slice(0, 120) : '',
+      subline: subline ? String(subline).trim().slice(0, 100) : '',
       brief: String(prompt).trim().slice(0, 7000)
     });
 
@@ -329,7 +360,7 @@ module.exports = async (req, res) => {
     try {
       if (geminiKey) {
         provider = 'gemini';
-        result = await generateWithGemini({ apiKey: geminiKey, prompt: fullPrompt, refs, aspect: isFeed ? '4:5' : '9:16' });
+        result = await generateWithGemini({ apiKey: geminiKey, prompt: fullPrompt, refs, aspect: isFeed ? '4:5' : '9:16', premium: quality === 'premium' });
       } else {
         provider = 'openai';
         result = await generateWithOpenAI({ apiKey: openaiKey, prompt: fullPrompt, refs, timeoutMs: 100000 });

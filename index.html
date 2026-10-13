@@ -798,6 +798,9 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .mascot-txt small { font-size:12px; color:var(--txt3); }
 .mascot-mini { margin-left:auto; display:flex; }
 .mascot-img { width:40px; height:40px; object-fit:contain; border-radius:6px; background:repeating-conic-gradient(#222 0% 25%, #2c2c2c 0% 50%) 50%/8px 8px; }
+.gen-select { background:var(--s2); border:1px solid var(--border); color:var(--txt); border-radius:8px; padding:10px; font-size:13px; font-family:'Inter',sans-serif; }
+.pos-wrap { display:flex; flex-wrap:wrap; gap:8px 18px; }
+.pos-row input[type=checkbox] { width:16px; height:16px; accent-color:#2563eb; }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -26142,8 +26145,10 @@ function ensureGenModal(){
           <span class="mascot-txt"><b>Incluir o mascote na arte</b><small id="gen-mascot-hint">quando a marca tiver mascote</small></span>
           <span class="mascot-mini" id="gen-mascot-mini"></span>
         </label>
-        <label class="sx-field"><span>Título escrito na arte <small>(opcional — vazio: a IA cria um título curto)</small></span>
-          <input type="text" id="gen-headline" maxlength="80" placeholder="Ex.: QUAL SABOR VOCÊ NUNCA DEIXA DE PEDIR?"></label>
+        <label class="sx-field"><span>Título escrito na arte <small>(sugerido a partir do texto da postagem — edite à vontade; vazio: a IA cria um)</small></span>
+          <input type="text" id="gen-headline" maxlength="90" placeholder="Ex.: QUAL SABOR VOCÊ NUNCA DEIXA DE PEDIR?"></label>
+        <label class="sx-field"><span>Linha de apoio na arte <small>(opcional — letras menores, abaixo do título)</small></span>
+          <input type="text" id="gen-subline" maxlength="70" placeholder="Ex.: Amanhã a gente se vê!"></label>
         <div class="sx-hint">✓ O <b>logo oficial</b> é aplicado automaticamente no melhor lugar da arte — idêntico ao original e uma única vez (você pode trocar a posição depois de gerar).</div>
         <div class="attach-box">
           <div class="brand-title">📎 Imagens para compor a arte <span>(opcional — ex.: a foto do produto da promoção; até 3)</span></div>
@@ -26151,6 +26156,11 @@ function ensureGenModal(){
           <button type="button" class="brand-btn" id="gen-attach-btn" onclick="document.getElementById('gen-attach-file').click()">＋ Anexar imagem</button>
           <input type="file" id="gen-attach-file" accept="image/*" multiple style="display:none" onchange="onGenAttach(this)">
         </div>
+        <label class="sx-field"><span>Qualidade da imagem</span>
+          <select id="gen-quality" class="gen-select" onchange="try{localStorage.setItem('genQuality',this.value)}catch(e){}">
+            <option value="standard">Padrão — rápido (~US$ 0,05 por imagem)</option>
+            <option value="premium">Premium — Nano Banana Pro, mais caprichado e mais lento (~US$ 0,13)</option>
+          </select></label>
         <div class="brand-box collapsed" id="brand-box">
           <div class="brand-title brand-toggle" onclick="toggleBrandBox()">
             <span class="brand-title-txt">🎨 Logos e mascotes <span id="brand-sum"></span></span>
@@ -26190,6 +26200,24 @@ function buildDetailedBrief(item, forSim){
   if (item.driveHint && scene) parts.push('O QUE A IMAGEM DEVE MOSTRAR:\n' + String(item.driveHint));
   return parts.join('\n\n');
 }
+// Sugere o título e a linha de apoio da arte usando as PRÓPRIAS frases do texto da
+// postagem (sem emojis/hashtags), pra imagem falar a mesma coisa que a legenda.
+function suggestArtText(item){
+  const txt = stripHtml(item.texto || '').replace(/#\S+/g, '')
+    .replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, '').replace(/[ \t]+/g, ' ').trim();
+  const sents = txt.split(/\n+|(?<=[.!?…])\s+/).map(x => x.trim()).filter(Boolean);
+  const words = (t) => t.split(/\s+/).filter(Boolean).length;
+  const trimEnd = (t) => t.replace(/[\s.]+$/, '');
+  const hasUrl = (t) => /(https?:|www\.|\.com|\.pro|\.br|@)/i.test(t);
+  // Título = 1ª frase curta (3 a 12 palavras, sem link). Frase longa não vira título (cortar
+  // no meio estraga o sentido): nesse caso fica vazio e a IA cria um título com as palavras do texto.
+  const hi = sents.findIndex(t => words(t) >= 3 && words(t) <= 12 && !hasUrl(t));
+  const headline = hi >= 0 ? trimEnd(sents[hi]) : '';
+  // Linha de apoio = última frase curta (despedida/fechamento), se for outra e sem link.
+  const last = sents.length > 1 ? sents[sents.length - 1] : '';
+  const subline = (last && last !== sents[hi] && words(last) <= 8 && !hasUrl(last)) ? trimEnd(last) : '';
+  return { headline: headline.slice(0, 90), subline: subline.slice(0, 70) };
+}
 function openGenImage(id, profile){
   const found = findItem(id);
   if (!found) return;
@@ -26198,13 +26226,16 @@ function openGenImage(id, profile){
   el.dataset.id = id; el.dataset.profile = profile; el.dataset.busy = '';
   document.getElementById('gen-sub').textContent = item.format + ' · ' + item.title;
   document.getElementById('gen-prompt').value = buildDetailedBrief(item);
-  document.getElementById('gen-headline').value = '';
+  const sug = suggestArtText(item);
+  document.getElementById('gen-headline').value = sug.headline;
+  document.getElementById('gen-subline').value = sug.subline;
   document.getElementById('gen-status').textContent = '';
   document.getElementById('gen-preview').innerHTML = '';
   document.getElementById('gen-use').style.display = 'none';
   const go = document.getElementById('gen-go'); go.disabled = false; go.textContent = '✨ Gerar';
   _genResult = null;
   _genAttach = [];
+  try { document.getElementById('gen-quality').value = localStorage.getItem('genQuality') === 'premium' ? 'premium' : 'standard'; } catch (e) {}
   renderGenAttach();
   el.dataset.skipSimilar = '';
   el.classList.add('on');
@@ -26237,13 +26268,13 @@ async function runGenerateImage(){
     return;
   }
   btn.disabled = true; btn.textContent = '⏳ Gerando...'; el.dataset.busy = '1';
-  status.textContent = 'A IA está criando a imagem — leva de 30 a 90 segundos. Não feche esta janela.';
+  status.textContent = document.getElementById('gen-quality').value === 'premium' ? 'A IA (modelo Premium) está criando a imagem — pode levar até 90 segundos. Não feche esta janela.' : 'A IA está criando a imagem — leva de 20 a 60 segundos. Não feche esta janela.';
   document.getElementById('gen-use').style.display = 'none';
   try {
     const palette = (PALETTES[profile] || []).map(c => c.hex + ' (' + c.name + ')').join(', ');
     const resp = await fetch('/api/generate-image', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ profile, prompt, format: found.item.format, palette, title: found.item.title, texto: stripHtml(found.item.texto), headline: document.getElementById('gen-headline').value.trim(), includeMascot: document.getElementById('gen-mascot').checked, extraRefs: _genAttach.map(a => ({ mime: a.mime, data: a.data })) })
+      body: JSON.stringify({ profile, prompt, format: found.item.format, palette, title: found.item.title, texto: stripHtml(found.item.texto), headline: document.getElementById('gen-headline').value.trim(), subline: document.getElementById('gen-subline').value.trim(), includeMascot: document.getElementById('gen-mascot').checked, extraRefs: _genAttach.map(a => ({ mime: a.mime, data: a.data })), quality: document.getElementById('gen-quality').value })
     });
     const rawText = await resp.text();
     let data;
@@ -26251,13 +26282,14 @@ async function runGenerateImage(){
     catch (e) { throw new Error('O servidor não respondeu direito (' + resp.status + '): ' + rawText.slice(0, 120)); }
     if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha ao gerar a imagem.');
     const rawSrc = 'data:' + data.mime + ';base64,' + data.imageBase64;
-    const composed = await composeFinalImage(rawSrc, found.item.format, profile, 'auto');
+    const composed = await composeFinalImage(rawSrc, found.item.format, profile, 'auto', true);
     _genResult = { id, profile, format: found.item.format, src: composed.url, raw: rawSrc, pos: composed.pos };
     const opts = Object.keys(LOGO_POS).map(k => `<option value="${k}">${LOGO_POS[k]}</option>`).join('');
     document.getElementById('gen-preview').innerHTML =
       `<img class="gen-img" id="gen-preview-img" src="${_genResult.src}" alt="Imagem gerada">
-       <label class="pos-row">Posição do logo: <select id="gen-pos" onchange="recomposeLogo()">${opts}</select></label>`;
-    status.textContent = '✓ ' + (data.provider === 'gemini' ? 'Gemini' : 'OpenAI') + ' — logo oficial aplicado (' + LOGO_POS[composed.pos].toLowerCase() + ')' + (data.usedAttachments ? ' + ' + data.usedAttachments + ' imagem(ns) anexada(s)' : '') + (data.usedMascot ? ' + mascote' : (document.getElementById('gen-mascot').checked ? ' (esta marca ainda não tem mascote cadastrado)' : '')) + '. Gostou? Use a imagem ou gere outra.';
+       <div class="pos-wrap"><label class="pos-row">Posição do logo: <select id="gen-pos" onchange="recomposeLogo()">${opts}</select></label>
+       <label class="pos-row"><input type="checkbox" id="gen-cut" checked onchange="recomposeLogo()"> Recortar o fundo do logo</label></div>`;
+    status.textContent = '✓ ' + (data.provider === 'gemini' ? (/pro/.test(data.model || '') ? 'Gemini Pro' : 'Gemini') : 'OpenAI') + ' — logo oficial aplicado (' + LOGO_POS[composed.pos].toLowerCase() + ')' + (data.usedAttachments ? ' + ' + data.usedAttachments + ' imagem(ns) anexada(s)' : '') + (data.usedMascot ? ' + mascote' : (document.getElementById('gen-mascot').checked ? ' (esta marca ainda não tem mascote cadastrado)' : '')) + '. Gostou? Use a imagem ou gere outra.';
     document.getElementById('gen-use').style.display = '';
   } catch (e) {
     status.textContent = '⚠️ ' + e.message;
@@ -26267,6 +26299,50 @@ async function runGenerateImage(){
 }
 function loadImageEl(url){
   return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('Imagem inválida')); i.src = url; });
+}
+// Remove o fundo liso de um logo (ex.: quadrado bege/branco) por flood-fill a partir das
+// bordas, deixando só a forma do logo, com borda suave. Se o logo já tem transparência
+// ou o fundo não é uma cor lisa, devolve o original.
+const _cutCache = new Map();
+async function logoCutout(asset){
+  const key = asset.data.length + ':' + asset.data.slice(0, 48) + asset.data.slice(-48);
+  if (_cutCache.has(key)) return _cutCache.get(key);
+  const img = await loadImageEl('data:' + asset.mime + ';base64,' + asset.data);
+  const sc = Math.min(1, 800 / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.round(img.naturalWidth * sc), h = Math.round(img.naturalHeight * sc);
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d'); x.drawImage(img, 0, 0, w, h);
+  const keep = () => { _cutCache.set(key, c); return c; };
+  const id = x.getImageData(0, 0, w, h), d = id.data;
+  const cs = [0, w - 1, (h - 1) * w, h * w - 1].map(i => [d[i * 4], d[i * 4 + 1], d[i * 4 + 2], d[i * 4 + 3]]);
+  if (cs.some(p => p[3] < 240)) return keep();                       // já tem transparência
+  const avg = [0, 1, 2].map(k => cs.reduce((a, p) => a + p[k], 0) / 4);
+  if (Math.max(...cs.map(p => Math.hypot(p[0] - avg[0], p[1] - avg[1], p[2] - avg[2]))) > 40) return keep(); // fundo não é liso
+  const T = 42;
+  const dist = (i) => Math.hypot(d[i * 4] - avg[0], d[i * 4 + 1] - avg[1], d[i * 4 + 2] - avg[2]);
+  const removed = new Uint8Array(w * h);
+  const stack = [];
+  const push = (i) => { if (!removed[i] && dist(i) < T) { removed[i] = 1; stack.push(i); } };
+  for (let xx = 0; xx < w; xx++) { push(xx); push((h - 1) * w + xx); }
+  for (let yy = 0; yy < h; yy++) { push(yy * w); push(yy * w + w - 1); }
+  while (stack.length) {
+    const i = stack.pop(), xx = i % w, yy = (i - xx) / w;
+    if (xx > 0) push(i - 1); if (xx < w - 1) push(i + 1); if (yy > 0) push(i - w); if (yy < h - 1) push(i + w);
+  }
+  let n = 0;
+  for (let i = 0; i < w * h; i++) if (removed[i]) n++;
+  if (n < w * h * 0.05 || n > w * h * 0.92) return keep();           // recorte suspeito: mantém o original
+  for (let i = 0; i < w * h; i++) if (removed[i]) d[i * 4 + 3] = 0;
+  for (let yy = 1; yy < h - 1; yy++) for (let xx = 1; xx < w - 1; xx++) { // borda suave
+    const i = yy * w + xx;
+    if (removed[i]) continue;
+    if (removed[i - 1] || removed[i + 1] || removed[i - w] || removed[i + w]) {
+      const dd = dist(i);
+      if (dd < T * 1.8) d[i * 4 + 3] = Math.round(255 * Math.min(1, (dd - T) / (T * 0.8)));
+    }
+  }
+  x.putImageData(id, 0, 0);
+  return keep();
 }
 const LOGO_POS = { auto: 'Automático (melhor lugar)', bc: 'Rodapé — centro', bl: 'Rodapé — esquerda', br: 'Rodapé — direita', tl: 'Topo — esquerda', tc: 'Topo — centro', tr: 'Topo — direita' };
 // Mede o quão "movimentada" é uma região (gradiente + variação de brilho) e o brilho médio.
@@ -26292,7 +26368,7 @@ function regionStats(canvas, x, y, w, h){
 // Recorta no formato exato (1080×1920 Story/Reel, 1080×1350 Post) e aplica o LOGO
 // ORIGINAL da marca UMA vez, no melhor lugar (a região mais calma da arte) ou na
 // posição escolhida. A IA não desenha o logo.
-async function composeFinalImage(src, format, profile, pos){
+async function composeFinalImage(src, format, profile, pos, cut){
   const target = GEN_TARGET[format] || GEN_TARGET.Post;
   const img = await loadImageEl(src);
   const canvas = document.createElement('canvas');
@@ -26305,12 +26381,13 @@ async function composeFinalImage(src, format, profile, pos){
   let used = null;
   const asset = brandGet(profile, 'logo');
   if (asset) {
-    const logo = await loadImageEl('data:' + asset.mime + ';base64,' + asset.data);
+    const logo = cut ? await logoCutout(asset) : await loadImageEl('data:' + asset.mime + ';base64,' + asset.data);
+    const lnw = logo.naturalWidth || logo.width, lnh = logo.naturalHeight || logo.height;
     const W = target.w, H = target.h;
     const isStory = H > W * 1.5;
-    const maxH = H * (isStory ? 0.085 : 0.095), maxW = W * 0.42;
-    const sc = Math.min(maxH / logo.naturalHeight, maxW / logo.naturalWidth);
-    const lw = logo.naturalWidth * sc, lh = logo.naturalHeight * sc;
+    const maxH = H * (isStory ? 0.11 : 0.12), maxW = W * 0.5;
+    const sc = Math.min(maxH / lnh, maxW / lnw);
+    const lw = lnw * sc, lh = lnh * sc;
     const mx = W * 0.05;
     const bm = H * (isStory ? 0.12 : 0.045);   // story: acima da barra de resposta do Instagram
     const tm = H * (isStory ? 0.09 : 0.04);    // story: abaixo da barra de perfil
@@ -26360,7 +26437,7 @@ async function composeFinalImage(src, format, profile, pos){
 function recomposeLogo(){
   if (!_genResult) return;
   const sel = document.getElementById('gen-pos');
-  composeFinalImage(_genResult.raw, _genResult.format, _genResult.profile, sel.value).then(r => {
+  composeFinalImage(_genResult.raw, _genResult.format, _genResult.profile, sel.value, document.getElementById('gen-cut').checked).then(r => {
     _genResult.src = r.url; _genResult.pos = r.pos;
     document.getElementById('gen-preview-img').src = r.url;
   }).catch(e => showToast('⚠️ ' + e.message));
