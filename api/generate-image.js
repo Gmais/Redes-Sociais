@@ -203,7 +203,7 @@ async function generateWithOpenAI({ apiKey, prompt, refs, timeoutMs, quality }) 
 // aplica por cima, idêntico ao original e uma única vez (a IA, quando recebe o
 // logo, tende a desenhá-lo duas vezes ou deformá-lo). Por isso a faixa inferior
 // é reservada.
-function buildPrompt({ cfg, isFeed, mascot, palette, title, caption, brief, headline }) {
+function buildPrompt({ cfg, isFeed, mascot, attachCount, palette, title, caption, brief, headline }) {
   const lines = [
     'Você é um diretor de arte sênior de agência. Crie a ARTE FINAL, pronta para publicar, de ' +
       (isFeed ? 'um post de feed do Instagram' : 'um story do Instagram') + ' da marca "' + cfg.nome + '". ' +
@@ -213,7 +213,7 @@ function buildPrompt({ cfg, isFeed, mascot, palette, title, caption, brief, head
     isFeed
       ? '- Vertical 4:5 (1080×1350 px). Mantenha tudo que é importante na área central: as bordas de cima e de baixo podem ser cortadas.'
       : '- Vertical 9:16 (1080×1920 px). Deixe margem segura no topo (12%) pois a interface do Instagram cobre essa área.',
-    '- FAIXA INFERIOR RESERVADA: os últimos ' + (isFeed ? '15' : '24') + '% da altura devem ficar LIVRES — apenas fundo/ambiente contínuo, sem texto, sem produto e sem personagem. O logo oficial será aplicado ali depois, por outro sistema.',
+    '- ÁREA CALMA PARA O LOGO: deixe pelo menos DUAS regiões calmas — fundo limpo e contínuo, sem texto, sem produto, sem personagem e sem detalhes — cada uma com no mínimo 30% da largura × 10% da altura, em cantos ou na base/topo (onde ficar melhor esteticamente, equilibrando a composição). O logo oficial será aplicado depois, por outro sistema, na região mais limpa.',
     '',
     '[2. LOGO — REGRA CRÍTICA]',
     '- NÃO desenhe, escreva ou imite o logo, o nome da marca, selos ou símbolos de marca em NENHUM lugar da arte. Zero logos. Nenhum elemento decorativo pode lembrar o logo.',
@@ -222,7 +222,7 @@ function buildPrompt({ cfg, isFeed, mascot, palette, title, caption, brief, head
     title ? '- Tema do post: ' + title : null,
     '- O texto abaixo traz os blocos do card do post (os que existirem). Leia e aplique TODOS:',
     '  • TEXTO DA POSTAGEM: a legenda que vai junto da imagem. A cena e o título da arte devem comunicar a ideia central dela (não copie o texto inteiro na arte).',
-    '  • FORMATO E ESPECIFICAÇÕES: dimensões, proporção e regras de composição (ex.: regra 60-30-10, limite de texto na imagem). Obedeça — têm prioridade sobre os padrões gerais abaixo, EXCETO as regras de LOGO e de FAIXA INFERIOR RESERVADA. Se pedirem um elemento de CTA na arte, inclua-o.',
+    '  • FORMATO E ESPECIFICAÇÕES: dimensões, proporção e regras de composição (ex.: regra 60-30-10, limite de texto na imagem). Obedeça — têm prioridade sobre os padrões gerais abaixo, EXCETO as regras de LOGO e de ÁREA CALMA PARA O LOGO. Se pedirem um elemento de CTA na arte, inclua-o.',
     '  • INTENÇÃO DA POSTAGEM: tipo, objetivo e CTA. O clima, a hierarquia visual e o destaque da arte devem servir a esse objetivo.',
     '  • BRIEFING CRIATIVO / O QUE A IMAGEM DEVE MOSTRAR: a cena, o estilo e as restrições visuais. Siga com fidelidade.',
     '',
@@ -237,7 +237,7 @@ function buildPrompt({ cfg, isFeed, mascot, palette, title, caption, brief, head
     '',
     '[5. COMPOSIÇÃO]',
     '- Um único ponto focal forte no centro (o produto/assunto "herói"), com primeiro plano, plano médio e fundo bem definidos, profundidade de campo e espaço de respiro ao redor.',
-    '- Hierarquia clara: título → elemento herói → (faixa inferior livre).',
+    '- Hierarquia clara: título → elemento herói → (regiões calmas livres para o logo).',
     '',
     '[6. ESTILO]',
     '- Fotografia publicitária realista de alta qualidade (iluminação de estúdio suave, texturas nítidas, cores vivas e contraste alto), ou ilustração/3D polida se o briefing pedir. Acabamento de agência; legível no celular. NÃO entregue mockup cru, wireframe, fundo liso ou slide genérico.',
@@ -247,7 +247,18 @@ function buildPrompt({ cfg, isFeed, mascot, palette, title, caption, brief, head
     lines.push(
       '',
       '[7. MASCOTE]',
-      '- A imagem de referência anexada é o MASCOTE oficial da marca. Inclua-o UMA única vez, FIEL ao original (mesmo personagem, proporções, roupa e cores — não recrie nem reinterprete), com cerca de 25–35% da altura da arte, interagindo naturalmente com o produto/cena (expressão alegre), nunca cortado pelas bordas e fora da faixa inferior reservada.'
+      '- A PRIMEIRA imagem de referência é o MASCOTE oficial da marca. Inclua-o UMA única vez, FIEL ao original (mesmo personagem, proporções, roupa e cores — não recrie nem reinterprete), com cerca de 25–35% da altura da arte, interagindo naturalmente com o produto/cena (expressão alegre), nunca cortado pelas bordas e fora das regiões calmas reservadas ao logo.'
+    );
+  }
+  if (attachCount > 0) {
+    const first = mascot ? 2 : 1;
+    const last = first + attachCount - 1;
+    lines.push(
+      '',
+      '[8. IMAGENS ANEXADAS PELO CLIENTE]',
+      '- ' + (mascot ? 'As imagens de referência ' + first + (last > first ? ' a ' + last : '') : 'As imagens de referência ' + first + (last > first ? ' a ' + last : '')) +
+        ' são fotos/arte do cliente (por exemplo, o produto da promoção). Use CADA uma, FIEL ao original: mesma embalagem, rótulo, formato e cores — não redesenhe, não troque por outro produto e não invente variações.',
+      '- Coloque-as em destaque como elemento herói da cena (tamanho grande, bem iluminadas), uma única vez cada, nunca cortadas pelas bordas e fora das regiões calmas reservadas ao logo.'
     );
   }
   lines.push(
@@ -266,7 +277,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { profile, prompt, format, palette, includeMascot, title, texto, headline } = JSON.parse(await readBody(req));
+    const { profile, prompt, format, palette, includeMascot, title, texto, headline, extraRefs } = JSON.parse(await readBody(req));
 
     const cfg = PROFILES[profile];
     if (!cfg) {
@@ -296,9 +307,17 @@ module.exports = async (req, res) => {
     // O logo NÃO vai pra IA (ela o duplica/deforma): o painel aplica o original.
     const refs = [];
     if (mascot) refs.push(mascot);
+    // Imagens que o cliente anexou no painel pra compor a arte (ex.: o produto da promoção).
+    let attachCount = 0;
+    (Array.isArray(extraRefs) ? extraRefs.slice(0, 3) : []).forEach((x, i) => {
+      if (!x || typeof x.data !== 'string' || x.data.length < 100 || x.data.length > 1800000) return;
+      const mime = /^image\/(png|jpeg|webp)$/.test(x.mime || '') ? x.mime : 'image/jpeg';
+      refs.push({ buffer: Buffer.from(x.data, 'base64'), mime, fileName: 'anexo' + (i + 1) + '.' + (mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg') });
+      attachCount++;
+    });
 
     const fullPrompt = buildPrompt({
-      cfg, isFeed, mascot: !!mascot, palette,
+      cfg, isFeed, mascot: !!mascot, attachCount, palette,
       title: title ? String(title).slice(0, 200) : '',
       caption: '', // o texto da postagem já vai dentro do briefing (bloco TEXTO DA POSTAGEM)
       headline: headline ? String(headline).trim().slice(0, 120) : '',
@@ -340,7 +359,7 @@ module.exports = async (req, res) => {
     }
     res.status(200).json({
       ok: true, imageBase64: result.b64, mime: result.mime,
-      usedLogo: false, logoOverlay: true, usedMascot: !!mascot, provider, model: result.model
+      usedLogo: false, logoOverlay: true, usedMascot: !!mascot, usedAttachments: attachCount, provider, model: result.model
     });
   } catch (e) {
     res.status(500).json({ error: e.message || 'Erro inesperado ao gerar a imagem.' });

@@ -773,6 +773,24 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .sim-title { font-size:12px; font-weight:700; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .sim-meta { font-size:11px; color:var(--txt3); }
 .sim-link { font-size:11px; color:#60a5fa; text-decoration:none; }
+.brand-title { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.brand-toggle { cursor:pointer; margin-bottom:0; }
+.brand-box:not(.collapsed) .brand-toggle { margin-bottom:8px; }
+.brand-title-txt { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.brand-title-txt > span { font-weight:500; color:var(--txt3); display:inline-flex; align-items:center; gap:4px; }
+.brand-exp { font-size:11px; font-weight:700; padding:4px 10px; border-radius:6px; border:1px solid var(--border); background:var(--s1); color:var(--txt); cursor:pointer; flex-shrink:0; }
+.brand-exp:hover { border-color:#2563eb; }
+.brand-box.collapsed .brand-grid { display:none; }
+.brand-mini { width:22px; height:22px; object-fit:contain; border-radius:4px; background:repeating-conic-gradient(#222 0% 25%, #2c2c2c 0% 50%) 50%/8px 8px; }
+.brand-warn-inline { color:#f87171; font-size:11px; }
+.brand-nomasc { font-size:11px; color:var(--txt3); }
+.attach-box { border:1px dashed var(--border); border-radius:10px; padding:10px; background:var(--s2); display:flex; flex-direction:column; gap:8px; }
+.attach-list { display:flex; gap:8px; flex-wrap:wrap; }
+.attach-item { position:relative; }
+.attach-thumb { width:72px; height:72px; object-fit:cover; border-radius:8px; border:1px solid var(--border); display:block; }
+.attach-item .brand-rm { position:absolute; top:-6px; right:-6px; }
+.pos-row { display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; color:var(--txt3); }
+.pos-row select { background:var(--s2); border:1px solid var(--border); color:var(--txt); border-radius:6px; padding:5px 8px; font-size:12px; }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -25846,6 +25864,40 @@ function renderBrandGrid(){
       <div class="brand-slots">${slot(b.id, 'logo', 'Logo')}${slot(b.id, 'mascote', 'Mascote')}</div>
       ${(b.id === cur && _brandAssets && !brandGet(b.id, 'logo')) ? '<div class="brand-warn">logo obrigatório</div>' : ''}
     </div>`).join('');
+  const box = document.getElementById('brand-box');
+  if (box && box.dataset.open === undefined) box.dataset.open = brandBoxPref() ? '1' : '0';
+  renderBrandSummary();
+  // Sem logo da marca atual a caixa abre sozinha pra você anexar.
+  applyBrandBoxState(!!(_brandAssets && cur && !brandGet(cur, 'logo')));
+}
+function brandBoxPref(){ try { return localStorage.getItem('brandBoxOpen') === '1'; } catch (e) { return false; } }
+function applyBrandBoxState(forceOpen){
+  const box = document.getElementById('brand-box');
+  if (!box) return;
+  const open = forceOpen || box.dataset.open === '1';
+  box.classList.toggle('collapsed', !open);
+  const btn = document.getElementById('brand-exp');
+  if (btn) btn.textContent = open ? '▲ Recolher' : '▼ Expandir';
+}
+function toggleBrandBox(){
+  const box = document.getElementById('brand-box');
+  const open = box.dataset.open !== '1';
+  box.dataset.open = open ? '1' : '0';
+  try { localStorage.setItem('brandBoxOpen', open ? '1' : '0'); } catch (e) {}
+  applyBrandBoxState();
+}
+// Linha-resumo (aparece com a caixa recolhida): miniaturas da marca do card aberto.
+function renderBrandSummary(){
+  const el = document.getElementById('brand-sum');
+  if (!el) return;
+  const cur = (document.getElementById('genModal') || { dataset: {} }).dataset.profile;
+  const b = BRAND_PROFILES.find(x => x.id === cur);
+  if (!b) { el.innerHTML = ''; return; }
+  const mini = (kind) => { const a = brandGet(cur, kind); return a ? `<img class="brand-mini" src="data:${a.mime};base64,${a.data}" alt="${kind}">` : ''; };
+  const hasLogo = !!brandGet(cur, 'logo'), hasMasc = !!brandGet(cur, 'mascote');
+  el.innerHTML = '— ' + b.nome + ': ' + mini('logo') + mini('mascote') +
+    (!_brandAssets ? '' : (hasLogo ? '' : ' <b class="brand-warn-inline">logo obrigatório — expanda e anexe</b>')) +
+    (_brandAssets && hasLogo && !hasMasc ? ' <span class="brand-nomasc">sem mascote</span>' : '');
 }
 function pickBrand(profile, kind){
   const input = document.getElementById('brand-file');
@@ -26006,6 +26058,49 @@ function showSimilarIfAny(){
   return true;
 }
 
+// ── Imagens anexadas pra compor a arte (só nesta geração, não ficam salvas) ──
+let _genAttach = []; // [{ mime, data, name }]
+async function genResizeJpeg(file){
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await loadImageEl(url);
+    let max = 1024, b64 = '';
+    for (let i = 0; i < 3; i++) {
+      const sc = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.naturalWidth * sc)); c.height = Math.max(1, Math.round(img.naturalHeight * sc));
+      const x = c.getContext('2d');
+      x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); // fundo transparente vira branco
+      x.drawImage(img, 0, 0, c.width, c.height);
+      b64 = c.toDataURL('image/jpeg', 0.88).split(',')[1];
+      if (b64.length < 900000) break;
+      max = Math.round(max * 0.72);
+    }
+    return b64;
+  } finally { URL.revokeObjectURL(url); }
+}
+function renderGenAttach(){
+  const list = document.getElementById('gen-attach-list');
+  if (!list) return;
+  list.innerHTML = _genAttach.map((a, i) =>
+    `<div class="attach-item"><img class="attach-thumb" src="data:${a.mime};base64,${a.data}" alt=""><button class="brand-rm" title="Remover" onclick="removeGenAttach(${i})">✕</button></div>`).join('');
+  const btn = document.getElementById('gen-attach-btn');
+  if (btn) btn.style.display = _genAttach.length >= 3 ? 'none' : '';
+}
+async function onGenAttach(input){
+  const files = Array.from(input.files || []);
+  input.value = '';
+  for (const f of files) {
+    if (_genAttach.length >= 3) { showToast('Máximo de 3 imagens anexadas.'); break; }
+    if (!f.type.startsWith('image/')) continue;
+    try {
+      _genAttach.push({ mime: 'image/jpeg', data: await genResizeJpeg(f), name: f.name });
+    } catch (e) { showToast('⚠️ ' + e.message); }
+  }
+  renderGenAttach();
+}
+function removeGenAttach(i){ _genAttach.splice(i, 1); renderGenAttach(); }
+
 // ── Gerar imagem com IA (logo + mascote sempre incluídos) ──
 const GEN_TARGET = { Story: { w: 1080, h: 1920 }, Reel: { w: 1080, h: 1920 }, Post: { w: 1080, h: 1350 } };
 let _genResult = null;
@@ -26025,9 +26120,18 @@ function ensureGenModal(){
           <textarea id="gen-prompt" rows="14" placeholder="Descreva a imagem que a IA deve criar..."></textarea></label>
         <label class="sx-field"><span>Título escrito na arte <small>(opcional — vazio: a IA cria um título curto)</small></span>
           <input type="text" id="gen-headline" maxlength="80" placeholder="Ex.: QUAL SABOR VOCÊ NUNCA DEIXA DE PEDIR?"></label>
-        <div class="sx-hint">✓ O <b>logo oficial</b> é aplicado automaticamente no rodapé — idêntico ao original e uma única vez. <label class="gen-mascot"><input type="checkbox" id="gen-mascot" checked> incluir o <b>mascote</b> (quando a marca tiver)</label></div>
-        <div class="brand-box">
-          <div class="brand-title">🎨 Logos e mascotes <span>(ficam salvos — anexe uma vez só)</span></div>
+        <div class="sx-hint">✓ O <b>logo oficial</b> é aplicado automaticamente no melhor lugar da arte — idêntico ao original e uma única vez (você pode trocar a posição depois de gerar). <label class="gen-mascot"><input type="checkbox" id="gen-mascot" checked> incluir o <b>mascote</b> (quando a marca tiver)</label></div>
+        <div class="attach-box">
+          <div class="brand-title">📎 Imagens para compor a arte <span>(opcional — ex.: a foto do produto da promoção; até 3)</span></div>
+          <div class="attach-list" id="gen-attach-list"></div>
+          <button type="button" class="brand-btn" id="gen-attach-btn" onclick="document.getElementById('gen-attach-file').click()">＋ Anexar imagem</button>
+          <input type="file" id="gen-attach-file" accept="image/*" multiple style="display:none" onchange="onGenAttach(this)">
+        </div>
+        <div class="brand-box collapsed" id="brand-box">
+          <div class="brand-title brand-toggle" onclick="toggleBrandBox()">
+            <span class="brand-title-txt">🎨 Logos e mascotes <span id="brand-sum"></span></span>
+            <button type="button" class="brand-exp" id="brand-exp">▼ Expandir</button>
+          </div>
           <div class="brand-grid" id="brand-grid"></div>
           <input type="file" id="brand-file" accept="image/*" style="display:none" onchange="onBrandFile(this)">
         </div>
@@ -26076,6 +26180,8 @@ function openGenImage(id, profile){
   document.getElementById('gen-use').style.display = 'none';
   const go = document.getElementById('gen-go'); go.disabled = false; go.textContent = '✨ Gerar';
   _genResult = null;
+  _genAttach = [];
+  renderGenAttach();
   el.dataset.skipSimilar = '';
   el.classList.add('on');
   showSimilarIfAny();
@@ -26096,7 +26202,7 @@ async function runGenerateImage(){
   const status = document.getElementById('gen-status');
   const skipSimilar = el.dataset.skipSimilar === '1';
   el.dataset.skipSimilar = '';
-  if (!skipSimilar && !_genResult && showSimilarIfAny()) {
+  if (!skipSimilar && !_genResult && !_genAttach.length && showSimilarIfAny()) {
     status.textContent = '♻️ Conferi o histórico: já existe imagem parecida. Reutilize uma delas ou gere uma nova mesmo assim.';
     return;
   }
@@ -26113,17 +26219,21 @@ async function runGenerateImage(){
     const palette = (PALETTES[profile] || []).map(c => c.hex + ' (' + c.name + ')').join(', ');
     const resp = await fetch('/api/generate-image', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ profile, prompt, format: found.item.format, palette, title: found.item.title, texto: stripHtml(found.item.texto), headline: document.getElementById('gen-headline').value.trim(), includeMascot: document.getElementById('gen-mascot').checked })
+      body: JSON.stringify({ profile, prompt, format: found.item.format, palette, title: found.item.title, texto: stripHtml(found.item.texto), headline: document.getElementById('gen-headline').value.trim(), includeMascot: document.getElementById('gen-mascot').checked, extraRefs: _genAttach.map(a => ({ mime: a.mime, data: a.data })) })
     });
     const rawText = await resp.text();
     let data;
     try { data = JSON.parse(rawText); }
     catch (e) { throw new Error('O servidor não respondeu direito (' + resp.status + '): ' + rawText.slice(0, 120)); }
     if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha ao gerar a imagem.');
-    const finalSrc = await composeFinalImage('data:' + data.mime + ';base64,' + data.imageBase64, found.item.format, profile);
-    _genResult = { id, profile, format: found.item.format, src: finalSrc };
-    document.getElementById('gen-preview').innerHTML = `<img class="gen-img" src="${_genResult.src}" alt="Imagem gerada">`;
-    status.textContent = '✓ ' + (data.provider === 'gemini' ? 'Gemini' : 'OpenAI') + ' — logo oficial aplicado no rodapé' + (data.usedMascot ? ' + mascote' : (document.getElementById('gen-mascot').checked ? ' (esta marca ainda não tem mascote cadastrado)' : '')) + '. Gostou? Use a imagem ou gere outra.';
+    const rawSrc = 'data:' + data.mime + ';base64,' + data.imageBase64;
+    const composed = await composeFinalImage(rawSrc, found.item.format, profile, 'auto');
+    _genResult = { id, profile, format: found.item.format, src: composed.url, raw: rawSrc, pos: composed.pos };
+    const opts = Object.keys(LOGO_POS).map(k => `<option value="${k}">${LOGO_POS[k]}</option>`).join('');
+    document.getElementById('gen-preview').innerHTML =
+      `<img class="gen-img" id="gen-preview-img" src="${_genResult.src}" alt="Imagem gerada">
+       <label class="pos-row">Posição do logo: <select id="gen-pos" onchange="recomposeLogo()">${opts}</select></label>`;
+    status.textContent = '✓ ' + (data.provider === 'gemini' ? 'Gemini' : 'OpenAI') + ' — logo oficial aplicado (' + LOGO_POS[composed.pos].toLowerCase() + ')' + (data.usedAttachments ? ' + ' + data.usedAttachments + ' imagem(ns) anexada(s)' : '') + (data.usedMascot ? ' + mascote' : (document.getElementById('gen-mascot').checked ? ' (esta marca ainda não tem mascote cadastrado)' : '')) + '. Gostou? Use a imagem ou gere outra.';
     document.getElementById('gen-use').style.display = '';
   } catch (e) {
     status.textContent = '⚠️ ' + e.message;
@@ -26134,9 +26244,31 @@ async function runGenerateImage(){
 function loadImageEl(url){
   return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('Imagem inválida')); i.src = url; });
 }
+const LOGO_POS = { auto: 'Automático (melhor lugar)', bc: 'Rodapé — centro', bl: 'Rodapé — esquerda', br: 'Rodapé — direita', tl: 'Topo — esquerda', tc: 'Topo — centro', tr: 'Topo — direita' };
+// Mede o quão "movimentada" é uma região (gradiente + variação de brilho) e o brilho médio.
+function regionStats(canvas, x, y, w, h){
+  const W = 40, H = Math.max(4, Math.round(40 * h / w));
+  const t = document.createElement('canvas'); t.width = W; t.height = H;
+  const tc = t.getContext('2d');
+  tc.drawImage(canvas, x, y, w, h, 0, 0, W, H);
+  const d = tc.getImageData(0, 0, W, H).data;
+  const lum = new Float32Array(W * H);
+  let sum = 0;
+  for (let i = 0; i < W * H; i++) { lum[i] = (0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]) / 255; sum += lum[i]; }
+  const mean = sum / (W * H);
+  let grad = 0, varsum = 0;
+  for (let yy = 0; yy < H; yy++) for (let xx = 0; xx < W; xx++) {
+    const v = lum[yy * W + xx];
+    varsum += (v - mean) * (v - mean);
+    if (xx + 1 < W) grad += Math.abs(v - lum[yy * W + xx + 1]);
+    if (yy + 1 < H) grad += Math.abs(v - lum[(yy + 1) * W + xx]);
+  }
+  return { busy: (grad / (W * H)) * 100 + Math.sqrt(varsum / (W * H)) * 35, mean };
+}
 // Recorta no formato exato (1080×1920 Story/Reel, 1080×1350 Post) e aplica o LOGO
-// ORIGINAL da marca no rodapé, uma única vez (a IA não desenha o logo).
-async function composeFinalImage(src, format, profile){
+// ORIGINAL da marca UMA vez, no melhor lugar (a região mais calma da arte) ou na
+// posição escolhida. A IA não desenha o logo.
+async function composeFinalImage(src, format, profile, pos){
   const target = GEN_TARGET[format] || GEN_TARGET.Post;
   const img = await loadImageEl(src);
   const canvas = document.createElement('canvas');
@@ -26146,34 +26278,68 @@ async function composeFinalImage(src, format, profile){
   const w = img.naturalWidth * scale, h = img.naturalHeight * scale;
   ctx.drawImage(img, (target.w - w) / 2, (target.h - h) / 2, w, h);
 
+  let used = null;
   const asset = brandGet(profile, 'logo');
   if (asset) {
     const logo = await loadImageEl('data:' + asset.mime + ';base64,' + asset.data);
-    const isStory = target.h > target.w * 1.5;
-    const maxH = target.h * (isStory ? 0.075 : 0.085);
-    const maxW = target.w * 0.5;
+    const W = target.w, H = target.h;
+    const isStory = H > W * 1.5;
+    const maxH = H * (isStory ? 0.085 : 0.095), maxW = W * 0.42;
     const sc = Math.min(maxH / logo.naturalHeight, maxW / logo.naturalWidth);
     const lw = logo.naturalWidth * sc, lh = logo.naturalHeight * sc;
-    const lx = (target.w - lw) / 2;
-    const ly = target.h - lh - target.h * (isStory ? 0.12 : 0.045);
+    const mx = W * 0.05;
+    const bm = H * (isStory ? 0.12 : 0.045);   // story: acima da barra de resposta do Instagram
+    const tm = H * (isStory ? 0.09 : 0.04);    // story: abaixo da barra de perfil
+    const cand = {
+      bc: { x: (W - lw) / 2, y: H - lh - bm }, bl: { x: mx, y: H - lh - bm }, br: { x: W - lw - mx, y: H - lh - bm },
+      tl: { x: mx, y: tm }, tc: { x: (W - lw) / 2, y: tm }, tr: { x: W - lw - mx, y: tm }
+    };
+    const bias = { bc: 0, bl: 1.5, br: 1.5, tl: 3, tc: 3, tr: 3 }; // leve preferência pelo rodapé, desempata
+    let key = (pos && pos !== 'auto' && cand[pos]) ? pos : null;
+    const stats = {};
+    Object.keys(cand).forEach(k => { stats[k] = regionStats(canvas, cand[k].x, cand[k].y, lw, lh); });
+    if (!key) {
+      key = Object.keys(cand).reduce((best, k) => (stats[k].busy + bias[k] < stats[best].busy + bias[best] ? k : best), 'bc');
+    }
+    used = key;
+    const { x: lx, y: ly } = cand[key];
+    const bgLum = stats[key].mean;
+
     // Logo com fundo opaco (cantos sem transparência) vira um selo de cantos arredondados.
     const probe = document.createElement('canvas'); probe.width = probe.height = 16;
     const pc = probe.getContext('2d'); pc.drawImage(logo, 0, 0, 16, 16);
-    const corners = [[0, 0], [15, 0], [0, 15], [15, 15]].map(([x, y]) => pc.getImageData(x, y, 1, 1).data[3]);
+    const pd = pc.getImageData(0, 0, 16, 16).data;
+    const corners = [[0, 0], [15, 0], [0, 15], [15, 15]].map(([cx, cy]) => pd[(cy * 16 + cx) * 4 + 3]);
     const opaque = corners.every(a => a > 240);
+    let logoLum = 0.5, cnt = 0;
+    for (let i = 0; i < 256; i++) { if (pd[i * 4 + 3] > 128) { logoLum += (0.299 * pd[i * 4] + 0.587 * pd[i * 4 + 1] + 0.114 * pd[i * 4 + 2]) / 255; cnt++; } }
+    logoLum = cnt ? (logoLum - 0.5) / cnt : 0.5;
+
+    const rr = (x, y, ww, hh, r) => { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + ww, y, x + ww, y + hh, r); ctx.arcTo(x + ww, y + hh, x, y + hh, r); ctx.arcTo(x, y + hh, x, y, r); ctx.arcTo(x, y, x + ww, y, r); ctx.closePath(); };
     ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = Math.round(target.w * 0.018);
+    ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = Math.round(W * 0.018);
     if (opaque) {
-      const r = Math.min(lw, lh) * 0.14;
-      ctx.beginPath();
-      ctx.moveTo(lx + r, ly); ctx.arcTo(lx + lw, ly, lx + lw, ly + lh, r); ctx.arcTo(lx + lw, ly + lh, lx, ly + lh, r);
-      ctx.arcTo(lx, ly + lh, lx, ly, r); ctx.arcTo(lx, ly, lx + lw, ly, r); ctx.closePath();
+      rr(lx, ly, lw, lh, Math.min(lw, lh) * 0.14);
       ctx.fillStyle = '#fff'; ctx.fill(); ctx.clip();
+    } else if (Math.abs(bgLum - logoLum) < 0.3) {
+      // Pouco contraste entre logo e fundo: coloca uma placa clara/escura atrás.
+      const pad = lh * 0.14;
+      rr(lx - pad, ly - pad, lw + pad * 2, lh + pad * 2, (lh + pad * 2) * 0.22);
+      ctx.fillStyle = logoLum < 0.5 ? 'rgba(255,255,255,0.93)' : 'rgba(0,0,0,0.6)';
+      ctx.fill();
     }
     ctx.drawImage(logo, lx, ly, lw, lh);
     ctx.restore();
   }
-  return canvas.toDataURL('image/jpeg', 0.92);
+  return { url: canvas.toDataURL('image/jpeg', 0.92), pos: used };
+}
+function recomposeLogo(){
+  if (!_genResult) return;
+  const sel = document.getElementById('gen-pos');
+  composeFinalImage(_genResult.raw, _genResult.format, _genResult.profile, sel.value).then(r => {
+    _genResult.src = r.url; _genResult.pos = r.pos;
+    document.getElementById('gen-preview-img').src = r.url;
+  }).catch(e => showToast('⚠️ ' + e.message));
 }
 // Entrega a imagem final (já recortada + logo) pro mesmo fluxo de upload de mídia (Drive + Zernio).
 async function useGeneratedImage(){
