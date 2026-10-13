@@ -25,13 +25,15 @@ Esta regra é fixa e vale para todas as três marcas (Academia, Sorveteria, Gymp
    - Instagram: @planetacorpoclubmais
    - Website: www.planetacorpoclubmais.com.br
    - Público: musculação, crossfit, lutas, judô infantil, recepção
-   - Campanha ativa (jun/jul 2026): "Mês do Amigo" (20% desc para referenciador + novo aluno, meta 50-60 novos)
+   - Campanha ativa (outubro/2026): "Cuidado que se Multiplica" — Outubro Rosa (ver seção 🎬 Campanhas)
+   - Novidade: MQV — Mapeamento de Qualidade de Vida (ver seção "🆕 Novidade — MQV")
 
 2. **Sorvetes Guri** (Turvo/PR)
    - Sorveteria com buffet, loja de fábrica (não é fábrica) e cardápio gourmet
    - Instagram: @sorvetesguriturvo_
    - Website: www.sorvetesguriturvo.com.br
    - Campanha ativa (jun/jul 2026): "Inverno Fitness" (açaí com whey, linha zero açúcar, 20% desc)
+   - Promoção ativa (outubro/2026): Dia das Crianças — Sorvete Guri Gurt por apenas R$ 0,99 (ver seção 🎬 Campanhas)
 
 3. **GympulsePro** (B2B SaaS)
    - Plataforma de gamificação para gestão de academias
@@ -174,7 +176,35 @@ Ajusta a cadência de Humanização (deixa de ser diária), adiciona um pilar de
 - **1ª semana do mês (dias 1-7):** campanha aparece **todo dia** (Story, Reel ou Post, variando o formato e o ângulo).
 - **2ª e 3ª semanas (dias 8-21, aprox.):** campanha aparece **~3x por semana**.
 - **Última semana do mês (dia 22 até o fim do mês):** campanha aparece **todo dia** de novo.
-- Vale para qualquer campanha ativa da Academia (a atual, "Agosto Vale Mais na Planeta", encerrou em 31/08 — aplicar essa cadência assim que a próxima campanha for definida).
+- Vale para qualquer campanha ativa da Academia (a atual é "Cuidado que se Multiplica — Outubro Rosa", 01-31/10/2026; "Agosto Vale Mais na Planeta" encerrou em 31/08 e a de Setembro Amarelo em 30/09).
+
+### 🆕 Novidade — MQV (Mapeamento de Qualidade de Vida)
+Fonte: www.planetacorpoclubmais.com.br/mqv (conferida em 13/10/2026).
+
+**O que é:** questionário rápido sobre a rotina do aluno (sono, estresse, dor, trabalho, alimentação e objetivos) para o professor enxergar a pessoa inteira, não só peso e medidas. Frase da página: **"Seu treino começa pelo que acontece fora da academia."**
+
+**Como funciona (4 passos):**
+1. Abrir o link e informar o número de matrícula (confirma o nome).
+2. Responder 40 perguntas de toque no celular, ~5 minutos. Não existem respostas certas ou erradas.
+3. O professor recebe a **Roda da Vida** do aluno: 10 pilares com nota de 0 a 100% (quanto maior a nota, mais atenção aquela área precisa no treino e na rotina).
+4. Refazer o MQV a cada **90 dias** para acompanhar a evolução.
+
+**Os 10 pilares:** Sono · Estresse e ansiedade · Humor e bem-estar · Vida social (amigos, família e trabalho) · Energia e disposição · Dores no corpo · Saúde no trabalho (tempo sentado/em pé/dirigindo e postura) · Alimentação e peso · Condicionamento · Esporte.
+
+**Benefícios para o aluno:**
+- Treino ajustado ao momento atual (intensidade, horário e exercícios).
+- Conversa mais próxima com o professor e metas que cabem na vida real.
+- Progresso medido além da balança (sono, energia, dor).
+- Roda da Vida e comparação com o MQV anterior aparecem no resultado da avaliação física.
+- O professor pode sugerir nutricionista, fisioterapeuta ou outro profissional quando fizer sentido.
+
+**Privacidade e limites:** só a equipe da Planeta Corpo vê o MQV. **Não é diagnóstico médico** — é ponto de partida para o professor conversar e planejar o treino. Nunca prometer resultado clínico nem substituir acompanhamento profissional.
+
+**Como participar:** agendaplanetacorpo.vercel.app/mqv/responder (botão "Responder meu MQV"). Sem senha nem app, funciona no celular; ter o número de matrícula em mãos. Dúvidas: professor ou recepção.
+
+**Lacunas da página (não inventar):** não informa preço/taxa, condições, data de lançamento nem cronograma do MQV. Público: alunos da Planeta Corpo (precisa de matrícula).
+
+**Sugestão de uso no conteúdo (ajustar com Gilson):** tratar como pilar "Diferencial"/"Dica de Saúde" (educativo), com CTA "Responda seu MQV"; convive com a campanha de outubro sem virar oferta comercial.
 
 ---
 
@@ -193,7 +223,7 @@ Substitui a estrutura anterior (2 Post + 2 Story fixos por horário, ver histór
 5. **Demais slots do dia:** seguem o mix padrão já existente (Bastidores, Enquete, Construção de Marca, Relacionamento, Promoção de campanha ativa quando houver), em Story ou Reel.
 
 ### ⚠️ Preços não disponíveis
-A lista de produtos enviada por Gilson (`produtos - produtos.csv`, 18/08/2026) veio com a coluna de preço em branco. **Não inventar valores** — perguntar a Gilson o preço antes de citar um número específico num post, ou usar linguagem sem valor até ele fornecer.
+A lista de produtos enviada por Gilson (`produtos - produtos.csv`, 18/08/2026) veio com a coluna de preço em branco. **Não inventar valores** — perguntar a Gilson o preço antes de citar um número específico num post, ou usar linguagem sem valor até ele fornecer. **Exceção autorizada:** Sorvete Guri Gurt por **R$ 0,99** na promoção do Dia das Crianças (ver 🎬 Campanhas).
 
 ### Lista de Produtos — Loja (todo item SEM "Caixa 7L sorvete sabor" na descrição, uso: Story diário do pilar 1)
 **Picolés de fruta:** abacaxi com hortelã, abacaxi, açaí 50g, água de coco 50g, groselha, limão, maracujá 50g, melancia 50g, morango, tangerina, uva.
@@ -213,7 +243,51 @@ Açaí tradicional, açaí com leitinho, açaí com avelã, açaí zero açúcar
 
 ## 🎬 Campanhas
 
-### 🟢 ATIVA — Academia: "Cuidado que se Multiplica" (Setembro Amarelo, 01-30/09/2026)
+### 🟢 ATIVA — Academia: "Cuidado que se Multiplica" (Outubro Rosa, 01-31/10/2026)
+Continuação da campanha de setembro, agora com o tema Outubro Rosa e autocuidado. Fonte: www.planetacorpoclubmais.com.br/campanha (conferida em 13/10/2026). Público: novas matrículas, rematrículas e ex-alunos.
+
+**Mecânica — desconto especial por plano fechado (o mesmo valor de setembro, segundo a página):**
+| Plano | Desconto | Benefício extra |
+|---|---|---|
+| Mensal | R$ 20 | — |
+| Trimestral | R$ 30 | — |
+| Semestral | R$ 60 | — |
+| Anual (outra forma de pagamento) | R$ 120 | — |
+| Anual no cartão | R$ 120 | **30 dias de Tempo de Cuidado OU fone Bluetooth** (a pessoa escolhe um; não é cumulativo) |
+
+**Regras:**
+- Anual pago de outra forma recebe só o desconto, sem benefício extra.
+- Os 30 dias de Tempo de Cuidado podem ser somados ao próprio plano, dados de presente a uma aluna ativa (somam ao plano dela) ou a alguém que ainda não treina (para começar na Planeta Corpo).
+- A escolha do benefício e o beneficiário dos 30 dias devem ser registrados no sistema no ato da matrícula.
+- Desconto e presente valem **somente em outubro**.
+- ⚠️ **Mudou em relação a setembro:** trimestral e semestral não têm mais dias de Tempo de Cuidado (só o desconto); o anual passa a ser 30 dias **ou** fone, não os dois.
+
+**3 pilares:** "Você também merece cuidado" · "Cuidado que se multiplica" · "Outubro é o momento".
+
+**Calendário (respeitar a cadência de "🏋️ Academia — Estrutura Semanal de Conteúdo": 01-07 todo dia, 08-21 ~3x/semana, 22-31 todo dia):**
+| Semana | Foco | Conteúdo |
+|---|---|---|
+| 1 (01-07) | Lançamento e conceito | Anúncio oficial |
+| 2 (08-14) | Outubro Rosa e autocuidado | Carrossel explicativo |
+| 3 (15-21) | Benefícios e prova social | Post do anual no cartão; **dia 19** institucional |
+| 4 (22-31) | Fechamento com urgência | Contagem regressiva |
+
+**⚠️ Dia 19/10 — Dia Internacional de Luta contra o Câncer de Mama:** post e stories **institucionais, sem oferta nem CTA comercial**.
+**⚠️ Regra de sensibilidade (Outubro Rosa):** tratar como conscientização sobre prevenção e diagnóstico precoce. **Nunca** afirmar que treinar previne a doença ou substitui exames e acompanhamento médico.
+
+**CTA e contato:** convite para falar com a consultora e conhecer as condições — WhatsApp (42) 99922-2857, Av. Maria Bettega, 360, Turvo/PR. **Tom:** acolhedor, sem pressão, no ritmo de cada pessoa.
+
+**Material previsto na página:** 4 posts de feed, 12 stories e 3 roteiros de reels (a página não traz o texto pronto; criar seguindo o padrão da campanha de setembro). Há também scripts de consultoras e 4 mensagens de WhatsApp — material interno, não vira card do painel.
+
+**Lacunas da página (não prometer nos posts):** modelo do fone e entrega; processo de registro no sistema; regra de início em até 30 dias para quem for presenteada e ainda não é aluna.
+
+### 🟢 ATIVA — Sorveteria: Dia das Crianças — Guri Gurt por apenas R$ 0,99 (outubro/2026)
+- **Oferta:** Sorvete **Guri Gurt por apenas R$ 0,99** (informado por Gilson em 13/10/2026). Linha Guri Gurt: chiclete, leite condensado, maracujá, morango e uva (ver Lista de Produtos — Loja) — confirmar quais sabores entram na promoção.
+- **Público e tom:** crianças e famílias; festivo, familiar, comunidade de Turvo.
+- **Período e condições: NÃO informados.** O Dia das Crianças é 12/10/2026 (segunda-feira). Confirmar com Gilson início/fim da promoção e se há limite (por cliente, por dia ou de estoque) antes de citar datas ou condições nos posts.
+- **Ação necessária:** usar como "Promoção de campanha ativa" (item 5 dos pilares diários), com espaçamento — não repetir todos os dias; variar o ângulo (preço, sabor, criançada, família) e manter o mix normal de loja/buffet/carrinho/humanização.
+
+### ⚪ ENCERRADA em 30/09/2026 — Academia: "Cuidado que se Multiplica" (Setembro Amarelo, 01-30/09/2026)
 Substitui "Agosto Vale Mais na Planeta" (encerrada 31/08/2026). Kit completo colado por Gilson em 19/08/2026, confirmando que esse é o padrão oficial de campanha (visão geral + pilares + script de vendas + WhatsApp + calendário + posts/stories/reels). Fonte: www.planetacorpoclubmais.com.br/campanha.
 
 **Mecânica:** plano trimestral/semestral/anual = desconto especial + "Tempo de Cuidado" (trimestral 7 dias, semestral 15 dias, anual 1 mês) — a pessoa usa no próprio plano ou presenteia alguém (aluna ativa ou alguém novo, que tem até 30 dias pra iniciar). Anual pago no cartão também ganha fone Bluetooth (brinde limitado). Público: novas matrículas, rematrículas, ex-alunos.
