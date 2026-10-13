@@ -91,17 +91,20 @@ function findImageData(node) {
   return null;
 }
 
-// A função do Vercel (plano Hobby) é cortada em 60s, então o modelo padrão é o
-// rápido (Nano Banana 2.1). O Pro (gemini-3-pro-image) é mais caprichado, mas
-// costuma passar de 60s — só use via variável GEMINI_IMAGE_MODEL no Vercel.
+// Custo por imagem (Google, tabela padrão): nano-banana-2.1 = US$0,034 em 1K e
+// US$0,050 em 2K; 3.1-flash-image = US$0,10 em 2K; 3-pro-image = US$0,13 (e
+// lento). O 2.1 é o melhor custo-benefício, então é o padrão. Em 2K a arte sai
+// nítida pra 1080×1920; GEMINI_IMAGE_SIZE=1K (variável no Vercel) economiza ~33%
+// mas deixa o story mais "macio". GEMINI_IMAGE_MODEL troca o modelo (ex.: Pro).
 const DEADLINE_MS = 100000; // vercel.json dá 120s à função
 
 async function generateWithGemini({ apiKey, prompt, refs, aspect }) {
   const started = Date.now();
   const models = [...new Set([process.env.GEMINI_IMAGE_MODEL, 'gemini-nano-banana-2.1', 'gemini-3.1-flash-image'].filter(Boolean))];
   // Do melhor pro mais simples: 2K com proporção -> proporção -> sem opções.
+  const size = ['1K', '2K'].includes(process.env.GEMINI_IMAGE_SIZE) ? process.env.GEMINI_IMAGE_SIZE : '2K';
   const variants = [
-    { aspect, size: '2K' },
+    { aspect, size },
     { aspect, size: null },
     { aspect: null, size: null }
   ];
@@ -159,7 +162,7 @@ async function generateWithGemini({ apiKey, prompt, refs, aspect }) {
 
 // OpenAI gpt-image-1. Com referências (ex.: mascote) usa /images/edits; sem
 // nenhuma, /images/generations.
-async function generateWithOpenAI({ apiKey, prompt, refs, timeoutMs }) {
+async function generateWithOpenAI({ apiKey, prompt, refs, timeoutMs, quality }) {
   const signal = AbortSignal.timeout(timeoutMs || 50000);
   let aiRes;
   if (refs && refs.length) {
@@ -167,7 +170,7 @@ async function generateWithOpenAI({ apiKey, prompt, refs, timeoutMs }) {
     form.append('model', 'gpt-image-1');
     form.append('prompt', prompt);
     form.append('size', '1024x1536');
-    form.append('quality', 'high');
+    form.append('quality', quality || 'high');
     form.append('output_format', 'jpeg');
     form.append('n', '1');
     refs.forEach((r) => {
@@ -183,7 +186,7 @@ async function generateWithOpenAI({ apiKey, prompt, refs, timeoutMs }) {
     aiRes = await fetch(OPENAI_URL + '/images/generations', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'gpt-image-1', prompt, size: '1024x1536', quality: 'high', output_format: 'jpeg', n: 1 }),
+      body: JSON.stringify({ model: 'gpt-image-1', prompt, size: '1024x1536', quality: quality || 'high', output_format: 'jpeg', n: 1 }),
       signal
     });
   }
@@ -316,7 +319,7 @@ module.exports = async (req, res) => {
       if (provider === 'gemini' && openaiKey && spent < 25000) {
         try {
           provider = 'openai';
-          result = await generateWithOpenAI({ apiKey: openaiKey, prompt: fullPrompt, refs, timeoutMs: 100000 - spent - 5000 });
+          result = await generateWithOpenAI({ apiKey: openaiKey, prompt: fullPrompt, refs, timeoutMs: 100000 - spent - 5000, quality: 'medium' });
         } catch (e2) {
           res.status(502).json({ error: 'A IA recusou o pedido: ' + e.message + ' | reserva: ' + e2.message });
           return;
