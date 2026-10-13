@@ -825,6 +825,10 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .cg-file .brand-btn { text-decoration:none; }
 .cg-det summary { cursor:pointer; font-size:12px; color:var(--txt3); }
 .cg-det textarea { width:100%; margin-top:6px; background:var(--s1); border:1px solid var(--border); color:var(--txt); border-radius:8px; padding:8px; font-size:12px; font-family:inherit; box-sizing:border-box; }
+.attach-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.attach-hint { font-size:11px; color:var(--txt3); }
+.attach-box:focus { outline:1px solid #2563eb; }
+.attach-box.drag { border-color:#2563eb; background:rgba(37,99,235,0.08); }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -26631,17 +26635,45 @@ function renderGenAttach(){
   const btn = document.getElementById('gen-attach-btn');
   if (btn) btn.style.display = _genAttach.length >= 3 ? 'none' : '';
 }
+// Adiciona uma imagem (de arquivo, colada ou arrastada) à lista de anexos.
+async function addGenAttachFile(f){
+  if (!f || !String(f.type).startsWith('image/')) return false;
+  if (_genAttach.length >= 3) { showToast('Máximo de 3 imagens anexadas.'); return false; }
+  try {
+    _genAttach.push({ mime: 'image/jpeg', data: await genResizeJpeg(f), name: f.name || 'colada', usage: '' });
+    renderGenAttach();
+    // leva o cursor pro campo "como usar" da imagem recém-adicionada
+    const inputs = document.querySelectorAll('.attach-usage');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+    return true;
+  } catch (e) { showToast('⚠️ ' + e.message); return false; }
+}
 async function onGenAttach(input){
   const files = Array.from(input.files || []);
   input.value = '';
-  for (const f of files) {
-    if (_genAttach.length >= 3) { showToast('Máximo de 3 imagens anexadas.'); break; }
-    if (!f.type.startsWith('image/')) continue;
-    try {
-      _genAttach.push({ mime: 'image/jpeg', data: await genResizeJpeg(f), name: f.name, usage: '' });
-    } catch (e) { showToast('⚠️ ' + e.message); }
-  }
+  for (const f of files) { if (!(await addGenAttachFile(f))) { if (_genAttach.length >= 3) break; } }
   renderGenAttach();
+}
+// Botão "Colar imagem": lê a imagem da área de transferência (precisa de permissão do navegador).
+async function pasteGenAttach(){
+  try {
+    const items = await navigator.clipboard.read();
+    let added = 0;
+    for (const it of items) {
+      const type = it.types.find(t => t.startsWith('image/'));
+      if (!type) continue;
+      const blob = await it.getType(type);
+      if (await addGenAttachFile(new File([blob], 'colada.' + (type.split('/')[1] || 'png'), { type }))) added++;
+    }
+    showToast(added ? '📎 Imagem colada — diga como usá-la' : 'Não há imagem na área de transferência. Copie uma imagem e tente de novo.');
+  } catch (e) {
+    showToast('Não consegui ler a área de transferência — clique na caixa de anexos e use Ctrl+V.');
+  }
+}
+async function onGenAttachDrop(ev){
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('drag');
+  for (const f of Array.from((ev.dataTransfer && ev.dataTransfer.files) || [])) { if (!(await addGenAttachFile(f))) break; }
 }
 function removeGenAttach(i){ _genAttach.splice(i, 1); renderGenAttach(); }
 
@@ -26742,12 +26774,23 @@ async function cgReceiveImage(file){
     status.textContent = '⚠️ ' + e.message;
   }
 }
-// Ctrl+V com uma imagem no clipboard (ex.: "copiar imagem" no ChatGPT) enquanto o passo a passo estiver aberto.
+// Ctrl+V com uma imagem na área de transferência, com a janela "Gerar imagem" aberta:
+// - dentro da caixa de anexos (ou logo depois de clicar nela) => vira anexo;
+// - com o passo a passo do ChatGPT aberto => é a imagem gerada no ChatGPT;
+// - nos demais casos => vira anexo.
+window._attachArmed = false;
+document.addEventListener('pointerdown', function (e) {
+  window._attachArmed = !!(e.target && e.target.closest && e.target.closest('.attach-box'));
+}, true);
 document.addEventListener('paste', function (e) {
   const modal = document.getElementById('genModal');
-  if (!modal || !modal.classList.contains('on') || !document.getElementById('cg-box')) return;
+  if (!modal || !modal.classList.contains('on')) return;
   const files = e.clipboardData && e.clipboardData.files;
-  if (files && files[0] && files[0].type.startsWith('image/')) { e.preventDefault(); cgReceiveImage(files[0]); }
+  if (!(files && files[0] && files[0].type.startsWith('image/'))) return;
+  const inAttach = !!(e.target && e.target.closest && e.target.closest('.attach-box'));
+  const toResult = !!document.getElementById('cg-box') && !inAttach && !window._attachArmed;
+  e.preventDefault();
+  if (toResult) cgReceiveImage(files[0]); else addGenAttachFile(files[0]);
 });
 
 // ── Gerar imagem com IA (logo + mascote sempre incluídos) ──
@@ -26781,10 +26824,14 @@ function ensureGenModal(){
         <label class="sx-field"><span>Linha de apoio na arte <small>(opcional — letras menores, abaixo do título)</small></span>
           <input type="text" id="gen-subline" maxlength="70" placeholder="Ex.: Amanhã a gente se vê!"></label>
         <div class="sx-hint">✓ O <b>logo oficial</b> é aplicado automaticamente no melhor lugar da arte — idêntico ao original e uma única vez (você pode trocar a posição depois de gerar).</div>
-        <div class="attach-box">
+        <div class="attach-box" id="attach-box" tabindex="0" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="onGenAttachDrop(event)">
           <div class="brand-title">📎 Imagens para compor a arte <span>(opcional — foto do produto, um fundo, uma captura de tela; até 3 — diga como usar cada uma)</span></div>
           <div class="attach-list" id="gen-attach-list"></div>
-          <button type="button" class="brand-btn" id="gen-attach-btn" onclick="document.getElementById('gen-attach-file').click()">＋ Anexar imagem</button>
+          <div class="attach-actions" id="gen-attach-btn">
+            <button type="button" class="brand-btn" onclick="document.getElementById('gen-attach-file').click()">＋ Anexar arquivo</button>
+            <button type="button" class="brand-btn" onclick="pasteGenAttach()">📋 Colar imagem</button>
+            <span class="attach-hint">ou clique aqui e use Ctrl+V · ou arraste e solte</span>
+          </div>
           <input type="file" id="gen-attach-file" accept="image/*" multiple style="display:none" onchange="onGenAttach(this)">
         </div>
         <label class="sx-field"><span>Motor de imagem</span>
