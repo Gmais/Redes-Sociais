@@ -97,10 +97,12 @@ Esta regra é fixa e vale para todas as três marcas (Academia, Sorveteria, Gymp
 
 ## 📊 Padrão de Conteúdo
 
-### Volume Diário
-- **Segunda-sexta:** 4 Academia + 4 Sorveteria + 2 GympulsePro = **10 posts/dia**
-- **Sábado:** 2 Academia + 6 Sorveteria + 2 GympulsePro = **10 posts/dia**
-- Distribuição otimizada para horários de pico por marca
+### Volume Diário e Formatos (Regra fixa — Outubro/2026)
+- **Academia:** **3 postagens diárias** (escolher o melhor horário para um melhor engajamento). **Apenas 1 post por semana**. **Sem Reel e Sem Carrossel** (as demais são Stories).
+- **Sorveteria:** **4 postagens diárias** (escolher o melhor horário para um melhor engajamento). **Apenas 1 post por semana**. **Sem Reel e Sem Carrossel** (as demais são Stories).
+- **GympulsePro:** **1 postagem diária** (escolher o melhor horário para um melhor engajamento). **Apenas 1 post a cada 15 dias**. **Sem Reel e Sem Carrossel** (as demais são Stories).
+- **Total diário:** 8 postagens/dia (3 Academia + 4 Sorveteria + 1 GympulsePro).
+- Distribuição otimizada para os melhores horários de engajamento por marca.
 
 ### Estrutura de Card (3 seções)
 ```
@@ -125,8 +127,7 @@ Esta regra é fixa e vale para todas as três marcas (Academia, Sorveteria, Gymp
 ### Regras de Conteúdo
 - ✅ **Sem texto sobreposto em imagens** (regra obrigatória para prompts IA)
 - ✅ **Máx 5 hashtags por Post** (regra de Instagram desde dez 2025)
-- ✅ **Carrossel favorecido** (altas taxas de save/share)
-- ✅ **Mix de formatos** (Post, Carrossel, Story, Reel)
+- ⚠️ **Formatos restritos (Outubro/2026):** **Sem Reel e Sem Carrossel** para todas as três marcas. No feed, sai apenas **Post estático** com baixa frequência (Academia: 1 post/semana; Sorveteria: 1 post/semana; Gympulse: 1 post a cada 15 dias). Todo o restante do volume diário é composto por **Stories**.
 - ✅ **Humanização com staff:** cada colaborador apresentado individualmente
 - ✅ **Posicionamento indireto:** referenciar diferenças sem citar concorrentes
 - ⚠️ **Academia — reforçar diferenciais com frequência:** Gilson notou (10/07) que os posts recentes estão com poucas postagens de diferencial competitivo. Ao planejar a semana da Academia, incluir pelo menos 1 post de diferencial a cada poucos dias, alternando entre: equipe 100% CREF, estrutura aeróbica completa, ambiente seguro para mulheres, atendimento próximo/personalizado (conhece seu nome), mensalidade única para todas as modalidades (vs. várias mensalidades avulsas), 27 anos de história/tradição em Turvo. Não deixar esse tipo de post cair de lado em favor só de humanização/prova social/convite.
@@ -160,9 +161,15 @@ Esta regra é fixa e vale para todas as três marcas (Academia, Sorveteria, Gymp
 
 ---
 
-## 🏋️ Academia — Estrutura Semanal de Conteúdo (regra fixa, atualizada em 19/08/2026)
+## 🏋️ Academia — Estrutura de Conteúdo (regra fixa, atualizada em Outubro/2026)
 
-Ajusta a cadência de Humanização (deixa de ser diária), adiciona um pilar de "Modalidade" e substitui, só para a Academia, a regra genérica de cadência de campanha por uma cadência baseada na semana do mês.
+### 🔒 Regra de Frequência e Formatos (Outubro/2026)
+- **Volume:** **Três postagens diárias** (escolher o melhor horário para um melhor engajamento).
+- **Feed:** **Um post apenas por semana**.
+- **Restrições:** **Sem Reel e Sem Carrossel**.
+- **Demais publicações:** As outras postagens diárias que não forem o post único da semana são obrigatoriamente **Stories**.
+
+*Ajusta a cadência de Humanização, pilar de Modalidade e Campanha sob a nova diretriz de 3 postagens/dia, sem Reel, sem Carrossel e apenas 1 post de feed por semana:*
 
 ### Humanização (equipe) — não é mais diária
 - **1 Post por semana, sempre quinta-feira.**
@@ -209,19 +216,20 @@ Fonte: www.planetacorpoclubmais.com.br/mqv (conferida em 13/10/2026).
 
 ---
 
-## 🍦 Sorveteria — Estrutura Diária de Conteúdo (regra fixa, atualizada em 18/08/2026)
+## 🍦 Sorveteria — Estrutura Diária de Conteúdo (regra fixa, atualizada em Outubro/2026)
 
-Substitui a estrutura anterior (2 Post + 2 Story fixos por horário, ver histórico do index.html até 17/08/2026). A partir daqui, aplicar sempre:
+### 🔒 Regra de Frequência e Formatos (Outubro/2026)
+- **Volume:** **Quatro postagens diárias** (escolher o melhor horário para um melhor engajamento).
+- **Feed:** **Um post apenas por semana** (substitui a regra anterior de 1 post por dia).
+- **Restrições:** **Sem Reel e Sem Carrossel**.
+- **Demais publicações:** As outras postagens diárias são em formato **Story**.
 
-### Regra de formatos
-- **Apenas 1 Post por dia.** As demais postagens do dia (geralmente 3) alternam entre **Story** e **Reel**.
-
-### Pilares obrigatórios (dentro dos 4 posts diários)
-1. **Produto da loja — todo dia, sempre em Story.** Fala sobre um produto da lista **Loja** abaixo (descrição, variedade, preço).
-2. **Produto do buffet — todo dia, alternando Story/Post dia a dia.** Fala sobre um produto da lista **Buffet** abaixo (descrição, variedade, preço). Quando o dia cair em "Post" nessa alternância, esse é o único Post do dia (ocupa a cota da regra acima).
-3. **Carrinho de Sorvete para eventos — pelo menos 1 dia por semana.** Post ou Story sobre o serviço de locação do Carrinho de Sorvete Guri para festas de aniversário e eventos.
-4. **Humanização — 1x por semana, de preferência sexta-feira.** Apresentar um dos colaboradores da Sorveteria (Maria Júlia, Maria Clara, Bruna, Luiza Helena — ver lista acima).
-5. **Demais slots do dia:** seguem o mix padrão já existente (Bastidores, Enquete, Construção de Marca, Relacionamento, Promoção de campanha ativa quando houver), em Story ou Reel.
+### Pilares (dentro das 4 postagens diárias)
+1. **Produto da loja — sempre em Story.** Fala sobre um produto da lista **Loja** abaixo (descrição, variedade, preço).
+2. **Produto do buffet — em Story (ou no Post único da semana).** Fala sobre um produto da lista **Buffet** abaixo (descrição, variedade, preço).
+3. **Carrinho de Sorvete para eventos — pelo menos 1 dia por semana** (em Story ou no Post único da semana). Post sobre o serviço de locação do Carrinho de Sorvete Guri para festas de aniversário e eventos.
+4. **Humanização — 1x por semana, de preferência sexta-feira** (em Story ou no Post único da semana). Apresentar um dos colaboradores da Sorveteria (Maria Júlia, Maria Clara, Bruna, Luiza Helena — ver lista acima).
+5. **Demais slots do dia:** seguem o mix padrão já existente (Bastidores, Enquete, Construção de Marca, Relacionamento, Promoção de campanha ativa quando houver), sempre em **Story** (Sem Reel e Sem Carrossel).
 
 ### ⚠️ Preços não disponíveis
 A lista de produtos enviada por Gilson (`produtos - produtos.csv`, 18/08/2026) veio com a coluna de preço em branco. **Não inventar valores** — perguntar a Gilson o preço antes de citar um número específico num post, ou usar linguagem sem valor até ele fornecer. **Exceção autorizada:** Sorvete Guri Gurt por **R$ 0,99** na promoção do Dia das Crianças (ver 🎬 Campanhas).
@@ -239,6 +247,17 @@ A lista de produtos enviada por Gilson (`produtos - produtos.csv`, 18/08/2026) v
 ### Lista de Produtos — Buffet (todo item "Caixa 7L", uso: pilar 2, Story/Post alternado)
 Todos vendidos em caixa de 7 litros para reposição do buffet self-service — inclui as variações "sorvete sabor", "açaí", "gelatto" e "premium"/"zero açúcar":
 Açaí tradicional, açaí com leitinho, açaí com avelã, açaí zero açúcar, gelatto sabor pistache, sorvete sabor: chocolate belga, coco com abóbora, fubá com goiabada, manga com abacaxi e hortelã, manga com maracujá, mousse de maracujá trufado, abacaxi, banana caramelizada, Blue Ice, brigadeiro, café com brigadeiro, chiclete, chocolate branco, chocolate, choco menta, clássico bombom, cocada cremosa, coco branco, cookie crocante, creme, creme de cupuaçu, doce de leite, flocos, floresta negra, iogurte grego com frutas do bosque, leite condensado, maracujá, marula com brigadeiro artesanal, milho verde, Mon Laté, morango, nata, olho de sogra, paçoca cremosa, passas ao rum, pavê latino, pistache, romeu e julieta, torta alemã, torta de limão, uva, uva ao creme; sorvete premium sabor alfajor, sorvete premium sabor Choco Dream; sorvete zero açúcar sabor baunilha, sorvete zero açúcar sabor chocolate.
+
+---
+
+## 💻 GympulsePro — Estrutura de Conteúdo (regra fixa, atualizada em Outubro/2026)
+
+### 🔒 Regra de Frequência e Formatos (Outubro/2026)
+- **Volume:** **Uma postagem diária** (escolher o melhor horário para um melhor engajamento).
+- **Feed:** **Um post apenas a cada 15 dias**.
+- **Restrições:** **Sem Reel e Sem Carrossel**.
+- **Demais publicações:** Nos dias sem post de feed, a postagem diária é obrigatoriamente **Story**.
+- **Público e foco:** Proprietários de academias, gestores e educadores físicos; foco em gamificação, retenção de alunos, gestão e dados de mercado.
 
 ---
 
