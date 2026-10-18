@@ -26664,7 +26664,11 @@ async function executeNewPost() {
   const time = document.getElementById('np-time').value;
   const format = document.getElementById('np-format').value;
   const title = document.getElementById('np-title').value.trim();
-  const texto = document.getElementById('np-texto').value.trim();
+  // Se o prompt foi parseado, usa a seção 'texto' como caption do Instagram.
+  // Sem isso, o prompt inteiro (5000+ chars) seria enviado ao Instagram.
+  const _parsed = window._npParsedSections;
+  const textoRaw = document.getElementById('np-texto').value.trim();
+  const texto = (_parsed && _parsed.texto) ? _parsed.texto : textoRaw;
 
   if (!baseDate) { showToast('⚠️ Selecione uma data'); return; }
   if (!title) { showToast('⚠️ Informe um título'); return; }
@@ -26805,12 +26809,17 @@ function parseAndFillPrompt(mode) {
   const raw = document.getElementById(textoId).value;
   if (!raw || raw.trim().length < 20) return; // muito curto, não tenta separar
 
-  // Padrões de cabeçalho para cada seção (case-insensitive)
+  // Padrões de cabeçalho — aceita:
+  // - "TEXTO DA POSTAGEM"
+  // - "## 1. TEXTO DA POSTAGEM"
+  // - "### TEXTO DA POSTAGEM:"
+  // - "1. TEXTO DA POSTAGEM -"
+  // (case-insensitive, com/sem acento)
   const patterns = {
-    texto:    /TEXTO\s+DA\s+POSTAGEM\s*[:\-]?/i,
-    formato:  /FORMATO\s+E\s+ESPECIFICA[ÇC][ÃA]O(?:ES)?\s*[:\-]?/i,
-    intencao: /INTEN[ÇC][ÃA]O\s+DA\s+POSTAGEM\s*[:\-]?/i,
-    briefing: /BRIEFING\s+CRIATIVO\s+(?:DETALHADO)?\s*[:\-]?/i
+    texto:    /(?:#{1,4}\s*)?(?:\d+\.\s*)?TEXTO\s+DA\s+POSTAGEM\s*[:\-]?\s*/i,
+    formato:  /(?:#{1,4}\s*)?(?:\d+\.\s*)?FORMATO\s+E\s+ESPECIFICA[ÇC][ÃA]O(?:ES)?\s*[:\-]?\s*/i,
+    intencao: /(?:#{1,4}\s*)?(?:\d+\.\s*)?INTEN[ÇC][ÃA]O\s+DA\s+POSTAGEM\s*[:\-]?\s*/i,
+    briefing: /(?:#{1,4}\s*)?(?:\d+\.\s*)?BRIEFING\s+CRIATIVO\s+(?:DETALHADO)?\s*[:\-]?\s*/i
   };
 
   // Encontra posições de cada cabeçalho no texto
