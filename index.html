@@ -26719,9 +26719,12 @@ async function executeNewPost() {
       title: title,
       texto: texto || '',
       secoes: [
-        { num:'01', cor:'#e63900', titulo:'FORMATO E ESPECIFICAÇÕES', conteudo: formatSpec(format) },
-        { num:'02', cor:'#f5a623', titulo:'INTENÇÃO DA POSTAGEM', conteudo: 'A preencher' },
-        { num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO', conteudo: 'A preencher' }
+        { num:'01', cor:'#e63900', titulo:'FORMATO E ESPECIFICAÇÕES',
+          conteudo: (window._npParsedSections && window._npParsedSections.formato) ? window._npParsedSections.formato : formatSpec(format) },
+        { num:'02', cor:'#f5a623', titulo:'INTENÇÃO DA POSTAGEM',
+          conteudo: (window._npParsedSections && window._npParsedSections.intencao) ? window._npParsedSections.intencao : 'A preencher' },
+        { num:'03', cor:'#4ade80', titulo:'BRIEFING CRIATIVO DETALHADO',
+          conteudo: (window._npParsedSections && window._npParsedSections.briefing) ? window._npParsedSections.briefing : 'A preencher' }
       ]
     };
     CONTENT[profile].push(card);
@@ -26759,6 +26762,9 @@ async function executeNewPost() {
     }
   });
 
+  // Limpar seções parseadas após uso
+  window._npParsedSections = null;
+
   closeNewPostModal({target: document.getElementById('newPostModal'), currentTarget: document.getElementById('newPostModal')});
   renderAll();
   buildHist();
@@ -26786,6 +26792,72 @@ function formatSpec(fmt) {
 document.addEventListener('change', function(e) {
   if (e.target.id === 'np-repeat-start' || e.target.id === 'np-repeat-end') npUpdateRepeatInfo();
 });
+
+// ── PARSE DO PROMPT DA POSTAGEM ──────────────────────────────────────────────
+// Detecta seções no prompt colado e distribui nos campos corretos.
+// Funciona nos modos 'np' (Nova Postagem) e 'edit' (Edição).
+function parseAndFillPrompt(mode) {
+  const textoId   = mode === 'np' ? 'np-texto'    : 'edit-texto';
+  const sec01Id   = mode === 'np' ? null          : 'edit-sec01';
+  const sec02Id   = mode === 'np' ? null          : 'edit-sec02';
+  const sec03Id   = mode === 'np' ? null          : 'edit-sec03';
+
+  const raw = document.getElementById(textoId).value;
+  if (!raw || raw.trim().length < 20) return; // muito curto, não tenta separar
+
+  // Padrões de cabeçalho para cada seção (case-insensitive)
+  const patterns = {
+    texto:    /TEXTO\s+DA\s+POSTAGEM\s*[:\-]?/i,
+    formato:  /FORMATO\s+E\s+ESPECIFICA[ÇC][ÃA]O(?:ES)?\s*[:\-]?/i,
+    intencao: /INTEN[ÇC][ÃA]O\s+DA\s+POSTAGEM\s*[:\-]?/i,
+    briefing: /BRIEFING\s+CRIATIVO\s+(?:DETALHADO)?\s*[:\-]?/i
+  };
+
+  // Encontra posições de cada cabeçalho no texto
+  const positions = [];
+  for (const [key, pat] of Object.entries(patterns)) {
+    const m = pat.exec(raw);
+    if (m) positions.push({ key, start: m.index, end: m.index + m[0].length });
+  }
+
+  // Se não encontrou nenhuma seção, mantém o texto como está
+  if (positions.length === 0) return;
+
+  // Ordena por posição
+  positions.sort((a, b) => a.start - b.start);
+
+  // Extrai conteúdo de cada seção
+  const sections = {};
+  for (let i = 0; i < positions.length; i++) {
+    const from = positions[i].end;
+    const to   = i + 1 < positions.length ? positions[i + 1].start : raw.length;
+    sections[positions[i].key] = raw.slice(from, to).trim();
+  }
+
+  // Preenche os campos
+  if (sections.texto !== undefined) {
+    document.getElementById(textoId).value = sections.texto;
+  } else {
+    // se não achou a seção texto, deixa o campo inteiro como texto
+  }
+
+  if (mode === 'edit') {
+    if (sections.formato  !== undefined && sec01Id) document.getElementById(sec01Id).value = sections.formato;
+    if (sections.intencao !== undefined && sec02Id) document.getElementById(sec02Id).value = sections.intencao;
+    if (sections.briefing !== undefined && sec03Id) document.getElementById(sec03Id).value = sections.briefing;
+    showToast('✅ Prompt separado nos painéis!');
+  } else {
+    // No modo 'np' (Nova Postagem) ainda não existem os campos sec01/02/03,
+    // então armazenamos temporariamente para aplicar em executeNewPost()
+    window._npParsedSections = sections;
+    const hints = [];
+    if (sections.texto    !== undefined) hints.push('📝 Texto');
+    if (sections.formato  !== undefined) hints.push('📐 Formato');
+    if (sections.intencao !== undefined) hints.push('🎯 Intenção');
+    if (sections.briefing !== undefined) hints.push('✨ Briefing');
+    if (hints.length > 1) showToast('✅ Prompt separado: ' + hints.join(', '));
+  }
+}
 
 
 // ── DESFAZER PUBLICAÇÃO ──
@@ -28362,9 +28434,9 @@ if (!localStorage.getItem('lastCleanup') || new Date(localStorage.getItem('lastC
       </div>
 
       <div class="field-group">
-        <div class="field-label" style="color:#f5a623">📝 Texto da postagem</div>
-        <textarea class="field-input" id="edit-texto" rows="6" placeholder="Texto completo da postagem..."></textarea>
-        <div class="field-hint">Esse é o texto que vai para o Instagram</div>
+        <div class="field-label" style="color:#f5a623">📋 Prompt da postagem</div>
+        <textarea class="field-input" id="edit-texto" rows="6" placeholder="Cole o prompt completo aqui — o sistema vai separar automaticamente nos painéis abaixo..." onpaste="setTimeout(()=>parseAndFillPrompt('edit'),0)"></textarea>
+        <div class="field-hint" style="color:#f5a623">💡 Cole o prompt completo — ele será separado em: Texto, Formato, Intenção e Briefing</div>
       </div>
 
       <div class="field-group">
@@ -28500,8 +28572,9 @@ if (!localStorage.getItem('lastCleanup') || new Date(localStorage.getItem('lastC
       </div>
 
       <div class="field-group">
-        <div class="field-label" style="color:#00b4d8">📝 Texto da postagem</div>
-        <textarea class="field-input" id="np-texto" rows="5" placeholder="Texto que vai para o Instagram..."></textarea>
+        <div class="field-label" style="color:#00b4d8">📋 Prompt da postagem</div>
+        <textarea class="field-input" id="np-texto" rows="5" placeholder="Cole o prompt completo aqui — o sistema vai separar automaticamente em: Texto da Postagem, Formato e Especificação, Intenção da Postagem e Briefing Criativo..." onpaste="setTimeout(()=>parseAndFillPrompt('np'),0)"></textarea>
+        <div class="field-hint" style="color:#00b4d8">💡 Cole o prompt completo — ele será separado automaticamente nos painéis</div>
       </div>
 
       <div class="field-group">
