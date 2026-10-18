@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -26816,8 +26816,10 @@ function parseAndFillPrompt(mode) {
   // - "1. TEXTO DA POSTAGEM -"
   // (case-insensitive, com/sem acento)
   const patterns = {
+    // Aceita: "TEXTO DA POSTAGEM", "## 1. TEXTO DA POSTAGEM", etc.
     texto:    /(?:#{1,4}\s*)?(?:\d+\.\s*)?TEXTO\s+DA\s+POSTAGEM\s*[:\-]?\s*/i,
-    formato:  /(?:#{1,4}\s*)?(?:\d+\.\s*)?FORMATO\s+E\s+ESPECIFICA[ÇC][ÃA]O(?:ES)?\s*[:\-]?\s*/i,
+    // Aceita singular (ESPECIFICACAO/ESPECIFICACAO) e plural (ESPECIFICACOES/ESPECIFICACOES)
+    formato:  /(?:#{1,4}\s*)?(?:\d+\.\s*)?FORMATO\s+E\s+ESPECIFICA[ÇC](?:[ÃA]O|[ÕO]ES)\s*[:\-]?\s*/i,
     intencao: /(?:#{1,4}\s*)?(?:\d+\.\s*)?INTEN[ÇC][ÃA]O\s+DA\s+POSTAGEM\s*[:\-]?\s*/i,
     briefing: /(?:#{1,4}\s*)?(?:\d+\.\s*)?BRIEFING\s+CRIATIVO\s+(?:DETALHADO)?\s*[:\-]?\s*/i
   };
