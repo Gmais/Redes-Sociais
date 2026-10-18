@@ -26834,18 +26834,20 @@ function parseAndFillPrompt(mode) {
     sections[positions[i].key] = raw.slice(from, to).trim();
   }
 
-  // Preenche os campos
-  if (sections.texto !== undefined) {
-    document.getElementById(textoId).value = sections.texto;
-  } else {
-    // se não achou a seção texto, deixa o campo inteiro como texto
-  }
+  // ✅ O prompt completo PERMANECE no textarea — as seções são
+  //    copiadas para os painéis sem apagar nada do campo.
 
   if (mode === 'edit') {
     if (sections.formato  !== undefined && sec01Id) document.getElementById(sec01Id).value = sections.formato;
     if (sections.intencao !== undefined && sec02Id) document.getElementById(sec02Id).value = sections.intencao;
     if (sections.briefing !== undefined && sec03Id) document.getElementById(sec03Id).value = sections.briefing;
-    showToast('✅ Prompt separado nos painéis!');
+    const hints = [];
+    if (sections.texto    !== undefined) hints.push('📝 Texto');
+    if (sections.formato  !== undefined) hints.push('📐 Formato');
+    if (sections.intencao !== undefined) hints.push('🎯 Intenção');
+    if (sections.briefing !== undefined) hints.push('✨ Briefing');
+    if (hints.length > 1) showToast('✅ Separado nos painéis: ' + hints.join(', '));
+    else showToast('✅ Prompt separado nos painéis!');
   } else {
     // No modo 'np' (Nova Postagem) ainda não existem os campos sec01/02/03,
     // então armazenamos temporariamente para aplicar em executeNewPost()
