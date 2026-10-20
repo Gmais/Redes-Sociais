@@ -125,6 +125,15 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .panel.on { display:block; }
 
 .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:28px; }
+.auto-bar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:var(--card,#161616); border:1px solid #2a2a2a; border-radius:12px; padding:12px 14px; margin-bottom:14px; }
+.auto-btn { display:inline-flex; align-items:center; gap:8px; border:1px solid #3a3a3a; background:#1d1d1d; color:#ddd; border-radius:999px; padding:8px 14px; font-size:13px; font-weight:700; cursor:pointer; }
+.auto-btn .auto-sw { width:30px; height:17px; border-radius:999px; background:#444; position:relative; transition:background .2s; }
+.auto-btn .auto-sw::after { content:''; position:absolute; top:2px; left:2px; width:13px; height:13px; border-radius:50%; background:#fff; transition:left .2s; }
+.auto-btn.on { border-color:#4ade80; color:#4ade80; }
+.auto-btn.on .auto-sw { background:#4ade80; }
+.auto-btn.on .auto-sw::after { left:15px; }
+.auto-btn[disabled] { opacity:.6; cursor:wait; }
+.auto-info { font-size:12px; color:#9a9a9a; flex:1; min-width:180px; }
 .stat { background:var(--s1); border:1px solid var(--border); border-radius:10px; padding:14px 12px; text-align:center; }
 .stat-n { font-family:'Bebas Neue',sans-serif; font-size:30px; line-height:1; }
 .stat-l { font-size:9px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--txt3); margin-top:4px; }
@@ -25284,6 +25293,51 @@ function cardHTML(item,profile){
 </div>`;
 }
 
+// ── Modo Automático ───────────────────────────────────────────────────────
+// Ligado: o servidor mantém os próximos 3 dias da marca gerados (api/auto-content.js,
+// cron diário + disparo imediato ao ligar). Desligado: nada é gerado, tudo fica como está.
+window.AUTO_MODE = window.AUTO_MODE || {};
+window.AUTO_BUSY = window.AUTO_BUSY || {};
+function autoBarHTML(profile){
+  const on = !!window.AUTO_MODE[profile], busy = !!window.AUTO_BUSY[profile];
+  const info = busy ? 'Gerando o conteúdo dos próximos 3 dias…'
+    : on ? 'Ligado — mantém os próximos 3 dias gerados automaticamente (só preenche o que falta; o que você editou ou excluiu não é refeito).'
+    : 'Desligado — nada é gerado automaticamente.';
+  return `<div class="auto-bar"><button class="auto-btn${on?' on':''}" ${busy?'disabled':''} onclick="toggleAutoMode('${profile}')"><span>🤖 Modo Automático</span><span class="auto-sw"></span></button><span class="auto-info">${info}</span></div>`;
+}
+async function toggleAutoMode(profile){
+  if (window.AUTO_BUSY[profile]) return;
+  const turnOn = !window.AUTO_MODE[profile];
+  window.AUTO_BUSY[profile] = true;
+  try {
+    // Lê o estado atual antes de gravar para não apagar a escolha das outras marcas.
+    let current = {};
+    const r0 = await supabaseFetch('painel_gilson_state?key=eq.auto_mode&select=value');
+    if (r0.ok) { const rows = await r0.json(); if (rows[0] && rows[0].value) current = rows[0].value; }
+    current[profile] = turnOn;
+    const w = await supabaseFetch('painel_gilson_state', { method:'POST', headers:{ 'Prefer':'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify([{ key:'auto_mode', value:current, updated_at:new Date().toISOString() }]) });
+    if (!w.ok) throw new Error('não foi possível salvar o modo');
+    window.AUTO_MODE = current;
+    renderPanel(profile);
+    if (turnOn) {
+      showToast('🤖 Gerando os próximos 3 dias…');
+      const g = await fetch('/api/auto-content', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ profile }) });
+      const j = await g.json().catch(() => ({}));
+      const res = (j.results || [])[0] || {};
+      if (!g.ok || res.error) throw new Error(res.error || j.error || 'falha ao gerar');
+      await pullRemoteState();
+      showToast(res.created ? '✓ ' + res.created + ' post(s) gerado(s)' : '✓ Próximos 3 dias já estão completos');
+    } else {
+      showToast('Modo Automático desligado');
+    }
+  } catch (e) {
+    showToast('⚠️ Modo Automático: ' + e.message);
+  } finally {
+    window.AUTO_BUSY[profile] = false;
+    renderAll();
+  }
+}
+
 function renderPanel(profile){
   const items=CONTENT[profile];
   const el=document.getElementById('p-'+profile);
@@ -25308,7 +25362,7 @@ function renderPanel(profile){
       <div class="stat"><div class="stat-n" style="color:${c}">${doneN}</div><div class="stat-l">Feito</div></div>
       <div class="stat"><div class="stat-n">${total-doneN}</div><div class="stat-l">Pendente</div></div>
       <div class="stat"><div class="stat-n" style="color:${c}">${pct}%</div><div class="stat-l">Progresso</div></div>
-    </div>${html||emptyMsg}`;
+    </div>${autoBarHTML(profile)}${html||emptyMsg}`;
 }
 
 function renderAll(){
@@ -25822,6 +25876,24 @@ async function pullRemoteState() {
           changed = true;
         }
       } catch(e){}
+    }
+
+    const autoModeRow = rows.find(r => r.key === 'auto_mode');
+    if (autoModeRow && autoModeRow.value && typeof autoModeRow.value === 'object') window.AUTO_MODE = autoModeRow.value;
+    {
+      let deletedForAuto = [];
+      try { deletedForAuto = JSON.parse(localStorage.getItem('deleted_cards') || '[]'); } catch(e) {}
+      const deletedAutoSet = new Set(deletedForAuto);
+      for (const profile of ['academia','sorveteria','gympulse']) {
+        const row = rows.find(r => r.key === 'auto_cards_' + profile);
+        if (!row || !Array.isArray(row.value)) continue;
+        row.value.forEach(card => {
+          if (!card || !card.id || deletedAutoSet.has(card.id)) return;
+          if (CONTENT[profile].some(c => c.id === card.id)) return;
+          CONTENT[profile].push(card);
+          changed = true;
+        });
+      }
     }
 
     if (doneRow && doneRow.value) {

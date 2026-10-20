@@ -7,6 +7,13 @@
     "api/gympulse-ranking.js": {
       "maxDuration": 60,
       "includeFiles": "assets/fonts/**"
+    },
+    "api/auto-content.js": {
+      "maxDuration": 120,
+      "includeFiles": "CONTEXTO.md"
     }
-  }
+  },
+  "crons": [
+    { "path": "/api/auto-content", "schedule": "0 9 * * *" }
+  ]
 }
