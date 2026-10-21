@@ -5,15 +5,12 @@
       "includeFiles": "assets/marcas/**"
     },
     "api/gympulse-ranking.js": {
-      "maxDuration": 60,
+      "maxDuration": 120,
       "includeFiles": "assets/fonts/**"
     },
     "api/auto-content.js": {
       "maxDuration": 120,
       "includeFiles": "CONTEXTO.md"
-    },
-    "api/gympulse-ranking-trigger.js": {
-      "maxDuration": 120
     }
   },
   "crons": [
@@ -22,11 +19,11 @@
       "schedule": "0 9 * * *"
     },
     {
-      "path": "/api/gympulse-ranking-trigger",
+      "path": "/api/gympulse-ranking",
       "schedule": "0 1 * * 2-6"
     },
     {
-      "path": "/api/gympulse-ranking-trigger?tentativa=2",
+      "path": "/api/gympulse-ranking?tentativa=2",
       "schedule": "0 2 * * 2-6"
     }
   ]

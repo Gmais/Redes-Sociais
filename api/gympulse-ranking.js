@@ -19,9 +19,13 @@
 //   mode 'render'  -> so devolve o PNG (base64), sem tocar na Zernio
 //   mode 'upload'  -> gera e sobe a imagem na Zernio, sem criar o post
 //   mode 'publish' -> (padrao) publica o Story agora
+//
+// GET (cron do Vercel, seg-sex 22h/23h BRT): dispara a exportacao no Gympulse,
+// sem depender do pg_cron de la (ver lib/gympulse-ranking-trigger.js).
 
 const crypto = require('crypto');
 const { renderRankingCard, THEMES } = require('../lib/ranking-card');
+const triggerExport = require('../lib/gympulse-ranking-trigger');
 
 const ZERNIO_BASE = 'https://zernio.com/api/v1';
 // Mesmo ID da conta da Academia usado em publish-zernio.js (ZERNIO_ACCOUNT_ACADEMIA troca a conta).
@@ -127,6 +131,7 @@ function validate(body) {
 }
 
 module.exports = async (req, res) => {
+  if (req.method === 'GET') return triggerExport(req, res);
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Metodo nao permitido' });
     return;
