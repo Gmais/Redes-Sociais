@@ -11,9 +11,23 @@
     "api/auto-content.js": {
       "maxDuration": 120,
       "includeFiles": "CONTEXTO.md"
+    },
+    "api/gympulse-ranking-trigger.js": {
+      "maxDuration": 120
     }
   },
   "crons": [
-    { "path": "/api/auto-content", "schedule": "0 9 * * *" }
+    {
+      "path": "/api/auto-content",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/gympulse-ranking-trigger",
+      "schedule": "0 1 * * 2-6"
+    },
+    {
+      "path": "/api/gympulse-ranking-trigger?tentativa=2",
+      "schedule": "0 2 * * 2-6"
+    }
   ]
 }
