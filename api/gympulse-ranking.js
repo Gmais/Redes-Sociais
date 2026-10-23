@@ -93,9 +93,12 @@ async function setLogEntry(key, entry) {
   await writeLog(log);
 }
 
+const ZERNIO_TIMEOUT_MS = 20 * 1000;
+
 async function zernio(path, apiKey, options = {}) {
   const res = await fetch(`${ZERNIO_BASE}${path}`, {
     ...options,
+    signal: options.signal || AbortSignal.timeout(ZERNIO_TIMEOUT_MS),
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json', ...(options.headers || {}) },
   });
   let data = {};
@@ -109,7 +112,12 @@ async function uploadToZernio(png, apiKey, fileName) {
     method: 'POST',
     body: JSON.stringify({ filename: fileName, contentType: 'image/png' }),
   });
-  const put = await fetch(presign.uploadUrl, { method: 'PUT', headers: { 'Content-Type': 'image/png' }, body: png });
+  const put = await fetch(presign.uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'image/png' },
+    body: png,
+    signal: AbortSignal.timeout(ZERNIO_TIMEOUT_MS),
+  });
   if (!put.ok) throw new Error('Falha ao enviar a imagem para a Zernio (status ' + put.status + ')');
   return presign.publicUrl;
 }
