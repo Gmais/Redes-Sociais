@@ -26595,7 +26595,7 @@ let npSelectedFiles = [];
 function openNewPostModal() {
   const modal = document.getElementById('newPostModal');
   document.getElementById('np-date').value = todayBR();
-  document.getElementById('np-time').value = '10h';
+  document.getElementById('np-time').value = '10:00';
   document.getElementById('np-format').value = 'Story';
   document.getElementById('np-title').value = '';
   document.getElementById('np-texto').value = '';
@@ -28633,17 +28633,7 @@ if (!localStorage.getItem('lastCleanup') || new Date(localStorage.getItem('lastC
 
       <div class="field-group">
         <div class="field-label" style="color:#00b4d8">🕐 Horário</div>
-        <select class="field-input" id="np-time">
-          <option value="06h">06h</option><option value="07h">07h</option>
-          <option value="08h">08h</option><option value="09h">09h</option>
-          <option value="10h">10h</option><option value="11h">11h</option>
-          <option value="11h30">11h30</option><option value="12h">12h</option>
-          <option value="13h">13h</option><option value="14h">14h</option>
-          <option value="15h">15h</option><option value="16h">16h</option>
-          <option value="17h">17h</option><option value="18h">18h</option>
-          <option value="19h">19h</option><option value="20h">20h</option>
-          <option value="21h">21h</option>
-        </select>
+        <input class="field-input" id="np-time" type="time" step="300">
       </div>
 
       <div class="field-group">
