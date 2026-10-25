@@ -855,6 +855,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 #gen-use[style*="none"] ~ #gen-editbtn { display:none; }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js" async defer></script>
 </head>
 <body>
 
@@ -24887,6 +24888,12 @@ function rerenderImageBox(id, profile){
 
 // ── GOOGLE OAUTH (browser-side, direct upload to Drive) ──
 const GOOGLE_OAUTH_CLIENT_ID = '531127789749-cj3s2m5rn48g17t8u8hsf4jq86n6i1c1.apps.googleusercontent.com';
+// Chave de API do Google (NÃO é a mesma coisa que o Client ID acima) — necessária
+// só para abrir o seletor visual (Picker) de arquivos já existentes no Drive.
+// Gerar em console.cloud.google.com, no mesmo projeto do Client ID, com a
+// "Google Picker API" ativada. Enquanto ficar vazia, o botão de importar
+// mostra um aviso em vez de travar silenciosamente.
+const GOOGLE_PICKER_API_KEY = '';
 let gisTokenClient = null;
 let driveAccessToken = null;
 let driveTokenExpiry = 0;
@@ -25034,6 +25041,70 @@ async function uploadFileToDrive(file, folderId){
     xhr.setRequestHeader('Content-Type', 'multipart/related; boundary=' + boundary);
     xhr.send(body);
   });
+}
+
+// ── GOOGLE DRIVE PICKER (importar imagem/vídeo já existente, sem reenviar) ──
+let pickerApiLoaded = false;
+let _pickerPickCallback = null; // função chamada com a lista de arquivos escolhidos
+
+function loadPickerApi(cb) {
+  if (pickerApiLoaded) { cb(); return; }
+  if (!window.gapi) { setTimeout(() => loadPickerApi(cb), 300); return; }
+  gapi.load('picker', () => { pickerApiLoaded = true; cb(); });
+}
+
+// onPicked(files) — files: [{fileId, fileName, fileType, viewUrl, thumbnailLink}]
+// chamada só quando o usuário efetivamente escolhe algo (cancelar não chama).
+function openDrivePicker(profile, onPicked) {
+  if (!GOOGLE_PICKER_API_KEY) {
+    alert('Importar do Drive ainda não foi configurado: falta a Chave de API do Google (peça pro Gilson configurar).');
+    return;
+  }
+  ensureDriveAuth((err) => {
+    if (err) { alert('Google Drive: ' + err.message); return; }
+    loadPickerApi(() => {
+      const folderId = DRIVE_FOLDER_MAP[profile];
+      const view = new google.picker.DocsView(google.picker.ViewId.DOCS)
+        .setParent(folderId)
+        .setIncludeFolders(false)
+        .setMimeTypes('image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime')
+        .setSelectFolderEnabled(false);
+      _pickerPickCallback = onPicked;
+      const picker = new google.picker.PickerBuilder()
+        .addView(view)
+        .setOAuthToken(driveAccessToken)
+        .setDeveloperKey(GOOGLE_PICKER_API_KEY)
+        .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+        .setCallback(pickerResultCallback)
+        .build();
+      picker.setVisible(true);
+    });
+  });
+}
+
+async function pickerResultCallback(data) {
+  if (data.action !== google.picker.Action.PICKED) return;
+  const cb = _pickerPickCallback;
+  if (!cb) return;
+  showToast('📥 Importando do Drive...');
+  const files = [];
+  for (const doc of data.docs) {
+    try {
+      files.push(await fetchDriveFileMeta(doc.id));
+    } catch (e) {
+      showToast('❌ Erro ao importar ' + doc.name);
+    }
+  }
+  if (files.length) cb(files);
+}
+
+async function fetchDriveFileMeta(fileId) {
+  const res = await fetch('https://www.googleapis.com/drive/v3/files/' + fileId + '?fields=id,name,mimeType,webViewLink,thumbnailLink', {
+    headers: { Authorization: 'Bearer ' + driveAccessToken }
+  });
+  if (!res.ok) throw new Error('Falha ao ler metadados do arquivo');
+  const d = await res.json();
+  return { fileId: d.id, fileName: d.name, fileType: d.mimeType, viewUrl: d.webViewLink || '', thumbnailLink: d.thumbnailLink || '' };
 }
 
 function showUploadProgress(pct, fileName) {
@@ -26591,6 +26662,7 @@ function deleteCard(id, profile) {
 
 // ── NOVA POSTAGEM ──────────────────────────────────────────────────────────
 let npSelectedFiles = [];
+let npDriveFiles = []; // arquivos importados do Drive (já no Drive, não precisam de upload)
 
 function openNewPostModal() {
   const modal = document.getElementById('newPostModal');
@@ -26603,6 +26675,7 @@ function openNewPostModal() {
   document.getElementById('np-schedule-section').style.display = 'none';
   document.getElementById('np-repeat').value = 'none';
   npSelectedFiles = [];
+  npDriveFiles = [];
   document.getElementById('np-media-list').innerHTML = '';
   document.getElementById('np-media-input').removeAttribute('multiple');
   document.getElementById('np-media-hint').textContent = 'Imagem ou vídeo.';
@@ -26654,8 +26727,11 @@ function npSelectMedia() {
 }
 
 function npOpenDrive() {
-  const folderId = DRIVE_FOLDER_MAP[activeProfile];
-  window.open('https://drive.google.com/drive/folders/' + folderId, '_blank');
+  openDrivePicker(activeProfile, (files) => {
+    npDriveFiles.push(...files);
+    npRenderMediaList();
+    showToast('✅ ' + files.length + ' arquivo(s) importado(s) do Drive');
+  });
 }
 
 function npMediaSelected(inputEl) {
@@ -26672,15 +26748,25 @@ function npMediaSelected(inputEl) {
 
 function npRenderMediaList() {
   const list = document.getElementById('np-media-list');
-  if (!npSelectedFiles.length) { list.innerHTML = ''; return; }
-  list.innerHTML = npSelectedFiles.map((f, i) => {
+  if (!npSelectedFiles.length && !npDriveFiles.length) { list.innerHTML = ''; return; }
+  const localHtml = npSelectedFiles.map((f, i) => {
     const icon = f.type.startsWith('video') ? '🎬' : '🖼️';
     return '<div class="carousel-slide"><span>' + icon + ' ' + f.name + '</span><button class="slide-remove" onclick="npRemoveMedia(' + i + ')">✕</button></div>';
   }).join('');
+  const driveHtml = npDriveFiles.map((f, i) => {
+    const icon = f.fileType.startsWith('video') ? '🎬' : '🖼️';
+    return '<div class="carousel-slide"><span>' + icon + ' ' + f.fileName + ' (Drive)</span><button class="slide-remove" onclick="npRemoveDriveMedia(' + i + ')">✕</button></div>';
+  }).join('');
+  list.innerHTML = localHtml + driveHtml;
 }
 
 function npRemoveMedia(idx) {
   npSelectedFiles.splice(idx, 1);
+  npRenderMediaList();
+}
+
+function npRemoveDriveMedia(idx) {
+  npDriveFiles.splice(idx, 1);
   npRenderMediaList();
 }
 
@@ -26788,6 +26874,8 @@ async function executeNewPost() {
       }
     }
   }
+  // Arquivos importados do Drive já estão lá — só anexar, sem reenviar
+  uploadedFiles.push(...npDriveFiles);
 
   // Criar posts
   allDates.forEach((dt, idx) => {
@@ -28662,7 +28750,7 @@ if (!localStorage.getItem('lastCleanup') || new Date(localStorage.getItem('lastC
         <div class="np-media-area" id="np-media-area">
           <div style="display:flex;gap:8px">
             <button class="np-media-btn" onclick="npSelectMedia()">📤 Selecionar arquivo(s)</button>
-            <button class="np-media-btn" onclick="npOpenDrive()">📁 Abrir Google Drive</button>
+            <button class="np-media-btn" onclick="npOpenDrive()">📁 Importar do Drive</button>
           </div>
           <div class="np-media-hint" id="np-media-hint">Imagem ou vídeo. Para Carrossel, selecione vários.</div>
           <div class="np-media-list" id="np-media-list"></div>
