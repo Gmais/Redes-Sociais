@@ -26653,6 +26653,11 @@ function npSelectMedia() {
   document.getElementById('np-media-input').click();
 }
 
+function npOpenDrive() {
+  const folderId = DRIVE_FOLDER_MAP[activeProfile];
+  window.open('https://drive.google.com/drive/folders/' + folderId, '_blank');
+}
+
 function npMediaSelected(inputEl) {
   if (!inputEl.files || !inputEl.files.length) return;
   for (const f of inputEl.files) {
@@ -28665,7 +28670,10 @@ if (!localStorage.getItem('lastCleanup') || new Date(localStorage.getItem('lastC
       <div class="field-group">
         <div class="field-label" style="color:#f5c200">📎 Mídia</div>
         <div class="np-media-area" id="np-media-area">
-          <button class="np-media-btn" onclick="npSelectMedia()">📤 Selecionar arquivo(s)</button>
+          <div style="display:flex;gap:8px">
+            <button class="np-media-btn" onclick="npSelectMedia()">📤 Selecionar arquivo(s)</button>
+            <button class="np-media-btn" onclick="npOpenDrive()">📁 Abrir Google Drive</button>
+          </div>
           <div class="np-media-hint" id="np-media-hint">Imagem ou vídeo. Para Carrossel, selecione vários.</div>
           <div class="np-media-list" id="np-media-list"></div>
         </div>
