@@ -26685,24 +26685,13 @@ function openNewPostModal() {
   document.getElementById('np-media-hint').textContent = 'Imagem ou vídeo.';
   npFormatChanged();
 
-  // Profile bar
+  // Marca da postagem = marca da aba aberta no painel (não dá pra trocar aqui dentro)
   const profileLabels = {academia:'🏋️ Academia', sorveteria:'🍦 Sorveteria', gympulse:'🎮 GympulsePro'};
   const profileColors = {academia:'#e63900', sorveteria:'#f5c800', gympulse:'#f5c200'};
-  let barHtml = '';
-  ['academia','sorveteria','gympulse'].forEach(p => {
-    const sel = p === activeProfile ? ' np-profile-active' : '';
-    barHtml += '<button class="np-profile-opt' + sel + '" style="--pc:' + profileColors[p] + '" data-p="' + p + '" onclick="npSelectProfile(\'' + p + '\')">' + profileLabels[p] + '</button>';
-  });
-  document.getElementById('np-profile-bar').innerHTML = barHtml;
+  document.getElementById('np-profile-bar').innerHTML =
+    '<span class="np-profile-opt np-profile-active" style="--pc:' + profileColors[activeProfile] + ';cursor:default">' + profileLabels[activeProfile] + '</span>';
 
   modal.classList.add('open');
-}
-
-function npSelectProfile(p) {
-  activeProfile = p;
-  document.querySelectorAll('.np-profile-opt').forEach(el => {
-    el.classList.toggle('np-profile-active', el.dataset.p === p);
-  });
 }
 
 function closeNewPostModal(e) {
