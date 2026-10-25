@@ -26674,7 +26674,7 @@ let npDriveFiles = []; // arquivos importados do Drive (já no Drive, não preci
 function openNewPostModal() {
   const modal = document.getElementById('newPostModal');
   document.getElementById('np-date').value = todayBR();
-  document.getElementById('np-time').value = '10:00';
+  npSetTime('10:00');
   document.getElementById('np-format').value = 'Story';
   document.getElementById('np-title').value = '';
   document.getElementById('np-texto').value = '';
@@ -26716,6 +26716,19 @@ function npFormatChanged() {
     input.removeAttribute('multiple');
     hint.textContent = 'Imagem ou vídeo.';
   }
+}
+
+function npSetTime(hhmm) {
+  const [h, m] = hhmm.split(':');
+  document.getElementById('np-time-h').value = h;
+  // Arredonda pro múltiplo de 15 mais próximo (só os 4 valores existem no select)
+  const mNum = parseInt(m, 10);
+  const mRounded = String(Math.round(mNum / 15) * 15 % 60).padStart(2, '0');
+  document.getElementById('np-time-m').value = mRounded;
+}
+
+function npGetTime() {
+  return document.getElementById('np-time-h').value + ':' + document.getElementById('np-time-m').value;
 }
 
 function npSelectMedia() {
@@ -26820,7 +26833,7 @@ function npAddExtraDate() {
 async function executeNewPost() {
   const profile = activeProfile;
   const baseDate = document.getElementById('np-date').value;
-  const time = document.getElementById('np-time').value;
+  const time = npGetTime();
   const format = document.getElementById('np-format').value;
   const title = document.getElementById('np-title').value.trim();
   // Se o prompt foi parseado, usa a seção 'texto' como caption do Instagram.
@@ -28717,7 +28730,22 @@ if (!localStorage.getItem('lastCleanup') || new Date(localStorage.getItem('lastC
 
       <div class="field-group">
         <div class="field-label" style="color:#00b4d8">🕐 Horário</div>
-        <input class="field-input" id="np-time" type="time" step="900">
+        <div style="display:flex;gap:8px">
+          <select class="field-input" id="np-time-h">
+            <option value="00">00h</option><option value="01">01h</option><option value="02">02h</option>
+            <option value="03">03h</option><option value="04">04h</option><option value="05">05h</option>
+            <option value="06">06h</option><option value="07">07h</option><option value="08">08h</option>
+            <option value="09">09h</option><option value="10">10h</option><option value="11">11h</option>
+            <option value="12">12h</option><option value="13">13h</option><option value="14">14h</option>
+            <option value="15">15h</option><option value="16">16h</option><option value="17">17h</option>
+            <option value="18">18h</option><option value="19">19h</option><option value="20">20h</option>
+            <option value="21">21h</option><option value="22">22h</option><option value="23">23h</option>
+          </select>
+          <select class="field-input" id="np-time-m">
+            <option value="00">00</option><option value="15">15</option>
+            <option value="30">30</option><option value="45">45</option>
+          </select>
+        </div>
       </div>
 
       <div class="field-group">
