@@ -654,7 +654,17 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 }
 .np-media-btn:hover { border-color:#f5c200; color:#f5c200; }
 .np-media-hint { font-size:11px; color:var(--txt3); margin-top:6px; text-align:center; }
-.np-media-list { margin-top:8px; display:flex; flex-direction:column; gap:4px; }
+.np-media-list { margin-top:8px; display:flex; flex-direction:column; gap:6px; }
+.np-media-item {
+  display:flex; align-items:center; gap:10px; background:var(--s1);
+  border:1px solid var(--border); border-radius:8px; padding:6px 10px;
+}
+.np-media-thumb {
+  width:56px; height:56px; border-radius:6px; object-fit:contain;
+  background:#0a0f0a; border:1px solid var(--border); flex-shrink:0;
+}
+.np-media-thumb-icon { display:flex; align-items:center; justify-content:center; font-size:22px; }
+.np-media-name { flex:1; min-width:0; font-size:12.5px; color:var(--txt2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .np-divider { height:1px; background:var(--border); margin:16px 0; }
 .np-schedule-toggle {
   display:flex; align-items:center; gap:8px; cursor:pointer;
@@ -26681,6 +26691,7 @@ function openNewPostModal() {
   document.getElementById('np-schedule-check').checked = false;
   document.getElementById('np-schedule-section').style.display = 'none';
   document.getElementById('np-repeat').value = 'none';
+  npSelectedFiles.forEach(f => { if (f._previewUrl) URL.revokeObjectURL(f._previewUrl); });
   npSelectedFiles = [];
   npDriveFiles = [];
   document.getElementById('np-media-list').innerHTML = '';
@@ -26755,21 +26766,32 @@ function npMediaSelected(inputEl) {
   inputEl.value = '';
 }
 
+function npFileThumbHTML(f) {
+  if (f.type.startsWith('video')) return '<div class="np-media-thumb np-media-thumb-icon">🎬</div>';
+  if (!f._previewUrl) f._previewUrl = URL.createObjectURL(f);
+  return '<img class="np-media-thumb" src="' + f._previewUrl + '" alt="">';
+}
+
+function npDriveThumbHTML(f) {
+  if (f.thumbnailLink) return '<img class="np-media-thumb" src="' + f.thumbnailLink + '" alt="">';
+  return '<div class="np-media-thumb np-media-thumb-icon">' + (f.fileType.startsWith('video') ? '🎬' : '🖼️') + '</div>';
+}
+
 function npRenderMediaList() {
   const list = document.getElementById('np-media-list');
   if (!npSelectedFiles.length && !npDriveFiles.length) { list.innerHTML = ''; return; }
   const localHtml = npSelectedFiles.map((f, i) => {
-    const icon = f.type.startsWith('video') ? '🎬' : '🖼️';
-    return '<div class="carousel-slide"><span>' + icon + ' ' + f.name + '</span><button class="slide-remove" onclick="npRemoveMedia(' + i + ')">✕</button></div>';
+    return '<div class="np-media-item">' + npFileThumbHTML(f) + '<span class="np-media-name">' + f.name + '</span><button class="slide-remove" onclick="npRemoveMedia(' + i + ')">✕</button></div>';
   }).join('');
   const driveHtml = npDriveFiles.map((f, i) => {
-    const icon = f.fileType.startsWith('video') ? '🎬' : '🖼️';
-    return '<div class="carousel-slide"><span>' + icon + ' ' + f.fileName + ' (Drive)</span><button class="slide-remove" onclick="npRemoveDriveMedia(' + i + ')">✕</button></div>';
+    return '<div class="np-media-item">' + npDriveThumbHTML(f) + '<span class="np-media-name">' + f.fileName + ' (Drive)</span><button class="slide-remove" onclick="npRemoveDriveMedia(' + i + ')">✕</button></div>';
   }).join('');
   list.innerHTML = localHtml + driveHtml;
 }
 
 function npRemoveMedia(idx) {
+  const f = npSelectedFiles[idx];
+  if (f && f._previewUrl) URL.revokeObjectURL(f._previewUrl);
   npSelectedFiles.splice(idx, 1);
   npRenderMediaList();
 }
