@@ -24905,12 +24905,15 @@ function initGoogleAuth(){
   }
   gisTokenClient = google.accounts.oauth2.initTokenClient({
     client_id: GOOGLE_OAUTH_CLIENT_ID,
-    scope: 'https://www.googleapis.com/auth/drive.file',
+    // drive.file sozinho só deixa o Picker gerar miniatura de arquivos criados
+    // por este app; os arquivos de IA são criados por outro processo, então
+    // precisa de drive.readonly também para a miniatura aparecer de verdade.
+    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly',
     callback: (resp) => {
       if (resp && resp.access_token) {
         driveAccessToken = resp.access_token;
         driveTokenExpiry = Date.now() + (resp.expires_in ? resp.expires_in * 1000 : 3000000);
-        sessionStorage.setItem('gdrive_token', JSON.stringify({ t: driveAccessToken, exp: driveTokenExpiry }));
+        sessionStorage.setItem('gdrive_token_v2', JSON.stringify({ t: driveAccessToken, exp: driveTokenExpiry }));
         updateDriveConnectBtn(true);
         resolvePendingAuth(null);
       } else {
@@ -24930,8 +24933,9 @@ function initGoogleAuth(){
     }
   });
   // Restore a still-valid token from this browser session, if any
+  // (chave v2: tokens antigos tinham escopo mais estreito e não valem mais)
   try {
-    const saved = JSON.parse(sessionStorage.getItem('gdrive_token') || 'null');
+    const saved = JSON.parse(sessionStorage.getItem('gdrive_token_v2') || 'null');
     if (saved && saved.exp > Date.now() + 60000) {
       driveAccessToken = saved.t;
       driveTokenExpiry = saved.exp;
