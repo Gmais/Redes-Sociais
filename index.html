@@ -635,6 +635,9 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .new-post-btn:hover { background:linear-gradient(135deg,#22c55e,#16a34a); box-shadow:0 0 20px rgba(74,222,128,0.5); }
 #newPostModal { display:none; }
 #newPostModal.open { display:flex; }
+.np-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px 20px; }
+.np-grid .np-full { grid-column:1 / -1; }
+@media (max-width:640px) { .np-grid { grid-template-columns:1fr; } }
 .np-profile-bar { display:flex; gap:6px; margin-bottom:16px; }
 .np-profile-opt {
   flex:1; padding:10px 8px; border-radius:6px; border:2px solid var(--border);
@@ -28698,14 +28701,14 @@ if (!localStorage.getItem('lastCleanup') || new Date(localStorage.getItem('lastC
 
 
 <div class="modal-overlay" id="newPostModal" onclick="closeNewPostModal(event)">
-  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:520px">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:900px;width:100%">
     <div class="modal-header">
       <div class="modal-title">＋ Nova Postagem</div>
       <button class="modal-close" onclick="closeNewPostModal({target:document.getElementById('newPostModal'),currentTarget:document.getElementById('newPostModal')})">✕</button>
     </div>
-    <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+    <div class="modal-body np-grid" style="max-height:85vh;overflow-y:auto">
 
-      <div class="np-profile-bar" id="np-profile-bar"></div>
+      <div class="np-profile-bar np-full" id="np-profile-bar"></div>
 
       <div class="field-group">
         <div class="field-label" style="color:#4ade80">📅 Data</div>
@@ -28732,13 +28735,13 @@ if (!localStorage.getItem('lastCleanup') || new Date(localStorage.getItem('lastC
         <input class="field-input" id="np-title" type="text" placeholder="Ex: Prova Social — Resultados reais">
       </div>
 
-      <div class="field-group">
+      <div class="field-group np-full">
         <div class="field-label" style="color:#00b4d8">📋 Prompt da postagem</div>
         <textarea class="field-input" id="np-texto" rows="5" placeholder="Cole o prompt completo aqui — o sistema vai separar automaticamente em: Texto da Postagem, Formato e Especificação, Intenção da Postagem e Briefing Criativo..." onpaste="setTimeout(()=>parseAndFillPrompt('np'),0)"></textarea>
         <div class="field-hint" style="color:#00b4d8">💡 Cole o prompt completo — ele será separado automaticamente nos painéis</div>
       </div>
 
-      <div class="field-group">
+      <div class="field-group np-full">
         <div class="field-label" style="color:#f5c200">📎 Mídia</div>
         <div class="np-media-area" id="np-media-area">
           <div style="display:flex;gap:8px">
@@ -28751,16 +28754,16 @@ if (!localStorage.getItem('lastCleanup') || new Date(localStorage.getItem('lastC
         <input type="file" id="np-media-input" style="display:none" accept="image/*,video/*" onchange="npMediaSelected(this)">
       </div>
 
-      <div class="np-divider"></div>
+      <div class="np-divider np-full"></div>
 
-      <div class="field-group">
+      <div class="field-group np-full">
         <label class="np-schedule-toggle">
           <input type="checkbox" id="np-schedule-check" onchange="npToggleSchedule()">
           <span>📆 Agendar para outros dias?</span>
         </label>
       </div>
 
-      <div id="np-schedule-section" style="display:none">
+      <div id="np-schedule-section" class="np-full" style="display:none">
         <div class="field-group">
           <div class="field-label" style="color:#f5a623">🔁 Repetição</div>
           <select class="field-input" id="np-repeat" onchange="npRepeatChanged()">
@@ -28781,13 +28784,15 @@ if (!localStorage.getItem('lastCleanup') || new Date(localStorage.getItem('lastC
         </div>
 
         <div id="np-repeat-range" style="display:none">
-          <div class="field-group">
-            <div class="field-label" style="color:#4ade80">📅 Data de início</div>
-            <input class="field-input" id="np-repeat-start" type="date">
-          </div>
-          <div class="field-group">
-            <div class="field-label" style="color:#ff6b6b">📅 Data de término</div>
-            <input class="field-input" id="np-repeat-end" type="date">
+          <div style="display:flex;gap:12px">
+            <div class="field-group" style="flex:1">
+              <div class="field-label" style="color:#4ade80">📅 Data de início</div>
+              <input class="field-input" id="np-repeat-start" type="date">
+            </div>
+            <div class="field-group" style="flex:1">
+              <div class="field-label" style="color:#ff6b6b">📅 Data de término</div>
+              <input class="field-input" id="np-repeat-end" type="date">
+            </div>
           </div>
           <div class="field-hint" id="np-repeat-info"></div>
         </div>
