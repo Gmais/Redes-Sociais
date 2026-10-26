@@ -24916,6 +24916,10 @@ const GOOGLE_PICKER_API_KEY = 'AIzaSyB3Qo8VqsyP0CkFuj4FKnpRqABBPIjBD4c';
 let gisTokenClient = null;
 let driveAccessToken = null;
 let driveTokenExpiry = 0;
+// Conta logins/envios ao Drive em andamento — enquanto > 0, o auto-reload por
+// nova versão (mais abaixo) não pode disparar, senão derruba o login/upload
+// no meio e perde o que já foi gerado.
+window._driveBusy = 0;
 
 function initGoogleAuth(){
   if (!window.google || !window.google.accounts) {
@@ -24969,6 +24973,7 @@ function resolvePendingAuth(err){
   const fn = window._pendingUploadAfterAuth;
   window._pendingUploadAfterAuth = null;
   if (fn) {
+    window._driveBusy = Math.max(0, window._driveBusy - 1);
     fn(err);
   } else if (err) {
     alert('Google Drive: ' + err.message);
@@ -24997,14 +25002,20 @@ function connectGoogleDrive(){
 }
 
 // onReady(err) — err is null on success, or an Error describing what went wrong.
-// Always resolves: either via the GIS success/error callback, or via a 25s
+// Always resolves: either via the GIS success/error callback, or via a
 // safety timeout, so the UI can never get stuck spinning forever again.
+// 2 minutos (não 25s) porque a tela "o Google não verificou este app" exige
+// cliques extras (Avançado → Acessar mesmo assim) que facilmente passam de
+// 25s — era isso que fazia a 1ª imagem gerada sempre "sumir": o timeout
+// batia antes da pessoa terminar de clicar, e a imagem já gerada ficava
+// sem jeito de reenviar sem gerar outra.
 function ensureDriveAuth(onReady){
   if (hasValidDriveToken()) { onReady(null); return; }
+  window._driveBusy++;
   window._pendingUploadAfterAuth = onReady;
   window._authTimeoutId = setTimeout(() => {
-    resolvePendingAuth(new Error('O login com Google demorou demais ou não respondeu. Verifique se uma janela de pop-up foi bloqueada e tente novamente.'));
-  }, 25000);
+    resolvePendingAuth(new Error('O login com Google demorou demais ou não respondeu. Se apareceu um aviso "o Google não verificou este app", clique em Avançado → Acessar mesmo assim, e tente de novo.'));
+  }, 120000);
   if (!gisTokenClient) {
     initGoogleAuth();
     setTimeout(() => {
@@ -25028,8 +25039,10 @@ async function uploadFileToDrive(file, folderId){
   const isVideo = file.type.startsWith('video/');
   const timeout = isVideo ? 120000 : 45000; // 2min vídeo, 45s imagem
 
+  window._driveBusy++;
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
+    const done = () => { window._driveBusy = Math.max(0, window._driveBusy - 1); };
     const timerId = setTimeout(() => { xhr.abort(); reject(new Error('Upload demorou demais. Verifique sua conexão.')); }, timeout);
 
     // Barra de progresso
@@ -25044,6 +25057,7 @@ async function uploadFileToDrive(file, folderId){
     xhr.onload = () => {
       clearTimeout(timerId);
       hideUploadProgress();
+      done();
       try {
         const data = JSON.parse(xhr.responseText);
         if (xhr.status >= 200 && xhr.status < 300) {
@@ -25056,8 +25070,8 @@ async function uploadFileToDrive(file, folderId){
       } catch(e) { reject(new Error('Resposta inválida do Drive')); }
     };
 
-    xhr.onerror = () => { clearTimeout(timerId); hideUploadProgress(); reject(new Error('Erro de rede ao enviar para o Drive')); };
-    xhr.onabort = () => { clearTimeout(timerId); hideUploadProgress(); };
+    xhr.onerror = () => { clearTimeout(timerId); hideUploadProgress(); done(); reject(new Error('Erro de rede ao enviar para o Drive')); };
+    xhr.onabort = () => { clearTimeout(timerId); hideUploadProgress(); done(); };
 
     xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink,thumbnailLink');
     xhr.setRequestHeader('Authorization', 'Bearer ' + driveAccessToken);
@@ -26420,10 +26434,13 @@ function showUpdateBanner() {
   bar.textContent = '🔄 Nova versão do painel disponível — clique aqui pra atualizar agora';
   bar.onclick = function () { location.reload(); };
   document.body.prepend(bar);
-  // Atualiza sozinho depois de um tempo, mas só se não tiver modal aberto
-  // (pra não interromper edição/criação de post em andamento)
+  // Atualiza sozinho depois de um tempo, mas só se não tiver modal aberto nem
+  // login/envio pro Drive em andamento (_driveBusy) — pra não interromper
+  // edição/criação de post, nem derrubar um upload ou um login do Google no
+  // meio (era isso que fazia imagem gerada "sumir" quando uma versão nova
+  // saía bem na hora que a pessoa tava logando no Drive).
   setTimeout(function () {
-    if (!document.querySelector('.modal-overlay.on')) location.reload();
+    if (!document.querySelector('.modal-overlay.on') && !(window._driveBusy > 0)) location.reload();
   }, 20000);
 }
 async function checkForUpdate() {
@@ -28469,22 +28486,39 @@ function recomposeLogo(){
   }).catch(e => showToast('⚠️ ' + e.message));
 }
 // Entrega a imagem final (já recortada + logo) pro mesmo fluxo de upload de mídia (Drive + Zernio).
-async function useGeneratedImage(){
+// Conecta ao Drive ANTES de fechar o modal/soltar a imagem gerada — se o login
+// falhar ou demorar, a imagem gerada continua ali, dá só pra clicar de novo em
+// "Usar esta imagem" sem ter que gerar outra.
+function useGeneratedImage(){
   if (!_genResult) return;
-  const { id, profile, src } = _genResult;
-  try {
-    const blob = await (await fetch(src)).blob();
-    const stamp = new Date().toISOString().slice(5, 10).replace('-', '');
-    const file = new File([blob], stamp + '_' + profile + '_ia_' + id + '.jpg', { type: 'image/jpeg' });
-    const input = document.getElementById('imgfile-' + id);
-    const dt = new DataTransfer();
-    dt.items.add(file);
-    input.files = dt.files;
-    closeGenImage();
-    handleImageSelect(id, profile, input);
-  } catch (e) {
-    showToast('⚠️ ' + e.message);
-  }
+  const status = document.getElementById('gen-status');
+  const useBtn = document.getElementById('gen-use');
+  useBtn.disabled = true;
+  status.textContent = '🔗 Conectando ao Google Drive...';
+  ensureDriveAuth(async (authErr) => {
+    if (authErr) {
+      status.textContent = '⚠️ ' + authErr.message;
+      useBtn.disabled = false;
+      return;
+    }
+    if (!_genResult) return; // modal foi fechado/reaberto enquanto esperava o login
+    const { id, profile, src } = _genResult;
+    try {
+      status.textContent = '📤 Enviando imagem...';
+      const blob = await (await fetch(src)).blob();
+      const stamp = new Date().toISOString().slice(5, 10).replace('-', '');
+      const file = new File([blob], stamp + '_' + profile + '_ia_' + id + '.jpg', { type: 'image/jpeg' });
+      const input = document.getElementById('imgfile-' + id);
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+      closeGenImage();
+      handleImageSelect(id, profile, input);
+    } catch (e) {
+      status.textContent = '⚠️ ' + e.message;
+      useBtn.disabled = false;
+    }
+  });
 }
 
 // ── CONVERSÃO DE MÍDIA ──
