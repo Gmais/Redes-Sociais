@@ -25209,13 +25209,21 @@ function isVideoImg(img){
   return !!img.isVideo || /\.(mp4|mov|m4v|webm)(\?|#|$)/i.test((img.fileName || '') + ' ' + (img.zernioUrl || ''));
 }
 
+// Alguns navegadores (principalmente no Windows) entregam .mov/.mp4 sem tipo MIME: deduz pela extensão.
+function normalizeMediaFile(file){
+  if (!file || file.type) return file;
+  const ext = (String(file.name).split('.').pop() || '').toLowerCase();
+  const t = { mp4: 'video/mp4', m4v: 'video/mp4', mov: 'video/quicktime', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png' }[ext];
+  return t ? new File([file], file.name, { type: t }) : file;
+}
+
 function startImageUpload(id, profile){
   document.getElementById('imgfile-'+id).click();
 }
 
 // Devolve { ok:true } quando o card ficou com a mídia (Zernio), ou { ok:false, error }.
 async function handleImageSelect(id, profile, inputEl){
-  let file = inputEl.files && inputEl.files[0];
+  let file = normalizeMediaFile(inputEl.files && inputEl.files[0]);
   if (!file) return { ok:false, error:'Nenhum arquivo escolhido.' };
   const prev = getImageData(id);
   const keepPrev = prev && prev.status === 'ok' ? prev : null;
@@ -26940,7 +26948,8 @@ function npOpenDrive() {
 
 function npMediaSelected(inputEl) {
   if (!inputEl.files || !inputEl.files.length) return;
-  for (const f of inputEl.files) {
+  for (const f0 of inputEl.files) {
+    const f = normalizeMediaFile(f0);
     if (f.type.startsWith('video/') && !/^video\/(mp4|quicktime)$/.test(f.type)) {
       showToast('❌ ' + f.name + ': o Instagram só aceita vídeo MP4 ou MOV');
       continue;
@@ -28018,6 +28027,9 @@ function refreshSimilarBadges(){
     for (const it of CONTENT[p]) if (it.date >= from) updateSimilarBadge(it.id);
   }
 }
+// O primeiro renderAll() roda mais acima, antes de CapSim existir (const não é içada): sem esta
+// chamada os selos só apareceriam depois da primeira sincronização remota.
+try { refreshSimilarBadges(); } catch (e) { /* sem selos nesta rodada */ }
 
 function testImgLoad(url, ms){
   return new Promise(res => {
