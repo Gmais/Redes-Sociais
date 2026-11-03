@@ -1,545 +1,147 @@
-# 📋 Painel de Conteúdo Instagram — Contexto do Projeto
+# Contexto do Projeto — Painel de Conteúdo Instagram
 
-## 🎯 Visão Geral
-Painel web privado para planejamento, execução e histórico de conteúdo Instagram das três marcas de Gilson Caetano. Ferramenta operacional de execução diária, não de planejamento estratégico. Síncrono entre dispositivos via Supabase + auto-publish para Instagram via API Zernio.
+> **Última revisão: 03/11/2026.**
+> Este arquivo é lido por pessoas **e pelo Modo Automático** (`api/auto-content.js` envia o arquivo inteiro à IA a cada geração). Por isso: sem senhas/chaves, curto, e atualizado no mesmo dia em que algo muda. **Campanha com data final vencida vai para "Encerradas" no mesmo dia** — a IA só anuncia o que está em "Ativas".
 
-## 🔒 Regra fixa — Dimensões de imagem por formato
+## 1. O que é o painel
+Painel web privado de Gilson Caetano para planejar, executar e registrar o Instagram de três marcas. Cada post vira um card (data, horário, formato, legenda, briefing da imagem). A mídia é enviada ao Instagram pela Zernio (agendamento/publicação) e uma cópia fica no Google Drive. O estado sincroniza entre dispositivos pelo Supabase.
 
-Esta regra é fixa e vale para todas as três marcas (Academia, Sorveteria, GympulsePro) e para todos os templates de briefing de imagem:
+## 2. Regras fixas (todas as marcas)
+- **Formatos:** Story = 1080×1920 px (9:16). Post de feed = 1080×1350 px (4:5). O Instagram recusa imagem de feed fora de 0,75:1 a 1,91:1.
+- **Sem Reel e sem Carrossel** nos cards gerados (regra de Outubro/2026). O feed é só Post estático, com baixa frequência; o resto do volume é Story. (Vídeo MP4/MOV enviado manualmente pelo painel continua permitido.)
+- **Sem texto sobreposto na imagem.** Todo o copy vai na legenda.
+- **Hashtags:** Story = 0. Post = exatamente 5, no fim da legenda.
+- **Legenda pronta para publicar:** português do Brasil, emojis com moderação, tom de voz da marca, CTA coerente com o objetivo.
+- **Nunca inventar** preço, condição, prazo, sabor, funcionalidade, número ou dado. Sem preço confirmado, escrever sem valor.
+- **Nunca citar concorrentes.** Diferenciais aparecem de forma indireta.
+- **Campanha/promoção:** só anunciar o que está em "Ativas" (seção 5), respeitando a data final. Em "Encerradas", nunca.
+- **Datas de conscientização** (saúde mental, câncer de mama, saúde do homem etc.): post institucional, **sem oferta e sem CTA de venda**. Nunca dizer que treinar previne doença ou substitui exame, terapia ou tratamento.
+- **Não repetir o mesmo produto/assunto em dias seguidos** nem repetir frases de posts recentes. O painel marca como "parecida" e o Modo Automático reescreve ou descarta.
+- **Data da geração manda:** conferir a data do post contra os períodos das campanhas antes de citá-las.
 
-- **Post / Carrossel**: 1080×1350px (proporção 4:5)
-- **Story**: 1080×1920px (proporção 9:16)
-- **Nunca gerar imagem fora da faixa 0.75:1 a 1.91:1 para posts de feed** (Post/Carrossel)
-- Sem texto sobreposto na imagem (todo copy vai na legenda)
+## 3. As três marcas
 
+### Academia Planeta Corpo Club+ (Turvo/PR)
+- Desde **1998** (escrever "desde 1998"; não calcular a idade). Av. Maria Bettega, 360, Centro. WhatsApp (42) 99922-2857.
+- Instagram @planetacorpoclubmais · www.planetacorpoclubmais.com.br
+- Modalidades: musculação, crossfit, dança, spinning, funcional, jump, HIIT, lutas (muay thai/jiu-jitsu), judô infantil, aulas do Prof. Wellinton.
+- **Público:** principalmente mulheres de 30 a 40 anos de Turvo, sem apelo atlético; buscam saúde, sono e disposição, não estética nem performance.
+- **Tom:** acolhedor, conversa entre amigas, sem linguagem fitness agressiva, sem "GRÁTIS!" gritado, **sem emojis de fogo ou músculo**. Emojis padrão: 🧡 🌿.
+- **Paleta:** laranja `#e63900` (principal/CTA), azul escuro `#003f6b` (acento), preto `#1a1a1a`, branco `#ffffff`.
+- **Funil:** Prova Social → Dica de Saúde → Convite à Matrícula → Humanização.
 
----
+### Sorvetes Guri (Turvo/PR)
+- Sorveteria com **buffet**, **loja de fábrica** (não é fábrica) e cardápio gourmet. Mascote 3D "Guri".
+- Instagram @sorvetesguriturvo_ · www.sorvetesguriturvo.com.br
+- **Público:** famílias de Turvo e região, todas as idades; consumo por impulso (calor, tarde, fim de semana) e por ocasião.
+- **Tom:** leve, alegre, festivo, familiar — "vizinho querido".
+- **Paleta:** azul escuro `#003f6b`, turquesa `#00b4d8`, amarelo `#f5c800` (destaque/CTA), branco.
+- **Objetivo:** reconhecimento da marca e visita à loja no mesmo dia.
 
-## 🏢 Contexto do Negócio
+### GympulsePro (B2B SaaS)
+- gympulse.pro · Instagram @gympulse.pro
+- **O que é:** plataforma de gamificação para academias; monitora biometria em tempo real (BPM por ANT+/Bluetooth) e transforma em pontos e rankings.
+- **Módulos (únicos que podem ser citados):** Monitor ao Vivo, Rankings, Cadastros, Relatórios PDF, Fitcoins, IA de Engajamento (alertas e WhatsApp), Portal do Aluno, Desafios.
+- **Público:** donos e gestores de academia, professores de educação física com estúdio.
+- **Tom:** profissional, tecnológico, orientado a dados (retenção, ROI, engajamento). Sem fitness genérico. Visual escuro premium.
+- **Paleta:** amarelo `#f5c200` (principal), preto `#0d0d0d`, cinza `#1c1c1c`, branco.
+- **Funil:** Dado de Mercado → Funcionalidade → Prova Social → Demo.
 
-### Três Marcas
-1. **Academia Planeta Corpo Club+** (Turvo/PR)
-   - Desde 1998
-   - Localização: Av. Maria Bettega, 360
-   - Contato: (42) 99922-2857
-   - Instagram: @planetacorpoclubmais
-   - Website: www.planetacorpoclubmais.com.br
-   - Público: musculação, crossfit, lutas, judô infantil, recepção
-   - Campanha ativa (outubro/2026): "Cuidado que se Multiplica" — Outubro Rosa (ver seção 🎬 Campanhas)
-   - Novidade: MQV — Mapeamento de Qualidade de Vida (ver seção "🆕 Novidade — MQV")
+## 4. Estrutura de conteúdo por marca (regra fixa, Outubro/2026)
 
-2. **Sorvetes Guri** (Turvo/PR)
-   - Sorveteria com buffet, loja de fábrica (não é fábrica) e cardápio gourmet
-   - Instagram: @sorvetesguriturvo_
-   - Website: www.sorvetesguriturvo.com.br
-   - Campanha ativa (jun/jul 2026): "Inverno Fitness" (açaí com whey, linha zero açúcar, 20% desc)
-   - Promoção ativa (outubro/2026): Dia das Crianças — Sorvete Guri Gurt por apenas R$ 0,99, **até 31/10/2026** (ver seção 🎬 Campanhas)
+### Academia — 3 postagens por dia
+- Horários padrão: 07h00, 12h00, 18h30 (ajustar ao melhor engajamento).
+- **1 Post por semana (quinta-feira)**. Todo o resto é Story.
+- **Humanização:** 1 Post por semana (quinta) + 1 Story por semana. Apresentar um colaborador por vez, nesta ordem de rodízio: David, Lidiane, Ana, Thiago, Wesley, Juliana, João Alexandre, Syonara, Wellinton, Isadora (não repetir a mesma pessoa em poucos dias). Staff: musculação (David, Lidiane, Ana, Thiago, Wesley), recepção (Juliana, Isadora), lutas (João Alexandre), judô infantil (Syonara), aulas do Prof. Wellinton.
+- **Modalidade:** pelo menos 1x por semana, alternando Story numa semana e Post na seguinte.
+- **Diferenciais** — a cada poucos dias, em rodízio: equipe 100% CREF · estrutura aeróbica completa · ambiente seguro para mulheres · atendimento próximo (conhece seu nome) · mensalidade única para todas as modalidades · tradição desde 1998.
+- **Campanha ativa (quando houver):** 1ª semana do mês (dias 1–7) todo dia; 2ª e 3ª semanas (8–21) cerca de 3x por semana; última semana (22 em diante) todo dia.
+- Tipos de intenção: Prova Social, Dica de Saúde, Convite à Matrícula, Humanização, Diferencial, Modalidade.
 
-3. **GympulsePro** (B2B SaaS)
-   - Plataforma de gamificação para gestão de academias
-   - Website: gympulse.pro
-   - Instagram: @gympulse.pro
-   - Público: proprietários de academias, gerentes, educadores
+### Sorveteria — 4 postagens por dia
+- Horários padrão: 09h00, 12h00, 15h30, 19h00.
+- **1 Post por semana (sexta-feira)**. Todo o resto é Story.
+- Pilares dentro das 4 postagens do dia:
+  1. **Produto da loja** — sempre Story. Item da lista "Loja" (seção 7).
+  2. **Produto do buffet** — Story (ou o Post da semana). Item da lista "Buffet" (seção 7).
+  3. **Carrinho de Sorvete para eventos** — **no máximo 1 dia por semana** (teto, não mínimo). Serviço de locação para festas e eventos. O painel descarta repetição na mesma semana.
+  4. **Humanização** — 1x por semana, de preferência sexta. Apresentar uma atendente: Maria Júlia, Maria Clara, Bruna ou Luiza Helena.
+  5. **Encerramento do dia** — todo dia, no horário de fechamento da loja, sempre Story: agradecimento + convite para voltar amanhã, tom leve de "vizinho querido". Usar um **template fixo por dia da semana** (reaproveitar o texto do mesmo dia da semana anterior, trocando só o que mudou). **O título começa com "Encerramento do dia"** (assim o painel não o acusa de repetição).
+  6. **Demais slots:** Bastidores, Enquete, Construção de Marca, Relacionamento ou Promoção de campanha ativa (quando houver), sempre Story.
+- **Títulos dos cards:** "Produto da loja — <item>", "Produto do buffet — <item>", "Carrinho de Sorvete para eventos", "Humanização — <nome>", "Encerramento do dia — <dia/tema>".
+- Tipos de intenção: Produto do Dia, Construção de Marca, Promoção, Relacionamento.
+- **Preços:** a lista de produtos veio sem preço. Não citar valor. Só vale preço de campanha que esteja em "Ativas".
 
----
+### GympulsePro — 1 postagem por dia
+- Horário padrão: 12h00.
+- **1 Post a cada 15 dias**. Nos outros dias, Story.
+- Alternar módulos em rodízio, sem repetir o mesmo módulo ou a mesma estatística em dias seguidos. Só citar dados que estejam neste arquivo.
 
-## 🏗️ Infraestrutura Técnica
+## 5. Campanhas
 
-### Repositório & Deploy
-- **GitHub:** `Gmais/Redes-Sociais` (branch `main`)
-- **Vercel:** Deploy automático ~30s após push (projeto `redes-sociais`, team `Gilson's projects`)
-- **URL ao vivo:** `redes-sociais-gilt-alpha.vercel.app`
+### Ativas
+**Nenhuma campanha ou promoção ativa informada para novembro/2026.**
+Enquanto o Gilson não definir uma, usar o mix padrão de cada marca (seção 4), sem citar desconto, brinde, preço promocional nem prazo.
 
-### Banco de Dados
-- **Supabase:** Projeto `ndzbfvxnallshfiouszk`
-- **Tabela:** `painel_gilson_state`
-- **Chaves de estado:** `manifest`, `published`, `reviewed`, `images`, `done`, `edits`
-- **Sincronização:** ~30s (Supabase sobrescreve dados em HTML estático)
+### Encerradas — NÃO anunciar
+| Marca | Campanha | Período |
+|---|---|---|
+| Academia | "Cuidado que se Multiplica" — Outubro Rosa | 01–31/10/2026 (encerrada) |
+| Sorveteria | Dia das Crianças — Guri Gurt a R$ 0,99 | até 31/10/2026 (encerrada; o preço R$ 0,99 não vale mais) |
+| Academia | "Cuidado que se Multiplica" — Setembro Amarelo | 01–30/09/2026 |
+| Academia | "Agosto Vale Mais na Planeta" | agosto/2026 |
+| Sorveteria | "Queridinhos do Papai" (Dia dos Pais) | agosto/2026 |
+| Sorveteria | "Não Fuja da Dieta!" (smoothies proteicos) | lançada 19/07/2026; pausada desde 01/08 — só voltar se o Gilson pedir |
+| Academia | "Mês do Amigo" | junho–31/07/2026 |
+| Sorveteria | "Inverno Fitness" | junho–julho/2026 |
+| Sorveteria | Férias escolares | 13–24/07/2026 |
 
-### Integração Google Drive
-- **Serviço:** Upload automático de imagens geradas (IA) para Google Drive
-- **Conta:** `upload-painel@painel-gilson.iam.gserviceaccount.com`
-- **Pastas por marca:** `1-mZJyf6yFvnZhnTGUWhQxjl-OaGz7y1P` (raiz), subpastas por marca
+## 6. Novidade permanente — MQV (Academia)
+Fonte: www.planetacorpoclubmais.com.br/mqv (conferida em 13/10/2026). Serve como conteúdo educativo/de diferencial, **sem virar oferta comercial**.
+- **O que é:** Mapeamento de Qualidade de Vida — questionário rápido sobre a rotina do aluno (sono, estresse, dor, trabalho, alimentação, objetivos) para o professor enxergar a pessoa inteira, não só peso e medidas. Frase da página: **"Seu treino começa pelo que acontece fora da academia."**
+- **Como funciona:** (1) abrir o link e informar o número de matrícula; (2) responder 40 perguntas de toque no celular, cerca de 5 minutos, sem resposta certa ou errada; (3) o professor recebe a **Roda da Vida** do aluno, 10 pilares com nota de 0 a 100%; (4) refazer a cada **90 dias** para acompanhar a evolução.
+- **Os 10 pilares:** Sono · Estresse e ansiedade · Humor e bem-estar · Vida social · Energia e disposição · Dores no corpo · Saúde no trabalho · Alimentação e peso · Condicionamento · Esporte.
+- **Benefícios:** treino ajustado ao momento (intensidade, horário, exercícios); conversa mais próxima com o professor; progresso medido além da balança; o professor pode sugerir nutricionista ou fisioterapeuta quando fizer sentido.
+- **Como participar:** agendaplanetacorpo.vercel.app/mqv/responder (botão "Responder meu MQV"); sem senha nem app; ter a matrícula em mãos. Público: alunos da Planeta Corpo.
+- **Limites:** só a equipe vê o MQV. **Não é diagnóstico médico.** Nunca prometer resultado clínico. A página não informa preço, condições nem cronograma — não inventar.
+- CTA sugerido: "Responda seu MQV".
 
-### Publishing (Instagram)
-- **Zernio API:** Publishing automático para Instagram
-- **Trocar a conta de Instagram de uma marca:** conectar a nova conta na Zernio e criar no Vercel a variável `ZERNIO_ACCOUNT_ACADEMIA` / `ZERNIO_ACCOUNT_SORVETERIA` / `ZERNIO_ACCOUNT_GYMPULSE` com o ID novo (depois, Redeploy). Sem a variável vale o ID padrão abaixo. Posts já agendados na conta antiga continuam saindo nela — cancelar/reagendar antes.
-- **IDs de Conta (padrão):**
-  - Academia: `6ace80c0a737012bc49cb80c`
-  - Sorveteria: `6a3916335f7d1751ab4afbe3`
-  - GympulsePro: `6a3920625f7d1751ab4b6fdc`
-- **Auto-publish:** Self-loop endpoint a cada 5 min (máx 5h50m por run), latência típica ~5 min
-- **Verificação:** `evaluateDelivery()` checa entrega real no Instagram (não apenas aceição de API)
+## 7. Produtos da Sorveteria
+Lista enviada por Gilson em 18/08/2026 (sem preços).
 
----
-
-## 📱 Funcionalidades Principais
-
-### Painel de Controle
-- **Abas por marca** (Academia / Sorveteria / GympulsePro)
-- **Checklist de execução:** feito/não feito por post
-- **Modal de edição inline:** horário, formato, título, texto, briefing criativo
-- **Botão "📋 Copiar tudo":** exporta conteúdo para clipboard
-- **Indicador de sincronização:** ponto visual (laranja = sincronizando, verde = sincronizado)
-
-### Histórico
-- Ordem decrescente (mais recente primeiro)
-- Rastreamento de posts publicados
-- Histórico de edições
-
-### Aba Estratégia
-- Bio por perfil
-- CTAs (call-to-action) por marca
-- Blocos de hashtags (30 por categoria)
-- Regras de engajamento
-
----
-
-## 📊 Padrão de Conteúdo
-
-### Volume Diário e Formatos (Regra fixa — Outubro/2026)
-- **Academia:** **3 postagens diárias** (escolher o melhor horário para um melhor engajamento). **Apenas 1 post por semana**. **Sem Reel e Sem Carrossel** (as demais são Stories).
-- **Sorveteria:** **4 postagens diárias** (escolher o melhor horário para um melhor engajamento). **Apenas 1 post por semana**. **Sem Reel e Sem Carrossel** (as demais são Stories).
-- **GympulsePro:** **1 postagem diária** (escolher o melhor horário para um melhor engajamento). **Apenas 1 post a cada 15 dias**. **Sem Reel e Sem Carrossel** (as demais são Stories).
-- **Total diário:** 8 postagens/dia (3 Academia + 4 Sorveteria + 1 GympulsePro).
-- Distribuição otimizada para os melhores horários de engajamento por marca.
-
-### Estrutura de Card (3 seções)
-```
-01. FORMATO / SPECS
-   - Tipo: Post, Carrossel, Story, Reel
-  - Dimensões (regra fixa — Academia, Sorveteria, GympulsePro): Post/Carrossel = 1080×1350px (4:5) | Story = 1080×1920px (9:16)
-      - Nunca gerar imagem fora da faixa 0.75:1 a 1.91:1 para posts de feed (Post/Carrossel)
-      - Regra hashtags: 5 hashtags em Post, 0 em Story/Carrossel
-
-02. INTENÇÃO DO POST
-   - Objetivo: tráfego, engajamento, humanização, promo, educação, etc.
-   - Público-alvo
-   - Tom de voz
-
-03. BRIEFING CRIATIVO DETALHADO
-   - Descrição visual (sem texto sobreposto em imagem)
-   - Elementos visuais, cores, estilo
-   - Copy (texto do post)
-   - Hashtags
-```
-
-### Regras de Conteúdo
-- ✅ **Sem texto sobreposto em imagens** (regra obrigatória para prompts IA)
-- ✅ **Máx 5 hashtags por Post** (regra de Instagram desde dez 2025)
-- ⚠️ **Formatos restritos (Outubro/2026):** **Sem Reel e Sem Carrossel** para todas as três marcas. No feed, sai apenas **Post estático** com baixa frequência (Academia: 1 post/semana; Sorveteria: 1 post/semana; Gympulse: 1 post a cada 15 dias). Todo o restante do volume diário é composto por **Stories**.
-- ✅ **Humanização com staff:** cada colaborador apresentado individualmente
-- ✅ **Posicionamento indireto:** referenciar diferenças sem citar concorrentes
-- ⚠️ **Academia — reforçar diferenciais com frequência:** Gilson notou (10/07) que os posts recentes estão com poucas postagens de diferencial competitivo. Ao planejar a semana da Academia, incluir pelo menos 1 post de diferencial a cada poucos dias, alternando entre: equipe 100% CREF, estrutura aeróbica completa, ambiente seguro para mulheres, atendimento próximo/personalizado (conhece seu nome), mensalidade única para todas as modalidades (vs. várias mensalidades avulsas), 27 anos de história/tradição em Turvo. Não deixar esse tipo de post cair de lado em favor só de humanização/prova social/convite.
-
-### Diretrizes Visuais e de Leitura (Aplicáveis a todas as marcas)
-*O objetivo principal é garantir o equilíbrio visual e a leitura rápida.*
-
-**1. Proporção de Cores (Regra 60-30-10):**
-- **60% Cor Dominante:** Geralmente o fundo. Serve como base visual da peça.
-- **30% Cor Secundária:** Estrutura o design e dá suporte à marca (textos secundários, caixas, grafismos).
-- **10% Cor de Destaque:** Usada exclusivamente para o CTA (Call to Action) e botões de conversão.
-
-**2. Proporção de Textos:**
-- **Anúncios Digitais (Meta/Google):** O texto deve ocupar, no máximo, 20% da área total da imagem. Mais do que isso reduz a entrega e o engajamento.
-- **Hierarquia de Leitura:** 70% do impacto do texto deve vir do título principal (headline), deixando o restante para subtítulos e corpo.
-
-**3. Boas Práticas Visuais:**
-- **Espaço em Branco:** Pelo menos 30% a 40% da peça deve ser "vazia" (respiro) para não cansar os olhos.
-- **Contraste Forte:** Texto escuro em fundo claro (ou vice-versa). Nunca use cores parecidas para fundo e tipografia.
-
-### Staff para Posts de Humanização
-**Academia:**
-- Musculação: David, Lidiane, Ana, Thiago, Wesley
-- Recepção: Juliana, Isadora
-- Lutas/Muay Thai/Jiu Jitsu: João Alexandre
-- Judô Infantil: Syonara
-- Benchmark: Prof. Wellinton
-
-**Sorveteria:**
-- Atendentes: Maria Júlia, Maria Clara, Bruna, Luiza Helena
-
----
-
-## 🏋️ Academia — Estrutura de Conteúdo (regra fixa, atualizada em Outubro/2026)
-
-### 🔒 Regra de Frequência e Formatos (Outubro/2026)
-- **Volume:** **Três postagens diárias** (escolher o melhor horário para um melhor engajamento).
-- **Feed:** **Um post apenas por semana**.
-- **Restrições:** **Sem Reel e Sem Carrossel**.
-- **Demais publicações:** As outras postagens diárias que não forem o post único da semana são obrigatoriamente **Stories**.
-
-*Ajusta a cadência de Humanização, pilar de Modalidade e Campanha sob a nova diretriz de 3 postagens/dia, sem Reel, sem Carrossel e apenas 1 post de feed por semana:*
-
-### Humanização (equipe) — não é mais diária
-- **1 Post por semana, sempre quinta-feira.**
-- **+ 1 Story por semana** (qualquer outro dia).
-- Mantém a mesma ordem de rodízio dos colaboradores já usada (ver [[project_gilson_negocios]] "Rotação de humanização da Academia") — só a cadência muda (2 aparições/semana em vez de quase diária), não a ordem.
-
-### Modalidade — pelo menos 1x por semana
-- Falar sobre uma das modalidades (Musculação, Dança, Spinning, Funcional, Jump, HIIT, aulas do Prof. Wellinton) pelo menos 1x por semana.
-- Alterna o formato a cada semana: numa semana em Story, na semana seguinte em Post.
-
-### Campanha ativa — cadência por semana do mês (substitui, só para a Academia, a regra genérica de "~1 post a cada 3 dias")
-- **1ª semana do mês (dias 1-7):** campanha aparece **todo dia** (Story, Reel ou Post, variando o formato e o ângulo).
-- **2ª e 3ª semanas (dias 8-21, aprox.):** campanha aparece **~3x por semana**.
-- **Última semana do mês (dia 22 até o fim do mês):** campanha aparece **todo dia** de novo.
-- Vale para qualquer campanha ativa da Academia (a atual é "Cuidado que se Multiplica — Outubro Rosa", 01-31/10/2026; "Agosto Vale Mais na Planeta" encerrou em 31/08 e a de Setembro Amarelo em 30/09).
-
-### 🆕 Novidade — MQV (Mapeamento de Qualidade de Vida)
-Fonte: www.planetacorpoclubmais.com.br/mqv (conferida em 13/10/2026).
-
-**O que é:** questionário rápido sobre a rotina do aluno (sono, estresse, dor, trabalho, alimentação e objetivos) para o professor enxergar a pessoa inteira, não só peso e medidas. Frase da página: **"Seu treino começa pelo que acontece fora da academia."**
-
-**Como funciona (4 passos):**
-1. Abrir o link e informar o número de matrícula (confirma o nome).
-2. Responder 40 perguntas de toque no celular, ~5 minutos. Não existem respostas certas ou erradas.
-3. O professor recebe a **Roda da Vida** do aluno: 10 pilares com nota de 0 a 100% (quanto maior a nota, mais atenção aquela área precisa no treino e na rotina).
-4. Refazer o MQV a cada **90 dias** para acompanhar a evolução.
-
-**Os 10 pilares:** Sono · Estresse e ansiedade · Humor e bem-estar · Vida social (amigos, família e trabalho) · Energia e disposição · Dores no corpo · Saúde no trabalho (tempo sentado/em pé/dirigindo e postura) · Alimentação e peso · Condicionamento · Esporte.
-
-**Benefícios para o aluno:**
-- Treino ajustado ao momento atual (intensidade, horário e exercícios).
-- Conversa mais próxima com o professor e metas que cabem na vida real.
-- Progresso medido além da balança (sono, energia, dor).
-- Roda da Vida e comparação com o MQV anterior aparecem no resultado da avaliação física.
-- O professor pode sugerir nutricionista, fisioterapeuta ou outro profissional quando fizer sentido.
-
-**Privacidade e limites:** só a equipe da Planeta Corpo vê o MQV. **Não é diagnóstico médico** — é ponto de partida para o professor conversar e planejar o treino. Nunca prometer resultado clínico nem substituir acompanhamento profissional.
-
-**Como participar:** agendaplanetacorpo.vercel.app/mqv/responder (botão "Responder meu MQV"). Sem senha nem app, funciona no celular; ter o número de matrícula em mãos. Dúvidas: professor ou recepção.
-
-**Lacunas da página (não inventar):** não informa preço/taxa, condições, data de lançamento nem cronograma do MQV. Público: alunos da Planeta Corpo (precisa de matrícula).
-
-**Sugestão de uso no conteúdo (ajustar com Gilson):** tratar como pilar "Diferencial"/"Dica de Saúde" (educativo), com CTA "Responda seu MQV"; convive com a campanha de outubro sem virar oferta comercial.
-
----
-
-## 🍦 Sorveteria — Estrutura Diária de Conteúdo (regra fixa, atualizada em Outubro/2026)
-
-### 🔒 Regra de Frequência e Formatos (Outubro/2026)
-- **Volume:** **Quatro postagens diárias** (escolher o melhor horário para um melhor engajamento).
-- **Feed:** **Um post apenas por semana** (substitui a regra anterior de 1 post por dia).
-- **Restrições:** **Sem Reel e Sem Carrossel**.
-- **Demais publicações:** As outras postagens diárias são em formato **Story**.
-
-### Pilares (dentro das 4 postagens diárias)
-1. **Produto da loja — sempre em Story.** Fala sobre um produto da lista **Loja** abaixo (descrição, variedade, preço).
-2. **Produto do buffet — em Story (ou no Post único da semana).** Fala sobre um produto da lista **Buffet** abaixo (descrição, variedade, preço).
-3. **Carrinho de Sorvete para eventos — no máximo 1 dia por semana** (em Story ou no Post único da semana). Post sobre o serviço de locação do Carrinho de Sorvete Guri para festas de aniversário e eventos. ⚠️ **Regra alterada em 26/10/2026:** antes era "pelo menos 1x/semana" (mínimo) e isso fez o assunto aparecer quase todo dia, ficando repetitivo (feedback de Gilson). Agora é **teto, não piso** — nunca mais de 1x por semana, mesmo no Modo Automático.
-4. **Humanização — 1x por semana, de preferência sexta-feira** (em Story ou no Post único da semana). Apresentar um dos colaboradores da Sorveteria (Maria Júlia, Maria Clara, Bruna, Luiza Helena — ver lista acima).
-5. **Encerramento do dia — todo dia, no horário de fechamento da loja, sempre em Story.** Mensagem de agradecimento pelo dia + convite para voltar amanhã (tom leve, "vizinho querido" — ver tom de voz da marca). ⚠️ **Retomado em 26/10/2026** a pedido de Gilson — essa dinâmica já existia (slot ~19h, "Story de abertura/boa noite") mas tinha parado de sair; usar um template fixo por dia da semana (reaproveitar o texto do mesmo dia da semana anterior, só trocando datas/promoções pontuais) em vez de reescrever do zero todo dia.
-6. **Demais slots do dia:** seguem o mix padrão já existente (Bastidores, Enquete, Construção de Marca, Relacionamento, Promoção de campanha ativa quando houver), sempre em **Story** (Sem Reel e Sem Carrossel).
-
-### ⚠️ Preços não disponíveis
-A lista de produtos enviada por Gilson (`produtos - produtos.csv`, 18/08/2026) veio com a coluna de preço em branco. **Não inventar valores** — perguntar a Gilson o preço antes de citar um número específico num post, ou usar linguagem sem valor até ele fornecer. **Exceção autorizada:** Sorvete Guri Gurt por **R$ 0,99** na promoção do Dia das Crianças (ver 🎬 Campanhas).
-
-### Lista de Produtos — Loja (todo item SEM "Caixa 7L sorvete sabor" na descrição, uso: Story diário do pilar 1)
+### Loja (itens SEM "Caixa 7L" — pilar 1)
 **Picolés de fruta:** abacaxi com hortelã, abacaxi, açaí 50g, água de coco 50g, groselha, limão, maracujá 50g, melancia 50g, morango, tangerina, uva.
 **Picolés de leite:** café com chocolate, chocolate, coco branco, coco queimado, leite condensado, leitinho, maçã verde, mamão, maracujá, melão chinês, milho verde, morango, torta de limão 50g, uva 50g, manga 50g.
 **Picolés especiais:** paçoca cremosa, uva ao creme, Bonello (choco menta, creme de avelã, iogurte grego com frutas do bosque, pistache), cookie crocante, brownie, doce de leite, alfajor, brigadeiro, flocos, Skimo, tablete, Pinta Língua, unicórnio, Supremo Bianco, Supremo Nero, pé de moleque, Supremo moranguinho, açaí com leitinho 50g, zero açúcar (baunilha, chocolate).
 **Sorvete Guri Gurt:** chiclete, leite condensado, maracujá, morango, uva.
-**Copas, potes e cones (embalagem individual/família):** Copa sorvete 90ml Boca Loca, Copa sundae baunilha trufado, Copa sorvete 80g uva ao creme, Copa 160g açaí zero açúcar, Pote 1L uva ao creme, Pote 400ml Guri + Chanty morango, Pote 400ml Guri + leite trufado, Pote 1kg açaí com guaraná, Pote 1kg açaí com leitinho, Cone confete, Cone torta alemã, Casquinha La Morena, Mini açaí 105g, Mini bombom coco.
-**Baldes 5L/2L (venda para casa):** 5L (alfajor, Choco Dream, clássico bombom, iogurte grego com frutas, marula com brigadeiro artesanal, Guri + Chanty morango, Guri + iogurte com amora, Guri + leite trufado, Gelakuka brigadeiro e leite condensado, Gelakuka creme, Gelakuka napolitano); Pote 2L (choco menta, cookie crocante, floresta negra, Mon Laté, olho de sogra, pavê latino, romeu e julieta, torta alemã, torta de limão, mousse de maracujá trufado, cocada cremosa, paçoca cremosa, abacaxi e coco, abacaxi, brigadeiro, chocolate branco, creme, flocos, napolitano, passas ao rum).
+**Copas, potes e cones:** Copa sorvete 90ml Boca Loca, Copa sundae baunilha trufado, Copa sorvete 80g uva ao creme, Copa 160g açaí zero açúcar, Pote 1L uva ao creme, Pote 400ml Guri + Chanty morango, Pote 400ml Guri + leite trufado, Pote 1kg açaí com guaraná, Pote 1kg açaí com leitinho, Cone confete, Cone torta alemã, Casquinha La Morena, Mini açaí 105g, Mini bombom coco.
+**Baldes 5L / potes 2L (para levar pra casa):** 5L (alfajor, Choco Dream, clássico bombom, iogurte grego com frutas, marula com brigadeiro artesanal, Guri + Chanty morango, Guri + iogurte com amora, Guri + leite trufado, Gelakuka brigadeiro e leite condensado, Gelakuka creme, Gelakuka napolitano); Pote 2L (choco menta, cookie crocante, floresta negra, Mon Laté, olho de sogra, pavê latino, romeu e julieta, torta alemã, torta de limão, mousse de maracujá trufado, cocada cremosa, paçoca cremosa, abacaxi e coco, abacaxi, brigadeiro, chocolate branco, creme, flocos, napolitano, passas ao rum).
 **Baldone:** Chocolitano, Flocos, Napolitano.
 **Sobremesas e salgados:** Petit gateau chocolate 240g, Petit gateau doce de leite 240g, assado de calabresa com queijo cheddar, bauru de frango, bauru de presunto e queijo, calzone de frango, calzone de palmito, doguinho, hambúrguer.
 
-### Lista de Produtos — Buffet (todo item "Caixa 7L", uso: pilar 2, Story/Post alternado)
-Todos vendidos em caixa de 7 litros para reposição do buffet self-service — inclui as variações "sorvete sabor", "açaí", "gelatto" e "premium"/"zero açúcar":
-Açaí tradicional, açaí com leitinho, açaí com avelã, açaí zero açúcar, gelatto sabor pistache, sorvete sabor: chocolate belga, coco com abóbora, fubá com goiabada, manga com abacaxi e hortelã, manga com maracujá, mousse de maracujá trufado, abacaxi, banana caramelizada, Blue Ice, brigadeiro, café com brigadeiro, chiclete, chocolate branco, chocolate, choco menta, clássico bombom, cocada cremosa, coco branco, cookie crocante, creme, creme de cupuaçu, doce de leite, flocos, floresta negra, iogurte grego com frutas do bosque, leite condensado, maracujá, marula com brigadeiro artesanal, milho verde, Mon Laté, morango, nata, olho de sogra, paçoca cremosa, passas ao rum, pavê latino, pistache, romeu e julieta, torta alemã, torta de limão, uva, uva ao creme; sorvete premium sabor alfajor, sorvete premium sabor Choco Dream; sorvete zero açúcar sabor baunilha, sorvete zero açúcar sabor chocolate.
-
----
-
-## 💻 GympulsePro — Estrutura de Conteúdo (regra fixa, atualizada em Outubro/2026)
-
-### 🔒 Regra de Frequência e Formatos (Outubro/2026)
-- **Volume:** **Uma postagem diária** (escolher o melhor horário para um melhor engajamento).
-- **Feed:** **Um post apenas a cada 15 dias**.
-- **Restrições:** **Sem Reel e Sem Carrossel**.
-- **Demais publicações:** Nos dias sem post de feed, a postagem diária é obrigatoriamente **Story**.
-- **Público e foco:** Proprietários de academias, gestores e educadores físicos; foco em gamificação, retenção de alunos, gestão e dados de mercado.
-
----
-
-## 🎬 Campanhas
-
-### 🟢 ATIVA — Academia: "Cuidado que se Multiplica" (Outubro Rosa, 01-31/10/2026)
-Continuação da campanha de setembro, agora com o tema Outubro Rosa e autocuidado. Fonte: www.planetacorpoclubmais.com.br/campanha (conferida em 13/10/2026). Público: novas matrículas, rematrículas e ex-alunos.
-
-**Mecânica — desconto especial por plano fechado (o mesmo valor de setembro, segundo a página):**
-| Plano | Desconto | Benefício extra |
-|---|---|---|
-| Mensal | R$ 20 | — |
-| Trimestral | R$ 30 | — |
-| Semestral | R$ 60 | — |
-| Anual (outra forma de pagamento) | R$ 120 | — |
-| Anual no cartão | R$ 120 | **30 dias de Tempo de Cuidado OU fone Bluetooth** (a pessoa escolhe um; não é cumulativo) |
-
-**Regras:**
-- Anual pago de outra forma recebe só o desconto, sem benefício extra.
-- Os 30 dias de Tempo de Cuidado podem ser somados ao próprio plano, dados de presente a uma aluna ativa (somam ao plano dela) ou a alguém que ainda não treina (para começar na Planeta Corpo).
-- A escolha do benefício e o beneficiário dos 30 dias devem ser registrados no sistema no ato da matrícula.
-- Desconto e presente valem **somente em outubro**.
-- ⚠️ **Mudou em relação a setembro:** trimestral e semestral não têm mais dias de Tempo de Cuidado (só o desconto); o anual passa a ser 30 dias **ou** fone, não os dois.
-
-**3 pilares:** "Você também merece cuidado" · "Cuidado que se multiplica" · "Outubro é o momento".
-
-**Calendário (respeitar a cadência de "🏋️ Academia — Estrutura Semanal de Conteúdo": 01-07 todo dia, 08-21 ~3x/semana, 22-31 todo dia):**
-| Semana | Foco | Conteúdo |
-|---|---|---|
-| 1 (01-07) | Lançamento e conceito | Anúncio oficial |
-| 2 (08-14) | Outubro Rosa e autocuidado | Carrossel explicativo |
-| 3 (15-21) | Benefícios e prova social | Post do anual no cartão; **dia 19** institucional |
-| 4 (22-31) | Fechamento com urgência | Contagem regressiva |
-
-**⚠️ Dia 19/10 — Dia Internacional de Luta contra o Câncer de Mama:** post e stories **institucionais, sem oferta nem CTA comercial**.
-**⚠️ Regra de sensibilidade (Outubro Rosa):** tratar como conscientização sobre prevenção e diagnóstico precoce. **Nunca** afirmar que treinar previne a doença ou substitui exames e acompanhamento médico.
-
-**CTA e contato:** convite para falar com a consultora e conhecer as condições — WhatsApp (42) 99922-2857, Av. Maria Bettega, 360, Turvo/PR. **Tom:** acolhedor, sem pressão, no ritmo de cada pessoa.
-
-**Material previsto na página:** 4 posts de feed, 12 stories e 3 roteiros de reels (a página não traz o texto pronto; criar seguindo o padrão da campanha de setembro). Há também scripts de consultoras e 4 mensagens de WhatsApp — material interno, não vira card do painel.
-
-**Lacunas da página (não prometer nos posts):** modelo do fone e entrega; processo de registro no sistema; regra de início em até 30 dias para quem for presenteada e ainda não é aluna.
-
-### 🟢 ATIVA — Sorveteria: Dia das Crianças — Guri Gurt por apenas R$ 0,99 (outubro/2026)
-- **Oferta:** Sorvete **Guri Gurt por apenas R$ 0,99** (informado por Gilson em 13/10/2026). Linha Guri Gurt: chiclete, leite condensado, maracujá, morango e uva (ver Lista de Produtos — Loja) — confirmar quais sabores entram na promoção.
-- **Público e tom:** crianças e famílias; festivo, familiar, comunidade de Turvo.
-- **Período:** até **31/10/2026** (informado por Gilson em 13/10/2026). Limite por cliente, por dia ou de estoque NÃO foi informado — não citar condições além do preço e da data final.
-- **Ação necessária:** usar como "Promoção de campanha ativa" (item 5 dos pilares diários), com espaçamento — não repetir todos os dias; variar o ângulo (preço, sabor, criançada, família) e manter o mix normal de loja/buffet/carrinho/humanização.
-
-### ⚪ ENCERRADA em 30/09/2026 — Academia: "Cuidado que se Multiplica" (Setembro Amarelo, 01-30/09/2026)
-Substitui "Agosto Vale Mais na Planeta" (encerrada 31/08/2026). Kit completo colado por Gilson em 19/08/2026, confirmando que esse é o padrão oficial de campanha (visão geral + pilares + script de vendas + WhatsApp + calendário + posts/stories/reels). Fonte: www.planetacorpoclubmais.com.br/campanha.
-
-**Mecânica:** plano trimestral/semestral/anual = desconto especial + "Tempo de Cuidado" (trimestral 7 dias, semestral 15 dias, anual 1 mês) — a pessoa usa no próprio plano ou presenteia alguém (aluna ativa ou alguém novo, que tem até 30 dias pra iniciar). Anual pago no cartão também ganha fone Bluetooth (brinde limitado). Público: novas matrículas, rematrículas, ex-alunos.
-
-**3 pilares (1 por foco de semana):**
-1. "Você também merece cuidado" (autocuidado não é egoísmo) — semana 1
-2. "Cuidado que se multiplica" (benefício pode ser presenteado) — semanas 2-3
-3. "Setembro é o momento" (urgência, só vale em setembro) — semana 4
-
-**⚠️ Regra de sensibilidade (Setembro Amarelo):** post do dia 10/09 é institucional sobre saúde mental (CVV 188), **sem oferta comercial nem CTA de venda**. Nunca dizer que treino substitui terapia/atendimento profissional.
-
-**Calendário (por semana — distribuir nos dias respeitando a cadência de "🏋️ Academia — Estrutura Semanal de Conteúdo" acima):**
-| Semana | Foco | Feed | Stories | Reels |
-|---|---|---|---|---|
-| 1 (1-6) | Lançamento e conceito | Post 1 — anúncio oficial | Teaser + explicação da escolha | Reel 1 — "Você também merece cuidado" |
-| 2 (7-13) | Setembro Amarelo e autocuidado | Post 2 — carrossel "Para quem vai seu Tempo de Cuidado?" | Enquete + dia 10 institucional | Reel 2 — "Cuidado que se multiplica" |
-| 3 (14-20) | Benefícios e prova social | Post 3 — anual no cartão + fone | Fone, rotina, depoimento | Reel 3 — "O que cabe na sua rotina?" |
-| 4 (21-30) | Fechamento com urgência | Post 4 — últimos dias | Contagem regressiva | — |
-
-**Copy pronta:**
-- Post 1: "VOCÊ CUIDA DE TODO MUNDO. MAS QUEM CUIDA DE VOCÊ?" — legenda sobre Tempo de Cuidado (usar ou presentear) + fone no anual no cartão.
-- Post 2 (carrossel 6 cards): "Em setembro, o cuidado se multiplica." → "Fechou plano? Você ganha Tempo de Cuidado." → "Trimestral: 7 dias. Semestral: 15 dias. Anual: 1 mês." → "Pode ser para você." → "Ou para alguém que você quer ver se cuidando também." → "Escolha seu plano, aproveite o desconto especial e compartilhe cuidado."
-- Post 3: "PLANO ANUAL NO CARTÃO — Desconto especial + 1 mês de Tempo de Cuidado + fone Bluetooth" — "válido durante setembro ou enquanto durarem os fones".
-- Post 4: "ÚLTIMOS DIAS PARA MULTIPLICAR CUIDADO." — "Não deixe você para depois."
-- Stories (12, temas não datados): teaser → "quem cuida de você?" → benefício → enquete (mim/alguém especial) → tabela 7/15/30 dias → detalhe do anual → rotina real → **dia 10: institucional CVV 188** → caixinha de pergunta → resposta a objeção → fone real → fechamento com contagem regressiva.
-- Reel 1 "Você também merece cuidado" (20s): clipes reais + convite pra se colocar na agenda.
-- Reel 2 "Para quem vai o seu Tempo de Cuidado?" (15s): treino individual vs. presentear amiga.
-- Reel 3 "O plano anual é para quem decidiu se priorizar" (20s): professor falando + cortes de aula, termina com desconto+1mês+fone.
-
-*(Script de vendas/WhatsApp/objeções e checklist operacional do Gilson não entram como card do painel — são material interno das consultoras, guardado à parte na memória do projeto.)*
-
----
-
-## 🎬 Campanhas Encerradas (histórico)
-
-### Academia: "Mês do Amigo"
-- **Slogan:** "Amigo que treina junto, economiza junto."
-- **Oferta:** 20% de desconto para referenciador + novo aluno
-- **Meta:** 50-60 novos alunos
-- **Duração:** Junho/Julho
-
-### Sorveteria: "Inverno Fitness"
-- **Slogan:** "Seu treino continua até na sobremesa."
-- **Produtos:** Açaí com whey protein, linha zero açúcar
-- **Oferta:** 20% de desconto
-- **Duração:** Junho/Julho
-
-### Sorveteria: "Não Fuja da Dieta!" (lançamento jul/2026)
-- **Slogan:** "Não fuja da dieta!"
-- **Produto:** Linha de Smoothies Proteicos Guri — 3 sabores: Zero Baunilha, Zero Chocolate e Açaí Zero, todos com 21g de proteína
-- **Preço de lançamento:** R$19,90
-- **Status:** Lançada em julho/2026, é uma extensão/evolução da linha fitness já existente (Inverno Fitness — açaí com whey, zero açúcar)
-- **Ação necessária:** priorizar essa campanha no conteúdo da Sorveteria a partir do lançamento (19/07), mantendo a linha "Inverno Fitness" como pano de fundo da mesma proposta (sorvete que cabe na dieta)
-
-### Sorveteria: "Queridinhos do Papai" (Ago/2026)
-- **Contexto:** Agosto é o mês dos Pais
-- **Produtos:** Linha Leve para Casa — sabores Flocos, Brigadeiro e Napolitano
-- **Preço promocional:** R$24,90 (cada sabor)
-- **Duração:** Mês de agosto/2026 inteiro
-- **Ação necessária:** priorizar essa campanha no conteúdo da Sorveteria a partir de 01/08, mas com espaçamento — não repetir a promoção todos os dias pra não ficar cansativo. Seguir a regra geral de cadência de campanha (~1 post a cada 3 dias), variando o ângulo (lançamento, sabor em destaque, praticidade de ter em casa, etc.), e manter o mix normal (produto do dia com outros sabores, construção de marca, relacionamento) rodando nos demais posts
-
-### Sorveteria: Férias Escolares (13 a 24/07)
-- **Período:** 13/07 a 24/07/2026 são dias de férias escolares em Turvo/PR
-- **Ação necessária:** pensar em postagens específicas para esse período — público muda (crianças/famílias com mais tempo livre durante a semana, não só fim de semana), oportunidade de reforçar visitas em dias úteis, combos família, brincadeiras/atividades para crianças na loja, horários alternativos de pico
-- Ao gerar conteúdo da Sorveteria para datas entre 13/07 e 24/07, priorizar ângulo de férias escolares em vez do mix padrão de dia útil
-
----
-
-## 🔧 Questões Técnicas em Aberto
-
-### Críticas
-1. **Chave admin Supabase:** Localização não confirmada — necessária para writes de estado direto do ambiente Claude
-2. **HTTP outbound bloqueado:** Claude não consegue chamar Supabase/Vercel de bash — soluções precisam rodar em Vercel ou browser
-3. **Chaves Zernio expostas:** API keys `sk_e2fcbf7c`, `sk_8f2dab48` foram expostas em histórico — precisam ser rotacionadas
-
-### Mitigações em Progresso
-- Reativar `cron-job.org` como gatilho redundante (ativa independente de self-loop)
-- Confirmar e localizar chave admin Supabase
-- Rotação de chaves Zernio
-
-#### Semana 1 (01-07 de julho)
-**Tema:** Lançamento da campanha | Tom: Convite e curiosidade
-
-- **01/07 (seg) 8h — Story:** "Início oficial do Mês do Amigo — Teaser visual" | Preto + laranja, emojis 🧡
-- **01/07 (seg) 17h — Post Feed:** "Anúncio oficial da campanha" | Briefing criativo + copy conversacional | CTA claro: "Trague seu amigo"
-- **02/07 (ter) 12h — Story:** Dúvida comum #1 ("Como funciona?") — resposta rápida
-- **03/07 (qua) 20h — Bastidores:** Humanização — colaborador falando sobre benefício de treinar com amigo
-- **04/07 (qui) 17h — Reel:** "Treinar com amigo" (motivação, diversão, comunidade)
-- **05/07 (sex) 8h — Story:** Prova social — "João trouxe sua amiga Maria, ambos ganharam 20% de desconto!"
-- **05/07 (sex) 20h — Post Feed:** "Depoimento/case" — Como treinar junto transforma a jornada
-
-#### Semana 2 (08-14 de julho)
-**Tema:** Momentum e prova social | Tom: Celebração de resultados iniciais
-
-- **08/07 (seg) 12h — Story:** Contador visual ("X alunos já participaram!")
-- **09/07 (ter) 17h — Post Feed:** "Dica de saúde" — Benefícios psicológicos de treinar em dupla
-- **10/07 (qua) 20h — Bastidores:** Humanização — outra colaboradora apresentada
-- **11/07 (qui) 9h — Story:** Enquete: "Você já convidou seu melhor amigo?"
-- **12/07 (sex) 17h — Reel:** "Transformação" — antes/depois de dupla treinando 30 dias
-- **13/07 (sab) 15h — Post Feed:** Ajuste sábado — destaque de promoção (2 posts Academia, 6 Sorveteria)
-- **14/07 (dom) — Pausa orgânica ou story leve**
-
-#### Semana 3 (15-21 de julho)
-**Tema:** Meio da campanha — lembrança urgente | Tom: FOMO positivo ("Não perca!")
-
-- **15/07 (seg) 8h — Story:** "Faltam 16 dias — Traga seu amigo agora!" (urgência gentil)
-- **16/07 (ter) 12h — Post Feed:** "Últimas semanas — Aproveita enquanto dura!"
-- **17/07 (qua) 20h — Bastidores:** Humanização — colaborador #3
-- **18/07 (qui) 17h — Story:** Votação ("Qual horário você e seu amigo vão treinar?")
-- **19/07 (sex) 8h — Reel:** Montagem dinâmica — 3 histórias de duplas felizes
-- **19/07 (fri) 17h — Post Feed:** Relatório intermediário ("Já somos X novos alunos!")
-- **20/07 (sab) 15h — Post Feed:** Ajuste sábado
-- **21/07 (dom) — Pausa**
-
-#### Semana 4 (22-31 de julho)
-**Tema:** Reta final — Fechamento da campanha | Tom: Urgência e reconhecimento
-
-- **22/07 (seg) 12h — Story:** "Uma semana para terminar! Traga seu amigo agora!"
-- **23/07 (ter) 17h — Post Feed:** "Top 5 Duplas da Semana" (prova social + gamificação)
-- **24/07 (qua) 20h — Bastidores:** Humanização — colaborador #4
-- **25/07 (qui) 9h — Story:** "Últimos dias!" (contagem regressiva visual)
-- **26/07 (fri) 17h — Post Feed:** Testemunhais compilado ("Veja o que as duplas estão dizendo")
-- **26/07 (fri) 20h — Reel:** Montagem "Mês do Amigo em 15 segundos" (compilation)
-- **29/07 (seg) 8h — Story:** "HOJE É O ÚLTIMO DIA!" (urgência total)
-- **29/07 (ter) 12h — Post Feed:** Encerramento oficial com números finais
-- **31/07 (qua) 20h — Bastidores/Story:** Agradecimento à comunidade + teaser do que vem em agosto
-
-### Estrutura de cada card de conteúdo — Mês do Amigo
-*Aplicar este template em todos os posts durante julho:*
-
-**`01` Formato/Specs**
-- Story 1080×1920 | Feed 1080×1350 (4:5) | Carrossel 1080×1350 (4:5) | Reel 1080×1920
-- Cores obrigatórias: Laranja (#e63900), Preto (#1a1a1a), Branco (#ffffff)
-- Emojis: 🧡💛🌿 (sem fogo, sem músculo)
-- Sem texto na imagem (todo copy é legenda)
-
-**`02` Intenção do post**
-- Funil: Awareness (semana 1) → Consideration (semanas 2-3) → Conversion (semana 4)
-- CTA obrigatório: "Traga seu amigo", "Convide agora", "Participe da campanha", "Clique no link"
-- Ação esperada: Compartilhamento interno, tagged friends, DM para dúvidas, clique no link da bio
-
-**`03` Briefing criativo detalhado**
-- Paleta visual: Laranja destaque, preto fundo, branco texto
-- Composição: Centrado, limpo, energético mas acolhedor
-- Hierarquia: Slogan → Imagem/Vídeo → Copy → CTA
-- Tone: Conversacional, amigável, sem jargão fitness agressivo
-
-### Hashtags — Campanha Mês do Amigo
-*30 hashtags por post (padrão Academia):*
-#MêsDoAmigo #AmigoQueTreinaJunto #AmigoQuePoupaTambém #AcademiaPlanetaCorpo #TreinoEmDupla #ComunidadeQueMotiva #QualidadeDeVida #AmigosDeTreino #DescontoParaDupla #MatrículaAgora #TreineComMotivaçãoDoble #SaudeCom Amigo #MotivacaoComParceria #AmigoIndica #AmigoSalva #TurvoPR #AcademiaLocal #27AnosDePadrão #SaudePsicológica #ConsistênciaTriplicada #DuplaDeSuccesso #AmigoMelhorQueSuplemento #TreineComemoia #Gym #FitnessComunidade #BenefíciosdoTreino #DescubraseuMelhorAmigo #JuntosSomosFortes #ComunidadeAcademia #CompromissoMútuo
-
----
-
-## 📈 Métricas & Objetivos
-
-### KPIs Rastreados
-- Engajamento (likes, comments, shares) por post
-- Taxa de clique (CTR) para links em bio
-- Crescimento de followers por marca
-- Conversão de referências (Academia "Mês do Amigo")
-- Taxa de desconto aplicado (Sorveteria "Inverno Fitness")
-
-### Cadência de Análise
-- Semanal: Top posts, trending topics
-- Mensal: Performance por campaign, ajuste de volume/mix
-
----
-
-## 👤 Responsabilidades & Acesso
-
-**Claude:** Execução técnica completa (criação de conteúdo, deploy, troubleshooting)
-**Gilson:** Aprovação de estratégia, feedback criativo, decisões de campanha
-
-**Acesso:**
-- GitHub token: `ghp_***`
-- Vercel team: `team_qNwqDFsenUMf0RhyXOxzC6l1`
-- Supabase public key: `sb_publishable_cEA3C8OvJgZfeZmbnfVYJg_3wuW1YAt`
-
----
-
-## 📚 Referência Rápida
-
-| Recurso | URL/Localização |
-|---------|-----------------|
-| **Painel ao vivo** | redes-sociais-gilt-alpha.vercel.app |
-| **Repositório** | github.com/Gmais/Redes-Sociais |
-| **Contexto estratégico** | CONTEXTO.md (raiz do repo) |
-| **Pasta Google Drive** | 1-mZJyf6yFvnZhnTGUWhQxjl-OaGz7y1P |
-| **Banco de dados** | Supabase project `ndzbfvxnallshfiouszk` |
-
----
-
-## 📐 ESPECIFICAÇÕES TÉCNICAS POR FORMATO
-| Formato | Dimensões | Proporção | Uso |
-|---|---|---|---|
-| Story | 1080 × 1920px | 9:16 | Engajamento rápido, urgência, bastidores |
-| Post Feed | 1080 × 1350px | 4:5 | Alcance, construção de marca, matrículas |
-| Carrossel | 1080 × 1350px por slide | 4:5 | Educação, demonstração, narrativa |
-| Reel | 1080 × 1920px | 9:16 | Crescimento de seguidores |
-
-> **⚠️ REGRA DE FORMATO (atualizada em 26/06/2026):** Todo **Post de feed** e **Carrossel** deve ser produzido em **1080 × 1350px (proporção 4:5, retrato)** — formato vertical que ocupa mais área no feed do Instagram e tende a ter mais alcance. Aplicar em TODAS as próximas publicações, tanto na seção `01 Formato/Specs` dos cards quanto nos prompts de geração de imagem por IA (gerar a imagem já em 1080×1350). Story e Reel permanecem em 1080 × 1920px (9:16). Mantém-se a regra de **sem texto na imagem** (todo copy vai na legenda).
-
-### Tipos de intenção por perfil
-**Academia:** Prova Social, Dica de Saúde, Convite à Matrícula, Humanização
-**Sorveteria:** Produto do Dia, Construção de Marca, Promoção, Relacionamento
-**GympulsePro:** Dado de Mercado, Funcionalidade, Prova Social, Demo
-
----
-
-## 🛠️ INFRAESTRUTURA TÉCNICA
-
-### Painel de conteúdo
-- **Repositório:** github.com/Gmais/Redes-Sociais
-- **Arquivo principal:** `index.html`
-- **Deploy:** automático via push no GitHub → Vercel
-
-### GympulsePro
-- **Frontend:** Next.js/React no Vercel
-- **Banco de dados:** Supabase
-- **Edge Functions:** Anthropic API (Claude)
-
----
-
-## ⚡ COMO EXECUTAR TAREFAS
-
-### Gerar conteúdo do dia
-Quando Gilson pedir "gera o conteúdo de [dia]":
-1. Gere os cards com o formato completo (formato técnico + intenção + briefing criativo)
-2. Atualize o `index.html` com os novos cards (validar sintaxe JS antes de commitar)
-3. Faça commit com mensagem clara (ex: "conteúdo 19/06 - ...")
-4. Push para o GitHub — Vercel publica automaticamente
-
-**Última atualização:** Jun 29, 2026  
-**Status:** Operacional com mitigações em progresso
+### Buffet (itens "Caixa 7L" — pilar 2)
+Vendidos em caixa de 7 litros para reposição do buffet self-service, incluindo as variações "sorvete sabor", "açaí", "gelatto", "premium" e "zero açúcar":
+Açaí tradicional, açaí com leitinho, açaí com avelã, açaí zero açúcar, gelatto sabor pistache, sorvete sabor: chocolate belga, coco com abóbora, fubá com goiabada, manga com abacaxi e hortelã, manga com maracujá, mousse de maracujá trufado, abacaxi, banana caramelizada, Blue Ice, brigadeiro, café com brigadeiro, chiclete, chocolate branco, chocolate, choco menta, clássico bombom, cocada cremosa, coco branco, cookie crocante, creme, creme de cupuaçu, doce de leite, flocos, floresta negra, iogurte grego com frutas do bosque, leite condensado, maracujá, marula com brigadeiro artesanal, milho verde, Mon Laté, morango, nata, olho de sogra, paçoca cremosa, passas ao rum, pavê latino, pistache, romeu e julieta, torta alemã, torta de limão, uva, uva ao creme; sorvete premium sabor alfajor; sorvete premium sabor Choco Dream; sorvete zero açúcar sabor baunilha; sorvete zero açúcar sabor chocolate.
+
+## 8. Estrutura de cada card
+1. **Formato / specs** — tipo (Post ou Story), dimensões, regra de hashtags.
+2. **Intenção** — pilar, objetivo, público, tom, CTA.
+3. **Briefing criativo** — cena, elementos, cores da marca, estilo. Sem texto sobreposto.
+
+Diretrizes visuais: regra 60-30-10 (60% cor dominante/fundo, 30% secundária, 10% destaque só no CTA); pelo menos 30% de área "vazia" para respiro; contraste forte entre texto e fundo; headline responde por ~70% do impacto do texto.
+
+## 9. Referência técnica (não usar nos posts)
+- **Repositório:** github.com/Gmais/Redes-Sociais (branch `main`). **Deploy:** push na `main` → Vercel (projeto `redes-sociais`), cerca de 30 s. **Painel:** redes-sociais-gilt-alpha.vercel.app
+- **Banco do painel:** Supabase `ggphrgfgckpsspbsguhp`, tabela `painel_gilson_state`. (O projeto `ndzbfvxnallshfiouszk` é o do **GymPulse**, não do painel.)
+- **Mídia:** o arquivo vai primeiro para a Zernio (sem login; o link temporário vale **7 dias**) e depois para o Google Drive em segundo plano (cópia permanente; exige "Conectar Drive"). Pastas do Drive: Academia `1xltSXYrcyWBAmJxKMzohjG2uuPSPbkWq` · Sorveteria `1OOZGQK1XO6XMH5K9VfyVXxk9Hdx3U_oS` · Gympulse `1fxOPjshpJS10kbUeWKYm8UQmQMnN3Rt7`.
+- **Vídeo:** MP4 ou MOV; até 300 MB (Story até 100 MB). Vídeo único fora de Story sai como Reel.
+- **Publicação:** Zernio. Contas: Academia `6ace80c0a737012bc49cb80c` · Sorveteria `6a3916335f7d1751ab4afbe3` · GympulsePro `6a3920625f7d1751ab4b6fdc`. Para trocar a conta de uma marca: conectar a nova na Zernio e criar no Vercel `ZERNIO_ACCOUNT_ACADEMIA` / `ZERNIO_ACCOUNT_SORVETERIA` / `ZERNIO_ACCOUNT_GYMPULSE`, depois Redeploy (posts já agendados continuam na conta antiga).
+- **Confirmação:** o cron (GitHub Actions) consulta a Zernio e só marca "publicado" quando o Instagram confirma.
+- **Modo Automático:** gera os próximos 3 dias de cada marca ligada, lendo este arquivo inteiro; cron diário do Vercel.
+- **Segredos** (chaves da Zernio, OpenAI/Gemini, tokens) ficam só nas variáveis do Vercel — nunca neste arquivo.
+
+## 10. Como gerar o conteúdo do dia (para o Claude)
+Quando o Gilson pedir "gera o conteúdo de [dia]":
+1. Gerar os cards completos (specs + intenção + briefing) seguindo as seções 2 a 5.
+2. Atualizar o `index.html` e validar a sintaxe do JavaScript antes de commitar.
+3. Commit com mensagem clara (ex.: "conteudo 05/11 - ...") e push na `main`.
