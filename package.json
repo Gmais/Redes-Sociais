@@ -5,5 +5,9 @@
   "dependencies": {
     "@resvg/resvg-js": "2.6.2",
     "satori": "0.10.14"
+  },
+  "scripts": {
+    "test": "node test/caption-similarity.test.js",
+    "sync:similarity": "node scripts/sync-caption-similarity.js"
   }
 }

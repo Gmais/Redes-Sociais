@@ -14,6 +14,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const sim = require('../lib/caption-similarity');
 
 const SUPABASE_URL = 'https://ggphrgfgckpsspbsguhp.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGhyZ2ZnY2twc3NwYnNndWhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3NzE2NDUsImV4cCI6MjEwNDM0NzY0NX0.t_dF5I6c0wCBqOnJd6ko6Jpu_ZQyQ5ulA8buRYLAMMk';
@@ -135,17 +136,17 @@ Regras de saída:
 ${context}`;
 }
 
-function userPrompt(profile, date, slots, existing) {
+function userPrompt(profile, date, slots, existing, notes) {
   const lines = slots.map((s, i) => `${i + 1}. ${s.time} — ${s.format}`).join('\n');
   const jaExiste = existing.length
-    ? existing.map(e => `- ${e.date} ${e.time} ${e.format}: ${String(e.caption || '').replace(/\s+/g, ' ').slice(0, 110)}`).join('\n')
+    ? existing.map(e => `- ${e.date} ${e.time} ${e.format}: ${String(e.caption || '').replace(/\s+/g, ' ').slice(0, 140)}`).join('\n')
     : '(nada próximo)';
   return `Data: ${date} (${WEEKDAYS[weekdayOf(date)]}).
 Gere os posts destes slots do dia:
 ${lines}
 
-Posts já existentes/recentes desta marca (não repetir tema nem frase):
-${jaExiste}`;
+Posts já existentes/recentes desta marca (não repetir produto, tema nem frase):
+${jaExiste}${notes ? '\n\n' + notes : ''}`;
 }
 
 async function callOpenAI(system, user) {
@@ -202,7 +203,61 @@ function buildCard(profile, date, slot, n, p) {
   };
 }
 
-async function runProfile(profile, rows, now) {
+// ── Anti-repetição ────────────────────────────────────────────────────────
+// Antes cada dia era gerado em paralelo vendo só 12 legendas dos 4 dias vizinhos: saía o
+// mesmo produto em dias seguidos e o Carrinho de Sorvete 2x na semana (regra: máx. 1x).
+function profileOfId(id) {
+  const m = /^au_([a-z]+)_/.exec(String(id));
+  if (m) return m[1];
+  return ({ ac: 'academia', so: 'sorveteria', gy: 'gympulse', gp: 'gympulse' })[String(id).slice(0, 2)] || null;
+}
+
+// Tudo que a marca já tem (histórico editado, agenda do painel e cards automáticos).
+function buildCorpus(profile, rows, keptCards) {
+  const map = new Map();
+  const put = (d) => {
+    if (!d.id || !d.date || !d.texto) return;
+    const old = map.get(d.id);
+    if (!old || (!old.title && d.title)) map.set(d.id, { ...old, ...d });
+  };
+  const edits = rows.edits || {};
+  Object.keys(edits).forEach((id) => {
+    const e = edits[id];
+    if (e && profileOfId(id) === profile) put({ id, profile, date: e.date, time: e.time, title: e.title, texto: e.texto });
+  });
+  const man = rows.manifest || {};
+  Object.keys(man).forEach((id) => {
+    const m = man[id];
+    if (m && m.profile === profile) put({ id, profile, date: m.date, time: m.time, title: '', texto: m.caption });
+  });
+  keptCards.forEach((c) => put({ id: c.id, profile, date: c.date, time: c.time, title: c.title, texto: c.texto }));
+  return [...map.values()];
+}
+
+const fmtDM = (date) => date.slice(8, 10) + '/' + date.slice(5, 7);
+
+// Aviso antecipado no 1º prompt: assunto de 1x por semana que a semana já usou.
+function weeklyNote(profile, date, corpus) {
+  const w = sim.weekOf(date);
+  return sim.ONCE_A_WEEK.filter((r) => r.profile === profile).map((r) => {
+    const hit = corpus.find((d) => sim.weekOf(d.date) === w && r.re.test((d.title || '') + ' ' + (d.texto || '')));
+    return hit ? `REGRA SEMANAL: "${r.label}" já tem post nesta semana (${fmtDM(hit.date)}). NÃO fale de ${r.label} neste dia.` : '';
+  }).filter(Boolean).join('\n');
+}
+
+function hitText(h) {
+  const d = h.doc;
+  const when = fmtDM(d.date) + (d.time ? ' ' + d.time : '');
+  if (h.why === 'semanal') return `${h.label} já tem post nesta semana (${when}) — NÃO use esse assunto`;
+  return `parecido com ${when}: "${String(d.title || d.texto).replace(/\s+/g, ' ').slice(0, 80)}"`;
+}
+
+function retryNote(flagged) {
+  return 'ATENÇÃO — o rascunho anterior ficou parecido com posts que já existem. Reescreva estes slots com OUTRO produto/assunto, outro ângulo e frases diferentes (mantendo as regras do CONTEXTO.md):\n' +
+    flagged.map((f, k) => `- slot ${k + 1} (${f.time}): ${f.hits.slice(0, 2).map(hitText).join('; ')}`).join('\n');
+}
+
+async function runProfile(profile, rows, now, startedAt) {
   const manifest = rows.manifest || {};
   const deleted = new Set(Array.isArray(rows.deleted) ? rows.deleted : []);
   const cards = Array.isArray(rows['auto_cards_' + profile]) ? rows['auto_cards_' + profile] : [];
@@ -233,14 +288,57 @@ async function runProfile(profile, rows, now) {
     occupied.weekHasPost = items.some(i => i.format === 'Post' && weekKey(i.date) === weekKey(date));
     const slots = planDay(profile, date, occupied);
     if (!slots.length) continue;
-    const recent = items.filter(i => Math.abs(epochDay(i.date) - epochDay(date)) <= 4 && i.caption).slice(0, 12);
+    const recent = items.filter(i => Math.abs(epochDay(i.date) - epochDay(date)) <= 7 && i.caption)
+      .sort((a, b) => Math.abs(epochDay(a.date) - epochDay(date)) - Math.abs(epochDay(b.date) - epochDay(date))).slice(0, 24);
     pending.push({ date, slots, recent });
   }
 
+  const corpus = buildCorpus(profile, rows, keptCards);
   const results = await Promise.all(pending.map(async ({ date, slots, recent }) => {
-    const posts = await callOpenAI(system, userPrompt(profile, date, slots, recent));
-    return { date, slots, posts };
+    const posts = await callOpenAI(system, userPrompt(profile, date, slots, recent, weeklyNote(profile, date, corpus)));
+    return { date, slots, posts, recent };
   }));
+
+  // Compara cada post novo com o histórico e com os outros novos (em ordem de data). O que
+  // ficar parecido é reescrito UMA vez (retries em paralelo para caber no tempo da função);
+  // se ainda repetir um assunto de 1x/semana, o post é descartado.
+  const ix = sim.createIndex(corpus);
+  const accepted = [];
+  const stats = { reescritos: 0, descartados: 0, parecidosMantidos: 0 };
+  const check = (r, i) => {
+    const p = r.posts[i];
+    const draft = { id: '__novo_' + r.date + '_' + i, profile, date: r.date, time: r.slots[i].time, title: clean(p.title), texto: clean(p.texto) };
+    return { draft, hits: sim.similarToDraft(ix, draft, accepted) };
+  };
+  const ordered = results.slice().sort((a, b) => a.date.localeCompare(b.date));
+  const toRedo = [];
+  for (const r of ordered) {
+    const flagged = [];
+    r.posts.forEach((p, i) => {
+      if (!r.slots[i] || !p || !clean(p.texto)) return;
+      const c = check(r, i);
+      if (c.hits.length) flagged.push({ i, time: r.slots[i].time, hits: c.hits }); else accepted.push(c.draft);
+    });
+    if (flagged.length) toRedo.push({ r, flagged });
+  }
+  if (toRedo.length && Date.now() - startedAt < 70000) {
+    await Promise.all(toRedo.map(async ({ r, flagged }) => {
+      try {
+        const slots2 = flagged.map((f) => r.slots[f.i]);
+        const note = [weeklyNote(profile, r.date, corpus), retryNote(flagged)].filter(Boolean).join('\n\n');
+        const posts2 = await callOpenAI(system, userPrompt(profile, r.date, slots2, r.recent, note));
+        flagged.forEach((f, k) => { if (posts2[k] && clean(posts2[k].texto)) { r.posts[f.i] = posts2[k]; stats.reescritos++; } });
+      } catch (e) { /* mantém o rascunho original */ }
+    }));
+  }
+  for (const { r, flagged } of toRedo) {
+    flagged.forEach((f) => {
+      const c = check(r, f.i);
+      if (c.hits.some((h) => h.why === 'semanal')) { r.posts[f.i] = null; stats.descartados++; return; }
+      if (c.hits.length) stats.parecidosMantidos++;
+      accepted.push(c.draft);
+    });
+  }
 
   results.forEach(({ date, slots, posts }) => {
     let n = 1;
@@ -265,7 +363,7 @@ async function runProfile(profile, rows, now) {
     created.forEach(c => { man[c.id] = { profile, date: c.date, time: c.time, format: c.format, caption: c.texto }; });
     await writeRow('manifest', man);
   }
-  return { profile, created: created.length, ids: created.map(c => c.id) };
+  return { profile, created: created.length, ids: created.map(c => c.id), antiRepeticao: stats };
 }
 
 module.exports = async (req, res) => {
@@ -301,7 +399,7 @@ module.exports = async (req, res) => {
       const last = state[profile] && Date.parse(state[profile].lastRun);
       if (last && now - last < minInterval) { out.push({ profile, skipped: 'executado há pouco' }); continue; }
       state[profile] = { lastRun: new Date(now).toISOString() };
-      try { out.push(await runProfile(profile, rows, now)); }
+      try { out.push(await runProfile(profile, rows, now, now)); }
       catch (e) { out.push({ profile, error: e.message }); }
     }
     await writeRow('auto_state', state);

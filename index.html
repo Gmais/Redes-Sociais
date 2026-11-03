@@ -860,6 +860,8 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .reuse-btn { font-size:11px; font-weight:800; border:none; border-radius:8px; padding:6px 12px; cursor:pointer; font-family:'Inter',sans-serif; color:#0d0d0d; }
 .reuse-btn:hover { opacity:0.85; }
 .reuse-y { background:#f5c200; }
+.sim-warn { flex:none; font-size:10px; font-weight:800; color:#0d0d0d; background:#f5c200; border-radius:6px; padding:2px 7px; margin-left:8px; white-space:nowrap; cursor:help; }
+.sim-note { margin:10px 0 0; padding:9px 12px; border-radius:8px; border:1px solid rgba(245,194,0,.45); background:rgba(245,194,0,.09); color:#f5c200; font-size:12px; line-height:1.5; }
 .reuse-g { background:#22c55e; }
 .ru-tabs { display:flex; gap:6px; flex-wrap:wrap; }
 .ru-tabs:empty { display:none; }
@@ -25520,6 +25522,7 @@ function cardHTML(item,profile){
       <span class="ctag">${item.time}</span>
       <span class="cfmt${cfmtClass}" id="cfmt-${item.id}">${item.format}</span>
       <span class="ctitle">${item.title}</span>
+      <span class="sim-warn" id="simw-${item.id}" style="display:none"></span>
     </div>
     <span class="cchev">▼</span>
   </div>
@@ -25530,6 +25533,7 @@ function cardHTML(item,profile){
       <button class="copy-all-btn" onclick="event.stopPropagation();copyAll('${item.id}')">📋 Copiar tudo</button>
       <button class="delete-btn" onclick="event.stopPropagation();deleteCard('${item.id}','${profile}')">🗑️ Excluir</button>
     </div>
+    <div class="sim-note" id="simnote-${item.id}" style="display:none"></div>
     ${ZERNIO_PROFILES.includes(profile) ? publishBlockHTML(item.id) : ''}
     <div class="block">
       <div class="blabel" style="color:#00b4d8">📎 Mídia a ser Publicada
@@ -25637,6 +25641,7 @@ function renderAll(){
     ['academia','sorveteria','gympulse'].forEach(renderPanel);
     // Restaurar cards abertos
     _openIds.forEach(cid => { const el = document.getElementById(cid); if (el) el.classList.add('open'); });
+    refreshSimilarBadges();
   } catch(err) {
     console.error('Erro em renderAll:', err);
     showToast('⚠️ Erro ao renderizar — recarregue a página');
@@ -27830,6 +27835,7 @@ function reuseCandidates(id){
 }
 // Mostra/esconde o botão "Reaproveitar imagem" do card (amarelo ou verde, com a %).
 function updateReuseButton(id){
+  updateSimilarBadge(id);
   const btn = document.getElementById('reuse-' + id);
   if (!btn) return;
   const gen = document.getElementById('genbtn-' + id);
@@ -27843,6 +27849,174 @@ function updateReuseButton(id){
   btn.style.display = '';
   btn.style.marginLeft = 'auto';
   if (gen) gen.style.marginLeft = '8px';
+}
+
+// ── MENSAGENS PARECIDAS (legenda) ──
+// Avisa no card quando a mensagem é parecida com outro post da MESMA marca em até 7 dias,
+// ou quando repete um assunto limitado a 1x por semana (Carrinho de Sorvete). O detector
+// antigo ("Reaproveitar imagem") só comparava o briefing da imagem com corte de 75% — as
+// legendas parecidas ficavam em 30–45% e nunca eram apontadas.
+// <caption-similarity:begin> (gerado de lib/caption-similarity.js por scripts/sync-caption-similarity.js — não edite aqui)
+const CapSim = (function () {
+  // Detecta "mensagens parecidas" entre posts da MESMA marca em dias próximos.
+  //
+  // Dois sinais (calibrados com o histórico real do painel):
+  //   - caption: a legenda é parecida (similaridade de cosseno com peso IDF, por radicais
+  //     de palavras). Pega o mesmo produto/assunto escrito de outro jeito.
+  //   - tema:    o TÍTULO repete 2+ palavras-chave em até 3 dias (ex.: "Picolé de Uva" de novo).
+  //     Pega o mesmo assunto mesmo quando a legenda muda quase tudo.
+  //   - semanal: assunto que o CONTEXTO.md limita a 1x por semana (hoje: Carrinho de Sorvete).
+  // Posts de encerramento do dia (template fixo por regra) nunca são comparados entre si.
+  //
+  // ATENÇÃO: a mesma lógica existe dentro do index.html (bloco "MENSAGENS PARECIDAS"), porque
+  // o painel é um arquivo estático sem build. test/caption-similarity.test.js confere que as
+  // duas versões dão o mesmo resultado — mexeu aqui, mexa lá.
+
+  const CAPTION_MIN = 0.30;   // cosseno mínimo da legenda
+  const CAPTION_SHARED = 4;   // e pelo menos N radicais em comum
+  const WINDOW_DAYS = 7;      // janela de comparação (± dias)
+  const THEME_DAYS = 3;       // janela do sinal "tema"
+  const THEME_TERMS = 2;      // palavras-chave de título em comum para o sinal "tema"
+  const THEME_MIN_CAPTION = 0.15; // e legenda minimamente parecida (evita ruído como "Dica rápida")
+  // Assuntos de no máximo 1 post por semana (segunda a domingo), por marca. Fonte: CONTEXTO.md.
+  const ONCE_A_WEEK = [{ profile: 'sorveteria', label: 'Carrinho de Sorvete', re: /carrinho/i }];
+
+  const STOP = new Set(('para com uma que dos das nao sem por mais como mas seu sua isso esta este foi ser tem ate ' +
+    'sobre entre voce voces vem aqui hoje pra ela ele dia').split(' '));
+  // Palavras de pilar/formato que aparecem em muitos títulos e não indicam assunto repetido.
+  const TITLE_STOP = new Set(('produto produtos loja buffet dia hoje encerramento humanizacao destaque sorvete sorvetes ' +
+    'caixa especial novo nova sabor sabores dica dicas bastidores agradecimento obrigado noite story post turvo guri ' +
+    'planeta corpo academia treino semana fim de da do para pra com sua seu campanha promocao').split(' '));
+  const TITLE_STOP_STEMS = new Set([...TITLE_STOP].map((w) => w.slice(0, 6))); // os termos comparados são radicais de 6 letras
+  const TEMPLATE_RE = /encerramento|boa noite|abertura do dia/i;
+
+  function stems(text) {
+    return String(text || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/#\w+/g, ' ').replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+      .filter((w) => w.length > 2 && !STOP.has(w) && !/^\d+$/.test(w)).map((w) => w.slice(0, 6));
+  }
+  function themeStems(title) {
+    return stems(title).filter((w) => !TITLE_STOP_STEMS.has(w));
+  }
+  function dayOf(date) { return Math.floor(Date.parse(date + 'T00:00:00Z') / 86400000); }
+
+  function weekStart(day) { const wd = (day + 4) % 7; return day - ((wd + 6) % 7); } // 1970-01-01 foi quinta
+
+  function weekOf(date) { return weekStart(dayOf(date)); }
+
+  function prepare(d) {
+    const day = dayOf(d.date);
+    const hay = (d.title || '') + ' ' + (d.texto || '');
+    return {
+      id: d.id, profile: d.profile, date: d.date, time: d.time || '', title: d.title || '', texto: d.texto,
+      day, week: weekStart(day), once: ONCE_A_WEEK.filter((r) => r.profile === d.profile && r.re.test(hay)).map((r) => r.label), set: new Set(stems(d.texto)), theme: new Set(themeStems(d.title)),
+      templ: TEMPLATE_RE.test(d.title || '')
+    };
+  }
+
+  function createIndex(docs) {
+    const list = docs.filter((d) => d && d.id && d.texto && d.date).map(prepare);
+    const df = new Map();
+    list.forEach((d) => d.set.forEach((w) => df.set(w, (df.get(w) || 0) + 1)));
+    const N = list.length;
+    const idf = (w) => Math.log((N + 1) / ((df.get(w) || 0) + 1)) + 0.05; // palavra rara pesa mais
+    const norm = (set) => Math.sqrt([...set].reduce((a, w) => a + idf(w) * idf(w), 0)) || 1;
+    list.forEach((d) => { d.n = norm(d.set); });
+    const byId = new Map(list.map((d) => [d.id, d]));
+    return { list, byId, idf, norm };
+  }
+
+  function compare(ix, me, d) {
+    if (d.id === me.id || d.profile !== me.profile) return null;
+    const gap = Math.abs(d.day - me.day);
+    const onceHit = d.week === me.week ? me.once.find((l) => d.once.includes(l)) : null;
+    if (onceHit) return { doc: d, score: 1, why: 'semanal', label: onceHit, gap };
+    if (gap > WINDOW_DAYS) return null;
+    if (d.templ && me.templ) return null;
+    let dot = 0, shared = 0;
+    me.set.forEach((w) => { if (d.set.has(w)) { dot += ix.idf(w) * ix.idf(w); shared++; } });
+    const score = dot / (me.n * d.n);
+    if (shared >= CAPTION_SHARED && score >= CAPTION_MIN) return { doc: d, score, why: 'caption', gap };
+    if (gap <= THEME_DAYS && !d.templ && !me.templ) {
+      const terms = [...me.theme].filter((w) => d.theme.has(w));
+      if (terms.length >= THEME_TERMS && score >= THEME_MIN_CAPTION) return { doc: d, score, why: 'tema', terms, gap };
+    }
+    return null;
+  }
+
+  const RANK = { semanal: 0, caption: 1, tema: 2 };
+
+  // Posts parecidos com o post `id` que já está no índice.
+  function similar(ix, id, opts) {
+    const me = ix.byId.get(id);
+    if (!me) return [];
+    const out = [];
+    ix.list.forEach((d) => { const r = compare(ix, me, d); if (r) out.push(r); });
+    return out.sort((a, b) => RANK[a.why] - RANK[b.why] || b.score - a.score).slice(0, (opts && opts.limit) || 3);
+  }
+
+  // Rascunho que ainda NÃO está no índice (ex.: post que a IA acabou de escrever).
+  function similarToDraft(ix, draft, extraDocs) {
+    const me = prepare({ id: draft.id || '__draft__', ...draft });
+    me.n = ix.norm(me.set);
+    const pool = ix.list.concat((extraDocs || []).map((d) => { const p = prepare(d); p.n = ix.norm(p.set); return p; }));
+    const out = [];
+    pool.forEach((d) => { const r = compare(ix, me, d); if (r) out.push(r); });
+    return out.sort((a, b) => RANK[a.why] - RANK[b.why] || b.score - a.score);
+  }
+  return { createIndex, similar, similarToDraft };
+})();
+// <caption-similarity:end>
+
+let _capIdx = null, _capKey = '';
+function capIndex(){
+  const docs = [];
+  for (const p of ['academia', 'sorveteria', 'gympulse']) {
+    for (const it of CONTENT[p]) docs.push({ id: it.id, profile: p, date: it.date, time: it.time, title: it.title, texto: it.texto });
+  }
+  const key = docs.length + ':' + docs.reduce((a, d) => a + (d.texto || '').length + (d.title || '').length, 0);
+  if (_capIdx && key === _capKey) return _capIdx;
+  _capKey = key;
+  _capIdx = CapSim.createIndex(docs);
+  return _capIdx;
+}
+function capEsc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function capDM(date){ const p = String(date).split('-'); return p[2] + '/' + p[1]; }
+function capLine(s){
+  const d = s.doc, when = capDM(d.date) + (d.time ? ' ' + d.time : '');
+  if (s.why === 'semanal') return `${capEsc(s.label)} já tem post nesta semana: ${when} — "${capEsc(d.title)}" (a regra é no máximo 1x por semana)`;
+  if (s.why === 'tema') return `mesmo assunto de ${when} — "${capEsc(d.title)}"`;
+  return `parecida com ${when} — "${capEsc(d.title)}" (${Math.round(s.score * 100)}%)`;
+}
+function findSimilarCaptions(id){
+  try { return CapSim.similar(capIndex(), id, { limit: 3 }); } catch (e) { return []; }
+}
+function updateSimilarBadge(id){
+  const badge = document.getElementById('simw-' + id);
+  const note = document.getElementById('simnote-' + id);
+  if (!badge && !note) return;
+  const sims = findSimilarCaptions(id);
+  if (!sims.length) {
+    if (badge) badge.style.display = 'none';
+    if (note) note.style.display = 'none';
+    return;
+  }
+  if (badge) {
+    badge.textContent = sims[0].why === 'semanal' ? '⚠️ repete assunto' : '⚠️ parecida';
+    badge.title = sims.map((s) => capLine(s).replace(/&quot;/g, '"').replace(/&amp;/g, '&')).join('\n');
+    badge.style.display = '';
+  }
+  if (note) {
+    note.innerHTML = '⚠️ <b>Mensagem parecida</b> — ' + sims.map(capLine).join('<br>→ ') +
+      '<br><span style="opacity:.8">Troque o produto ou o ângulo para não repetir.</span>';
+    note.style.display = '';
+  }
+}
+function refreshSimilarBadges(){
+  const from = dateBR(-1);
+  for (const p of ['academia', 'sorveteria', 'gympulse']) {
+    for (const it of CONTENT[p]) if (it.date >= from) updateSimilarBadge(it.id);
+  }
 }
 
 function testImgLoad(url, ms){
