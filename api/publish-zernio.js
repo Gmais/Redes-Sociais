@@ -32,7 +32,7 @@ module.exports = async (req, res) => {
 
   try {
     const raw = await readBody(req);
-    const { profile, caption, fileName, mimeType, base64, format, zernioUrl, scheduledFor } = JSON.parse(raw);
+    const { profile, caption, fileName, mimeType, base64, format, zernioUrl, scheduledFor, mediaType } = JSON.parse(raw);
 
     const config = PROFILE_CONFIG[profile];
     if (!config) {
@@ -98,9 +98,18 @@ module.exports = async (req, res) => {
       if (ms > Date.now() + 60000) scheduleAt = new Date(ms).toISOString();
     }
 
+    // Imagem ou vídeo? A Zernio recusa (400) quando o "type" contradiz a extensão
+    // do arquivo — era o que derrubava todo vídeo ("type is image but URL
+    // extension suggests video"). Decide por: campo explícito, MIME ou extensão.
+    const isVideo = mediaType === 'video'
+      || /^video\//i.test(mimeType || '')
+      || /\.(mp4|mov|m4v|webm|avi|mpeg)(\?|#|$)/i.test(String(publicUrl || ''));
+
     // Cria o post (agendado ou publicando imediatamente).
-    // Stories são 9:16 e usam contentType:'story'. Posts/Carrossel ficam no
-    // padrão de feed (sem platformSpecificData), que aceita proporção 0.8–1.91.
+    // Stories são 9:16 e usam contentType:'story' (imagem ou vídeo). Vídeo único
+    // fora de Story é publicado pela Zernio como Reel (sem contentType, e
+    // continua aparecendo no feed). Imagem de Post/Carrossel fica no padrão de
+    // feed (sem platformSpecificData), que aceita proporção 0.75–1.91.
     const platformTarget = { platform: 'instagram', accountId };
     if ((format || '').toLowerCase() === 'story') {
       platformTarget.platformSpecificData = { contentType: 'story' };
@@ -114,7 +123,7 @@ module.exports = async (req, res) => {
       },
       body: JSON.stringify({
         content: caption || '',
-        mediaItems: [{ type: 'image', url: publicUrl }],
+        mediaItems: [{ type: isVideo ? 'video' : 'image', url: publicUrl }],
         platforms: [platformTarget],
         ...(scheduleAt
           ? { scheduledFor: scheduleAt, timezone: 'America/Sao_Paulo' }

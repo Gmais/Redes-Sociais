@@ -24667,17 +24667,22 @@ async function publishToInstagram(id, scheduledFor){
   rerenderPublishBlock(id);
 
   const img = getImageData(id);
+  const mediaType = isVideoImg(img) ? 'video' : 'image';
 
-  // Se a imagem já foi enviada pro Zernio em segundo plano (fluxo normal),
-  // publica direto sem precisar do login do Google.
-  if (img.zernioStatus === 'ok' && img.zernioUrl) {
+  // O arquivo temporário da Zernio vale 7 dias. Com mais de ~6 dias, renova a partir do
+  // Drive (quando existe cópia) antes de publicar — antes isso virava "Image not found".
+  const zernioAgeDays = (img.zernioAt || img.uploadedAt) ? (Date.now() - Date.parse(img.zernioAt || img.uploadedAt)) / 86400000 : 0;
+  const zernioStale = zernioAgeDays > 6 && !!img.fileId;
+
+  // Mídia já está na Zernio (fluxo normal): publica direto, sem login do Google.
+  if (img.zernioStatus === 'ok' && img.zernioUrl && !zernioStale) {
     try {
       const resp = await fetch('/api/publish-zernio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profile, caption: item.texto, format: item.format, zernioUrl: img.zernioUrl, scheduledFor: scheduledFor || undefined })
+        body: JSON.stringify({ profile, caption: item.texto, format: item.format, zernioUrl: img.zernioUrl, mediaType, scheduledFor: scheduledFor || undefined })
       });
-      const data = await resp.json();
+      const data = await safeJsonResponse(resp);
       if (!resp.ok || !data.ok) throw new Error(data.error || 'Falha desconhecida ao publicar.');
       // A Zernio aceitou o envio, mas isso ainda não é confirmação de que o
       // post está no ar (publicação assíncrona) — fica 'sent' até
@@ -24690,8 +24695,13 @@ async function publishToInstagram(id, scheduledFor){
     return;
   }
 
-  // Caminho antigo (imagem ainda não preparada no Zernio): baixa do Drive
-  // com o login do navegador e sobe na hora.
+  // Sem cópia válida na Zernio (ou expirada): baixa do Drive com o login do navegador,
+  // sobe de novo direto na Zernio (sem limite de 4,5MB) e publica.
+  if (!img.fileId) {
+    setPublishData(id, { status: 'error', errorMsg: 'A mídia não está pronta para publicar. Use "Substituir" para enviar de novo.' });
+    rerenderPublishBlock(id);
+    return;
+  }
   ensureDriveAuth(async (authErr) => {
     if (authErr) {
       setPublishData(id, { status: 'error', errorMsg: authErr.message });
@@ -24700,16 +24710,18 @@ async function publishToInstagram(id, scheduledFor){
     }
     try {
       const blob = await downloadDriveFile(img.fileId);
-      const base64 = await blobToBase64(blob);
-      const mimeType = blob.type || 'image/jpeg';
-      const fileName = img.fileName || ('post-' + id + '.jpg');
+      const mimeType = blob.type || (mediaType === 'video' ? 'video/mp4' : 'image/jpeg');
+      const fileName = img.fileName || ('post-' + id + (mediaType === 'video' ? '.mp4' : '.jpg'));
+      const zUrl = await uploadMediaToZernio(new File([blob], fileName, { type: mimeType }), profile);
+      setImageData(id, { ...img, zernioStatus: 'ok', zernioUrl: zUrl, zernioAt: new Date().toISOString(), zernioErrorMsg: '' });
+      rerenderImageBox(id, profile);
 
       const resp = await fetch('/api/publish-zernio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profile, caption: item.texto, fileName, mimeType, base64, format: item.format, scheduledFor: scheduledFor || undefined })
+        body: JSON.stringify({ profile, caption: item.texto, format: item.format, zernioUrl: zUrl, mediaType, scheduledFor: scheduledFor || undefined })
       });
-      const data = await resp.json();
+      const data = await safeJsonResponse(resp);
       if (!resp.ok || !data.ok) {
         throw new Error(data.error || 'Falha desconhecida ao publicar.');
       }
@@ -24840,9 +24852,12 @@ function imageBlockHTML(id, profile){
           </div>
         </div>`;
     }
+    const isVid = isVideoImg(img);
     const thumb = img.thumbnailLink
       ? `<img class="upload-thumb" src="${img.thumbnailLink}" alt="">`
-      : `<span class="upload-thumb-icon">🖼️</span>`;
+      : (img.zernioUrl && !isVid)
+        ? `<img class="upload-thumb" src="${img.zernioUrl}" alt="">`
+        : `<span class="upload-thumb-icon">${isVid ? '🎬' : '🖼️'}</span>`;
     const zernioLine = img.zernioStatus === 'ok'
       ? `<div class="upload-status zernio-ok">✓ Disponível pra publicação automática</div>`
       : img.zernioStatus === 'error'
@@ -24855,11 +24870,11 @@ function imageBlockHTML(id, profile){
         ${thumb}
         <div class="upload-info">
           <div class="upload-name">${img.fileName}</div>
-          <div class="upload-status">✓ Enviado para o Drive (${profileFolderName(profile)})</div>
+          ${driveLineHTML(id, profile, img)}
           ${zernioLine}
         </div>
         <div class="upload-actions">
-          <a class="upload-link" href="${img.viewUrl}" target="_blank">Abrir ↗</a>
+          <a class="upload-link" href="${img.viewUrl || img.zernioUrl || '#'}" target="_blank">Abrir ↗</a>
           <button class="upload-replace" onclick="event.stopPropagation();startImageUpload('${id}','${profile}')">Substituir</button>
         </div>
       </div>`;
@@ -24870,7 +24885,7 @@ function imageBlockHTML(id, profile){
         <span class="upload-thumb-icon">⏳</span>
         <div class="upload-info">
           <div class="upload-name">${img.fileName || 'Enviando...'}</div>
-          <div class="upload-status loading">Enviando para o Drive...</div>
+          <div class="upload-status loading">Enviando...</div>
         </div>
       </div>`;
   }
@@ -24886,7 +24901,7 @@ function imageBlockHTML(id, profile){
     <div class="upload-box" onclick="startImageUpload('${id}','${profile}')">
       <div class="upload-box-icon">📤</div>
       <div class="upload-box-text">Toque para enviar imagem ou vídeo da postagem</div>
-      <div class="upload-box-hint">Vai direto para a pasta ${profileFolderName(profile)} no Drive</div>
+      <div class="upload-box-hint">Imagem JPG/PNG ou vídeo MP4/MOV — também é salva na pasta ${profileFolderName(profile)} do Drive</div>
     </div>`;
 }
 
@@ -24939,6 +24954,7 @@ function initGoogleAuth(){
         sessionStorage.setItem('gdrive_token_v2', JSON.stringify({ t: driveAccessToken, exp: driveTokenExpiry }));
         updateDriveConnectBtn(true);
         resolvePendingAuth(null);
+        setTimeout(flushPendingDrive, 300); // salva no Drive o que ficou pendente nesta sessão
       } else {
         resolvePendingAuth(new Error('Login com Google não retornou permissão. Tente novamente.'));
       }
@@ -25027,17 +25043,43 @@ function ensureDriveAuth(onReady){
   gisTokenClient.requestAccessToken();
 }
 
+// Envia para o Drive. Até 5MB: um pedido só (multipart). Acima disso (vídeos): upload
+// retomável — o multipart do Drive não é feito para arquivo grande e estourava o tempo.
 async function uploadFileToDrive(file, folderId){
-  const boundary = 'painelgilson' + Date.now();
+  const mime = file.type || 'application/octet-stream';
   const metadata = { name: file.name, parents: [folderId] };
-  const delimiter = '\r\n--' + boundary + '\r\n';
-  const closeDelim = '\r\n--' + boundary + '--';
-  const metaPart = delimiter + 'Content-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify(metadata);
-  const mediaHeader = delimiter + 'Content-Type: ' + file.type + '\r\n\r\n';
-  const body = new Blob([metaPart, mediaHeader, file, closeDelim]);
+  const fields = 'id,webViewLink,thumbnailLink';
+  const isVideo = mime.startsWith('video/');
+  const timeout = Math.max(isVideo ? 120000 : 45000, Math.round(file.size / 1048576) * 8000);
+  const sessionExpired = new Error('Sessão do Google expirou. Toque em "Conectar Drive" de novo.');
 
-  const isVideo = file.type.startsWith('video/');
-  const timeout = isVideo ? 120000 : 45000; // 2min vídeo, 45s imagem
+  let url, headers, body;
+  if (file.size <= 5 * 1024 * 1024) {
+    const boundary = 'painelgilson' + Date.now();
+    const delimiter = '\r\n--' + boundary + '\r\n';
+    const closeDelim = '\r\n--' + boundary + '--';
+    url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=' + fields;
+    headers = { 'Authorization': 'Bearer ' + driveAccessToken, 'Content-Type': 'multipart/related; boundary=' + boundary };
+    body = new Blob([delimiter + 'Content-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify(metadata),
+      delimiter + 'Content-Type: ' + mime + '\r\n\r\n', file, closeDelim]);
+  } else {
+    const init = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=' + fields, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + driveAccessToken,
+        'Content-Type': 'application/json; charset=UTF-8',
+        'X-Upload-Content-Type': mime,
+        'X-Upload-Content-Length': String(file.size)
+      },
+      body: JSON.stringify(metadata)
+    });
+    if (init.status === 401) throw sessionExpired;
+    if (!init.ok) throw new Error('O Drive recusou iniciar o envio (status ' + init.status + ').');
+    url = init.headers.get('Location');
+    if (!url) throw new Error('O Drive não devolveu o endereço de envio. Tente de novo.');
+    headers = { 'Content-Type': mime };
+    body = file;
+  }
 
   window._driveBusy++;
   return new Promise((resolve, reject) => {
@@ -25045,37 +25087,26 @@ async function uploadFileToDrive(file, folderId){
     const done = () => { window._driveBusy = Math.max(0, window._driveBusy - 1); };
     const timerId = setTimeout(() => { xhr.abort(); reject(new Error('Upload demorou demais. Verifique sua conexão.')); }, timeout);
 
-    // Barra de progresso
     showUploadProgress(0, file.name);
     xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
-        const pct = Math.round((e.loaded / e.total) * 100);
-        showUploadProgress(pct, file.name);
-      }
+      if (e.lengthComputable) showUploadProgress(Math.round((e.loaded / e.total) * 100), file.name);
     };
-
     xhr.onload = () => {
       clearTimeout(timerId);
       hideUploadProgress();
       done();
       try {
         const data = JSON.parse(xhr.responseText);
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve(data);
-        } else if (xhr.status === 401) {
-          reject(new Error('Sessão do Google expirou. Toque em "Conectar Drive" de novo.'));
-        } else {
-          reject(new Error((data.error && data.error.message) || 'Falha no upload'));
-        }
-      } catch(e) { reject(new Error('Resposta inválida do Drive')); }
+        if (xhr.status >= 200 && xhr.status < 300) resolve(data);
+        else if (xhr.status === 401) reject(sessionExpired);
+        else reject(new Error((data.error && data.error.message) || 'Falha no upload'));
+      } catch (e) { reject(new Error('Resposta inválida do Drive')); }
     };
-
     xhr.onerror = () => { clearTimeout(timerId); hideUploadProgress(); done(); reject(new Error('Erro de rede ao enviar para o Drive')); };
     xhr.onabort = () => { clearTimeout(timerId); hideUploadProgress(); done(); };
 
-    xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink,thumbnailLink');
-    xhr.setRequestHeader('Authorization', 'Bearer ' + driveAccessToken);
-    xhr.setRequestHeader('Content-Type', 'multipart/related; boundary=' + boundary);
+    xhr.open(file.size <= 5 * 1024 * 1024 ? 'POST' : 'PUT', url);
+    Object.keys(headers).forEach((h) => xhr.setRequestHeader(h, headers[h]));
     xhr.send(body);
   });
 }
@@ -25163,85 +25194,155 @@ function hideUploadProgress() {
   if (bar) bar.style.display = 'none';
 }
 
-function startImageUpload(id, profile){
-  ensureDriveAuth((authErr) => {
-    if (authErr) {
-      showToast('⚠️ ' + authErr.message);
-      return;
-    }
-    document.getElementById('imgfile-'+id).click();
-  });
+// ── ENVIO DE MÍDIA DO CARD ──
+// Ordem nova: 1) Zernio (servidor, SEM login) -> o card já fica pronto para publicar;
+// 2) Drive só como cópia permanente, em segundo plano. Antes o painel exigia o login do
+// Google ANTES de aceitar a mídia: se o login falhava (pop-up fechado, tela "app não
+// verificado"), a imagem gerada por IA se perdia. O arquivo temporário da Zernio vale
+// 7 dias, por isso o card avisa quando ainda falta salvar no Drive.
+const _driveFileCache = {}; // id do card -> File ainda na memória (para salvar no Drive depois)
+
+function isVideoImg(img){
+  if (!img) return false;
+  return !!img.isVideo || /\.(mp4|mov|m4v|webm)(\?|#|$)/i.test((img.fileName || '') + ' ' + (img.zernioUrl || ''));
 }
 
+function startImageUpload(id, profile){
+  document.getElementById('imgfile-'+id).click();
+}
+
+// Devolve { ok:true } quando o card ficou com a mídia (Zernio), ou { ok:false, error }.
 async function handleImageSelect(id, profile, inputEl){
   let file = inputEl.files && inputEl.files[0];
-  if (!file) return;
+  if (!file) return { ok:false, error:'Nenhum arquivo escolhido.' };
+  const prev = getImageData(id);
+  const keepPrev = prev && prev.status === 'ok' ? prev : null;
+  const fail = (msg) => {
+    hideUploadProgress();
+    if (keepPrev) { setImageData(id, keepPrev); showToast('⚠️ ' + msg + ' (a imagem anterior foi mantida)'); }
+    else setImageData(id, { status:'error', fileName:file.name, errorMsg:msg });
+    rerenderImageBox(id, profile);
+    inputEl.value = '';
+    return { ok:false, error:msg };
+  };
+
   const isVideo = file.type.startsWith('video/');
   const isImage = file.type.startsWith('image/');
-  if (!isImage && !isVideo) {
-    setImageData(id, { status:'error', errorMsg:'Selecione uma imagem ou vídeo.' });
-    rerenderImageBox(id, profile);
-    return;
-  }
-  if (isVideo) {
-    // Comprimir e converter vídeo para MP4 (720p, max 20MB)
-    setImageData(id, { status:'uploading', fileName:'Comprimindo ' + file.name + '...' });
-    rerenderImageBox(id, profile);
-    try {
-      file = await compressVideo(file);
-    } catch(convErr) {
-      setImageData(id, { status:'error', errorMsg:'Falha na compressão: ' + convErr.message });
-      rerenderImageBox(id, profile);
-      return;
-    }
+  if (!isImage && !isVideo) return fail('Selecione uma imagem ou vídeo.');
+  if (isVideo && !/^video\/(mp4|quicktime)$/.test(file.type)) {
+    return fail('O Instagram só aceita vídeo MP4 ou MOV. Converta o vídeo e envie de novo.');
   }
   if (isImage && !['image/jpeg','image/png'].includes(file.type)) {
-    // Converter imagem para JPEG
-    try {
-      file = await convertImageToJpeg(file);
-    } catch(e) { /* se falhar, envia no formato original */ }
+    try { file = await convertImageToJpeg(file); } catch(e) { /* envia no formato original */ }
   }
-  const maxSize = isVideo ? 100 * 1024 * 1024 : 15 * 1024 * 1024;
-  const maxLabel = isVideo ? '100MB' : '15MB';
-  if (file.size > maxSize) {
-    setImageData(id, { status:'error', fileName:file.name, errorMsg:'Arquivo maior que ' + maxLabel + ' — reduza o tamanho e tente de novo.' });
-    rerenderImageBox(id, profile);
-    return;
-  }
+  const found = findItem(id);
+  const isStory = !!found && String(found.item.format).toLowerCase() === 'story';
+  const maxMB = isVideo ? (isStory ? 100 : 300) : 15; // limites do Instagram via Zernio
+  if (file.size > maxMB * 1048576) return fail('Arquivo maior que ' + maxMB + 'MB — reduza o tamanho e tente de novo.');
 
   setImageData(id, { status:'uploading', fileName:file.name });
   rerenderImageBox(id, profile);
 
-  ensureDriveAuth(async (authErr) => {
-    if (authErr) {
-      setImageData(id, { status:'error', fileName:file.name, errorMsg: authErr.message });
-      rerenderImageBox(id, profile);
-      inputEl.value = '';
-      return;
-    }
-    try {
-      const folderId = DRIVE_FOLDER_MAP[profile];
-      const data = await uploadFileToDrive(file, folderId);
+  // 1) Zernio — é o que permite publicar. Sem login do Google.
+  let zernioUrl;
+  try {
+    zernioUrl = await uploadMediaToZernio(file, profile);
+  } catch (e) {
+    return fail('Falha ao enviar: ' + (e.message || 'erro de conexão'));
+  }
 
-      setImageData(id, {
-        status: 'ok',
-        fileId: data.id,
-        viewUrl: data.webViewLink || `https://drive.google.com/file/d/${data.id}/view`,
-        thumbnailLink: data.thumbnailLink || '',
-        fileName: file.name,
-        uploadedAt: new Date().toISOString(),
-        zernioStatus: ZERNIO_PROFILES.includes(profile) ? 'pending' : 'n/a'
-      });
-      rerenderImageBox(id, profile);
-      pushRemoteState();
-      if (ZERNIO_PROFILES.includes(profile)) uploadToZernioBackground(id, profile, file);
-    } catch (e) {
-      setImageData(id, { status:'error', fileName:file.name, errorMsg: e.message || 'Erro de conexão' });
-      rerenderImageBox(id, profile);
-    } finally {
-      inputEl.value = '';
-    }
+  const stamp = new Date().toISOString();
+  setImageData(id, {
+    status: 'ok', fileName: file.name, uploadedAt: stamp, isVideo,
+    zernioStatus: 'ok', zernioUrl, zernioAt: stamp,
+    driveStatus: 'pending'
   });
+  _driveFileCache[id] = file;
+  rerenderImageBox(id, profile);
+  pushRemoteState();
+  inputEl.value = '';
+
+  // 2) Drive — melhor esforço, nunca trava o card.
+  saveToDriveInBackground(id, profile, file, stamp);
+  return { ok:true };
+}
+
+// Atualiza só os campos informados, e só se o card ainda tem ESTA mídia (não foi trocada).
+function patchImageData(id, stamp, patch){
+  const cur = getImageData(id);
+  if (!cur || cur.uploadedAt !== stamp) return false;
+  setImageData(id, { ...cur, ...patch });
+  return true;
+}
+
+async function saveToDriveInBackground(id, profile, file, stamp){
+  if (!hasValidDriveToken()) {
+    patchImageData(id, stamp, { driveStatus: 'needs-login' });
+    rerenderImageBox(id, profile);
+    pushRemoteState();
+    return;
+  }
+  patchImageData(id, stamp, { driveStatus: 'pending', driveErrorMsg: '' });
+  rerenderImageBox(id, profile);
+  try {
+    const data = await uploadFileToDrive(file, DRIVE_FOLDER_MAP[profile]);
+    patchImageData(id, stamp, {
+      fileId: data.id,
+      viewUrl: data.webViewLink || `https://drive.google.com/file/d/${data.id}/view`,
+      thumbnailLink: data.thumbnailLink || '',
+      driveStatus: 'ok', driveErrorMsg: ''
+    });
+    delete _driveFileCache[id];
+  } catch (e) {
+    patchImageData(id, stamp, { driveStatus: 'error', driveErrorMsg: e.message || 'Erro de conexão' });
+  }
+  rerenderImageBox(id, profile);
+  pushRemoteState();
+}
+
+// Botão "Salvar no Drive" do card (clique = gesto do usuário, o login do Google abre normalmente).
+function saveToDriveNow(id, profile){
+  ensureDriveAuth(async (authErr) => {
+    if (authErr) { showToast('⚠️ ' + authErr.message); return; }
+    const img = getImageData(id);
+    if (!img || img.status !== 'ok') return;
+    let file = _driveFileCache[id];
+    if (!file && img.zernioUrl) {
+      try {
+        const r = await fetch(img.zernioUrl);
+        if (!r.ok) throw new Error('status ' + r.status);
+        const blob = await r.blob();
+        file = new File([blob], img.fileName || 'arquivo', { type: blob.type || (isVideoImg(img) ? 'video/mp4' : 'image/jpeg') });
+      } catch (e) {
+        showToast('⚠️ Não consegui ler o arquivo temporário. Use "Substituir" para enviar de novo.');
+        return;
+      }
+    }
+    if (!file) { showToast('⚠️ Arquivo indisponível. Use "Substituir" para enviar de novo.'); return; }
+    await saveToDriveInBackground(id, profile, file, img.uploadedAt);
+  });
+}
+
+// Quando o Drive conecta (botão do topo), salva de uma vez tudo que ficou pendente nesta sessão.
+function flushPendingDrive(){
+  Object.keys(_driveFileCache).forEach((id) => {
+    const img = getImageData(id);
+    const found = findItem(id);
+    if (!img || !found || img.driveStatus === 'ok' || img.driveStatus === 'pending') return;
+    saveToDriveInBackground(id, found.profile, _driveFileCache[id], img.uploadedAt);
+  });
+}
+
+function driveLineHTML(id, profile, img){
+  if (img.fileId && img.driveStatus !== 'error') return `<div class="upload-status">✓ Salvo no Drive (${profileFolderName(profile)})</div>`;
+  if (img.driveStatus === 'pending') return `<div class="upload-status loading">⏳ Salvando no Drive...</div>`;
+  if (img.driveStatus === 'error') {
+    return `<div class="upload-status zernio-error">⚠️ Não salvou no Drive: ${img.driveErrorMsg || ''} <button class="upload-replace" onclick="event.stopPropagation();saveToDriveNow('${id}','${profile}')">Tentar de novo</button></div>`;
+  }
+  if (img.driveStatus === 'needs-login') {
+    return `<div class="upload-status zernio-error">☁️ Ainda não está no Drive (o link temporário vale 7 dias) <button class="upload-replace" onclick="event.stopPropagation();saveToDriveNow('${id}','${profile}')">Salvar no Drive</button></div>`;
+  }
+  return '';
 }
 
 async function retryZernioUpload(id, profile){
@@ -25267,21 +25368,76 @@ async function retryZernioUpload(id, profile){
   });
 }
 
+// Lê a resposta como texto: um corpo que não é JSON (ex.: "Request Entity Too Large" do
+// Vercel) vira uma mensagem clara em vez de "Unexpected token 'R'... is not valid JSON".
+async function safeJsonResponse(resp){
+  const text = await resp.text();
+  try { return JSON.parse(text); } catch (e) {
+    if (resp.status === 413 || /entity too large/i.test(text)) return { error: 'Arquivo grande demais para este caminho de envio (limite do servidor).' };
+    return { error: 'O servidor respondeu algo inesperado (status ' + resp.status + '): ' + text.slice(0, 80) };
+  }
+}
+
+// PUT direto no storage da Zernio (URL pré-assinada), com barra de progresso.
+function putWithProgress(url, file, mime){
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const mb = file.size / 1048576;
+    xhr.timeout = Math.max(120000, Math.round(mb * 8000)); // ~8s por MB, mínimo 2 min
+    window._driveBusy++; // trava o auto-reload do painel enquanto envia
+    const finish = () => { window._driveBusy = Math.max(0, window._driveBusy - 1); hideUploadProgress(); };
+    showUploadProgress(0, file.name);
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) showUploadProgress(Math.round((e.loaded / e.total) * 100), file.name); };
+    xhr.onload = () => {
+      finish();
+      if (xhr.status >= 200 && xhr.status < 300) resolve();
+      else reject(new Error('O servidor de mídia recusou o arquivo (status ' + xhr.status + ').'));
+    };
+    xhr.onerror = () => { finish(); reject(Object.assign(new Error('Falha de rede ao enviar o arquivo.'), { network: true })); };
+    xhr.ontimeout = () => { finish(); reject(new Error('O envio demorou demais. Verifique sua conexão.')); };
+    xhr.open('PUT', url);
+    xhr.setRequestHeader('Content-Type', mime);
+    xhr.send(file);
+  });
+}
+
+// Sobe imagem OU vídeo para a Zernio e devolve a URL pública. O servidor só gera a URL
+// de upload (chave da Zernio fica lá); o arquivo vai direto do navegador, então não
+// existe o limite de 4,5MB do Vercel (que derrubava todo vídeo).
+async function uploadMediaToZernio(file, profile){
+  const mime = file.type || 'image/jpeg';
+  const presign = await fetch('/api/zernio-media-upload', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode: 'presign', profile, fileName: file.name, mimeType: mime, size: file.size })
+  });
+  const pd = await safeJsonResponse(presign);
+  if (!presign.ok || !pd.ok) throw new Error(pd.error || 'Falha ao preparar o envio.');
+  try {
+    await putWithProgress(pd.uploadUrl, file, mime);
+    return pd.publicUrl;
+  } catch (e) {
+    if (e.network && file.size <= 3000000) {
+      // Reserva: pelo servidor (base64), só para arquivos pequenos.
+      const base64 = await blobToBase64(file);
+      const r = await fetch('/api/zernio-media-upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile, fileName: file.name, mimeType: mime, base64 })
+      });
+      const d = await safeJsonResponse(r);
+      if (r.ok && d.ok) return d.publicUrl;
+      throw new Error(d.error || 'Falha ao enviar o arquivo.');
+    }
+    throw new Error(e.network ? 'O navegador não conseguiu enviar o arquivo direto ao servidor de mídia (rede ou bloqueio). Tente de novo; se continuar, use um arquivo menor que 3MB.' : e.message);
+  }
+}
+
 async function uploadToZernioBackground(id, profile, file){
   try {
-    const base64 = await blobToBase64(file);
-    const resp = await fetch('/api/zernio-media-upload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ profile, fileName: file.name, mimeType: file.type || 'image/jpeg', base64 })
-    });
-    const data = await resp.json();
+    const publicUrl = await uploadMediaToZernio(file, profile);
     const current = getImageData(id) || {};
-    if (!resp.ok || !data.ok) {
-      setImageData(id, { ...current, zernioStatus: 'error', zernioErrorMsg: data.error || 'Falha desconhecida' });
-    } else {
-      setImageData(id, { ...current, zernioStatus: 'ok', zernioUrl: data.publicUrl });
-    }
+    setImageData(id, { ...current, zernioStatus: 'ok', zernioUrl: publicUrl, zernioAt: new Date().toISOString(), zernioErrorMsg: '' });
   } catch (e) {
     const current = getImageData(id) || {};
     setImageData(id, { ...current, zernioStatus: 'error', zernioErrorMsg: e.message || 'Erro de conexão' });
@@ -26780,8 +26936,9 @@ function npOpenDrive() {
 function npMediaSelected(inputEl) {
   if (!inputEl.files || !inputEl.files.length) return;
   for (const f of inputEl.files) {
-    if (f.type.startsWith('video/') && f.type !== 'video/mp4') {
-      showToast('📎 ' + f.name + ' será convertido para MP4 ao publicar');
+    if (f.type.startsWith('video/') && !/^video\/(mp4|quicktime)$/.test(f.type)) {
+      showToast('❌ ' + f.name + ': o Instagram só aceita vídeo MP4 ou MOV');
+      continue;
     }
     npSelectedFiles.push(f);
   }
@@ -26922,28 +27079,41 @@ async function executeNewPost() {
     }
   }
 
-  // Upload de arquivos se houver
+  // Mídia: Zernio primeiro (é o que publica, sem login do Google). O Drive é a cópia
+  // permanente: salva agora se já estiver conectado e o arquivo não for enorme; senão o
+  // card fica com "Salvar no Drive" pendente. Antes, sem token do Drive os arquivos eram
+  // IGNORADOS em silêncio e o post saía sem mídia.
   let uploadedFiles = [];
-  if (npSelectedFiles.length > 0 && hasValidDriveToken()) {
-    showToast('📤 Enviando arquivos...');
-    const folderId = DRIVE_FOLDER_MAP[profile];
-    for (const file of npSelectedFiles) {
+  const mediaErrors = [];
+  const totalMedia = npSelectedFiles.length + npDriveFiles.length;
+  let doneMedia = 0;
+  for (const file of npSelectedFiles) {
+    doneMedia++;
+    showToast('📤 Enviando mídia ' + doneMedia + '/' + totalMedia + '...');
+    const entry = { file, fileName: file.name, fileType: file.type };
+    try { entry.zernioUrl = await uploadMediaToZernio(file, profile); }
+    catch (err) { mediaErrors.push(file.name + ': ' + (err.message || 'erro')); }
+    if (hasValidDriveToken() && file.size <= 50 * 1048576) {
       try {
-        const data = await uploadFileToDrive(file, folderId);
-        uploadedFiles.push({
-          fileId: data.id,
-          fileName: file.name,
-          fileType: file.type,
-          viewUrl: data.webViewLink || 'https://drive.google.com/file/d/' + data.id + '/view',
-          thumbnailLink: data.thumbnailLink || ''
-        });
-      } catch(err) {
-        showToast('❌ Erro ao enviar ' + file.name);
-      }
+        const data = await uploadFileToDrive(file, DRIVE_FOLDER_MAP[profile]);
+        entry.fileId = data.id;
+        entry.viewUrl = data.webViewLink || 'https://drive.google.com/file/d/' + data.id + '/view';
+        entry.thumbnailLink = data.thumbnailLink || '';
+      } catch (err) { /* o Drive é só cópia: o card segue válido sem ele */ }
     }
+    if (entry.zernioUrl || entry.fileId) uploadedFiles.push(entry);
   }
-  // Arquivos importados do Drive já estão lá — só anexar, sem reenviar
-  uploadedFiles.push(...npDriveFiles);
+  // Importados do Drive já estão lá: copia para a Zernio só para poder publicar.
+  for (const f of npDriveFiles) {
+    doneMedia++;
+    showToast('📤 Preparando mídia ' + doneMedia + '/' + totalMedia + '...');
+    const entry = { fileId: f.fileId, fileName: f.fileName, fileType: f.fileType, viewUrl: f.viewUrl, thumbnailLink: f.thumbnailLink };
+    try {
+      const blob = await downloadDriveFile(f.fileId);
+      entry.zernioUrl = await uploadMediaToZernio(new File([blob], f.fileName, { type: f.fileType || blob.type }), profile);
+    } catch (err) { mediaErrors.push(f.fileName + ': ' + (err.message || 'erro')); }
+    uploadedFiles.push(entry);
+  }
 
   // Criar posts
   allDates.forEach((dt, idx) => {
@@ -26977,15 +27147,22 @@ async function executeNewPost() {
     // Associar primeira imagem ao card
     if (uploadedFiles.length > 0) {
       const mainFile = uploadedFiles[0];
+      const nowIso = new Date().toISOString();
       setImageData(newId, {
         status: 'ok',
         fileId: mainFile.fileId,
         viewUrl: mainFile.viewUrl,
         thumbnailLink: mainFile.thumbnailLink,
         fileName: mainFile.fileName,
-        uploadedAt: new Date().toISOString(),
-        zernioStatus: 'n/a'
+        uploadedAt: nowIso,
+        isVideo: /^video\//.test(mainFile.fileType || ''),
+        zernioStatus: mainFile.zernioUrl ? 'ok' : 'error',
+        zernioUrl: mainFile.zernioUrl || undefined,
+        zernioAt: mainFile.zernioUrl ? nowIso : undefined,
+        zernioErrorMsg: mainFile.zernioUrl ? '' : 'Não foi enviada para a Zernio — toque em "Tentar de novo".',
+        driveStatus: mainFile.fileId ? 'ok' : 'needs-login'
       });
+      if (!mainFile.fileId && mainFile.file) _driveFileCache[newId] = mainFile.file;
       // Slides adicionais para Carrossel
       if (format === 'Carrossel' && uploadedFiles.length > 1) {
         const extraSlides = uploadedFiles.slice(1).map(f => ({
@@ -27010,7 +27187,9 @@ async function executeNewPost() {
   // Salvar imediatamente no Supabase para não perder dados
   pushRemoteState();
 
-  if (allDates.length === 1) {
+  if (mediaErrors.length) {
+    showToast('⚠️ Postagem criada, mas a mídia teve problema — ' + mediaErrors.join(' | '));
+  } else if (allDates.length === 1) {
     showToast('✅ Postagem criada e salva!');
   } else {
     showToast('✅ ' + allDates.length + ' postagens criadas e salvas!');
@@ -28485,40 +28664,36 @@ function recomposeLogo(){
     document.getElementById('gen-preview-img').src = r.url;
   }).catch(e => showToast('⚠️ ' + e.message));
 }
-// Entrega a imagem final (já recortada + logo) pro mesmo fluxo de upload de mídia (Drive + Zernio).
-// Conecta ao Drive ANTES de fechar o modal/soltar a imagem gerada — se o login
-// falhar ou demorar, a imagem gerada continua ali, dá só pra clicar de novo em
-// "Usar esta imagem" sem ter que gerar outra.
-function useGeneratedImage(){
+// Entrega a imagem final (já recortada + logo) pro mesmo fluxo de upload de mídia.
+// O envio vai primeiro para a Zernio (sem login do Google) e o Drive é salvo em segundo
+// plano — a imagem gerada nunca mais depende do login para ficar no card. O modal só
+// fecha depois que o card recebeu a imagem; se falhar, ela continua aqui para tentar de novo.
+async function useGeneratedImage(){
   if (!_genResult) return;
+  const { id, profile, src } = _genResult;
   const status = document.getElementById('gen-status');
   const useBtn = document.getElementById('gen-use');
   useBtn.disabled = true;
-  status.textContent = '🔗 Conectando ao Google Drive...';
-  ensureDriveAuth(async (authErr) => {
-    if (authErr) {
-      status.textContent = '⚠️ ' + authErr.message;
-      useBtn.disabled = false;
-      return;
-    }
-    if (!_genResult) return; // modal foi fechado/reaberto enquanto esperava o login
-    const { id, profile, src } = _genResult;
-    try {
-      status.textContent = '📤 Enviando imagem...';
-      const blob = await (await fetch(src)).blob();
-      const stamp = new Date().toISOString().slice(5, 10).replace('-', '');
-      const file = new File([blob], stamp + '_' + profile + '_ia_' + id + '.jpg', { type: 'image/jpeg' });
-      const input = document.getElementById('imgfile-' + id);
-      const dt = new DataTransfer();
-      dt.items.add(file);
-      input.files = dt.files;
+  status.textContent = '📤 Enviando imagem...';
+  try {
+    const blob = await (await fetch(src)).blob();
+    const stamp = new Date().toISOString().slice(5, 10).replace('-', '');
+    const file = new File([blob], stamp + '_' + profile + '_ia_' + id + '.jpg', { type: 'image/jpeg' });
+    const input = document.getElementById('imgfile-' + id);
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    const res = await handleImageSelect(id, profile, input);
+    if (res && res.ok) {
       closeGenImage();
-      handleImageSelect(id, profile, input);
-    } catch (e) {
-      status.textContent = '⚠️ ' + e.message;
+    } else {
+      status.textContent = '⚠️ ' + ((res && res.error) || 'Falha ao enviar a imagem.');
       useBtn.disabled = false;
     }
-  });
+  } catch (e) {
+    status.textContent = '⚠️ ' + e.message;
+    useBtn.disabled = false;
+  }
 }
 
 // ── CONVERSÃO DE MÍDIA ──
@@ -28544,103 +28719,6 @@ async function convertImageToJpeg(file) {
   });
 }
 
-async function compressVideo(file) {
-  const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('Conversão demorou muito — tente um vídeo mais curto')), 120000));
-  showUploadProgress(0, 'Comprimindo ' + file.name + '...');
-  const video = document.createElement('video');
-  video.muted = true;
-  video.playsInline = true;
-  video.preload = 'auto';
-  const url = URL.createObjectURL(file);
-
-  return new Promise((resolve, reject) => {
-    video.onloadedmetadata = async () => {
-      const duration = video.duration;
-      if (!duration || duration > 90) {
-        URL.revokeObjectURL(url);
-        hideUploadProgress();
-        reject(new Error('Vídeo tem mais de 90s (limite do Reel)'));
-        return;
-      }
-
-      // Escalar para 720p max mantendo proporção
-      let w = video.videoWidth;
-      let h = video.videoHeight;
-      const maxDim = 480;
-      if (w > h) {
-        if (h > maxDim) { w = Math.round(w * maxDim / h); h = maxDim; }
-      } else {
-        if (w > maxDim) { h = Math.round(h * maxDim / w); w = maxDim; }
-      }
-      // Garantir dimensões pares (exigido por codecs)
-      w = w % 2 === 0 ? w : w + 1;
-      h = h % 2 === 0 ? h : h + 1;
-
-      const canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext('2d');
-
-      let mimeType = 'video/mp4';
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'video/webm;codecs=vp9';
-        if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
-      }
-
-      const stream = canvas.captureStream(24);
-      try {
-        const audioCtx = new AudioContext();
-        const source = audioCtx.createMediaElementSource(video);
-        const dest = audioCtx.createMediaStreamDestination();
-        source.connect(dest);
-        source.connect(audioCtx.destination);
-        dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
-      } catch(e) {}
-
-      // Bitrate baixo para manter arquivo pequeno (~2Mbps)
-      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 1200000 });
-      const chunks = [];
-      recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-
-      recorder.onstop = () => {
-        URL.revokeObjectURL(url);
-        hideUploadProgress();
-        const blob = new Blob(chunks, { type: mimeType.split(';')[0] });
-        const ext = mimeType.includes('mp4') ? '.mp4' : '.webm';
-        const newName = file.name.replace(/\.[^.]+$/, '_compressed' + ext);
-        const compressed = new File([blob], newName, { type: mimeType.split(';')[0] });
-        const sizeMB = (compressed.size / 1024 / 1024).toFixed(1);
-        if (compressed.size > 8 * 1024 * 1024) {
-          showToast('⚠️ Vídeo comprimido (' + sizeMB + 'MB) ainda grande. Tente um vídeo mais curto.');
-        } else {
-          showToast('✓ Vídeo comprimido: ' + sizeMB + 'MB (' + w + 'x' + h + ')');
-        }
-        resolve(compressed);
-      };
-
-      recorder.start(1000);
-      video.currentTime = 0;
-      await video.play();
-
-      const drawFrame = () => {
-        if (video.ended || video.paused) { recorder.stop(); return; }
-        ctx.drawImage(video, 0, 0, w, h);
-        const pct = Math.round((video.currentTime / duration) * 100);
-        showUploadProgress(pct, 'Comprimindo ' + file.name + ' (' + pct + '%)');
-        requestAnimationFrame(drawFrame);
-      };
-      drawFrame();
-      video.onended = () => { if (recorder.state !== 'inactive') recorder.stop(); };
-    };
-
-    video.onerror = () => {
-      URL.revokeObjectURL(url);
-      hideUploadProgress();
-      reject(new Error('Não foi possível abrir o vídeo'));
-    };
-    video.src = url;
-  });
-}
 // ── LIMPEZA AUTOMÁTICA ──
 function cleanupOldPosts() {
   const today = todayBR();
