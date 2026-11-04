@@ -27840,7 +27840,21 @@ function reuseCandidates(id){
   if (!found) return [];
   const img = getImageData(id);
   if (img && (img.status === 'ok' || img.status === 'uploading')) return []; // já tem imagem
-  return findSimilarImages(id, found.profile, found.item.format, cardSimText(found.item), 3);
+  const out = findSimilarImages(id, found.profile, found.item.format, cardSimText(found.item), 3);
+  // Também entram os posts de mensagem parecida (o aviso "⚠️ parecida") que já têm imagem pronta,
+  // mesmo que o briefing da imagem fique abaixo do corte de 75%.
+  const seen = new Set(out.map(c => c.d.id));
+  const ix = simIndex();
+  for (const s of findSimilarCaptions(id)) {
+    if (seen.has(s.doc.id)) continue;
+    const d = ix.docs.find(x => x.id === s.doc.id);
+    if (!d || fmtGroup(d.item.format) !== fmtGroup(found.item.format)) continue;
+    const im = getImageData(d.id);
+    if (!im || im.status !== 'ok' || !(im.zernioUrl || im.fileId)) continue;
+    out.push({ d, score: s.score, img: im, via: 'legenda' });
+    seen.add(d.id);
+  }
+  return out.slice(0, 3);
 }
 // Mostra/esconde o botão "Reaproveitar imagem" do card (amarelo ou verde, com a %).
 function updateReuseButton(id){
@@ -27851,10 +27865,10 @@ function updateReuseButton(id){
   const sims = reuseCandidates(id);
   if (!sims.length) { btn.style.display = 'none'; if (gen) gen.style.marginLeft = 'auto'; return; }
   const best = sims[0];
-  const green = best.score >= SIM_GREEN;
+  const green = best.via !== 'legenda' && best.score >= SIM_GREEN;
   btn.className = 'reuse-btn ' + (green ? 'reuse-g' : 'reuse-y');
-  btn.textContent = '♻️ Reaproveitar imagem · ' + Math.round(best.score * 100) + '%';
-  btn.title = green ? 'Imagem muito parecida (90% ou mais)' : 'Imagem parecida (75% a 89%)';
+  btn.textContent = best.via === 'legenda' ? '♻️ Reaproveitar imagem do post parecido' : '♻️ Reaproveitar imagem · ' + Math.round(best.score * 100) + '%';
+  btn.title = best.via === 'legenda' ? 'Post de mensagem parecida que já tem imagem' : green ? 'Imagem muito parecida (90% ou mais)' : 'Imagem parecida (75% a 89%)';
   btn.style.display = '';
   btn.style.marginLeft = 'auto';
   if (gen) gen.style.marginLeft = '8px';
@@ -28016,8 +28030,18 @@ function updateSimilarBadge(id){
     badge.style.display = '';
   }
   if (note) {
+    let imgHint = '';
+    try {
+      const own = getImageData(id);
+      if (!(own && (own.status === 'ok' || own.status === 'uploading'))) {
+        const withImg = sims.filter((s) => { const im = getImageData(s.doc.id); return im && im.status === 'ok' && (im.zernioUrl || im.fileId); });
+        imgHint = withImg.length
+          ? '<br>🖼️ Já tem imagem pronta: use o botão <b>♻️ Reaproveitar imagem</b> abaixo.'
+          : '<br>🖼️ O post parecido ainda não tem imagem para reaproveitar.';
+      }
+    } catch (e) { /* sem dica de imagem nesta rodada */ }
     note.innerHTML = '⚠️ <b>Mensagem parecida</b> — ' + sims.map(capLine).join('<br>→ ') +
-      '<br><span style="opacity:.8">Troque o produto ou o ângulo para não repetir.</span>';
+      '<br><span style="opacity:.8">Troque o produto ou o ângulo para não repetir.</span>' + imgHint;
     note.style.display = '';
   }
 }
@@ -28270,13 +28294,13 @@ function ruPick(i){ _ru.idx = i; _ru.edited = null; ruRefresh(); }
 function ruRefresh(){
   const c = _ru.sims[_ru.idx];
   const pct = Math.round(c.score * 100);
-  const cls = c.score >= SIM_GREEN ? 'g' : 'y';
+  const cls = c.via !== 'legenda' && c.score >= SIM_GREEN ? 'g' : 'y';
   document.getElementById('ru-tabs').innerHTML = _ru.sims.length > 1
-    ? _ru.sims.map((s, i) => `<button class="cal-filter${i === _ru.idx ? ' on' : ''}" onclick="ruPick(${i})">${i + 1} · ${Math.round(s.score * 100)}%</button>`).join('') : '';
+    ? _ru.sims.map((s, i) => `<button class="cal-filter${i === _ru.idx ? ' on' : ''}" onclick="ruPick(${i})">${i + 1}${s.via === 'legenda' ? ' · msg' : ' · ' + Math.round(s.score * 100) + '%'}</button>`).join('') : '';
   const pub = getPublishData(c.d.id);
   const title = String(c.d.item.title || '').replace(/</g, '&lt;');
   document.getElementById('ru-meta').innerHTML =
-    `<span class="ru-badge ${cls}">${pct}% parecida</span><b>${title}</b><span>${fmtDate(c.d.item.date)} · ${c.d.item.format}${(pub && pub.status === 'ok') ? ' · ✅ já publicada' : ''}</span>`;
+    `<span class="ru-badge ${cls}">${c.via === 'legenda' ? 'mensagem parecida' : pct + '% parecida'}</span><b>${title}</b><span>${fmtDate(c.d.item.date)} · ${c.d.item.format}${(pub && pub.status === 'ok') ? ' · ✅ já publicada' : ''}</span>`;
   const url = _ru.edited || c.img.zernioUrl || c.img.thumbnailLink || '';
   document.getElementById('ru-imgwrap').innerHTML = url
     ? `<img class="gen-img" id="ru-img" src="${url.replace(/"/g, '&quot;')}" alt="Imagem parecida" onerror="ruImgError()">`
