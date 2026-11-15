@@ -25125,7 +25125,8 @@ function loadPickerApi(cb) {
 
 // onPicked(files) — files: [{fileId, fileName, fileType, viewUrl, thumbnailLink}]
 // chamada só quando o usuário efetivamente escolhe algo (cancelar não chama).
-function openDrivePicker(profile, onPicked) {
+function openDrivePicker(profile, onPicked, opts) {
+  const multi = !opts || opts.multi !== false;
   if (!GOOGLE_PICKER_API_KEY) {
     alert('Importar do Drive ainda não foi configurado: falta a Chave de API do Google (peça pro Gilson configurar).');
     return;
@@ -25140,14 +25141,13 @@ function openDrivePicker(profile, onPicked) {
         .setMimeTypes('image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime')
         .setSelectFolderEnabled(false);
       _pickerPickCallback = onPicked;
-      const picker = new google.picker.PickerBuilder()
+      const builder = new google.picker.PickerBuilder()
         .addView(view)
         .setOAuthToken(driveAccessToken)
         .setDeveloperKey(GOOGLE_PICKER_API_KEY)
-        .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
-        .setCallback(pickerResultCallback)
-        .build();
-      picker.setVisible(true);
+        .setCallback(pickerResultCallback);
+      if (multi) builder.enableFeature(google.picker.Feature.MULTISELECT_ENABLED);
+      builder.build().setVisible(true);
     });
   });
 }
@@ -25221,20 +25221,41 @@ function startImageUpload(id, profile){
   document.getElementById('imgfile-'+id).click();
 }
 
-// Devolve { ok:true } quando o card ficou com a mídia (Zernio), ou { ok:false, error }.
+// Input de arquivo do card -> anexa a mídia escolhida.
 async function handleImageSelect(id, profile, inputEl){
-  let file = normalizeMediaFile(inputEl.files && inputEl.files[0]);
-  if (!file) return { ok:false, error:'Nenhum arquivo escolhido.' };
+  const res = await attachMediaFile(id, profile, inputEl.files && inputEl.files[0]);
+  inputEl.value = '';
+  return res;
+}
+
+// Devolve { ok:true } quando o card ficou com a mídia (Zernio), ou { ok:false, error }.
+// `drive` ({ fileId, fileName, fileType, viewUrl, thumbnailLink }) = mídia escolhida no Drive:
+// `file0` pode ser null e o arquivo é baixado aqui (com o login do Drive já ativo), sem o usuário
+// baixar nada. Como já está no Drive, não é salvo lá de novo.
+async function attachMediaFile(id, profile, file0, drive){
+  let file = normalizeMediaFile(file0);
+  if (!file && !drive) return { ok:false, error:'Nenhum arquivo escolhido.' };
+  const name = file ? file.name : drive.fileName;
   const prev = getImageData(id);
   const keepPrev = prev && prev.status === 'ok' ? prev : null;
   const fail = (msg) => {
     hideUploadProgress();
     if (keepPrev) { setImageData(id, keepPrev); showToast('⚠️ ' + msg + ' (a imagem anterior foi mantida)'); }
-    else setImageData(id, { status:'error', fileName:file.name, errorMsg:msg });
+    else setImageData(id, { status:'error', fileName:name, errorMsg:msg });
     rerenderImageBox(id, profile);
-    inputEl.value = '';
     return { ok:false, error:msg };
   };
+
+  if (!file) {
+    setImageData(id, { status:'uploading', fileName:name });
+    rerenderImageBox(id, profile);
+    try {
+      const blob = await downloadDriveFile(drive.fileId);
+      file = normalizeMediaFile(new File([blob], name, { type: drive.fileType || blob.type }));
+    } catch (e) {
+      return fail(e.message || 'Não consegui ler o arquivo do Drive.');
+    }
+  }
 
   const isVideo = file.type.startsWith('video/');
   const isImage = file.type.startsWith('image/');
@@ -25243,7 +25264,10 @@ async function handleImageSelect(id, profile, inputEl){
     return fail('O Instagram só aceita vídeo MP4 ou MOV. Converta o vídeo e envie de novo.');
   }
   if (isImage && !['image/jpeg','image/png'].includes(file.type)) {
+    const original = file;
     try { file = await convertImageToJpeg(file); } catch(e) { /* envia no formato original */ }
+    // Convertida (ex.: WebP): a cópia do Drive não é a que vai ser publicada, então salva a nova.
+    if (file !== original) drive = null;
   }
   const found = findItem(id);
   const isStory = !!found && String(found.item.format).toLowerCase() === 'story';
@@ -25265,16 +25289,25 @@ async function handleImageSelect(id, profile, inputEl){
   setImageData(id, {
     status: 'ok', fileName: file.name, uploadedAt: stamp, isVideo,
     zernioStatus: 'ok', zernioUrl, zernioAt: stamp,
-    driveStatus: 'pending'
+    ...(drive
+      ? { fileId: drive.fileId, viewUrl: drive.viewUrl || `https://drive.google.com/file/d/${drive.fileId}/view`, thumbnailLink: drive.thumbnailLink || '', driveStatus: 'ok' }
+      : { driveStatus: 'pending' })
   });
-  _driveFileCache[id] = file;
+  if (!drive) _driveFileCache[id] = file;
   rerenderImageBox(id, profile);
   pushRemoteState();
-  inputEl.value = '';
 
-  // 2) Drive — melhor esforço, nunca trava o card.
-  saveToDriveInBackground(id, profile, file, stamp);
+  // 2) Drive — melhor esforço, nunca trava o card (já está lá quando veio do Drive).
+  if (!drive) saveToDriveInBackground(id, profile, file, stamp);
   return { ok:true };
+}
+
+// "Buscar imagem": abre o seletor do Drive (pasta da marca) e anexa a escolhida direto ao card.
+function pickDriveForCard(id, profile){
+  openDrivePicker(profile, async (files) => {
+    const r = await attachMediaFile(id, profile, null, files[0]);
+    if (r.ok) showToast('✅ Mídia anexada direto do Drive');
+  }, { multi: false });
 }
 
 // Atualiza só os campos informados, e só se o card ainda tem ESTA mídia (não foi trocada).
@@ -25546,7 +25579,7 @@ function cardHTML(item,profile){
     <div class="block">
       <div class="blabel" style="color:#00b4d8">📎 Mídia a ser Publicada
         ${(item.format==='Story'||item.format==='Post'||item.format==='Reel') ? `<button class="reuse-btn reuse-y" id="reuse-${item.id}" style="display:none;margin-left:auto" onclick="event.stopPropagation();openReuseViewer('${item.id}','${profile}')">♻️ Reaproveitar imagem</button><button class="gen-img-btn" id="genbtn-${item.id}" style="margin-left:auto" onclick="event.stopPropagation();openGenImage('${item.id}','${profile}')">✨ Gerar imagem</button>` : ''}
-        <a class="upload-link" style="${(item.format==='Story'||item.format==='Post'||item.format==='Reel')?'margin-left:8px':'margin-left:auto'}" href="https://drive.google.com/drive/folders/${DRIVE_FOLDER_MAP[profile]}" target="_blank" onclick="event.stopPropagation()">🔍 Buscar imagem</a>
+        <button class="upload-link" title="Escolhe uma mídia que já está no Drive e anexa direto, sem baixar" style="${(item.format==='Story'||item.format==='Post'||item.format==='Reel')?'margin-left:8px':'margin-left:auto'}" onclick="event.stopPropagation();pickDriveForCard('${item.id}','${profile}')">🔍 Buscar imagem</button>
       </div>
       <div id="imgbox-${item.id}">${imageBlockHTML(item.id, profile)}</div>
       <input type="file" accept="image/*,video/*" id="imgfile-${item.id}" style="display:none" ${item.format==='Carrossel'?'multiple':''} onchange="handleImageSelect('${item.id}','${profile}',this)">
