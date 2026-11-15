@@ -24956,7 +24956,11 @@ function initGoogleAuth(){
     // precisa de drive.readonly também para a miniatura aparecer de verdade.
     scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly',
     callback: (resp) => {
-      if (resp && resp.access_token) {
+      // Na tela de permissões do Google dá para desmarcar caixas: sem o escopo básico do Drive
+      // o token não serve para nada (só gera "insufficient authentication scopes"), então não o guarda.
+      if (resp && resp.access_token && google.accounts.oauth2.hasGrantedAllScopes && !google.accounts.oauth2.hasGrantedAllScopes(resp, 'https://www.googleapis.com/auth/drive.file')) {
+        resolvePendingAuth(new Error('O Google não liberou o acesso ao Drive. Tente de novo e deixe todas as caixas de permissão marcadas.'));
+      } else if (resp && resp.access_token) {
         driveAccessToken = resp.access_token;
         driveTokenExpiry = Date.now() + (resp.expires_in ? resp.expires_in * 1000 : 3000000);
         sessionStorage.setItem('gdrive_token_v2', JSON.stringify({ t: driveAccessToken, exp: driveTokenExpiry }));
@@ -25033,8 +25037,10 @@ function connectGoogleDrive(){
 // 25s — era isso que fazia a 1ª imagem gerada sempre "sumir": o timeout
 // batia antes da pessoa terminar de clicar, e a imagem já gerada ficava
 // sem jeito de reenviar sem gerar outra.
-function ensureDriveAuth(onReady){
-  if (hasValidDriveToken()) { onReady(null); return; }
+function ensureDriveAuth(onReady, force){
+  // force: ignora o token atual e pede de novo (com a tela de permissões), p.ex. quando faltou escopo.
+  const tokReq = force ? { prompt: 'consent' } : undefined;
+  if (!force && hasValidDriveToken()) { onReady(null); return; }
   window._driveBusy++;
   window._pendingUploadAfterAuth = onReady;
   window._authTimeoutId = setTimeout(() => {
@@ -25043,12 +25049,12 @@ function ensureDriveAuth(onReady){
   if (!gisTokenClient) {
     initGoogleAuth();
     setTimeout(() => {
-      if (gisTokenClient) gisTokenClient.requestAccessToken();
+      if (gisTokenClient) gisTokenClient.requestAccessToken(tokReq);
       else resolvePendingAuth(new Error('Não foi possível iniciar o login do Google. Recarregue a página e tente de novo.'));
     }, 600);
     return;
   }
-  gisTokenClient.requestAccessToken();
+  gisTokenClient.requestAccessToken(tokReq);
 }
 
 // Envia para o Drive. Até 5MB: um pedido só (multipart). Acima disso (vídeos): upload
@@ -25359,7 +25365,7 @@ async function dgLoad(reset){
   const g = _dg; if (!g) return;
   const seq = ++g.seq;
   if (reset) { g.items = []; g.next = ''; }
-  g.error = '';
+  g.error = ''; g.needScope = false;
   dgRender(true);
   const q = `'${DRIVE_FOLDER_MAP[g.profile]}' in parents and trashed=false and (mimeType contains 'image/' or mimeType='video/mp4' or mimeType='video/quicktime')`
     + (g.q ? ` and name contains '${g.q.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'` : '');
@@ -25374,7 +25380,14 @@ async function dgLoad(reset){
       throw new Error('A sessão do Google expirou. Feche esta janela e clique em "Buscar imagem" de novo para entrar outra vez.');
     }
     const data = await res.json();
-    if (!res.ok) throw new Error((data.error && data.error.message) || ('Erro do Drive (status ' + res.status + ')'));
+    if (!res.ok) {
+      const er = data.error || {};
+      if (res.status === 403 && /insufficient|scope/i.test((er.message || '') + JSON.stringify(er.errors || []))) {
+        if (_dg === g && g.seq === seq) { g.needScope = true; g.error = 'O Google não liberou a permissão de ver os arquivos do Drive.'; dgRender(false); }
+        return;
+      }
+      throw new Error(er.message || ('Erro do Drive (status ' + res.status + ')'));
+    }
     if (_dg !== g || g.seq !== seq) return; // fechou ou digitou outra busca no meio
     g.items.push(...(data.files || []));
     g.next = data.nextPageToken || '';
@@ -25395,10 +25408,22 @@ function dgRender(loading){
         return `<button class="dg-item" title="${dgEsc(f.name)}" onclick="dgPick(${i})">${th}<span class="dg-name">${vid ? '🎬 ' : ''}${dgEsc(f.name)}</span></button>`;
       }).join('') + '</div>'
     : '';
-  document.getElementById('dg-msg').textContent = g.error ? '⚠️ ' + g.error
+  document.getElementById('dg-msg').innerHTML = g.needScope
+    ? '⚠️ ' + dgEsc(g.error) + '<br>Na tela do Google, <b>marque todas as caixas</b> (inclusive "ver e baixar todos os arquivos do Google Drive") e clique em Continuar.<br><button class="edit-btn edit-btn-primary" style="margin-top:8px" onclick="dgReauth()">🔑 Conceder permissão do Drive</button>'
+    : g.error ? '⚠️ ' + dgEsc(g.error)
     : loading ? '⏳ Carregando...'
     : g.items.length ? '' : (g.q ? 'Nenhum arquivo com esse nome na pasta ' + profileFolderName(g.profile) + '.' : 'A pasta ' + profileFolderName(g.profile) + ' não tem imagens ou vídeos.');
   document.getElementById('dg-more').style.display = (!loading && g.next && !g.error) ? '' : 'none';
+}
+// Pede o login/permissões de novo (clique = gesto do usuário, o pop-up abre) e recarrega a lista.
+function dgReauth(){
+  driveAccessToken = null; driveTokenExpiry = 0;
+  try { sessionStorage.removeItem('gdrive_token_v2'); } catch (e) {}
+  ensureDriveAuth((err) => {
+    if (!_dg) return;
+    if (err) { _dg.error = err.message; _dg.needScope = false; dgRender(false); return; }
+    dgLoad(true);
+  }, true);
 }
 async function dgPick(i){
   const g = _dg; const f = g && g.items[i]; if (!f) return;
