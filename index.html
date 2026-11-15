@@ -863,6 +863,12 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .sim-warn { flex:none; font-size:10px; font-weight:800; color:#0d0d0d; background:#f5c200; border-radius:6px; padding:2px 7px; margin-left:8px; white-space:nowrap; cursor:help; }
 .sim-note { margin:10px 0 0; padding:9px 12px; border-radius:8px; border:1px solid rgba(245,194,0,.45); background:rgba(245,194,0,.09); color:#f5c200; font-size:12px; line-height:1.5; }
 .reuse-g { background:#22c55e; }
+.dg-q { width:100%; box-sizing:border-box; background:var(--s1); border:1px solid var(--border); color:var(--txt); border-radius:8px; padding:9px 12px; font-size:13px; font-family:inherit; }
+.dg-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; max-height:55vh; overflow:auto; }
+.dg-item { display:flex; flex-direction:column; gap:6px; padding:6px; background:var(--s2); border:1px solid var(--border); border-radius:10px; cursor:pointer; color:var(--txt); font-family:inherit; text-align:left; }
+.dg-item:hover { border-color:#00b4d8; }
+.dg-item img, .dg-ph { width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:6px; background:#000; display:flex; align-items:center; justify-content:center; font-size:28px; }
+.dg-name { font-size:10px; line-height:1.3; color:var(--txt3); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; word-break:break-word; }
 .ru-tabs { display:flex; gap:6px; flex-wrap:wrap; }
 .ru-tabs:empty { display:none; }
 .ru-meta { font-size:12px; color:var(--txt3); display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
@@ -25125,8 +25131,7 @@ function loadPickerApi(cb) {
 
 // onPicked(files) — files: [{fileId, fileName, fileType, viewUrl, thumbnailLink}]
 // chamada só quando o usuário efetivamente escolhe algo (cancelar não chama).
-function openDrivePicker(profile, onPicked, opts) {
-  const multi = !opts || opts.multi !== false;
+function openDrivePicker(profile, onPicked) {
   if (!GOOGLE_PICKER_API_KEY) {
     alert('Importar do Drive ainda não foi configurado: falta a Chave de API do Google (peça pro Gilson configurar).');
     return;
@@ -25141,13 +25146,14 @@ function openDrivePicker(profile, onPicked, opts) {
         .setMimeTypes('image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime')
         .setSelectFolderEnabled(false);
       _pickerPickCallback = onPicked;
-      const builder = new google.picker.PickerBuilder()
+      const picker = new google.picker.PickerBuilder()
         .addView(view)
         .setOAuthToken(driveAccessToken)
         .setDeveloperKey(GOOGLE_PICKER_API_KEY)
-        .setCallback(pickerResultCallback);
-      if (multi) builder.enableFeature(google.picker.Feature.MULTISELECT_ENABLED);
-      builder.build().setVisible(true);
+        .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+        .setCallback(pickerResultCallback)
+        .build();
+      picker.setVisible(true);
     });
   });
 }
@@ -25302,12 +25308,103 @@ async function attachMediaFile(id, profile, file0, drive){
   return { ok:true };
 }
 
-// "Buscar imagem": abre o seletor do Drive (pasta da marca) e anexa a escolhida direto ao card.
+// ── "Buscar imagem": galeria da pasta da marca dentro do painel ──
+// Lista pela API do Drive com o login que o painel já usa (sem o Picker do Google, que dava 403
+// por causa da chave de API) e anexa a escolhida direto ao card.
+let _dg = null; // { id, profile, q, items, next, seq, error }
+function dgEsc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
+
 function pickDriveForCard(id, profile){
-  openDrivePicker(profile, async (files) => {
-    const r = await attachMediaFile(id, profile, null, files[0]);
-    if (r.ok) showToast('✅ Mídia anexada direto do Drive');
-  }, { multi: false });
+  ensureDriveAuth((err) => {
+    if (err) { showToast('⚠️ ' + err.message); return; }
+    _dg = { id, profile, q: '', items: [], next: '', seq: 0, error: '' };
+    ensureDriveGallery().classList.add('on');
+    const inp = document.getElementById('dg-q');
+    inp.value = '';
+    dgLoad(true);
+    setTimeout(() => inp.focus(), 50);
+  });
+}
+function closeDriveGallery(){
+  const el = document.getElementById('driveGalModal');
+  if (el) el.classList.remove('on');
+  _dg = null;
+}
+function ensureDriveGallery(){
+  let el = document.getElementById('driveGalModal');
+  if (el) return el;
+  el = document.createElement('div');
+  el.className = 'sx-overlay';
+  el.id = 'driveGalModal';
+  el.onclick = (e) => { if (e.target === el) closeDriveGallery(); };
+  el.innerHTML = `
+    <div class="sx-box" style="max-width:760px" onclick="event.stopPropagation()">
+      <div class="sx-head"><div class="sx-title">🔍 Buscar no Drive</div><button class="sx-close" onclick="closeDriveGallery()">✕</button></div>
+      <div class="sx-body">
+        <input id="dg-q" class="dg-q" type="search" placeholder="Buscar pelo nome do arquivo (deixe vazio para ver os mais recentes)" oninput="dgSearchSoon()">
+        <div id="dg-grid"></div>
+        <div class="sx-hint" id="dg-msg"></div>
+        <button class="edit-btn" id="dg-more" style="display:none" onclick="dgLoad(false)">Carregar mais</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  return el;
+}
+let _dgTimer = null;
+function dgSearchSoon(){
+  clearTimeout(_dgTimer);
+  _dgTimer = setTimeout(() => { if (_dg) { _dg.q = document.getElementById('dg-q').value.trim(); dgLoad(true); } }, 350);
+}
+async function dgLoad(reset){
+  const g = _dg; if (!g) return;
+  const seq = ++g.seq;
+  if (reset) { g.items = []; g.next = ''; }
+  g.error = '';
+  dgRender(true);
+  const q = `'${DRIVE_FOLDER_MAP[g.profile]}' in parents and trashed=false and (mimeType contains 'image/' or mimeType='video/mp4' or mimeType='video/quicktime')`
+    + (g.q ? ` and name contains '${g.q.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'` : '');
+  const params = { q, orderBy: 'createdTime desc', pageSize: '48', fields: 'nextPageToken,files(id,name,mimeType,thumbnailLink,webViewLink)' };
+  if (g.next) params.pageToken = g.next;
+  try {
+    const res = await fetch('https://www.googleapis.com/drive/v3/files?' + new URLSearchParams(params), { headers: { Authorization: 'Bearer ' + driveAccessToken } });
+    if (res.status === 401) {
+      driveAccessToken = null; driveTokenExpiry = 0;
+      try { sessionStorage.removeItem('gdrive_token_v2'); } catch (e) {}
+      updateDriveConnectBtn(false);
+      throw new Error('A sessão do Google expirou. Feche esta janela e clique em "Buscar imagem" de novo para entrar outra vez.');
+    }
+    const data = await res.json();
+    if (!res.ok) throw new Error((data.error && data.error.message) || ('Erro do Drive (status ' + res.status + ')'));
+    if (_dg !== g || g.seq !== seq) return; // fechou ou digitou outra busca no meio
+    g.items.push(...(data.files || []));
+    g.next = data.nextPageToken || '';
+  } catch (e) {
+    if (_dg !== g || g.seq !== seq) return;
+    g.error = e.message || 'Não consegui listar o Drive.';
+  }
+  dgRender(false);
+}
+function dgRender(loading){
+  const g = _dg; if (!g) return;
+  document.getElementById('dg-grid').innerHTML = g.items.length
+    ? '<div class="dg-grid">' + g.items.map((f, i) => {
+        const vid = f.mimeType.startsWith('video/');
+        const th = f.thumbnailLink
+          ? `<img src="${dgEsc(f.thumbnailLink)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'dg-ph',textContent:'${vid ? '🎬' : '🖼️'}'}))">`
+          : `<span class="dg-ph">${vid ? '🎬' : '🖼️'}</span>`;
+        return `<button class="dg-item" title="${dgEsc(f.name)}" onclick="dgPick(${i})">${th}<span class="dg-name">${vid ? '🎬 ' : ''}${dgEsc(f.name)}</span></button>`;
+      }).join('') + '</div>'
+    : '';
+  document.getElementById('dg-msg').textContent = g.error ? '⚠️ ' + g.error
+    : loading ? '⏳ Carregando...'
+    : g.items.length ? '' : (g.q ? 'Nenhum arquivo com esse nome na pasta ' + profileFolderName(g.profile) + '.' : 'A pasta ' + profileFolderName(g.profile) + ' não tem imagens ou vídeos.');
+  document.getElementById('dg-more').style.display = (!loading && g.next && !g.error) ? '' : 'none';
+}
+async function dgPick(i){
+  const g = _dg; const f = g && g.items[i]; if (!f) return;
+  closeDriveGallery();
+  const r = await attachMediaFile(g.id, g.profile, null, { fileId: f.id, fileName: f.name, fileType: f.mimeType, viewUrl: f.webViewLink || '', thumbnailLink: f.thumbnailLink || '' });
+  if (r.ok) showToast('✅ Mídia anexada direto do Drive');
 }
 
 // Atualiza só os campos informados, e só se o card ainda tem ESTA mídia (não foi trocada).
