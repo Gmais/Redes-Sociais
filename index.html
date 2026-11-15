@@ -25399,6 +25399,9 @@ async function dgLoad(reset){
 }
 function dgRender(loading){
   const g = _dg; if (!g) return;
+  // A lista é redesenhada a cada carga: guarda a rolagem para "Carregar mais" não voltar ao topo.
+  const oldGrid = document.querySelector('#dg-grid .dg-grid');
+  const keepScroll = oldGrid ? oldGrid.scrollTop : 0;
   document.getElementById('dg-grid').innerHTML = g.items.length
     ? '<div class="dg-grid">' + g.items.map((f, i) => {
         const vid = f.mimeType.startsWith('video/');
@@ -25408,6 +25411,8 @@ function dgRender(loading){
         return `<button class="dg-item" title="${dgEsc(f.name)}" onclick="dgPick(${i})">${th}<span class="dg-name">${vid ? '🎬 ' : ''}${dgEsc(f.name)}</span></button>`;
       }).join('') + '</div>'
     : '';
+  const newGrid = document.querySelector('#dg-grid .dg-grid');
+  if (newGrid) newGrid.scrollTop = keepScroll;
   document.getElementById('dg-msg').innerHTML = g.needScope
     ? '⚠️ ' + dgEsc(g.error) + '<br>Na tela do Google, <b>marque todas as caixas</b> (inclusive "ver e baixar todos os arquivos do Google Drive") e clique em Continuar.<br><button class="edit-btn edit-btn-primary" style="margin-top:8px" onclick="dgReauth()">🔑 Conceder permissão do Drive</button>'
     : g.error ? '⚠️ ' + dgEsc(g.error)
