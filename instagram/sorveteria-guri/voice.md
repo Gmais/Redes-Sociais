@@ -25,7 +25,7 @@ arquivo: diga o caminho no pedido (ex.: "use a voz de instagram/sorveteria-guri/
 - **Words I would never say out loud:** [PREENCHER]
 - **Do I swear:** no
 - **Emoji in captions:** [PREENCHER: livremente, com moderação?]
-- **Face on camera:** [PREENCHER: mascote 3D Guri, atendentes, Gilson?]
+- **Face on camera:** varia. Aparecem o mascote 3D Guri, as atendentes (Maria Júlia, Maria Clara, Bruna, Luiza Helena), clientes e crianças (com autorização) e também posts só do produto, sem rosto. Menores só com autorização do responsável.
 - **Voiceover or to-camera:** [PREENCHER]
 - **Pace:** [PREENCHER]
 
