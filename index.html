@@ -21,6 +21,11 @@
 
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 body { background: var(--bg); color: var(--txt); font-family: 'Inter', sans-serif; min-height: 100vh; overflow-x: hidden; }
+/* Cor de fundo por aba: Academia laranja, Sorveteria azul, GympulsePro amarelo (Histórico fica neutro).
+   --bg também pinta a barra fixa das abas; os cards continuam escuros para o texto ficar legível. */
+body[data-tab="academia"]   { --bg: #2a1006; background: linear-gradient(180deg, rgba(230,57,0,.38) 0, rgba(230,57,0,.12) 520px, rgba(230,57,0,.06) 100%) fixed, var(--bg); }
+body[data-tab="sorveteria"] { --bg: #061a2e; background: linear-gradient(180deg, rgba(0,140,220,.40) 0, rgba(0,120,200,.14) 520px, rgba(0,100,180,.07) 100%) fixed, var(--bg); }
+body[data-tab="gympulse"]   { --bg: #241d04; background: linear-gradient(180deg, rgba(245,194,0,.30) 0, rgba(245,194,0,.10) 520px, rgba(245,194,0,.05) 100%) fixed, var(--bg); }
 
 .hero { position: relative; padding: 28px 24px 0; overflow: hidden; }
 .hero-bg {
@@ -884,7 +889,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://apis.google.com/js/api.js" async defer></script>
 </head>
-<body>
+<body data-tab="academia">
 
 <div class="hero">
   <div class="hero-bg"></div>
@@ -25775,7 +25780,9 @@ async function toggleAutoMode(profile){
 }
 
 function renderPanel(profile){
-  const items=CONTENT[profile];
+  // Só hoje e os próximos dias. Os dias passados continuam no Histórico e no Calendário.
+  const today=todayBR();
+  const items=CONTENT[profile].filter(i=>i.date>=today);
   const el=document.getElementById('p-'+profile);
   const total=items.length;
   const doneN=items.filter(i=>done(i.id)).length;
@@ -25791,7 +25798,7 @@ function renderPanel(profile){
   });
   const emptyMsg = hideDone && total>0 && visibleItems.length===0
     ? '<div class="empty"><div class="eico">🎉</div><p>Tudo concluído! Desmarque o filtro para ver tudo de novo.</p></div>'
-    : '<div class="empty"><div class="eico">📭</div><p>Sem conteúdo ainda.</p></div>';
+    : '<div class="empty"><div class="eico">📭</div><p>Nada programado de hoje em diante. Os dias passados estão no Histórico.</p></div>';
   el.innerHTML=`
     <div class="stats">
       <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Total</div></div>
@@ -25918,6 +25925,7 @@ function go(tab,el){
   document.getElementById('p-'+tab).classList.add('on');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   el.classList.add('on');
+  document.body.dataset.tab = tab; // cor de fundo da aba (CSS body[data-tab=...])
   if(['academia','sorveteria','gympulse'].includes(tab)) activeProfile = tab;
   // Esconder botão Nova Postagem no Histórico/Estratégia
   const npBtn = document.getElementById('newPostBtn');
@@ -27784,7 +27792,7 @@ function calGoto(id, profile){
   if (tab) go(profile, tab);
   setTimeout(() => {
     const card = document.getElementById('card-' + id);
-    if (!card) { showToast('Card não está visível (talvez escondido pelo filtro).'); return; }
+    if (!card) { showToast('Card não está visível: é de um dia passado (veja no Histórico) ou está escondido pelo filtro.'); return; }
     if (!card.classList.contains('open')) expand(id);
     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, 80);
