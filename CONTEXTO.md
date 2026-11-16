@@ -110,6 +110,8 @@ Fonte: www.planetacorpoclubmais.com.br/mqv (conferida em 13/10/2026). Serve como
 ## 7. Produtos da Sorveteria
 Lista enviada por Gilson em 18/08/2026 (sem preços).
 
+> **Catálogo real (desde 16/11/2026):** os produtos da loja e do cardápio gourmet, com foto, vêm ao vivo do site da Sorvetes Guri (projeto Siteguri, `lib/guri-catalog.js`). O Modo Automático recebe esse catálogo e ele manda sobre a lista "Loja" abaixo. O gerador de imagem anexa sozinho a foto real do produto do card. Os sabores do **buffet (Caixa 7L)** não estão cadastrados no site: seguem na lista abaixo.
+
 ### Loja (itens SEM "Caixa 7L" — pilar 1)
 **Picolés de fruta:** abacaxi com hortelã, abacaxi, açaí 50g, água de coco 50g, groselha, limão, maracujá 50g, melancia 50g, morango, tangerina, uva.
 **Picolés de leite:** café com chocolate, chocolate, coco branco, coco queimado, leite condensado, leitinho, maçã verde, mamão, maracujá, melão chinês, milho verde, morango, torta de limão 50g, uva 50g, manga 50g.

@@ -7,7 +7,7 @@
     "satori": "0.10.14"
   },
   "scripts": {
-    "test": "node test/caption-similarity.test.js",
+    "test": "node test/caption-similarity.test.js && node test/guri-catalog.test.js",
     "sync:similarity": "node scripts/sync-caption-similarity.js"
   }
 }

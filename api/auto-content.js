@@ -15,6 +15,7 @@
 const fs = require('fs');
 const path = require('path');
 const sim = require('../lib/caption-similarity');
+const guri = require('../lib/guri-catalog');
 
 const SUPABASE_URL = 'https://ggphrgfgckpsspbsguhp.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGhyZ2ZnY2twc3NwYnNndWhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3NzE2NDUsImV4cCI6MjEwNDM0NzY0NX0.t_dF5I6c0wCBqOnJd6ko6Jpu_ZQyQ5ulA8buRYLAMMk';
@@ -163,8 +164,9 @@ function loadVoice(profile) {
   return '';
 }
 
-function systemPrompt(profile, context, voice) {
+function systemPrompt(profile, context, voice, extra) {
   const rules = PROFILE_RULES[profile];
+  const extraBlock = extra ? '\n\n' + extra : '';
   const voiceBlock = voice ? `
 
 ===== VOZ DA MARCA (instagram/${VOICE_DIRS[profile]}/voice.md) =====
@@ -182,10 +184,26 @@ Regras de saída:
 - Story não pode ser salvo: em Story, nunca peça para salvar; "salve este post" só em Post.
 - "briefing_visual" descreve a imagem (cena, elementos, cores, estilo) SEM texto sobreposto na imagem.
 - Varie ângulo e pilar entre os posts; não repita o que já existe (lista fornecida).
-- Responda SOMENTE JSON: {"posts":[{"title":"","pilar":"","objetivo":"","publico":"","tom":"","cta":"","texto":"","briefing_visual":""}]} com um item por slot, na mesma ordem dos slots.
+- Responda SOMENTE JSON: {"posts":[{"title":"","pilar":"","objetivo":"","publico":"","tom":"","cta":"","texto":"","briefing_visual":"","produto":""}]} com um item por slot, na mesma ordem dos slots. "produto" = nome EXATO de um item do CATÁLOGO REAL quando o post é sobre esse item; vazio nos demais.
 
 ===== CONTEXTO.md =====
-${context}${voiceBlock}`;
+${context}${voiceBlock}${extraBlock}`;
+}
+
+// Sorveteria: catálogo real da loja (Siteguri). Sem ele, segue a lista da seção 7 do CONTEXTO.md.
+async function sorveteriaExtra() {
+  try {
+    const catalog = await guri.fetchCatalog();
+    if (!catalog.length) return { catalog: [], block: '' };
+    return {
+      catalog,
+      block: `===== CATÁLOGO REAL DA LOJA (site da Sorvetes Guri, lido agora) =====
+Para "Produto da loja" e posts de cardápio gourmet, escolha SÓ itens desta lista: ela manda sobre a lista "Loja" da seção 7 do CONTEXTO.md. Escreva o nome por extenso na legenda ("Pic." = picolé, "Pt" = pote, "Sorv." = sorvete, "C/" = com) e ponha o nome exato no campo "produto". Os sabores do buffet (Caixa 7L) continuam vindo da seção 7. Sem preço.
+${guri.catalogPromptBlock(catalog)}`
+    };
+  } catch (e) {
+    return { catalog: [], block: '' };
+  }
 }
 
 function userPrompt(profile, date, slots, existing, notes) {
@@ -330,7 +348,9 @@ async function runProfile(profile, rows, now, startedAt) {
   const created = [];
   const context = loadContext();
   const voice = loadVoice(profile);
-  const system = systemPrompt(profile, context, voice);
+  const extra = profile === 'sorveteria' ? await sorveteriaExtra() : { catalog: [], block: '' };
+  const system = systemPrompt(profile, context, voice, extra.block);
+  const catalogNames = new Set(extra.catalog.map(p => p.nome.toLowerCase()));
   const examples = voiceExamples(profile, voice);
   const pending = [];
 
@@ -404,6 +424,9 @@ async function runProfile(profile, rows, now, startedAt) {
       const used = new Set(keptCards.map(c => c.id));
       while (used.has(`au_${profile}_${date.replace(/-/g, '')}_${n}`) || deleted.has(`au_${profile}_${date.replace(/-/g, '')}_${n}`)) n++;
       const card = buildCard(profile, date, slot, n, posts[i]);
+      // Produto do catálogo real: o gerador de imagem usa para anexar a foto certa.
+      const prod = clean(posts[i].produto);
+      if (prod && catalogNames.has(prod.toLowerCase())) card.produto = prod;
       keptCards.push(card);
       created.push(card);
       n++;

@@ -484,7 +484,34 @@ async function handleEdit(body, res) {
   res.status(200).json({ ok: true, imageBase64: result.b64, mime: result.mime, provider, model: result.model, edited: true });
 }
 
+// GET ?produto=<título do card ou nome exato> -> foto real do produto da Sorvetes Guri (catálogo do
+// Siteguri) para anexar como referência. Mora aqui porque o plano Hobby do Vercel limita a 12 funções.
+// A foto passa pelo servidor porque parte delas está no site da loja, que não libera outro domínio (CORS).
+const guri = require('../lib/guri-catalog');
+async function handleProduto(req, res) {
+  try {
+    const catalog = await guri.fetchCatalog();
+    if (req.query.lista) {
+      res.status(200).json({ ok: true, total: catalog.length, produtos: catalog.map(({ nome, categoria, menu }) => ({ nome, categoria, menu })) });
+      return;
+    }
+    const m = guri.matchProduct(String(req.query.produto || '').slice(0, 300), catalog);
+    if (!m || !guri.imageAllowed(m.produto.imagem)) { res.status(200).json({ ok: true, produto: null }); return; }
+    const r = await fetch(m.produto.imagem);
+    if (!r.ok) throw new Error('foto do produto indisponível (' + r.status + ')');
+    const buf = Buffer.from(await r.arrayBuffer());
+    if (buf.length > 6 * 1024 * 1024) throw new Error('foto do produto grande demais');
+    const mime = (r.headers.get('content-type') || '').split(';')[0];
+    if (!/^image\//.test(mime)) throw new Error('o endereço da foto não devolveu uma imagem');
+    res.setHeader('Cache-Control', 's-maxage=3600');
+    res.status(200).json({ ok: true, produto: { nome: m.produto.nome, categoria: m.produto.categoria }, score: m.score, mime, data: buf.toString('base64') });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+}
+
 module.exports = async (req, res) => {
+  if (req.method === 'GET' && req.query && (req.query.produto || req.query.lista)) { await handleProduto(req, res); return; }
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Método não permitido' });
     return;

@@ -28843,9 +28843,38 @@ function openGenImage(id, profile){
   } catch (e) {}
   updateEngineUI();
   renderGenAttach();
+  if (profile === 'sorveteria') autoAttachProduct(id, item);
   el.classList.add('on');
   renderBrandGrid();
   loadBrandAssets().then(renderBrandGrid);
+}
+// Sorveteria: anexa a foto REAL do produto do card (catálogo do site da loja, projeto Siteguri),
+// como "Produto em destaque", pra IA mostrar o produto de verdade. Usa o nome exato que o Modo
+// Automático gravou (item.produto) ou acha pelo título. Buffet, encerramento etc. não têm foto.
+async function autoAttachProduct(id, item){
+  const q = item.produto || item.title;
+  const el = document.getElementById('genModal');
+  const status = document.getElementById('gen-status');
+  if (!q || !el) return;
+  try {
+    status.textContent = '📦 Procurando a foto real do produto no site da loja...';
+    const r = await fetch('/api/generate-image?produto=' + encodeURIComponent(q));
+    const j = await r.json();
+    if (el.dataset.id !== id) return; // abriu outro card enquanto buscava
+    if (!j.ok || !j.produto) { status.textContent = ''; return; }
+    if (_genAttach.length >= 3 || _genAttach.some(a => a.produto === j.produto.nome)) { status.textContent = ''; return; }
+    const bin = atob(j.data), arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    const data = await genResizeJpeg(new Blob([arr], { type: j.mime }));
+    if (el.dataset.id !== id) return;
+    const uso = ATTACH_USES.find(u => u.id === 'produto');
+    _genAttach.push({ mime: 'image/jpeg', data, name: j.produto.nome, produto: j.produto.nome,
+      usage: (uso ? uso.text : 'Produto em destaque, fiel ao original') + ': ' + j.produto.nome });
+    renderGenAttach();
+    status.textContent = '📦 Foto real anexada: ' + j.produto.nome + ' (do site da loja). Se não for este produto, remova no ✕ do anexo.';
+  } catch (e) {
+    if (el.dataset.id === id) status.textContent = '';
+  }
 }
 function closeGenImage(){
   const el = document.getElementById('genModal');
