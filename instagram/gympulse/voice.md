@@ -56,12 +56,7 @@ Reel nem Carrossel nos cards gerados.)
 
 ## Proof I can use
 
-Números reais do GympulsePro, a partir dos dados da Planeta Corpo Club+ (plano Black). Confirme que ainda valem antes de publicar:
-
-- 215 alunos cadastrados, 108 ativos nos últimos 30 dias
-- 408 aulas registradas
-- Média por aula: 62 min, 129 pontos, 971 kcal
-- 25 sensores em uso
+Desde 16/11/2026 os números vêm **ao vivo** do banco do GymPulse, todo dia: totais da plataforma e o caso da Planeta Corpo Club+. O Modo Automático recebe no bloco "DADOS REAIS". Para gerar à mão, leia `dados_gympulse_plataforma` e `dados_gympulse_planeta` em `painel_gilson_state`. Não use números escritos aqui: eles envelhecem.
 
 ## The ask
 

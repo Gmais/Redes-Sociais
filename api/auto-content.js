@@ -190,6 +190,32 @@ Regras de saída:
 ${context}${voiceBlock}${extraBlock}`;
 }
 
+// Academia e GympulsePro: números reais que o GymFit e o GymPulse gravam todo dia às 05h30 (Brasília)
+// em painel_gilson_state (chaves dados_*; SQL em integracoes/). Só totais e médias, sem aluno.
+// Dado com mais de 3 dias é ignorado (o envio parou): melhor sem número do que número velho.
+const nf = (n) => Number(n || 0).toLocaleString('pt-BR');
+function fresh(d) {
+  const t = d && Date.parse(d.atualizado_em);
+  return t && Date.now() - t < 3 * 86400000 ? d : null;
+}
+function liveDataBlock(profile, rows) {
+  const gf = fresh(rows.dados_gymfit), gp = fresh(rows.dados_gympulse_planeta), pl = fresh(rows.dados_gympulse_plataforma);
+  const dia = (d) => d.atualizado_em.slice(8, 10) + '/' + d.atualizado_em.slice(5, 7);
+  const linhas = [];
+  if (profile === 'academia') {
+    if (gf) linhas.push(`Catraca da academia (GymFit, últimos 30 dias, atualizado ${dia(gf)}): ${nf(gf.alunos_ativos)} alunos ativos; ${nf(gf.alunos_que_treinaram_30d)} alunos treinaram no período; cerca de ${nf(gf.media_treinos_por_dia_30d)} treinos por dia; média de ${String(gf.media_treinos_por_aluno_30d).replace('.', ',')} treinos por aluno no mês; horários mais cheios: ${(gf.horarios_de_pico || []).join(', ')}; dias mais movimentados: ${(gf.dias_mais_movimentados || []).join(' e ')}. ("Treino" = aluno que passou na catraca naquele dia.)`);
+    if (gp) linhas.push(`Aulas monitoradas com sensor de batimento (GymPulse, últimos 30 dias, atualizado ${dia(gp)}): ${nf(gp.aulas_monitoradas)} aulas; ${nf(gp.alunos_que_treinaram)} alunos usaram o sensor; ${nf(gp.participacoes)} participações; ${nf(gp.kcal_total)} kcal no total; em média ${nf(gp.kcal_media_por_aluno_por_aula)} kcal e ${nf(gp.pontos_media_por_aluno_por_aula)} pontos por aluno em cada aula; ${nf(gp.sensores)} sensores; ${nf(gp.fitcoins_ganhos_desde_o_inicio)} fitcoins ganhos pelos alunos desde o início (${nf(gp.fitcoins_resgates_desde_o_inicio)} resgates).`);
+  }
+  if (profile === 'gympulse') {
+    if (pl) linhas.push(`Plataforma GympulsePro inteira (atualizado ${dia(pl)}): ${nf(pl.academias)} academias usando; ${nf(pl.alunos_cadastrados)} alunos cadastrados; ${nf(pl.aulas_monitoradas_total)} aulas monitoradas desde o início (${nf(pl.aulas_monitoradas_30d)} nos últimos 30 dias); ${nf(pl.participacoes_total)} participações; ${nf(pl.kcal_total)} kcal registradas; ${nf(pl.sensores)} sensores. Nunca cite o nome de outra academia cliente.`);
+    if (gp) linhas.push(`Caso real da Planeta Corpo Club+, academia do próprio Gilson (pode citar o nome; últimos 30 dias): ${nf(gp.aulas_monitoradas)} aulas monitoradas; ${nf(gp.alunos_que_treinaram)} alunos com sensor; ${nf(gp.participacoes)} participações; média de ${nf(gp.kcal_media_por_aluno_por_aula)} kcal e ${nf(gp.pontos_media_por_aluno_por_aula)} pontos por aluno por aula; ${nf(gp.fitcoins_ganhos_desde_o_inicio)} fitcoins ganhos e só ${nf(gp.fitcoins_resgates_desde_o_inicio)} resgates.`);
+  }
+  if (!linhas.length) return '';
+  return `===== DADOS REAIS (lidos dos sistemas da empresa; valem mais do que qualquer número escrito no CONTEXTO.md ou no voice.md) =====
+Use no máximo um ou dois números por post, só quando servirem ao assunto, e só estes (pode arredondar para baixo, nunca para cima). Nunca invente outro número nem cite aluno.
+${linhas.map(l => '- ' + l).join('\n')}`;
+}
+
 // Sorveteria: catálogo real da loja (Siteguri). Sem ele, segue a lista da seção 7 do CONTEXTO.md.
 async function sorveteriaExtra() {
   try {
@@ -349,7 +375,8 @@ async function runProfile(profile, rows, now, startedAt) {
   const context = loadContext();
   const voice = loadVoice(profile);
   const extra = profile === 'sorveteria' ? await sorveteriaExtra() : { catalog: [], block: '' };
-  const system = systemPrompt(profile, context, voice, extra.block);
+  const live = liveDataBlock(profile, rows);
+  const system = systemPrompt(profile, context, voice, [extra.block, live].filter(Boolean).join('\n\n'));
   const catalogNames = new Set(extra.catalog.map(p => p.nome.toLowerCase()));
   const examples = voiceExamples(profile, voice);
   const pending = [];
@@ -443,7 +470,8 @@ async function runProfile(profile, rows, now, startedAt) {
     created.forEach(c => { man[c.id] = { profile, date: c.date, time: c.time, format: c.format, caption: c.texto }; });
     await writeRow('manifest', man);
   }
-  return { profile, created: created.length, ids: created.map(c => c.id), antiRepeticao: stats, voz: !!loadVoice(profile) };
+  return { profile, created: created.length, ids: created.map(c => c.id), antiRepeticao: stats, voz: !!loadVoice(profile),
+    catalogo: extra.catalog.length || undefined, dadosReais: !!live };
 }
 
 // Diagnóstico sem efeito colateral: o deploy enxerga o CONTEXTO.md e os voice.md? (só tamanhos)
@@ -457,7 +485,13 @@ function filesCheck() {
 
 module.exports = async (req, res) => {
   if (req.method === 'GET' && req.query && req.query.check === 'voz') {
-    res.status(200).json(filesCheck());
+    const out = filesCheck();
+    try {
+      const rows = await readRows();
+      out.dados = {};
+      ['dados_gymfit', 'dados_gympulse_planeta', 'dados_gympulse_plataforma'].forEach(k => { out.dados[k] = rows[k] ? rows[k].atualizado_em : null; });
+    } catch (e) { out.dados = 'erro ao ler: ' + e.message; }
+    res.status(200).json(out);
     return;
   }
   const bearer = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');

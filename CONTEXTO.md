@@ -76,7 +76,7 @@ Painel web privado de Gilson Caetano para planejar, executar e registrar o Insta
 ### GympulsePro — 1 postagem por dia
 - Horário padrão: 12h00.
 - **1 Post a cada 15 dias**. Nos outros dias, Story.
-- Alternar módulos em rodízio, sem repetir o mesmo módulo ou a mesma estatística em dias seguidos. Só citar dados que estejam neste arquivo.
+- Alternar módulos em rodízio, sem repetir o mesmo módulo ou a mesma estatística em dias seguidos. Só citar dados que estejam neste arquivo ou no bloco "DADOS REAIS" que o Modo Automático recebe (seção 9).
 
 ## 5. Campanhas
 
@@ -141,6 +141,7 @@ Diretrizes visuais: regra 60-30-10 (60% cor dominante/fundo, 30% secundária, 10
 - **Publicação:** Zernio. Contas: Academia `6ace80c0a737012bc49cb80c` · Sorveteria `6a3916335f7d1751ab4afbe3` · GympulsePro `6a3920625f7d1751ab4b6fdc`. Para trocar a conta de uma marca: conectar a nova na Zernio e criar no Vercel `ZERNIO_ACCOUNT_ACADEMIA` / `ZERNIO_ACCOUNT_SORVETERIA` / `ZERNIO_ACCOUNT_GYMPULSE`, depois Redeploy (posts já agendados continuam na conta antiga).
 - **Confirmação:** o cron (GitHub Actions) consulta a Zernio e só marca "publicado" quando o Instagram confirma.
 - **Modo Automático:** gera os próximos 3 dias de cada marca ligada, lendo este arquivo inteiro e o `voice.md` da marca (linhas com `[PREENCHER]` são ignoradas); cron diário do Vercel. Conferir se o deploy enxerga os arquivos: `GET /api/auto-content?check=voz` (só mostra tamanhos; 0 = não achou).
+- **Dados reais integrados (16/11/2026):** GymFit (catraca da Planeta Corpo) e GymPulse (aulas da Planeta Corpo e totais da plataforma) gravam **só totais e médias** todo dia às 05h30 (Brasília) em `painel_gilson_state` (`dados_gymfit`, `dados_gympulse_planeta`, `dados_gympulse_plataforma`), por `pg_cron` em cada projeto (SQL em `integracoes/`). O Modo Automático da Academia e do GympulsePro recebe esses números; dado com mais de 3 dias é ignorado. Sorveteria: catálogo e fotos vêm ao vivo do site da loja (seção 7).
 - **Segredos** (chaves da Zernio, OpenAI/Gemini, tokens) ficam só nas variáveis do Vercel — nunca neste arquivo.
 
 ## 10. Como gerar o conteúdo do dia (para o Claude)
