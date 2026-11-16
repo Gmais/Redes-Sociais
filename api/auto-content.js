@@ -138,6 +138,23 @@ function stripPending(text) {
   }).filter(l => l !== null).join('\n').trim();
 }
 
+// Legendas aprovadas do voice.md (linhas "1. Rótulo: "texto"" ou "- Rótulo: "texto""). Entram na
+// checagem de repetição: a IA deve imitar o jeito, não devolver a frase. O rótulo vira título,
+// então "Encerramento do dia" segue como template (pode parecer com o modelo, é a regra).
+function voiceExamples(profile, voice) {
+  const out = [];
+  String(voice || '').split('\n').forEach((l) => {
+    const m = /^\s*(?:\d+\.|-)\s+([^:"*\n]{2,60}):\s+"(.{20,})"\s*$/.exec(l);
+    if (m) out.push({ id: `__voz_${profile}_${out.length}`, profile, title: 'exemplo da voz: ' + m[1].trim(), texto: m[2] });
+  });
+  return out;
+}
+
+// Travessão é marca de texto de IA: na legenda vira vírgula (ou hífen, colado entre palavras).
+function noDash(s) {
+  return String(s).replace(/\s+[—–]\s+/g, ', ').replace(/[—–]/g, '-');
+}
+
 function loadVoice(profile) {
   const candidates = [VOICE_FILES[profile], path.join(process.cwd(), 'instagram', VOICE_DIRS[profile], 'voice.md')];
   for (const f of candidates) {
@@ -162,6 +179,7 @@ Regras de saída:
 - Sem Reel e sem Carrossel.
 - A legenda ("texto") deve estar pronta para publicar, com emojis do jeito que a voz da marca pede, tom de voz da marca e CTA coerente.
 - Sem travessão (— ou –) nas legendas: use vírgula, ponto ou dois-pontos.
+- Story não pode ser salvo: em Story, nunca peça para salvar; "salve este post" só em Post.
 - "briefing_visual" descreve a imagem (cena, elementos, cores, estilo) SEM texto sobreposto na imagem.
 - Varie ângulo e pilar entre os posts; não repita o que já existe (lista fornecida).
 - Responda SOMENTE JSON: {"posts":[{"title":"","pilar":"","objetivo":"","publico":"","tom":"","cta":"","texto":"","briefing_visual":""}]} com um item por slot, na mesma ordem dos slots.
@@ -224,7 +242,7 @@ function buildCard(profile, date, slot, n, p) {
     driveFile: `${compact.slice(4)}_${profile}_auto${n}.png`,
     driveUrl: '#',
     driveHint: clean(p.briefing_visual).slice(0, 160),
-    texto: clean(p.texto),
+    texto: noDash(clean(p.texto)),
     auto: true,
     secoes: [
       { num: '01', cor: '#e63900', titulo: 'FORMATO E ESPECIFICAÇÕES',
@@ -281,6 +299,7 @@ function weeklyNote(profile, date, corpus) {
 
 function hitText(h) {
   const d = h.doc;
+  if (String(d.id).startsWith('__voz_')) return `copiou a legenda de exemplo da voz ("${String(d.texto).slice(0, 70)}..."): imite só o jeito, com outra situação e outras palavras`;
   const when = fmtDM(d.date) + (d.time ? ' ' + d.time : '');
   if (h.why === 'semanal') return `${h.label} já tem post nesta semana (${when}) — NÃO use esse assunto`;
   return `parecido com ${when}: "${String(d.title || d.texto).replace(/\s+/g, ' ').slice(0, 80)}"`;
@@ -310,7 +329,9 @@ async function runProfile(profile, rows, now, startedAt) {
 
   const created = [];
   const context = loadContext();
-  const system = systemPrompt(profile, context, loadVoice(profile));
+  const voice = loadVoice(profile);
+  const system = systemPrompt(profile, context, voice);
+  const examples = voiceExamples(profile, voice);
   const pending = [];
 
   for (let k = 1; k <= DAYS_AHEAD; k++) {
@@ -341,8 +362,10 @@ async function runProfile(profile, rows, now, startedAt) {
   const stats = { reescritos: 0, descartados: 0, parecidosMantidos: 0 };
   const check = (r, i) => {
     const p = r.posts[i];
-    const draft = { id: '__novo_' + r.date + '_' + i, profile, date: r.date, time: r.slots[i].time, title: clean(p.title), texto: clean(p.texto) };
-    return { draft, hits: sim.similarToDraft(ix, draft, accepted) };
+    const draft = { id: '__novo_' + r.date + '_' + i, profile, date: r.date, time: r.slots[i].time, title: clean(p.title), texto: noDash(clean(p.texto)) };
+    // Exemplos da voz entram com a data do rascunho (sempre na janela de comparação).
+    const voz = examples.map((e) => ({ ...e, date: r.date }));
+    return { draft, hits: sim.similarToDraft(ix, draft, accepted.concat(voz)) };
   };
   const ordered = results.slice().sort((a, b) => a.date.localeCompare(b.date));
   const toRedo = [];
