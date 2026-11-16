@@ -57,6 +57,6 @@ Números reais que podem ir com o nome da academia. Confirme que ainda valem ant
 
 ## The ask
 
-- **My keyword CTA, if I use one:** [PREENCHER: uma palavra, ex.: "QUERO"]
-- **What the keyword sends them:** conversa no WhatsApp (42) 99922-2857
+- **My keyword CTA, if I use one:** não uso. O convite fica no texto ("Venha conhecer") e o WhatsApp vai escrito na legenda.
+- **What the keyword sends them:** não se aplica. Contato: WhatsApp (42) 99922-2857
 - **Where my link goes:** planetacorpoclubmais.com.br
