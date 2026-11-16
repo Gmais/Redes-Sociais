@@ -16,7 +16,12 @@ arquivo: diga o caminho no pedido (ex.: "use a voz de instagram/planeta-corpo/vo
 
 ## What I sound like
 
-- **Three of my own reels or captions that sound most like me:** [PREENCHER: cole 3 legendas ou roteiros que você considera "a cara da Planeta"]
+- **Legendas aprovadas como "a cara da Planeta"** (geradas pelo painel em 14-16/10/2026 e escolhidas pelo Gilson em 16/11/2026, não escritas por ele de próprio punho):
+  1. Prova social: "Teve aluna que voltou a treinar depois de muito tempo parada e hoje diz que o treino virou o momento só dela no dia. 🧡 Cuidar de si também cabe na rotina. Quer começar o seu também?"
+  2. Humanização: "O Thiago acompanha o treino de perto e corrige a postura com calma, sem pressa e sem julgamento. 🧡 Quem está começando sente a diferença. Venha conhecer."
+  3. Diferencial: "Aqui o professor sabe o seu nome, a sua rotina e o seu momento. 🧡 Treino ajustado pra você, não um plano igual pra todo mundo. Venha sentir essa diferença."
+  4. Modalidade: "Mini trampolim, ritmo e muita risada: o Jump transforma o treino numa aula que passa voando. 🧡 Energia boa, em grupo, do começo ao fim. Venha experimentar."
+- **Padrões que se repetem nelas:** frases curtas; abre com uma cena concreta (a aluna, o professor, a aula); um 🧡 depois da primeira frase; fecha com convite suave no imperativo gentil ("Venha conhecer", "Venha experimentar"); fala do que a pessoa sente (calma, sem julgamento, momento só dela), não do corpo.
 - **On camera I am:** acolhedora, calma, conversa entre amigas
 - **Words I actually use:** cuidar de você, no seu ritmo, bem-estar, disposição, sono, rotina, você [PREENCHER: outras]
 - **Words I would never say out loud:** linguagem fitness agressiva, "GRÁTIS!" gritado, "queime gordura", "shape", "bumbum na nuca", "sem desculpas" [PREENCHER: outras]
