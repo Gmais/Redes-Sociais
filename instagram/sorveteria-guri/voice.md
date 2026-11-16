@@ -16,7 +16,10 @@ arquivo: diga o caminho no pedido (ex.: "use a voz de instagram/sorveteria-guri/
 
 ## What I sound like
 
-- **Three of my own reels or captions that sound most like me:** [PREENCHER: cole 3 legendas que você considera "a cara do Guri"]
+- **Legenda aprovada como "a cara do Guri"** (gerada pelo painel em 16/10/2026 e escolhida pelo Gilson em 16/11/2026, não escrita por ele de próprio punho):
+  - Encerramento do dia: "Semana fechou, fim de semana começou, e com sorvete fica ainda melhor. 💙🍦 Amanhã a loja te espera!"
+- **Não aprovadas** (o Gilson viu e não marcou): legenda de buffet com sabor ("Fubá com goiabada: o sabor de café da tarde na casa da vó..."), enquete ("Com quem você mais vem tomar sorvete?") e promoção do Guri Gurt. Motivo ainda não perguntado.
+- **Padrões da aprovada:** curta, leve, fala do momento do dia, emojis 💙🍦, fecha com convite para voltar.
 - **On camera I am:** leve, alegre, festivo, familiar. O "vizinho querido" da cidade.
 - **Words I actually use:** [PREENCHER: ex.: "bora", "vem pro Guri", "geladinho"]
 - **Words I would never say out loud:** [PREENCHER]
