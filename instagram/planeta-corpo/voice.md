@@ -42,7 +42,7 @@ três saíram do posicionamento do CONTEXTO.md, confirme ou troque:
 
 ## Off limits
 
-- **Topics I do not post about:** [PREENCHER]
+- **Topics I do not post about:** política, religião, comparação com outra academia, peso corporal e dieta.
 - **Clients, numbers or names I cannot say publicly:** valor exato de descontos ou brindes que ainda não foram confirmados; limite de estoque de brindes.
 - **Claims I am not allowed to make:** treino não substitui terapia nem atendimento profissional; treinar não previne câncer de mama nem substitui exames; nada de promessa clínica. Posts institucionais de datas de saúde (Setembro Amarelo, Outubro Rosa) não levam oferta nem CTA comercial.
 
