@@ -12,12 +12,14 @@ caminho no pedido (ex.: "use a voz de instagram/gympulse/voice.md").
 
 Perfil novo. Prioridade: **crescer seguidores e reconhecimento de marca** entre
 donos e gestores de academia. Venda vem depois. Por isso o conteúdo puxa mais
-para Reels compartilháveis e dados que geram conversa do que para pitch direto.
+para dados e situações que geram conversa e compartilhamento do que para pitch
+direto. (Formatos e frequência seguem o CONTEXTO.md: hoje só Story e Post, sem
+Reel nem Carrossel nos cards gerados.)
 
 ## Who I am
 
 - **Name:** GympulsePro (Gilson Caetano, criador)
-- **Handle:** @gympulsepro
+- **Handle:** @gympulse.pro
 - **What I do, in one sentence:** SaaS de gamificação para academias: monitora a biometria dos alunos em tempo real e transforma em pontos e rankings.
 - **Who I am talking to:** Donos e gestores de academia pequena e média, e professores de Educação Física com estúdio, que perdem aluno sem saber por quê.
 - **What I sell:** Assinatura do GympulsePro (Monitor ao Vivo, Rankings, Cadastros, Relatórios PDF, Fitcoins, IA de Engajamento, Portal do Aluno, Desafios), com demonstração como porta de entrada. Preços: não citar até o Gilson informar.
@@ -63,6 +65,7 @@ Números reais do GympulsePro, a partir dos dados da Planeta Corpo Club+ (plano 
 
 ## The ask
 
-- **My keyword CTA, if I use one:** **DEMO**. Ex.: "Comenta DEMO que eu te mando o link pra ver o sistema funcionando." Para posts de alcance (Reels educativos), o CTA é seguir o perfil ou salvar o post, não vender.
-- **What the keyword sends them:** mensagem no DM com o link de demonstração em gympulse.pro. A resposta automática por palavra-chave só pode ser feita pelas ferramentas oficiais do Instagram ou parceiros aprovados.
+- **My keyword CTA, if I use one:** nenhum por enquanto. Não escrever "comenta X que eu te mando" enquanto não houver resposta automática configurada no Instagram: a promessa ficaria sem entrega. Ideia para o futuro: palavra **DEMO**, depois que a resposta automática existir.
+- **CTA atual:** posts de alcance (dado de mercado, reflexão) pedem para seguir o perfil ou salvar o post. Posts de produto e demo: "Conheça em gympulse.pro" ou "Link na bio".
+- **What the keyword sends them:** não se aplica por enquanto.
 - **Where my link goes:** gympulse.pro

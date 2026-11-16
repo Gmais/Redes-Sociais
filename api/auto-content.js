@@ -32,6 +32,15 @@ const PROFILE_RULES = {
   gympulse:   { perDay: 1, times: ['12h00'], postEveryDays: 15, label: 'GympulsePro', section: 'GympulsePro' }
 };
 
+// Voz de cada marca (instagram/<pasta>/voice.md). Os mesmos arquivos que as skills ig-* usam.
+// Caminhos literais para o rastreador de arquivos do Vercel enxergar; vercel.json também inclui.
+const VOICE_FILES = {
+  academia:   path.join(__dirname, '..', 'instagram', 'planeta-corpo', 'voice.md'),
+  sorveteria: path.join(__dirname, '..', 'instagram', 'sorveteria-guri', 'voice.md'),
+  gympulse:   path.join(__dirname, '..', 'instagram', 'gympulse', 'voice.md')
+};
+const VOICE_DIRS = { academia: 'planeta-corpo', sorveteria: 'sorveteria-guri', gympulse: 'gympulse' };
+
 const FORMAT_SPECS = {
   Story: { tipo: 'Story Instagram', dimensoes: '1080 × 1920px (9:16)' },
   Post: { tipo: 'Post Feed Instagram', dimensoes: '1080 × 1350px (4:5)' }
@@ -118,22 +127,47 @@ function loadContext() {
   throw new Error('CONTEXTO.md não encontrado no deploy');
 }
 
-function systemPrompt(profile, context) {
+// voice.md da marca sem os trechos ainda não respondidos ("[PREENCHER: ...]"). Tira só o trecho;
+// a linha cai apenas se ficar sem conteúdo (ex.: "- **Pace:**" ou "3."). Sem o arquivo, a geração
+// segue só com o CONTEXTO.md (como antes) — a voz é um reforço, não pode derrubar o cron.
+function stripPending(text) {
+  return text.split('\n').map(l => {
+    if (!l.includes('[PREENCHER')) return l;
+    const rest = l.replace(/\s*`?\[PREENCHER[^\]]*\]`?/g, '').trimEnd();
+    return /^\s*(-|\d+\.)?\s*(\*\*[^*]*\*\*)?\s*$/.test(rest) ? null : rest;
+  }).filter(l => l !== null).join('\n').trim();
+}
+
+function loadVoice(profile) {
+  const candidates = [VOICE_FILES[profile], path.join(process.cwd(), 'instagram', VOICE_DIRS[profile], 'voice.md')];
+  for (const f of candidates) {
+    try { return stripPending(fs.readFileSync(f, 'utf8')); } catch (e) { /* tenta o próximo */ }
+  }
+  return '';
+}
+
+function systemPrompt(profile, context, voice) {
   const rules = PROFILE_RULES[profile];
+  const voiceBlock = voice ? `
+
+===== VOZ DA MARCA (instagram/${VOICE_DIRS[profile]}/voice.md) =====
+Este arquivo define COMO escrever: tom, palavras que a marca usa e as proibidas, emojis, assuntos evitados, bordão, legendas aprovadas (imite o jeito, nunca copie a frase) e CTA. Em fato, número, preço, campanha, formato ou frequência, o CONTEXTO.md manda.
+${voice}` : '';
   return `Você é o social media de Gilson Caetano e escreve o conteúdo de Instagram da marca "${rules.label}" (Turvo/PR), em português do Brasil.
 
-Abaixo está o CONTEXTO.md do projeto. Ele é a fonte da verdade: siga TODAS as regras fixas (volume, formatos, hashtags, sem texto sobreposto na imagem, dimensões), a seção "${rules.section}", a campanha/promoção ATIVA na data do post (e o calendário dela), as listas de produtos, a equipe para humanização e as regras de sensibilidade (ex.: Outubro Rosa, dia 19/10 institucional sem oferta). Nunca invente preço, condição, prazo, sabor, funcionalidade ou dado que não esteja no contexto; sem preço confirmado, escreva sem valor. Nunca cite concorrentes. Campanhas marcadas como ENCERRADAS não podem ser anunciadas.
+Abaixo está o CONTEXTO.md do projeto. Ele é a fonte da verdade: siga TODAS as regras fixas (volume, formatos, hashtags, sem texto sobreposto na imagem, dimensões), a seção "${rules.section}", a campanha/promoção ATIVA na data do post (e o calendário dela), as listas de produtos, a equipe para humanização e as regras de sensibilidade (ex.: Outubro Rosa, dia 19/10 institucional sem oferta). Nunca invente preço, condição, prazo, sabor, funcionalidade ou dado que não esteja no contexto; sem preço confirmado, escreva sem valor. Nunca cite concorrentes. Campanhas marcadas como ENCERRADAS não podem ser anunciadas.${voice ? '\n\nDepois do CONTEXTO.md vem a VOZ DA MARCA: siga-a no tom, nas palavras, nos emojis e no CTA de cada legenda.' : ''}
 
 Regras de saída:
 - Story: 0 hashtags. Post: exatamente 5 hashtags no final da legenda.
 - Sem Reel e sem Carrossel.
-- A legenda ("texto") deve estar pronta para publicar, com emojis com moderação, tom de voz da marca e CTA coerente.
+- A legenda ("texto") deve estar pronta para publicar, com emojis do jeito que a voz da marca pede, tom de voz da marca e CTA coerente.
+- Sem travessão (— ou –) nas legendas: use vírgula, ponto ou dois-pontos.
 - "briefing_visual" descreve a imagem (cena, elementos, cores, estilo) SEM texto sobreposto na imagem.
 - Varie ângulo e pilar entre os posts; não repita o que já existe (lista fornecida).
 - Responda SOMENTE JSON: {"posts":[{"title":"","pilar":"","objetivo":"","publico":"","tom":"","cta":"","texto":"","briefing_visual":""}]} com um item por slot, na mesma ordem dos slots.
 
 ===== CONTEXTO.md =====
-${context}`;
+${context}${voiceBlock}`;
 }
 
 function userPrompt(profile, date, slots, existing, notes) {
@@ -276,7 +310,7 @@ async function runProfile(profile, rows, now, startedAt) {
 
   const created = [];
   const context = loadContext();
-  const system = systemPrompt(profile, context);
+  const system = systemPrompt(profile, context, loadVoice(profile));
   const pending = [];
 
   for (let k = 1; k <= DAYS_AHEAD; k++) {
@@ -363,10 +397,23 @@ async function runProfile(profile, rows, now, startedAt) {
     created.forEach(c => { man[c.id] = { profile, date: c.date, time: c.time, format: c.format, caption: c.texto }; });
     await writeRow('manifest', man);
   }
-  return { profile, created: created.length, ids: created.map(c => c.id), antiRepeticao: stats };
+  return { profile, created: created.length, ids: created.map(c => c.id), antiRepeticao: stats, voz: !!loadVoice(profile) };
+}
+
+// Diagnóstico sem efeito colateral: o deploy enxerga o CONTEXTO.md e os voice.md? (só tamanhos)
+function filesCheck() {
+  let contexto = 0;
+  try { contexto = loadContext().length; } catch (e) { /* 0 = não achou */ }
+  const voz = {};
+  PROFILES.forEach(p => { voz[p] = loadVoice(p).length; });
+  return { contexto, voz };
 }
 
 module.exports = async (req, res) => {
+  if (req.method === 'GET' && req.query && req.query.check === 'voz') {
+    res.status(200).json(filesCheck());
+    return;
+  }
   const bearer = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   const isCron = !!(process.env.CRON_SECRET && bearer === process.env.CRON_SECRET)
     || !!(process.env.AUTO_PUBLISH_SECRET && req.headers['x-auto-publish-secret'] === process.env.AUTO_PUBLISH_SECRET);

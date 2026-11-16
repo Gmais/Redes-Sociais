@@ -12,7 +12,7 @@ arquivo: diga o caminho no pedido (ex.: "use a voz de instagram/planeta-corpo/vo
 - **Handle:** @planetacorpoclubmais
 - **What I do, in one sentence:** Academia em Turvo/PR desde 1998, com todas as modalidades por uma mensalidade única.
 - **Who I am talking to:** Mulheres de 30 a 40 anos de Turvo/PR, sem apelo atlético, que buscam saúde, sono e disposição, não estética nem performance.
-- **What I sell:** Mensalidade de R$209/mês com todas as modalidades e horário livre (musculação, dança, spinning, funcional, jump, HIIT, aulas do Prof. Wellinton). Planos trimestral, semestral e anual. Matrícula pelo WhatsApp (42) 99922-2857.
+- **What I sell:** Mensalidade de R$209/mês com todas as modalidades e horário livre (lista oficial de modalidades: seção 3 do CONTEXTO.md). Planos trimestral, semestral e anual. Matrícula pelo WhatsApp (42) 99922-2857.
 
 ## What I sound like
 
@@ -50,7 +50,7 @@ três saíram do posicionamento do CONTEXTO.md, confirme ou troque:
 
 Números reais que podem ir com o nome da academia. Confirme que ainda valem antes de publicar:
 
-- 27 anos de tradição (fundada em 1998)
+- Tradição desde 1998 (escrever "desde 1998"; não calcular a idade)
 - Equipe 100% CREF
 - Mensalidade única para todas as modalidades (R$209/mês)
 - Depoimentos de alunas: só o primeiro nome, e só com autorização dela. Sem autorização confirmada, o texto fica anônimo ("uma aluna nossa"). Nenhum depoimento foi cadastrado ainda; quando houver, entra aqui com a frase exata e o nome autorizado.

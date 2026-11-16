@@ -9,7 +9,7 @@ arquivo: diga o caminho no pedido (ex.: "use a voz de instagram/sorveteria-guri/
 ## Who I am
 
 - **Name:** Sorveteria Guri (Gilson Caetano, dono)
-- **Handle:** @sorvetesguriturvo
+- **Handle:** @sorvetesguriturvo_
 - **What I do, in one sentence:** Sorveteria com buffet, loja de fábrica e sorvetes gourmet em Turvo/PR.
 - **Who I am talking to:** Famílias de Turvo e região, todas as idades, que compram por impulso (calor, tarde, fim de semana) e por ocasião.
 - **What I sell:** Sorvete no buffet (pesado), itens da loja (picolés, potes, baldes, casquinhas, sundaes, açaí), smoothies proteicos e o Carrinho de Sorvete para eventos.
@@ -33,7 +33,7 @@ arquivo: diga o caminho no pedido (ex.: "use a voz de instagram/sorveteria-guri/
 
 Coisas em que o Guri acredita. Estas saíram do posicionamento, confirme ou troque:
 
-1. Sorvete bom é sorvete feito na fábrica, fresquinho, e dá para provar a diferença.
+1. Sorvete bom é sorvete fresquinho, direto da nossa loja de fábrica (é loja de fábrica, não fábrica).
 2. Sorvete também cabe na dieta (linha fitness, açaí zero açúcar, smoothies com 21g de proteína).
 3. Sorveteria é lugar de família, não só de criança. [PREENCHER: outras posições suas]
 

@@ -1,7 +1,7 @@
 # Contexto do Projeto — Painel de Conteúdo Instagram
 
-> **Última revisão: 03/11/2026.**
-> Este arquivo é lido por pessoas **e pelo Modo Automático** (`api/auto-content.js` envia o arquivo inteiro à IA a cada geração). Por isso: sem senhas/chaves, curto, e atualizado no mesmo dia em que algo muda. **Campanha com data final vencida vai para "Encerradas" no mesmo dia** — a IA só anuncia o que está em "Ativas".
+> **Última revisão: 16/11/2026.**
+> Este arquivo é lido por pessoas **e pelo Modo Automático** (`api/auto-content.js` envia o arquivo inteiro à IA a cada geração, junto com o `voice.md` da marca). Por isso: sem senhas/chaves, curto, e atualizado no mesmo dia em que algo muda. **Campanha com data final vencida vai para "Encerradas" no mesmo dia** — a IA só anuncia o que está em "Ativas".
 
 ## 1. O que é o painel
 Painel web privado de Gilson Caetano para planejar, executar e registrar o Instagram de três marcas. Cada post vira um card (data, horário, formato, legenda, briefing da imagem). A mídia é enviada ao Instagram pela Zernio (agendamento/publicação) e uma cópia fica no Google Drive. O estado sincroniza entre dispositivos pelo Supabase.
@@ -11,7 +11,8 @@ Painel web privado de Gilson Caetano para planejar, executar e registrar o Insta
 - **Sem Reel e sem Carrossel** nos cards gerados (regra de Outubro/2026). O feed é só Post estático, com baixa frequência; o resto do volume é Story. (Vídeo MP4/MOV enviado manualmente pelo painel continua permitido.)
 - **Sem texto sobreposto na imagem.** Todo o copy vai na legenda.
 - **Hashtags:** Story = 0. Post = exatamente 5, no fim da legenda.
-- **Legenda pronta para publicar:** português do Brasil, emojis com moderação, tom de voz da marca, CTA coerente com o objetivo.
+- **Legenda pronta para publicar:** português do Brasil, tom de voz e emojis conforme o `voice.md` da marca, CTA coerente com o objetivo. Sem travessão (— ou –) na legenda.
+- **Voz de cada marca:** `instagram/planeta-corpo/voice.md`, `instagram/sorveteria-guri/voice.md`, `instagram/gympulse/voice.md` (legendas aprovadas, palavras proibidas, assuntos evitados, bordão, CTA). Este arquivo manda em fatos, campanhas, formatos e frequência; o `voice.md` manda em como escrever.
 - **Nunca inventar** preço, condição, prazo, sabor, funcionalidade, número ou dado. Sem preço confirmado, escrever sem valor.
 - **Nunca citar concorrentes.** Diferenciais aparecem de forma indireta.
 - **Campanha/promoção:** só anunciar o que está em "Ativas" (seção 5), respeitando a data final. Em "Encerradas", nunca.
@@ -137,11 +138,15 @@ Diretrizes visuais: regra 60-30-10 (60% cor dominante/fundo, 30% secundária, 10
 - **Vídeo:** MP4 ou MOV; até 300 MB (Story até 100 MB). Vídeo único fora de Story sai como Reel.
 - **Publicação:** Zernio. Contas: Academia `6ace80c0a737012bc49cb80c` · Sorveteria `6a3916335f7d1751ab4afbe3` · GympulsePro `6a3920625f7d1751ab4b6fdc`. Para trocar a conta de uma marca: conectar a nova na Zernio e criar no Vercel `ZERNIO_ACCOUNT_ACADEMIA` / `ZERNIO_ACCOUNT_SORVETERIA` / `ZERNIO_ACCOUNT_GYMPULSE`, depois Redeploy (posts já agendados continuam na conta antiga).
 - **Confirmação:** o cron (GitHub Actions) consulta a Zernio e só marca "publicado" quando o Instagram confirma.
-- **Modo Automático:** gera os próximos 3 dias de cada marca ligada, lendo este arquivo inteiro; cron diário do Vercel.
+- **Modo Automático:** gera os próximos 3 dias de cada marca ligada, lendo este arquivo inteiro e o `voice.md` da marca (linhas com `[PREENCHER]` são ignoradas); cron diário do Vercel. Conferir se o deploy enxerga os arquivos: `GET /api/auto-content?check=voz` (só mostra tamanhos; 0 = não achou).
 - **Segredos** (chaves da Zernio, OpenAI/Gemini, tokens) ficam só nas variáveis do Vercel — nunca neste arquivo.
 
 ## 10. Como gerar o conteúdo do dia (para o Claude)
 Quando o Gilson pedir "gera o conteúdo de [dia]":
-1. Gerar os cards completos (specs + intenção + briefing) seguindo as seções 2 a 5.
-2. Atualizar o `index.html` e validar a sintaxe do JavaScript antes de commitar.
-3. Commit com mensagem clara (ex.: "conteudo 05/11 - ...") e push na `main`.
+1. Ler o `voice.md` de cada marca (seção 2) antes de escrever.
+2. Gerar os cards completos (specs + intenção + briefing) seguindo as seções 2 a 5.
+3. Passar as legendas pelo `/ig-human` (tira travessão, caracteres invisíveis e vocabulário de IA). Para Post, conferir a primeira linha com `/ig-caption` (o feed só mostra ~125 caracteres).
+4. Atualizar o `index.html` e validar a sintaxe do JavaScript antes de commitar.
+5. Commit com mensagem clara (ex.: "conteudo 05/11 - ...") e push na `main`.
+
+As skills `ig-*` ficam em `.claude/skills/` (pacote instagram-agent-skill, MIT). Elas procuram a voz em `~/.claude/instagram/voice.md`; neste projeto a voz é por marca, então sempre passar o caminho do `voice.md` da marca no pedido.

@@ -10,7 +10,7 @@
     },
     "api/auto-content.js": {
       "maxDuration": 120,
-      "includeFiles": "CONTEXTO.md"
+      "includeFiles": "{CONTEXTO.md,instagram/*/voice.md}"
     }
   },
   "crons": [
