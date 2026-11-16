@@ -22,7 +22,7 @@ arquivo: diga o caminho no pedido (ex.: "use a voz de instagram/sorveteria-guri/
 - **Padrões da aprovada:** curta, leve, fala do momento do dia, emojis 💙🍦, fecha com convite para voltar.
 - **On camera I am:** leve, alegre, festivo, familiar. O "vizinho querido" da cidade.
 - **Words I actually use:** bordão da marca: **"Melhor Sorvete da Cidade!"**. [PREENCHER: outras palavras do dia a dia]
-- **Words I would never say out loud:** [PREENCHER]
+- **Words I would never say out loud:** nenhuma palavra proibida definida pelo Gilson (resposta: "acho que não"). Vale a regra geral de não prometer saúde ou emagrecimento.
 - **Do I swear:** no
 - **Emoji in captions:** [PREENCHER: livremente, com moderação?]
 - **Face on camera:** varia. Aparecem o mascote 3D Guri, as atendentes (Maria Júlia, Maria Clara, Bruna, Luiza Helena), clientes e crianças (com autorização) e também posts só do produto, sem rosto. Menores só com autorização do responsável.
