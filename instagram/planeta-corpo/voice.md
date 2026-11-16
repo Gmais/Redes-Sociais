@@ -53,7 +53,7 @@ Números reais que podem ir com o nome da academia. Confirme que ainda valem ant
 - 27 anos de tradição (fundada em 1998)
 - Equipe 100% CREF
 - Mensalidade única para todas as modalidades (R$209/mês)
-- [PREENCHER: depoimentos reais de alunas, com autorização]
+- Depoimentos de alunas: só o primeiro nome, e só com autorização dela. Sem autorização confirmada, o texto fica anônimo ("uma aluna nossa"). Nenhum depoimento foi cadastrado ainda; quando houver, entra aqui com a frase exata e o nome autorizado.
 
 ## The ask
 
