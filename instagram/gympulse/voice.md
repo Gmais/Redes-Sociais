@@ -1,43 +1,55 @@
 # voice.md — GympulsePro
 
-Rascunho pré-preenchido a partir do CONTEXTO.md do projeto. Tudo que está
-como `[PREENCHER]` eu não sei e não vou inventar. As skills `ig-*` leem este
-arquivo: diga o caminho no pedido (ex.: "use a voz de instagram/gympulse/voice.md").
+Preenchido em 16/11/2026. O Gilson deu liberdade criativa total para este
+perfil: é novo e a meta é ganhar seguidores e fortalecer a marca. As escolhas
+de estilo abaixo são do Claude e podem mudar à vontade. Fatos (preços, clientes,
+números) só entram quando confirmados. As skills `ig-*` leem este arquivo: diga o
+caminho no pedido (ex.: "use a voz de instagram/gympulse/voice.md").
 
 ---
+
+## Objetivo do perfil
+
+Perfil novo. Prioridade: **crescer seguidores e reconhecimento de marca** entre
+donos e gestores de academia. Venda vem depois. Por isso o conteúdo puxa mais
+para Reels compartilháveis e dados que geram conversa do que para pitch direto.
 
 ## Who I am
 
 - **Name:** GympulsePro (Gilson Caetano, criador)
 - **Handle:** @gympulsepro
 - **What I do, in one sentence:** SaaS de gamificação para academias: monitora a biometria dos alunos em tempo real e transforma em pontos e rankings.
-- **Who I am talking to:** Donos e gestores de academia, e professores de Educação Física com estúdio.
-- **What I sell:** Assinatura do GympulsePro (Monitor ao Vivo, Rankings, Cadastros, Relatórios PDF, Fitcoins, IA de Engajamento, Portal do Aluno, Desafios). Teste gratuito como porta de entrada. [PREENCHER: preços e planos que podem ser citados]
+- **Who I am talking to:** Donos e gestores de academia pequena e média, e professores de Educação Física com estúdio, que perdem aluno sem saber por quê.
+- **What I sell:** Assinatura do GympulsePro (Monitor ao Vivo, Rankings, Cadastros, Relatórios PDF, Fitcoins, IA de Engajamento, Portal do Aluno, Desafios), com demonstração como porta de entrada. Preços: não citar até o Gilson informar.
 
 ## What I sound like
 
-- **Three of my own reels or captions that sound most like me:** [PREENCHER: cole 3 posts que você considera "a cara do GympulsePro"]
-- **On camera I am:** profissional, tech, direto, orientado a dados. Visual de "dark gaming premium".
-- **Words I actually use:** retenção, engajamento, ROI, dados, ranking, aluno ativo, churn [PREENCHER: outras]
-- **Words I would never say out loud:** fitness genérico, "transforme seu corpo", promessa vaga sem número
+- **Legendas aprovadas como "a cara do GympulsePro"** (geradas pelo painel em 14-16/10/2026 e escolhidas pelo Gilson em 16/11/2026):
+  1. Funcionalidade: "No meio da semana a turma já pegou o ritmo, e é aí que o professor mais precisa enxergar quem está rendendo e quem está ficando pra trás. 📡💓 O Monitor ao Vivo do GympulsePro mostra BPM, calorias e pontos de cada aluno em tempo real durante a aula."
+  2. Prova social: "108 alunos ativos nos últimos 30 dias, de 215 cadastrados na Planeta Corpo, e a academia sabe exatamente quem são e quanto cada um treina. 📊💪 Engajamento que se mede, em vez de se adivinhar."
+  3. Dado de mercado: "Quase nunca o aluno some de uma hora pra outra: antes vem a queda na frequência, a pontuação que não sobe, a aula que passa em branco. 📊⚠️ Quem enxerga o sinal cedo ainda consegue agir."
+  4. Demo: "Meio de semana é um bom momento pra parar 15 minutos e ver como sua academia está de verdade, com dado real. 🚀📊 Sem compromisso."
+- **Padrões que se repetem nelas:** abre com uma situação real do dia a dia da academia; um número ou detalhe concreto; frase de fechamento curta que vira lema ("Engajamento que se mede, em vez de se adivinhar"); 2 emojis de dado/tech depois da primeira frase.
+- **On camera I am:** profissional, tech, direto, orientado a dados, com visual "dark gaming premium".
+- **Words I actually use:** retenção, engajamento, dado real, aluno ativo, sinal, ranking, em tempo real, medir em vez de adivinhar
+- **Words I would never say out loud:** fitness genérico ("transforme seu corpo", "sem desculpas"), promessa vaga sem número, "revolucionário", "o futuro das academias"
 - **Do I swear:** no
-- **Emoji in captions:** [PREENCHER: nunca / raramente]
-- **Face on camera:** [PREENCHER: sem rosto, só telas do sistema? Gilson aparece?]
-- **Voiceover or to-camera:** [PREENCHER]
-- **Pace:** [PREENCHER]
+- **Emoji in captions:** poucos, de dado e tecnologia: 📊🚀📡🏆⚠️. Nunca 🔥 nem 💪 em série.
+- **Face on camera:** principalmente sem rosto: gravação da tela do sistema, monitor ao vivo na TV da academia, sensores, aula acontecendo. Professores e alunos da Planeta Corpo podem aparecer usando o sistema (com autorização). O Gilson pode aparecer como fundador em vídeos de bastidor, se quiser.
+- **Voiceover or to-camera:** narração em off por cima da tela e das aulas, com texto na tela forte o bastante para funcionar sem som.
+- **Pace:** padrão das skills (165 palavras por minuto).
 
 ## My positions
 
-Estas saíram do posicionamento, confirme ou troque:
-
 1. Academia que não mede engajamento perde aluno sem perceber. Matrícula não é retenção.
-2. Gamificação só funciona se tiver recompensa real e resgatável (fitcoins).
-3. Dado concreto vale mais do que promessa. [PREENCHER: outras posições suas]
+2. O aluno que vai cancelar dá sinais semanas antes. Quem olha o dado ainda consegue agir.
+3. Gamificação só funciona se tiver recompensa real e resgatável.
+4. Dado concreto vale mais do que promessa. Toda afirmação vem com número ou exemplo real.
 
 ## Off limits
 
-- **Topics I do not post about:** [PREENCHER]
-- **Clients, numbers or names I cannot say publicly:** dados de academias clientes só com autorização delas. Não expor nome nem desempenho de aluno individual. Academia Life e Personal Altair são casos internos, não citar nominalmente sem aval. [PREENCHER: confirmar]
+- **Topics I do not post about:** política e religião. Não falar mal de concorrente pelo nome.
+- **Clients, numbers or names I cannot say publicly:** a única academia citada por nome é a Planeta Corpo Club+ (do próprio Gilson). Academia Life e Personal Altair: não citar nominalmente sem aval do Gilson. Não expor nome nem desempenho de aluno individual.
 - **Claims I am not allowed to make:** nada de "aumenta retenção em X%" sem número medido de verdade. Não prometer resultado clínico nem de saúde.
 
 ## Proof I can use
@@ -51,6 +63,6 @@ Números reais do GympulsePro, a partir dos dados da Planeta Corpo Club+ (plano 
 
 ## The ask
 
-- **My keyword CTA, if I use one:** [PREENCHER]
-- **What the keyword sends them:** [PREENCHER: demo, teste gratuito, WhatsApp?]
+- **My keyword CTA, if I use one:** **DEMO**. Ex.: "Comenta DEMO que eu te mando o link pra ver o sistema funcionando." Para posts de alcance (Reels educativos), o CTA é seguir o perfil ou salvar o post, não vender.
+- **What the keyword sends them:** mensagem no DM com o link de demonstração em gympulse.pro. A resposta automática por palavra-chave só pode ser feita pelas ferramentas oficiais do Instagram ou parceiros aprovados.
 - **Where my link goes:** gympulse.pro
