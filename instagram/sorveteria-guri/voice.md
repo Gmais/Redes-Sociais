@@ -50,7 +50,8 @@ Fatos reais que podem ir com o nome do Guri. Confirme que ainda valem antes de p
 - Sorvete Guri Gurt por R$0,99 até 31/10/2026 (Dia das Crianças)
 - Smoothies proteicos: 3 sabores, 21g de proteína, R$19,90
 - Buffet com mais de 40 sabores (confirmado pelo Gilson em 16/11/2026)
-- [PREENCHER: tempo de fábrica, depoimentos reais com autorização]
+- Há 2 anos em Turvo (informado pelo Gilson em 16/11/2026; o número muda com o tempo, recalcular antes de usar)
+- [PREENCHER: depoimentos reais com autorização]
 
 ## The ask
 
