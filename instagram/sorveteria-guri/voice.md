@@ -26,7 +26,7 @@ arquivo: diga o caminho no pedido (ex.: "use a voz de instagram/sorveteria-guri/
 - **Do I swear:** no
 - **Emoji in captions:** livremente, escolhidos conforme o post. Os mais comuns são 💙🍦.
 - **Face on camera:** varia. Aparecem o mascote 3D Guri, as atendentes (Maria Júlia, Maria Clara, Bruna, Luiza Helena), clientes e crianças (com autorização) e também posts só do produto, sem rosto. Menores só com autorização do responsável.
-- **Voiceover or to-camera:** [PREENCHER]
+- **Voiceover or to-camera:** para a câmera. Atendente ou cliente falando direto com quem assiste.
 - **Pace:** [PREENCHER]
 
 ## My positions
