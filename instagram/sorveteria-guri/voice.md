@@ -21,7 +21,7 @@ arquivo: diga o caminho no pedido (ex.: "use a voz de instagram/sorveteria-guri/
 - **Não aprovadas** (o Gilson viu e não marcou): legenda de buffet com sabor ("Fubá com goiabada: o sabor de café da tarde na casa da vó..."), enquete ("Com quem você mais vem tomar sorvete?") e promoção do Guri Gurt. Motivo dado pelo Gilson: **faltou alegria e festa**. Sabor, enquete e promoção precisam do tom de brincadeira e de família, não de descrição de catálogo.
 - **Padrões da aprovada:** curta, leve, fala do momento do dia, emojis 💙🍦, fecha com convite para voltar.
 - **On camera I am:** leve, alegre, festivo, familiar. O "vizinho querido" da cidade.
-- **Words I actually use:** [PREENCHER: ex.: "bora", "vem pro Guri", "geladinho"]
+- **Words I actually use:** bordão da marca: **"Melhor Sorvete da Cidade!"**. [PREENCHER: outras palavras do dia a dia]
 - **Words I would never say out loud:** [PREENCHER]
 - **Do I swear:** no
 - **Emoji in captions:** [PREENCHER: livremente, com moderação?]
