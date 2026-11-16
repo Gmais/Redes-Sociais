@@ -39,7 +39,7 @@ Coisas em que o Guri acredita. Estas saíram do posicionamento, confirme ou troq
 
 ## Off limits
 
-- **Topics I do not post about:** [PREENCHER]
+- **Topics I do not post about:** política e religião.
 - **Clients, numbers or names I cannot say publicly:** limite por cliente e estoque das promoções; qualquer preço que não tenha sido informado por você.
 - **Claims I am not allowed to make:** nada de promessa de saúde ou emagrecimento. Não inventar preço nem sabor que não existe na loja.
 
