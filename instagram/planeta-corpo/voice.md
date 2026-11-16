@@ -28,7 +28,7 @@ arquivo: diga o caminho no pedido (ex.: "use a voz de instagram/planeta-corpo/vo
 - **Do I swear:** no
 - **Emoji in captions:** poucos. Padrão: 🧡🌿. Nunca fogo nem músculo.
 - **Face on camera:** sim. Aparecem professores e equipe e alunas. O Gilson não aparece. Depoimento de aluna só com autorização.
-- **Voiceover or to-camera:** [PREENCHER]
+- **Voiceover or to-camera:** para a câmera. Professor ou aluna falando direto com quem assiste.
 - **Pace:** [PREENCHER: palavras por minuto, se você já cronometrou. Se não souber, deixe em branco.]
 
 ## My positions
