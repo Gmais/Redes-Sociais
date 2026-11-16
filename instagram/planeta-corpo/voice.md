@@ -24,7 +24,7 @@ arquivo: diga o caminho no pedido (ex.: "use a voz de instagram/planeta-corpo/vo
 - **Padrões que se repetem nelas:** frases curtas; abre com uma cena concreta (a aluna, o professor, a aula); um 🧡 depois da primeira frase; fecha com convite suave no imperativo gentil ("Venha conhecer", "Venha experimentar"); fala do que a pessoa sente (calma, sem julgamento, momento só dela), não do corpo.
 - **On camera I am:** acolhedora, calma, conversa entre amigas
 - **Words I actually use:** cuidar de você, no seu ritmo, bem-estar, disposição, sono, rotina, você [PREENCHER: outras]
-- **Words I would never say out loud:** linguagem fitness agressiva, "GRÁTIS!" gritado, "queime gordura", "shape", "bumbum na nuca", "sem desculpas" [PREENCHER: outras]
+- **Words I would never say out loud:** linguagem fitness agressiva, "GRÁTIS!" gritado, "queime gordura", "shape", "bumbum na nuca", "sem desculpas", "corpo perfeito"
 - **Do I swear:** no
 - **Emoji in captions:** poucos. Padrão: 🧡🌿. Nunca fogo nem músculo.
 - **Face on camera:** sim. Aparecem professores e equipe e alunas. O Gilson não aparece. Depoimento de aluna só com autorização.
