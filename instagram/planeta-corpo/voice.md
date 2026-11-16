@@ -27,7 +27,7 @@ arquivo: diga o caminho no pedido (ex.: "use a voz de instagram/planeta-corpo/vo
 - **Words I would never say out loud:** linguagem fitness agressiva, "GRÁTIS!" gritado, "queime gordura", "shape", "bumbum na nuca", "sem desculpas" [PREENCHER: outras]
 - **Do I swear:** no
 - **Emoji in captions:** poucos. Padrão: 🧡🌿. Nunca fogo nem músculo.
-- **Face on camera:** [PREENCHER: sempre / às vezes / sem rosto. Quem aparece: alunas, professores, Gilson?]
+- **Face on camera:** sim. Aparecem professores e equipe e alunas. O Gilson não aparece. Depoimento de aluna só com autorização.
 - **Voiceover or to-camera:** [PREENCHER]
 - **Pace:** [PREENCHER: palavras por minuto, se você já cronometrou. Se não souber, deixe em branco.]
 
