@@ -53,6 +53,6 @@ Fatos reais que podem ir com o nome do Guri. Confirme que ainda valem antes de p
 
 ## The ask
 
-- **My keyword CTA, if I use one:** [PREENCHER]
-- **What the keyword sends them:** [PREENCHER]
+- **My keyword CTA, if I use one:** não uso. O convite fica no texto ("Amanhã a loja te espera!", "Fale com a gente pra reservar o seu Carrinho").
+- **What the keyword sends them:** não se aplica.
 - **Where my link goes:** sorvetesguriturvo.com.br
