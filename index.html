@@ -28705,6 +28705,7 @@ async function cgReceiveImage(file){
        `<div class="pos-wrap"><label class="pos-row">Posição do logo: <select id="gen-pos" onchange="recomposeLogo()">${opts}</select></label>
        <label class="pos-row"><input type="checkbox" id="gen-cut" checked onchange="recomposeLogo()"> Recortar o fundo do logo</label></div>`);
     status.textContent = '✓ Imagem recebida do ChatGPT e ajustada para ' + (found.item.format === 'Post' ? '1080×1350' : '1080×1920') + (logoAI ? '' : ' (logo oficial aplicado pelo painel)') + '. Gostou? Clique em "Usar esta imagem".';
+    document.getElementById('gen-use').disabled = false;
     document.getElementById('gen-use').style.display = '';
   } catch (e) {
     status.textContent = '⚠️ ' + e.message;
@@ -28833,6 +28834,7 @@ function openGenImage(id, profile){
   document.getElementById('gen-edit').innerHTML = '';
   window._editWait = null;
   document.getElementById('gen-use').style.display = 'none';
+  document.getElementById('gen-use').disabled = false; // useGeneratedImage trava o botão e o sucesso fecha o modal sem destravar
   const go = document.getElementById('gen-go'); go.disabled = false; go.textContent = '✨ Gerar';
   _genResult = null;
   _genAttach = [];
@@ -28919,7 +28921,7 @@ async function runGenerateImage(){
        `<div class="pos-wrap"><label class="pos-row">Posição do logo: <select id="gen-pos" onchange="recomposeLogo()">${opts}</select></label>
        <label class="pos-row"><input type="checkbox" id="gen-cut" checked onchange="recomposeLogo()"> Recortar o fundo do logo</label></div>`);
     status.textContent = '✓ ' + (data.provider === 'gemini' ? (/pro/.test(data.model || '') ? 'Nano Banana Pro' : 'Nano Banana') : 'GPT Image') + (logoAI ? ' — logo integrado pela IA' : ' — logo oficial aplicado (' + LOGO_POS[composed.pos].toLowerCase() + ')') + (data.usedAttachments ? ' + ' + data.usedAttachments + ' imagem(ns) anexada(s)' : '') + (data.usedMascot ? ' + mascote' : (document.getElementById('gen-mascot').checked ? ' (esta marca ainda não tem mascote cadastrado)' : '')) + '. Gostou? Use a imagem ou gere outra.';
-    document.getElementById('gen-use').style.display = '';
+    const useOk = document.getElementById('gen-use'); useOk.disabled = false; useOk.style.display = '';
   } catch (e) {
     status.textContent = '⚠️ ' + e.message;
   } finally {
