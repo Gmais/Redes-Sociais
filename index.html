@@ -958,6 +958,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://apis.google.com/js/api.js" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js"></script>
 <script src="analise-demo.js"></script>
 </head>
 <body data-tab="academia">
@@ -1018,7 +1019,13 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
       </nav>
 
       <div class="an-main">
-        <div class="an-demo" role="note"><b>Modo demonstração</b> Nenhuma conta conectada. Os números desta aba são fictícios, gerados para testar o painel. Não são métricas reais.</div>
+        <div class="an-card" style="margin-bottom:16px">
+          <h3>Conta e organização</h3>
+          <div class="hint">Entre para conectar o Instagram e a Página do Facebook da sua organização.</div>
+          <div id="an-conta-corpo"><div class="hint">Verificando sua sessão…</div></div>
+          <div class="hint" id="an-msg" role="status" style="margin-top:10px;min-height:16px"></div>
+        </div>
+        <div class="an-demo" id="an-demo" role="note"><b>Modo demonstração</b> Nenhuma conta conectada. Os números desta aba são fictícios, gerados para testar o painel. Não são métricas reais.</div>
         <section class="an-sec on" id="an-visao">
           <div class="an-head">
             <div>
@@ -1046,11 +1053,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 
         <section class="an-sec" id="an-contas">
           <div class="an-head"><div><h2>Contas conectadas</h2><p>Instagram profissional e Páginas do Facebook.</p></div></div>
-          <div class="an-empty">
-            <div class="eico">🔌</div>
-            <h3>Nenhuma conta conectada</h3>
-            <p>A conexão oficial pela Meta (login OAuth, permissões e armazenamento seguro dos tokens) entra na etapa de integração. Nenhuma senha de rede social é solicitada.</p>
-          </div>
+          <div id="an-contas-corpo"></div>
         </section>
 
         <section class="an-sec" id="an-publico">
@@ -26092,7 +26095,7 @@ function go(tab,el){
   if(npBtn) npBtn.style.display = ['historico','estrategia','analise'].includes(tab) ? 'none' : 'flex';
   const calBtn = document.getElementById('calOpenBtn');
   if(calBtn) calBtn.style.display = ['historico','estrategia','analise'].includes(tab) ? 'none' : 'flex';
-  if(tab==='analise') anRender();
+  if(tab==='analise'){ anRender(); anContaIniciar(); }
   if(tab==='historico') buildHist();
   if(tab==='estrategia') buildEstrategia();
 }
@@ -26158,6 +26161,210 @@ function anMetrica(k){
   window.anState.metrica = k;
   anRender();
 }
+
+// ── Análise: login, organização e conexão com a Meta ──────────────────────────
+// O login usa o Supabase Auth (link por e-mail). O navegador só tem a chave pública;
+// as ações que mexem em dados passam por /api/analise, que confere o login e o papel.
+let anSb = null;
+let anSessao = null;
+let anOrgs = [];
+let anOrgAtiva = null;
+const AN_ORG_LEMBRADA = 'an_org_ativa';
+const ANALISE_ERROS = {
+  recusado: 'Você cancelou a autorização na Meta. Nada foi conectado.',
+  estado: 'O link de conexão expirou ou é inválido. Tente de novo.',
+  sem_permissao: 'Só owner ou admin podem conectar contas nesta organização.',
+  sem_codigo: 'A Meta não devolveu a autorização. Tente de novo.',
+  meta: 'A Meta não concluiu a conexão. Tente de novo em instantes.'
+};
+
+const anEsc = (s) => String(s ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+
+function anMsg(texto, erro) {
+  const el = document.getElementById('an-msg');
+  if (!el) return;
+  el.textContent = texto || '';
+  el.style.color = erro ? '#ff8a8a' : '#4ade80';
+}
+
+function anAtualizarBanner(contas) {
+  const b = document.getElementById('an-demo');
+  if (!b) return;
+  b.innerHTML = contas > 0
+    ? '<b>Conta conectada</b> Os números desta aba ainda são de demonstração. A sincronização com a Meta chega na próxima etapa.'
+    : '<b>Modo demonstração</b> Nenhuma conta conectada. Os números desta aba são fictícios, gerados para testar o painel. Não são métricas reais.';
+}
+
+async function anContaIniciar() {
+  if (typeof window.supabase === 'undefined') {
+    const c = document.getElementById('an-conta-corpo');
+    if (c) c.innerHTML = '<div class="hint">Não foi possível carregar o login agora. Recarregue a página.</div>';
+    return;
+  }
+  if (!anSb) {
+    anSb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+    anSb.auth.onAuthStateChange((_evento, sessao) => { anSessao = sessao; anContaRender(); });
+  }
+  const { data } = await anSb.auth.getSession();
+  anSessao = data.session;
+  await anContaRender();
+}
+
+async function anContaRender() {
+  const corpo = document.getElementById('an-conta-corpo');
+  if (!corpo) return;
+  if (!anSessao) {
+    anOrgs = [];
+    anOrgAtiva = null;
+    corpo.innerHTML = `
+      <form class="an-custom" onsubmit="anEnviarLink(event)">
+        <input type="email" id="an-email" required placeholder="seu@email.com" aria-label="E-mail">
+        <button type="submit">Enviar link de acesso</button>
+      </form>`;
+    anContasRender();
+    anAtualizarBanner(0);
+    return;
+  }
+  const { data, error } = await anSb.from('organization_members').select('role, organization_id, organizations(name)');
+  if (error) {
+    corpo.innerHTML = `<div class="hint">Não foi possível carregar suas organizações (${anEsc(error.message)}).</div>`;
+    return;
+  }
+  anOrgs = (data || []).map((m) => ({ id: m.organization_id, nome: m.organizations ? m.organizations.name : '—', papel: m.role }));
+  const email = anSessao.user && anSessao.user.email ? anSessao.user.email : '';
+  const cabecalho = `<div class="hint" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+    <span>Conectado como <b>${anEsc(email)}</b></span>
+    <button class="an-chip" onclick="anSair()">Sair</button></div>`;
+
+  if (!anOrgs.length) {
+    corpo.innerHTML = cabecalho + `
+      <div class="hint">Você ainda não tem organização. Crie uma para começar.</div>
+      <form class="an-custom" onsubmit="anCriarOrg(event)">
+        <input type="text" id="an-org-nome" required minlength="2" maxlength="120" placeholder="Nome da empresa" aria-label="Nome da organização">
+        <button type="submit">Criar organização</button>
+      </form>`;
+    anContasRender();
+    return;
+  }
+  const lembrada = localStorage.getItem(AN_ORG_LEMBRADA);
+  anOrgAtiva = anOrgs.some((o) => o.id === lembrada) ? lembrada : anOrgs[0].id;
+  corpo.innerHTML = cabecalho + `
+    <div class="an-custom">
+      <label class="hint" for="an-org-sel">Organização</label>
+      <select id="an-org-sel" onchange="anMudarOrg(this.value)" style="background:var(--s2);color:var(--txt);border:1px solid var(--border);border-radius:8px;padding:6px 8px">
+        ${anOrgs.map((o) => `<option value="${anEsc(o.id)}"${o.id === anOrgAtiva ? ' selected' : ''}>${anEsc(o.nome)} (${anEsc(o.papel)})</option>`).join('')}
+      </select>
+    </div>`;
+  anContasRender();
+}
+
+async function anContasRender() {
+  const el = document.getElementById('an-contas-corpo');
+  if (!el) return;
+  if (!anSessao || !anOrgAtiva) {
+    el.innerHTML = `<div class="an-empty"><div class="eico">🔌</div><h3>Nenhuma conta conectada</h3>
+      <p>Entre e escolha uma organização para conectar o Instagram e a Página do Facebook. Nenhuma senha de rede social é solicitada.</p></div>`;
+    return;
+  }
+  const org = anOrgs.find((o) => o.id === anOrgAtiva);
+  const podeConectar = org && (org.papel === 'owner' || org.papel === 'admin');
+  el.innerHTML = `
+    <div class="an-card">
+      <h3>Conectar conta</h3>
+      <div class="hint">Você vai ao login oficial da Meta e escolhe quais páginas autorizar. Só leitura.</div>
+      ${podeConectar
+        ? '<button class="an-chip on" onclick="anConectarMeta()">Conectar Instagram / Facebook</button>'
+        : '<div class="hint">Só owner ou admin podem conectar contas.</div>'}
+    </div>
+    <div class="an-card" style="margin-top:14px">
+      <h3>Contas da organização</h3>
+      <div id="an-contas-lista"><div class="hint">Carregando…</div></div>
+    </div>`;
+  const r = await fetch(`/api/analise?acao=contas&org=${encodeURIComponent(anOrgAtiva)}`, {
+    headers: { Authorization: 'Bearer ' + anSessao.access_token }
+  });
+  const j = await r.json().catch(() => ({}));
+  const lista = document.getElementById('an-contas-lista');
+  if (!lista) return;
+  if (!r.ok) {
+    lista.innerHTML = `<div class="hint">Não foi possível carregar as contas (${anEsc(j.error || r.status)}).</div>`;
+    return;
+  }
+  const contas = j.accounts || [];
+  anAtualizarBanner(contas.length);
+  lista.innerHTML = contas.length
+    ? contas.map((c) => `
+        <div class="an-top" style="margin-top:8px">
+          <span><b>${c.platform === 'instagram' ? 'Instagram' : 'Facebook'}</b> ${c.username ? '@' + anEsc(c.username) : anEsc(c.display_name || c.external_id)}</span>
+          <span>${anEsc(c.status)}</span>
+        </div>`).join('')
+    : '<div class="hint">Nenhuma conta conectada ainda.</div>';
+}
+
+async function anEnviarLink(ev) {
+  ev.preventDefault();
+  const email = document.getElementById('an-email').value.trim();
+  const { error } = await anSb.auth.signInWithOtp({
+    email, options: { emailRedirectTo: location.origin + '/?analise=1' }
+  });
+  anMsg(error ? 'Não foi possível enviar o link: ' + error.message : 'Link enviado. Abra o e-mail neste mesmo navegador.', !!error);
+}
+
+async function anSair() {
+  await anSb.auth.signOut();
+  localStorage.removeItem(AN_ORG_LEMBRADA);
+  anMsg('Você saiu.');
+}
+
+async function anCriarOrg(ev) {
+  ev.preventDefault();
+  const nome = document.getElementById('an-org-nome').value.trim();
+  const { data, error } = await anSb.rpc('create_organization', { p_name: nome });
+  if (error) { anMsg('Não foi possível criar a organização: ' + error.message, true); return; }
+  anOrgAtiva = data;
+  localStorage.setItem(AN_ORG_LEMBRADA, anOrgAtiva);
+  anMsg('Organização criada.');
+  await anContaRender();
+}
+
+function anMudarOrg(id) {
+  anOrgAtiva = id;
+  localStorage.setItem(AN_ORG_LEMBRADA, id);
+  anContasRender();
+}
+
+async function anConectarMeta() {
+  anMsg('Abrindo o login da Meta…');
+  const r = await fetch('/api/analise?acao=meta-iniciar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + anSessao.access_token },
+    body: JSON.stringify({ orgId: anOrgAtiva })
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.url) { anMsg(j.error || 'Não foi possível iniciar a conexão.', true); return; }
+  window.location.href = j.url;
+}
+
+// Volta da Meta (?analise=conectada|erro) ou do link de e-mail (?analise=1).
+(function anRetorno() {
+  const p = new URLSearchParams(location.search);
+  if (!p.has('analise')) return;
+  const finalizar = () => {
+    const botao = document.querySelector('.tab[data-p="analise"]');
+    if (botao) go('analise', botao);
+    if (p.get('analise') === 'conectada') {
+      anMsg(`Conexão concluída: ${p.get('paginas') || 0} página(s) do Facebook e ${p.get('contas_ig') || 0} conta(s) de Instagram.`);
+    } else if (p.get('analise') === 'erro') {
+      anMsg(ANALISE_ERROS[p.get('motivo')] || 'Não foi possível concluir a conexão.', true);
+    }
+    // Só o ?analise sai da barra: o #fragmento com a sessão do e-mail precisa ficar para o Supabase ler.
+    history.replaceState(null, '', location.pathname + location.hash);
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', finalizar);
+  else finalizar();
+})();
 
 function anResolve(){
   const st = window.anState;
