@@ -29,7 +29,8 @@ body[data-tab="gympulse"]   { --bg: #241d04; background: linear-gradient(180deg,
 body[data-tab="analise"]    { --bg: #120d1f; background: linear-gradient(180deg, rgba(124,92,255,.30) 0, rgba(124,92,255,.10) 520px, rgba(124,92,255,.05) 100%) fixed, var(--bg); }
 
 /* ── Análise das Redes Sociais ───────────────────────────────────────────── */
-.an-wrap { display:grid; grid-template-columns:210px 1fr; gap:20px; padding:20px 24px 40px; align-items:start; }
+.an-wrap { display:grid; grid-template-columns:210px minmax(0,1fr); gap:20px; padding:20px 24px 40px; align-items:start; }
+.an-main { min-width:0; }
 .an-nav { display:flex; flex-direction:column; gap:4px; position:sticky; top:110px; background:var(--s1); border:1px solid var(--border); border-radius:14px; padding:10px; }
 .an-nav .an-nav-title { font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--txt3); padding:6px 10px 8px; }
 .an-nav button { text-align:left; background:none; border:1px solid transparent; color:var(--txt2); font:500 13px 'Inter',sans-serif; padding:9px 10px; border-radius:9px; cursor:pointer; transition:background .15s,color .15s; }
@@ -46,8 +47,36 @@ body[data-tab="analise"]    { --bg: #120d1f; background: linear-gradient(180deg,
 .an-kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:16px; }
 .an-kpi { background:var(--s1); border:1px solid var(--border); border-radius:14px; padding:16px; }
 .an-kpi .lbl { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--txt3); }
-.an-kpi .val { font:700 26px 'JetBrains Mono',monospace; color:var(--txt3); margin-top:8px; }
+.an-kpi .val { font:700 26px 'JetBrains Mono',monospace; color:var(--txt); margin-top:8px; }
 .an-kpi .sub { font-size:12px; color:var(--txt3); margin-top:4px; }
+.an-kpi .sub.up { color:#4ade80; }
+.an-kpi .sub.down { color:#ff6b6b; }
+.an-demo { display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:rgba(124,92,255,.14); border:1px solid rgba(124,92,255,.5); color:#d9d0ff; border-radius:12px; padding:10px 14px; font-size:13px; margin-bottom:16px; }
+.an-demo b { font-size:11px; letter-spacing:.08em; text-transform:uppercase; background:#7c5cff; color:#fff; padding:3px 8px; border-radius:6px; }
+.an-card h3 { font:600 15px 'Inter',sans-serif; color:var(--txt); }
+.an-card .hint { font-size:12px; color:var(--txt3); margin:2px 0 12px; }
+.an-chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+.an-chip { background:var(--s2); border:1px solid var(--border); color:var(--txt2); border-radius:999px; padding:6px 12px; font:600 12px 'Inter',sans-serif; cursor:pointer; }
+.an-chip.on { color:var(--txt); border-color:var(--c,#7c5cff); box-shadow:inset 0 0 0 1px var(--c,#7c5cff); }
+.an-chart { position:relative; height:280px; }
+.an-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px; }
+.an-grid2 .an-card + .an-card { margin-top:0; }
+.an-custom { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+.an-custom[hidden] { display:none; }
+.an-custom input { background:var(--s2); border:1px solid var(--border); color:var(--txt); border-radius:8px; padding:6px 8px; font:500 12px 'Inter',sans-serif; color-scheme:dark; }
+.an-custom button { background:rgba(124,92,255,.2); border:1px solid rgba(124,92,255,.5); color:var(--txt); border-radius:8px; padding:6px 12px; font:600 12px 'Inter',sans-serif; cursor:pointer; }
+.an-custom span { font-size:12px; color:var(--txt3); }
+.an-erro { width:100%; color:#ff8a8a; font-size:12px; min-height:0; }
+.an-erro:empty { display:none; }
+.an-head-ctrl { display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+.an-heat { overflow-x:auto; }
+.an-heat-grid { display:grid; grid-template-columns:36px repeat(24,minmax(0,1fr)); gap:2px; align-items:center; }
+.an-heat-cell { height:24px; border-radius:4px; }
+.an-heat-lbl { font-size:10px; color:var(--txt3); text-align:center; }
+.an-heat-lbl.dia { text-align:left; font-size:12px; color:var(--txt2); }
+.an-top { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+.an-top span { background:var(--s2); border:1px solid var(--border); border-radius:999px; padding:6px 12px; font-size:12px; color:var(--txt2); }
+.an-top b { color:var(--txt); }
 .an-card { background:var(--s1); border:1px solid var(--border); border-radius:14px; padding:20px; }
 .an-card + .an-card { margin-top:14px; }
 .an-empty { text-align:center; padding:56px 20px; background:var(--s1); border:1px dashed var(--border); border-radius:14px; color:var(--txt3); }
@@ -55,12 +84,16 @@ body[data-tab="analise"]    { --bg: #120d1f; background: linear-gradient(180deg,
 .an-empty h3 { color:var(--txt2); font:600 16px 'Inter',sans-serif; margin-bottom:6px; }
 .an-empty p { font-size:13px; max-width:460px; margin:0 auto; line-height:1.5; }
 @media (max-width:760px) {
-  .an-wrap { grid-template-columns:1fr; padding:16px; gap:14px; }
+  .an-wrap { grid-template-columns:minmax(0,1fr); padding:16px; gap:14px; }
+  .an-chart { max-width:100%; }
   .an-nav { position:static; flex-direction:row; overflow-x:auto; scrollbar-width:none; }
   .an-nav::-webkit-scrollbar { display:none; }
   .an-nav .an-nav-title { display:none; }
   .an-nav button { white-space:nowrap; }
   .an-kpi .val { font-size:22px; }
+  .an-grid2 { grid-template-columns:1fr; }
+  .an-head-ctrl { align-items:flex-start; width:100%; }
+  .an-heat-grid { min-width:520px; }
 }
 
 .hero { position: relative; padding: 28px 24px 0; overflow: hidden; }
@@ -924,6 +957,8 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://apis.google.com/js/api.js" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="analise-demo.js"></script>
 </head>
 <body data-tab="academia">
 
@@ -983,32 +1018,30 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
       </nav>
 
       <div class="an-main">
+        <div class="an-demo" role="note"><b>Modo demonstração</b> Nenhuma conta conectada. Os números desta aba são fictícios, gerados para testar o painel. Não são métricas reais.</div>
         <section class="an-sec on" id="an-visao">
           <div class="an-head">
             <div>
               <h2>Visão geral</h2>
               <p>Alcance, impressões, engajamento e seguidores das suas redes.</p>
             </div>
-            <div class="an-period" role="group" aria-label="Período">
-              <button class="on" onclick="anPeriod(7,this)">7 dias</button>
-              <button onclick="anPeriod(30,this)">30 dias</button>
-              <button onclick="anPeriod(90,this)">90 dias</button>
+            <div class="an-head-ctrl">
+              <div class="an-period" role="group" aria-label="Período">
+                <button onclick="anPeriod(7,this)">7 dias</button>
+                <button class="on" onclick="anPeriod(30,this)">30 dias</button>
+                <button onclick="anPeriod(90,this)">90 dias</button>
+                <button onclick="anPersonalizado(this)">Personalizado</button>
+              </div>
+              <div class="an-custom" id="an-custom" hidden>
+                <input type="date" id="an-ini" aria-label="Data inicial">
+                <span>até</span>
+                <input type="date" id="an-fim" aria-label="Data final">
+                <button onclick="anAplicarPeriodo()">Aplicar</button>
+                <div class="an-erro" id="an-erro" role="alert"></div>
+              </div>
             </div>
           </div>
-          <div class="an-kpis">
-            <div class="an-kpi"><div class="lbl">Alcance total</div><div class="val">—</div><div class="sub">sem conta conectada</div></div>
-            <div class="an-kpi"><div class="lbl">Impressões</div><div class="val">—</div><div class="sub">sem conta conectada</div></div>
-            <div class="an-kpi"><div class="lbl">Engajamento</div><div class="val">—</div><div class="sub">sem conta conectada</div></div>
-            <div class="an-kpi"><div class="lbl">Visitas ao perfil</div><div class="val">—</div><div class="sub">sem conta conectada</div></div>
-            <div class="an-kpi"><div class="lbl">Seguidores ganhos</div><div class="val">—</div><div class="sub">sem conta conectada</div></div>
-            <div class="an-kpi"><div class="lbl">Seguidores perdidos</div><div class="val">—</div><div class="sub">sem conta conectada</div></div>
-            <div class="an-kpi"><div class="lbl">Cliques no link</div><div class="val">—</div><div class="sub">sem conta conectada</div></div>
-          </div>
-          <div class="an-empty">
-            <div class="eico">📊</div>
-            <h3>Nenhum dado ainda</h3>
-            <p>Os indicadores aparecem aqui quando a conta do Instagram ou da Página do Facebook estiver conectada. Os gráficos e a comparação com o período anterior vêm na próxima etapa.</p>
-          </div>
+          <div id="an-visao-body"></div>
         </section>
 
         <section class="an-sec" id="an-contas">
@@ -1022,7 +1055,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 
         <section class="an-sec" id="an-publico">
           <div class="an-head"><div><h2>Público</h2><p>Faixa etária, gênero, localização, crescimento e atividade.</p></div></div>
-          <div class="an-empty"><div class="eico">👥</div><h3>Sem dados de público</h3><p>Esta seção recebe os dados demográficos disponibilizados pela API da Meta, assim que a conta estiver conectada.</p></div>
+          <div id="an-publico-body"></div>
         </section>
 
         <section class="an-sec" id="an-publicacoes">
@@ -1032,7 +1065,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 
         <section class="an-sec" id="an-horarios">
           <div class="an-head"><div><h2>Melhores horários</h2><p>Mapa de calor por dia da semana e horário.</p></div></div>
-          <div class="an-empty"><div class="eico">🗓️</div><h3>Sem histórico de atividade</h3><p>O mapa de calor usa o horário em que seu público está online, informado pela Meta.</p></div>
+          <div id="an-horarios-body"></div>
         </section>
 
         <section class="an-sec" id="an-concorrentes">
@@ -26059,18 +26092,249 @@ function go(tab,el){
   if(npBtn) npBtn.style.display = ['historico','estrategia','analise'].includes(tab) ? 'none' : 'flex';
   const calBtn = document.getElementById('calOpenBtn');
   if(calBtn) calBtn.style.display = ['historico','estrategia','analise'].includes(tab) ? 'none' : 'flex';
+  if(tab==='analise') anRender();
   if(tab==='historico') buildHist();
   if(tab==='estrategia') buildEstrategia();
 }
 
-// Análise das Redes Sociais: troca de seção e de período (os dados entram nas próximas etapas).
+// ── Análise das Redes Sociais: seções, período e gráficos ──────────────────
+// Todos os números vêm de analise-demo.js (MODO DEMONSTRAÇÃO, fictícios). Quando a conta
+// da Meta estiver conectada, anResolve/anRender passam a ler o banco no lugar do gerador.
+window.anState = { dias: 30, ini: null, fim: null, metrica: 'alcance' };
+window.anCharts = {};
+const AN_METRICAS = [
+  { k: 'alcance', label: 'Alcance', cor: '#7c5cff' },
+  { k: 'impressoes', label: 'Impressões', cor: '#00b4d8' },
+  { k: 'engajamento', label: 'Engajamento', cor: '#ff6b35' },
+  { k: 'visitas', label: 'Visitas ao perfil', cor: '#4ade80' },
+  { k: 'cliques', label: 'Cliques no link', cor: '#f5c200' }
+];
+const anNum = (n) => Math.round(n).toLocaleString('pt-BR');
+const anDM = (ds) => ds.slice(8, 10) + '/' + ds.slice(5, 7);
+
 function anGo(id, btn){
   document.querySelectorAll('#p-analise .an-sec').forEach(s=>s.classList.toggle('on', s.id==='an-'+id));
   document.querySelectorAll('#p-analise .an-nav button').forEach(b=>b.classList.toggle('on', b===btn));
+  anRender();
 }
 function anPeriod(dias, btn){
+  window.anState.dias = dias;
+  window.anState.ini = null;
+  window.anState.fim = null;
   document.querySelectorAll('#p-analise .an-period button').forEach(b=>b.classList.toggle('on', b===btn));
-  window.anDias = dias;
+  document.getElementById('an-custom').hidden = true;
+  document.getElementById('an-erro').textContent = '';
+  anRender();
+}
+function anPersonalizado(btn){
+  const box = document.getElementById('an-custom');
+  const hoje = todayBR();
+  const ini = document.getElementById('an-ini');
+  const fim = document.getElementById('an-fim');
+  box.hidden = false;
+  document.querySelectorAll('#p-analise .an-period button').forEach(b=>b.classList.toggle('on', b===btn));
+  ini.min = fim.min = AnaliseDemo.ANCORA;
+  ini.max = fim.max = hoje;
+  if (!ini.value) ini.value = AnaliseDemo.addDays(hoje, -29);
+  if (!fim.value) fim.value = hoje;
+}
+function anAplicarPeriodo(){
+  const ini = document.getElementById('an-ini').value;
+  const fim = document.getElementById('an-fim').value;
+  const hoje = todayBR();
+  let msg = '';
+  if (!ini || !fim) msg = 'Escolha a data inicial e a final.';
+  else if (ini > fim) msg = 'A data inicial é depois da final.';
+  else if (fim > hoje) msg = 'A data final não pode estar no futuro.';
+  else if (ini < AnaliseDemo.ANCORA) msg = 'O histórico começa em 01/01/2025.';
+  else if (AnaliseDemo.diasEntre(ini, fim) > 365) msg = 'O período máximo é de 365 dias.';
+  document.getElementById('an-erro').textContent = msg;
+  if (msg) return;
+  window.anState.ini = ini;
+  window.anState.fim = fim;
+  anRender();
+}
+function anMetrica(k){
+  window.anState.metrica = k;
+  anRender();
+}
+
+function anResolve(){
+  const st = window.anState;
+  if (st.ini && st.fim) return { ini: st.ini, fim: st.fim };
+  return { ini: AnaliseDemo.addDays(todayBR(), -(st.dias - 1)), fim: todayBR() };
+}
+
+function anOpcoes(o){
+  o = o || {};
+  const horiz = !!o.horizontal;
+  const eixoValor = horiz ? 'x' : 'y', eixoCat = horiz ? 'y' : 'x';
+  const escalas = {};
+  escalas[eixoCat] = { grid: { display: false }, ticks: { maxTicksLimit: 10, autoSkip: true } };
+  escalas[eixoValor] = { beginAtZero: o.zero !== false, grid: { color: 'rgba(255,255,255,.06)' },
+    ticks: { callback: (v) => Number(v).toLocaleString('pt-BR') } };
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    indexAxis: horiz ? 'y' : 'x',
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: !!o.legenda, labels: { boxWidth: 10, color: '#9999bb' } },
+      tooltip: {
+        backgroundColor: '#101018', borderColor: '#26262f', borderWidth: 1,
+        titleColor: '#f5f5fa', bodyColor: '#f5f5fa',
+        callbacks: { label: (c) => ' ' + (c.dataset.label ? c.dataset.label + ': ' : '') +
+          Number(c.parsed.y ?? c.parsed.x).toLocaleString('pt-BR') + (o.pct ? '%' : '') }
+      }
+    },
+    scales: escalas
+  };
+}
+
+function anChart(id, cfg){
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (typeof Chart === 'undefined') {
+    el.parentElement.innerHTML = '<div class="an-empty"><p>Gráfico indisponível: a biblioteca de gráficos não carregou. Recarregue a página.</p></div>';
+    return;
+  }
+  window.anCharts[id] = new Chart(el, cfg);
+}
+
+function anRender(){
+  if (typeof AnaliseDemo === 'undefined') return;
+  Object.values(window.anCharts).forEach((c) => c.destroy());
+  window.anCharts = {};
+  if (typeof Chart !== 'undefined') {
+    Chart.defaults.color = '#9999bb';
+    Chart.defaults.borderColor = 'rgba(255,255,255,.06)';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+  }
+  const p = anResolve();
+  const r = AnaliseDemo.comparar(p.ini, p.fim);
+  anRenderVisao(r);
+  anRenderPublico(r);
+  anRenderHorarios();
+}
+
+function anRenderVisao(r){
+  const T = r.totais, A = r.anteriorTotais;
+  const periodo = `${anDM(r.ini)} a ${anDM(r.fim)} · ${r.dias} dias`;
+  const kpi = (lbl, k, inverte) => {
+    const d = r.comparavel ? AnaliseDemo.variacao(T[k], A[k]) : null;
+    let sub = 'sem período anterior para comparar';
+    let cls = '';
+    if (d !== null) {
+      const bom = inverte ? d <= 0 : d >= 0;
+      cls = bom ? 'up' : 'down';
+      sub = (d >= 0 ? '▲ ' : '▼ ') + Math.abs(d).toFixed(1).replace('.', ',') + '% vs período anterior';
+    }
+    return `<div class="an-kpi"><div class="lbl">${lbl}</div><div class="val">${anNum(T[k])}</div><div class="sub ${cls}">${sub}</div></div>`;
+  };
+  const met = AN_METRICAS.find((m) => m.k === window.anState.metrica) || AN_METRICAS[0];
+  document.getElementById('an-visao-body').innerHTML = `
+    <div class="an-kpis">
+      ${kpi('Alcance total', 'alcance')}
+      ${kpi('Impressões', 'impressoes')}
+      ${kpi('Engajamento', 'engajamento')}
+      ${kpi('Visitas ao perfil', 'visitas')}
+      ${kpi('Seguidores ganhos', 'ganhos')}
+      ${kpi('Seguidores perdidos', 'perdidos', true)}
+      ${kpi('Cliques no link', 'cliques')}
+    </div>
+    <div class="an-card">
+      <h3>Evolução</h3>
+      <div class="hint">Período: ${periodo}. Escolha o indicador e passe o mouse no gráfico para ver cada dia.</div>
+      <div class="an-chips">${AN_METRICAS.map((m) => `<button class="an-chip${m.k === met.k ? ' on' : ''}" style="--c:${m.cor}" onclick="anMetrica('${m.k}')">${m.label}</button>`).join('')}</div>
+      <div class="an-chart"><canvas id="an-ch-evolucao" role="img" aria-label="Evolução do indicador escolhido no período"></canvas></div>
+    </div>
+    <div class="an-card">
+      <h3>Seguidores ganhos e perdidos</h3>
+      <div class="hint">Por dia, no período.</div>
+      <div class="an-chart"><canvas id="an-ch-seguidores" role="img" aria-label="Seguidores ganhos e perdidos por dia"></canvas></div>
+    </div>`;
+
+  const labels = r.serie.map((d) => anDM(d.data));
+  anChart('an-ch-evolucao', {
+    type: 'line',
+    data: { labels, datasets: [{ label: met.label, data: r.serie.map((d) => d[met.k]),
+      borderColor: met.cor, backgroundColor: met.cor + '26', fill: true, tension: 0.35,
+      pointRadius: r.dias > 45 ? 0 : 3, pointHoverRadius: 5, borderWidth: 2 }] },
+    options: anOpcoes({ legenda: false })
+  });
+  anChart('an-ch-seguidores', {
+    type: 'bar',
+    data: { labels, datasets: [
+      { label: 'Ganhos', data: r.serie.map((d) => d.ganhos), backgroundColor: '#4ade80', borderRadius: 4 },
+      { label: 'Perdidos', data: r.serie.map((d) => d.perdidos), backgroundColor: '#ff6b6b', borderRadius: 4 }
+    ] },
+    options: anOpcoes({ legenda: true })
+  });
+}
+
+function anRenderPublico(r){
+  const P = AnaliseDemo.publico();
+  const labels = r.serie.map((d) => anDM(d.data));
+  const fimSeg = r.seguidoresFim != null ? ` Fim do período: ${anNum(r.seguidoresFim)} seguidores.` : '';
+  document.getElementById('an-publico-body').innerHTML = `
+    <div class="an-card">
+      <h3>Crescimento de seguidores</h3>
+      <div class="hint">Período: ${anDM(r.ini)} a ${anDM(r.fim)}.${fimSeg}</div>
+      <div class="an-chart"><canvas id="an-ch-cresc" role="img" aria-label="Crescimento de seguidores no período"></canvas></div>
+    </div>
+    <div class="an-grid2">
+      <div class="an-card"><h3>Faixa etária</h3><div class="hint">% dos seguidores</div><div class="an-chart"><canvas id="an-ch-idade" role="img" aria-label="Seguidores por faixa etária"></canvas></div></div>
+      <div class="an-card"><h3>Gênero</h3><div class="hint">% dos seguidores</div><div class="an-chart"><canvas id="an-ch-genero" role="img" aria-label="Seguidores por gênero"></canvas></div></div>
+    </div>
+    <div class="an-card" style="margin-top:14px">
+      <h3>Localização</h3>
+      <div class="hint">Principais cidades, % dos seguidores</div>
+      <div class="an-chart"><canvas id="an-ch-cidades" role="img" aria-label="Seguidores por cidade"></canvas></div>
+    </div>`;
+
+  anChart('an-ch-cresc', {
+    type: 'line',
+    data: { labels, datasets: [{ label: 'Seguidores', data: r.serie.map((d) => d.seguidores),
+      borderColor: '#7c5cff', backgroundColor: '#7c5cff26', fill: true, tension: 0.3,
+      pointRadius: r.dias > 45 ? 0 : 3, borderWidth: 2 }] },
+    options: anOpcoes({ legenda: false, zero: false })
+  });
+  anChart('an-ch-idade', {
+    type: 'bar',
+    data: { labels: P.idade.map((x) => x.rotulo), datasets: [{ label: '%', data: P.idade.map((x) => x.pct), backgroundColor: '#7c5cff', borderRadius: 6 }] },
+    options: anOpcoes({ legenda: false, pct: true })
+  });
+  anChart('an-ch-genero', {
+    type: 'doughnut',
+    data: { labels: P.genero.map((x) => x.rotulo), datasets: [{ data: P.genero.map((x) => x.pct),
+      backgroundColor: ['#ff6b35', '#00b4d8', '#44445a'], borderColor: '#101018', borderWidth: 2 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '62%',
+      plugins: { legend: { position: 'bottom', labels: { color: '#9999bb', boxWidth: 10 } },
+        tooltip: { callbacks: { label: (c) => ' ' + c.label + ': ' + c.parsed + '%' } } } }
+  });
+  anChart('an-ch-cidades', {
+    type: 'bar',
+    data: { labels: P.cidades.map((x) => x.rotulo), datasets: [{ label: '%', data: P.cidades.map((x) => x.pct), backgroundColor: '#4ade80', borderRadius: 6 }] },
+    options: anOpcoes({ legenda: false, pct: true, horizontal: true })
+  });
+}
+
+function anRenderHorarios(){
+  const m = AnaliseDemo.mapaDeCalor();
+  const top = AnaliseDemo.melhoresHorarios(m, 3);
+  const cel = (v, d, h) => `<span class="an-heat-cell" title="${AnaliseDemo.DIAS_SEMANA[d]} ${String(h).padStart(2, '0')}h · intensidade ${Math.round(v * 100)}%" style="background:rgba(124,92,255,${(0.08 + 0.92 * v).toFixed(2)})"></span>`;
+  let grade = '<span></span>' + Array.from({ length: 24 }, (_, h) => `<span class="an-heat-lbl">${h}</span>`).join('');
+  m.forEach((linha, d) => {
+    grade += `<span class="an-heat-lbl dia">${AnaliseDemo.DIAS_SEMANA[d]}</span>` + linha.map((v, h) => cel(v, d, h)).join('');
+  });
+  document.getElementById('an-horarios-body').innerHTML = `
+    <div class="an-card">
+      <h3>Mapa de calor: dia e horário</h3>
+      <div class="hint">Demonstração: padrão fictício de atividade. Quanto mais forte a cor, maior a atividade.</div>
+      <div class="an-heat"><div class="an-heat-grid">${grade}</div></div>
+      <div class="hint" style="margin:14px 0 0">Horários mais fortes na demonstração:</div>
+      <div class="an-top">${top.map((t) => `<span>${t.dia} às <b>${String(t.hora).padStart(2, '0')}h</b> · ${Math.round(t.valor * 100)}%</span>`).join('')}</div>
+    </div>`;
 }
 
 (function(){
