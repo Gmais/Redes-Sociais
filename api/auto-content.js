@@ -235,7 +235,7 @@ ${guri.catalogPromptBlock(catalog)}`
 function userPrompt(profile, date, slots, existing, notes) {
   const lines = slots.map((s, i) => `${i + 1}. ${s.time} — ${s.format}`).join('\n');
   const jaExiste = existing.length
-    ? existing.map(e => `- ${e.date} ${e.time} ${e.format}: ${String(e.caption || '').replace(/\s+/g, ' ').slice(0, 140)}`).join('\n')
+    ? existing.map(e => `- ${e.date} ${e.time} ${e.format}: ${cut(String(e.caption || '').replace(/\s+/g, ' '), 140)}`).join('\n')
     : '(nada próximo)';
   return `Data: ${date} (${WEEKDAYS[weekdayOf(date)]}).
 Gere os posts destes slots do dia:
@@ -258,7 +258,7 @@ async function callOpenAI(system, user) {
         model,
         temperature: 0.8,
         response_format: { type: 'json_object' },
-        messages: [{ role: 'system', content: system }, { role: 'user', content: user }]
+        messages: [{ role: 'system', content: wellFormed(system) }, { role: 'user', content: wellFormed(user) }]
       })
     });
     if (!r.ok) { lastError = `${model} ${r.status}: ${(await r.text()).slice(0, 200)}`; continue; }
@@ -276,16 +276,23 @@ async function callOpenAI(system, user) {
 // O painel renderiza via innerHTML e a legenda vai crua para a Zernio: só tiramos < e >.
 const clean = (s) => String(s == null ? '' : s).replace(/[<>]/g, '').trim();
 
+// Emoji é 2 unidades UTF-16: .slice(0, n) no meio dele deixa meio caractere solto, e a OpenAI
+// recusa o corpo inteiro ("Invalid body: failed to parse JSON value"). Foi o que travou a
+// Sorveteria de 18 a 20/11/2026: uma legenda com emoji bem na posição 140.
+const LONE_SURROGATE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
+const wellFormed = (s) => String(s).replace(LONE_SURROGATE, '');
+const cut = (s, n) => wellFormed(String(s == null ? '' : s).slice(0, n));
+
 function buildCard(profile, date, slot, n, p) {
   const spec = FORMAT_SPECS[slot.format];
   const compact = date.replace(/-/g, '');
   const id = `au_${profile}_${compact}_${n}`;
   return {
     id, date, time: slot.time, format: slot.format,
-    title: clean(p.title).slice(0, 90) || 'Post automático',
+    title: cut(clean(p.title), 90) || 'Post automático',
     driveFile: `${compact.slice(4)}_${profile}_auto${n}.png`,
     driveUrl: '#',
-    driveHint: clean(p.briefing_visual).slice(0, 160),
+    driveHint: cut(clean(p.briefing_visual), 160),
     texto: noDash(clean(p.texto)),
     auto: true,
     secoes: [
@@ -343,10 +350,10 @@ function weeklyNote(profile, date, corpus) {
 
 function hitText(h) {
   const d = h.doc;
-  if (String(d.id).startsWith('__voz_')) return `copiou a legenda de exemplo da voz ("${String(d.texto).slice(0, 70)}..."): imite só o jeito, com outra situação e outras palavras`;
+  if (String(d.id).startsWith('__voz_')) return `copiou a legenda de exemplo da voz ("${cut(d.texto, 70)}..."): imite só o jeito, com outra situação e outras palavras`;
   const when = fmtDM(d.date) + (d.time ? ' ' + d.time : '');
   if (h.why === 'semanal') return `${h.label} já tem post nesta semana (${when}) — NÃO use esse assunto`;
-  return `parecido com ${when}: "${String(d.title || d.texto).replace(/\s+/g, ' ').slice(0, 80)}"`;
+  return `parecido com ${when}: "${cut(String(d.title || d.texto).replace(/\s+/g, ' '), 80)}"`;
 }
 
 function retryNote(flagged) {
