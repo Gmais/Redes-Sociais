@@ -163,6 +163,10 @@ async function rodar(handler, reqOpts, dp) {
   assert.strictEqual(url.searchParams.get('client_id'), '123');
   assert.strictEqual(url.searchParams.get('state'), estado);
   assert.strictEqual(url.searchParams.get('scope').split(',').sort().join(','), [...meta.PERMISSOES].sort().join(','));
+  // Com configuração do Login do Facebook para Empresas: config_id no lugar de scope.
+  const urlCfg = new URL(meta.urlDeLogin({ appId: '123', redirectUri: ENV.META_REDIRECT_URI, estado, configId: '987' }));
+  assert.strictEqual(urlCfg.searchParams.get('config_id'), '987');
+  assert.strictEqual(urlCfg.searchParams.get('scope'), null, 'scope não vai junto com config_id');
   assert.ok(!meta.PERMISSOES.some((p) => /publish|manage_posts|delete|write/.test(p)), 'só permissões de leitura');
 
   // ── Iniciar conexão ───────────────────────────────────────────────────────────
