@@ -1,2 +1,7 @@
 .vercel
 node_modules
+
+# Segredos locais (o .env.example fica no Git)
+.env
+.env.*
+!.env.example
