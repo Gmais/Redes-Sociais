@@ -26,6 +26,42 @@ body { background: var(--bg); color: var(--txt); font-family: 'Inter', sans-seri
 body[data-tab="academia"]   { --bg: #2a1006; background: linear-gradient(180deg, rgba(230,57,0,.38) 0, rgba(230,57,0,.12) 520px, rgba(230,57,0,.06) 100%) fixed, var(--bg); }
 body[data-tab="sorveteria"] { --bg: #061a2e; background: linear-gradient(180deg, rgba(0,140,220,.40) 0, rgba(0,120,200,.14) 520px, rgba(0,100,180,.07) 100%) fixed, var(--bg); }
 body[data-tab="gympulse"]   { --bg: #241d04; background: linear-gradient(180deg, rgba(245,194,0,.30) 0, rgba(245,194,0,.10) 520px, rgba(245,194,0,.05) 100%) fixed, var(--bg); }
+body[data-tab="analise"]    { --bg: #120d1f; background: linear-gradient(180deg, rgba(124,92,255,.30) 0, rgba(124,92,255,.10) 520px, rgba(124,92,255,.05) 100%) fixed, var(--bg); }
+
+/* ── Análise das Redes Sociais ───────────────────────────────────────────── */
+.an-wrap { display:grid; grid-template-columns:210px 1fr; gap:20px; padding:20px 24px 40px; align-items:start; }
+.an-nav { display:flex; flex-direction:column; gap:4px; position:sticky; top:110px; background:var(--s1); border:1px solid var(--border); border-radius:14px; padding:10px; }
+.an-nav .an-nav-title { font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--txt3); padding:6px 10px 8px; }
+.an-nav button { text-align:left; background:none; border:1px solid transparent; color:var(--txt2); font:500 13px 'Inter',sans-serif; padding:9px 10px; border-radius:9px; cursor:pointer; transition:background .15s,color .15s; }
+.an-nav button:hover { background:var(--s2); color:var(--txt); }
+.an-nav button.on { background:rgba(124,92,255,.18); color:var(--txt); border-color:rgba(124,92,255,.45); }
+.an-sec { display:none; }
+.an-sec.on { display:block; }
+.an-head { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+.an-head h2 { font:700 22px 'Inter',sans-serif; color:var(--txt); letter-spacing:-.01em; }
+.an-head p { color:var(--txt2); font-size:13px; margin-top:4px; }
+.an-period { display:inline-flex; background:var(--s1); border:1px solid var(--border); border-radius:10px; padding:3px; gap:2px; }
+.an-period button { background:none; border:none; color:var(--txt2); font:600 12px 'Inter',sans-serif; padding:7px 12px; border-radius:7px; cursor:pointer; }
+.an-period button.on { background:var(--s2); color:var(--txt); box-shadow:inset 0 0 0 1px rgba(124,92,255,.5); }
+.an-kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:16px; }
+.an-kpi { background:var(--s1); border:1px solid var(--border); border-radius:14px; padding:16px; }
+.an-kpi .lbl { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--txt3); }
+.an-kpi .val { font:700 26px 'JetBrains Mono',monospace; color:var(--txt3); margin-top:8px; }
+.an-kpi .sub { font-size:12px; color:var(--txt3); margin-top:4px; }
+.an-card { background:var(--s1); border:1px solid var(--border); border-radius:14px; padding:20px; }
+.an-card + .an-card { margin-top:14px; }
+.an-empty { text-align:center; padding:56px 20px; background:var(--s1); border:1px dashed var(--border); border-radius:14px; color:var(--txt3); }
+.an-empty .eico { font-size:36px; margin-bottom:12px; }
+.an-empty h3 { color:var(--txt2); font:600 16px 'Inter',sans-serif; margin-bottom:6px; }
+.an-empty p { font-size:13px; max-width:460px; margin:0 auto; line-height:1.5; }
+@media (max-width:760px) {
+  .an-wrap { grid-template-columns:1fr; padding:16px; gap:14px; }
+  .an-nav { position:static; flex-direction:row; overflow-x:auto; scrollbar-width:none; }
+  .an-nav::-webkit-scrollbar { display:none; }
+  .an-nav .an-nav-title { display:none; }
+  .an-nav button { white-space:nowrap; }
+  .an-kpi .val { font-size:22px; }
+}
 
 .hero { position: relative; padding: 28px 24px 0; overflow: hidden; }
 .hero-bg {
@@ -912,6 +948,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
     <button class="tab on" data-p="academia" onclick="go('academia',this)">🏋️ Academia</button>
     <button class="tab" data-p="sorveteria" onclick="go('sorveteria',this)">🍦 Sorveteria</button>
     <button class="tab" data-p="gympulse" onclick="go('gympulse',this)">🎮 GympulsePro</button>
+    <button class="tab" data-p="analise" onclick="go('analise',this)">📊 Análise das Redes Sociais</button>
     <button class="tab" data-p="historico" onclick="go('historico',this)">📋 Histórico</button>
   </div>
 </div>
@@ -930,6 +967,96 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   <div class="panel on" id="p-academia"></div>
   <div class="panel" id="p-sorveteria"></div>
   <div class="panel" id="p-gympulse"></div>
+  <div class="panel" id="p-analise">
+    <div class="an-wrap">
+      <nav class="an-nav" aria-label="Seções da análise">
+        <div class="an-nav-title">Análise</div>
+        <button class="on" onclick="anGo('visao',this)">Visão geral</button>
+        <button onclick="anGo('contas',this)">Contas conectadas</button>
+        <button onclick="anGo('publico',this)">Público</button>
+        <button onclick="anGo('publicacoes',this)">Publicações</button>
+        <button onclick="anGo('horarios',this)">Melhores horários</button>
+        <button onclick="anGo('concorrentes',this)">Concorrentes</button>
+        <button onclick="anGo('ia',this)">Inteligência artificial</button>
+        <button onclick="anGo('relatorios',this)">Relatórios</button>
+        <button onclick="anGo('config',this)">Configurações</button>
+      </nav>
+
+      <div class="an-main">
+        <section class="an-sec on" id="an-visao">
+          <div class="an-head">
+            <div>
+              <h2>Visão geral</h2>
+              <p>Alcance, impressões, engajamento e seguidores das suas redes.</p>
+            </div>
+            <div class="an-period" role="group" aria-label="Período">
+              <button class="on" onclick="anPeriod(7,this)">7 dias</button>
+              <button onclick="anPeriod(30,this)">30 dias</button>
+              <button onclick="anPeriod(90,this)">90 dias</button>
+            </div>
+          </div>
+          <div class="an-kpis">
+            <div class="an-kpi"><div class="lbl">Alcance total</div><div class="val">—</div><div class="sub">sem conta conectada</div></div>
+            <div class="an-kpi"><div class="lbl">Impressões</div><div class="val">—</div><div class="sub">sem conta conectada</div></div>
+            <div class="an-kpi"><div class="lbl">Engajamento</div><div class="val">—</div><div class="sub">sem conta conectada</div></div>
+            <div class="an-kpi"><div class="lbl">Visitas ao perfil</div><div class="val">—</div><div class="sub">sem conta conectada</div></div>
+            <div class="an-kpi"><div class="lbl">Seguidores ganhos</div><div class="val">—</div><div class="sub">sem conta conectada</div></div>
+            <div class="an-kpi"><div class="lbl">Seguidores perdidos</div><div class="val">—</div><div class="sub">sem conta conectada</div></div>
+            <div class="an-kpi"><div class="lbl">Cliques no link</div><div class="val">—</div><div class="sub">sem conta conectada</div></div>
+          </div>
+          <div class="an-empty">
+            <div class="eico">📊</div>
+            <h3>Nenhum dado ainda</h3>
+            <p>Os indicadores aparecem aqui quando a conta do Instagram ou da Página do Facebook estiver conectada. Os gráficos e a comparação com o período anterior vêm na próxima etapa.</p>
+          </div>
+        </section>
+
+        <section class="an-sec" id="an-contas">
+          <div class="an-head"><div><h2>Contas conectadas</h2><p>Instagram profissional e Páginas do Facebook.</p></div></div>
+          <div class="an-empty">
+            <div class="eico">🔌</div>
+            <h3>Nenhuma conta conectada</h3>
+            <p>A conexão oficial pela Meta (login OAuth, permissões e armazenamento seguro dos tokens) entra na etapa de integração. Nenhuma senha de rede social é solicitada.</p>
+          </div>
+        </section>
+
+        <section class="an-sec" id="an-publico">
+          <div class="an-head"><div><h2>Público</h2><p>Faixa etária, gênero, localização, crescimento e atividade.</p></div></div>
+          <div class="an-empty"><div class="eico">👥</div><h3>Sem dados de público</h3><p>Esta seção recebe os dados demográficos disponibilizados pela API da Meta, assim que a conta estiver conectada.</p></div>
+        </section>
+
+        <section class="an-sec" id="an-publicacoes">
+          <div class="an-head"><div><h2>Publicações</h2><p>Posts, Reels e Stories com alcance, curtidas, comentários, salvamentos e compartilhamentos.</p></div></div>
+          <div class="an-empty"><div class="eico">🖼️</div><h3>Sem publicações sincronizadas</h3><p>Ordenação, filtros e a ação "Analisar com IA" aparecem aqui quando houver publicações com métricas.</p></div>
+        </section>
+
+        <section class="an-sec" id="an-horarios">
+          <div class="an-head"><div><h2>Melhores horários</h2><p>Mapa de calor por dia da semana e horário.</p></div></div>
+          <div class="an-empty"><div class="eico">🗓️</div><h3>Sem histórico de atividade</h3><p>O mapa de calor usa o horário em que seu público está online, informado pela Meta.</p></div>
+        </section>
+
+        <section class="an-sec" id="an-concorrentes">
+          <div class="an-head"><div><h2>Concorrentes</h2><p>Apenas dados públicos dos perfis cadastrados.</p></div></div>
+          <div class="an-empty"><div class="eico">🎯</div><h3>Nenhum concorrente cadastrado</h3><p>Métricas privadas de concorrentes não são acessadas. Só seguidores, frequência e tipos de conteúdo públicos.</p></div>
+        </section>
+
+        <section class="an-sec" id="an-ia">
+          <div class="an-head"><div><h2>Inteligência artificial</h2><p>Análises feitas sobre os dados reais guardados no sistema.</p></div></div>
+          <div class="an-empty"><div class="eico">🧠</div><h3>Ainda não há dados para analisar</h3><p>A IA só analisa números reais. Quando faltar informação, ela vai dizer qual é a limitação, sem completar com estimativas.</p></div>
+        </section>
+
+        <section class="an-sec" id="an-relatorios">
+          <div class="an-head"><div><h2>Relatórios</h2><p>Semanal, mensal e personalizado, com exportação em PDF e CSV.</p></div></div>
+          <div class="an-empty"><div class="eico">📄</div><h3>Nenhum relatório gerado</h3><p>Os relatórios são montados a partir dos dados sincronizados da conta conectada.</p></div>
+        </section>
+
+        <section class="an-sec" id="an-config">
+          <div class="an-head"><div><h2>Configurações</h2><p>Conta, sincronização e preferências da análise.</p></div></div>
+          <div class="an-empty"><div class="eico">⚙️</div><h3>Nada para configurar ainda</h3><p>As opções de sincronização e de envio de relatórios por e-mail aparecem quando a conexão com a Meta estiver pronta.</p></div>
+        </section>
+      </div>
+    </div>
+  </div>
   <div class="panel" id="p-historico"></div>
 </main>
 
@@ -25929,11 +26056,21 @@ function go(tab,el){
   if(['academia','sorveteria','gympulse'].includes(tab)) activeProfile = tab;
   // Esconder botão Nova Postagem no Histórico/Estratégia
   const npBtn = document.getElementById('newPostBtn');
-  if(npBtn) npBtn.style.display = ['historico','estrategia'].includes(tab) ? 'none' : 'flex';
+  if(npBtn) npBtn.style.display = ['historico','estrategia','analise'].includes(tab) ? 'none' : 'flex';
   const calBtn = document.getElementById('calOpenBtn');
-  if(calBtn) calBtn.style.display = ['historico','estrategia'].includes(tab) ? 'none' : 'flex';
+  if(calBtn) calBtn.style.display = ['historico','estrategia','analise'].includes(tab) ? 'none' : 'flex';
   if(tab==='historico') buildHist();
   if(tab==='estrategia') buildEstrategia();
+}
+
+// Análise das Redes Sociais: troca de seção e de período (os dados entram nas próximas etapas).
+function anGo(id, btn){
+  document.querySelectorAll('#p-analise .an-sec').forEach(s=>s.classList.toggle('on', s.id==='an-'+id));
+  document.querySelectorAll('#p-analise .an-nav button').forEach(b=>b.classList.toggle('on', b===btn));
+}
+function anPeriod(dias, btn){
+  document.querySelectorAll('#p-analise .an-period button').forEach(b=>b.classList.toggle('on', b===btn));
+  window.anDias = dias;
 }
 
 (function(){
