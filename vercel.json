@@ -13,6 +13,13 @@
       "includeFiles": "{CONTEXTO.md,instagram/*/voice.md}"
     }
   },
+  "rewrites": [
+    { "source": "/api/zernio-health", "destination": "/api/zernio?acao=health" },
+    { "source": "/api/zernio-post-status", "destination": "/api/zernio?acao=post-status" },
+    { "source": "/api/zernio-retry-post", "destination": "/api/zernio?acao=retry-post" },
+    { "source": "/api/zernio-cancel-post", "destination": "/api/zernio?acao=cancel-post" },
+    { "source": "/api/zernio-media-upload", "destination": "/api/zernio?acao=media-upload" }
+  ],
   "crons": [
     {
       "path": "/api/auto-content",

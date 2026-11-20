@@ -24918,7 +24918,7 @@ async function verifyPublishStatus(id, profile, attempt){
   if (isScheduledFuture(pub)) return; // agendado: a Zernio publica no horário
 
   try {
-    const resp = await fetch('/api/zernio-post-status', {
+    const resp = await fetch('/api/zernio?acao=post-status', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ profile, postId: pub.postId })
@@ -24964,7 +24964,7 @@ async function retryPublish(id, profile){
   showToast('🔁 Tentando republicar via Zernio...');
 
   try {
-    const resp = await fetch('/api/zernio-retry-post', {
+    const resp = await fetch('/api/zernio?acao=retry-post', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ profile, postId: pub.postId })
@@ -25741,7 +25741,7 @@ function putWithProgress(url, file, mime){
 // existe o limite de 4,5MB do Vercel (que derrubava todo vídeo).
 async function uploadMediaToZernio(file, profile){
   const mime = file.type || 'image/jpeg';
-  const presign = await fetch('/api/zernio-media-upload', {
+  const presign = await fetch('/api/zernio?acao=media-upload', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ mode: 'presign', profile, fileName: file.name, mimeType: mime, size: file.size })
@@ -25755,7 +25755,7 @@ async function uploadMediaToZernio(file, profile){
     if (e.network && file.size <= 3000000) {
       // Reserva: pelo servidor (base64), só para arquivos pequenos.
       const base64 = await blobToBase64(file);
-      const r = await fetch('/api/zernio-media-upload', {
+      const r = await fetch('/api/zernio?acao=media-upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ profile, fileName: file.name, mimeType: mime, base64 })
@@ -27992,7 +27992,7 @@ async function confirmSchedule(now){
   const pub = getPublishData(id);
   if (pub && pub.status === 'sent' && pub.postId && isScheduledFuture(pub)) {
     try {
-      const resp = await fetch('/api/zernio-cancel-post', {
+      const resp = await fetch('/api/zernio?acao=cancel-post', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ profile: found.profile, postId: pub.postId })
       });
@@ -28011,7 +28011,7 @@ async function cancelSchedule(id, profile){
   if (!pub || !pub.postId) return;
   if (!confirm('Cancelar o agendamento deste post na Zernio?')) return;
   try {
-    const resp = await fetch('/api/zernio-cancel-post', {
+    const resp = await fetch('/api/zernio?acao=cancel-post', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ profile, postId: pub.postId })
     });
