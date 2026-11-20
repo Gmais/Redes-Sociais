@@ -26175,7 +26175,9 @@ const ANALISE_ERROS = {
   estado: 'O link de conexão expirou ou é inválido. Tente de novo.',
   sem_permissao: 'Só owner ou admin podem conectar contas nesta organização.',
   sem_codigo: 'A Meta não devolveu a autorização. Tente de novo.',
-  meta: 'A Meta não concluiu a conexão. Tente de novo em instantes.'
+  meta: 'A Meta não concluiu a conexão. Tente de novo em instantes.',
+  tipo_conta: 'Essa conta do Instagram não é profissional. Mude para conta Business ou de Criador de conteúdo no Instagram e tente de novo.',
+  instagram: 'O Instagram não concluiu a conexão. Tente de novo em instantes.'
 };
 
 const anEsc = (s) => String(s ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
@@ -26275,7 +26277,7 @@ async function anContasRender() {
       <h3>Conectar conta</h3>
       <div class="hint">Você vai ao login oficial da Meta e escolhe quais páginas autorizar. Só leitura.</div>
       ${podeConectar
-        ? '<button class="an-chip on" onclick="anConectarMeta()">Conectar Instagram / Facebook</button>'
+        ? '<div class="an-custom"><button class="an-chip on" onclick="anConectarMeta()">Conectar Instagram / Facebook</button><button class="an-chip" onclick="anConectarInstagram()">Conectar só o Instagram (login direto)</button></div>'
         : '<div class="hint">Só owner ou admin podem conectar contas.</div>'}
     </div>
     <div class="an-card" style="margin-top:14px">
@@ -26347,6 +26349,18 @@ async function anConectarMeta() {
   window.location.href = j.url;
 }
 
+async function anConectarInstagram() {
+  anMsg('Abrindo o login do Instagram…');
+  const r = await fetch('/api/analise?acao=ig-iniciar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + anSessao.access_token },
+    body: JSON.stringify({ orgId: anOrgAtiva })
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.url) { anMsg(j.error || 'Não foi possível iniciar o login do Instagram.', true); return; }
+  window.location.href = j.url;
+}
+
 // Volta da Meta (?analise=conectada|erro) ou do link de e-mail (?analise=1).
 (function anRetorno() {
   const p = new URLSearchParams(location.search);
@@ -26354,7 +26368,9 @@ async function anConectarMeta() {
   const finalizar = () => {
     const botao = document.querySelector('.tab[data-p="analise"]');
     if (botao) go('analise', botao);
-    if (p.get('analise') === 'conectada') {
+    if (p.get('analise') === 'conectada' && p.get('tipo') === 'ig') {
+      anMsg('Conta do Instagram conectada pelo login direto.');
+    } else if (p.get('analise') === 'conectada') {
       anMsg(`Conexão concluída: ${p.get('paginas') || 0} página(s) do Facebook e ${p.get('contas_ig') || 0} conta(s) de Instagram.`);
     } else if (p.get('analise') === 'erro') {
       anMsg(ANALISE_ERROS[p.get('motivo')] || 'Não foi possível concluir a conexão.', true);
