@@ -29,7 +29,7 @@ const resposta = (status, corpo) => {
   return { ok: status >= 200 && status < 300, status, text: async () => texto, json: async () => JSON.parse(texto || '[]') };
 };
 
-function fakeF({ papel = 'viewer', contas = [{ id: A }, { id: B }], postsComMetricas = 0 } = {}) {
+function fakeF({ papel = 'viewer', contas = [{ id: A, platform: "instagram", username: "academia" }, { id: B, platform: "instagram", username: "sorveteria" }], postsComMetricas = 0 } = {}) {
   const posts = Array.from({ length: postsComMetricas }, (_, i) => ({ id: 'p' + i, published_at: '2026-11-18T15:00:00Z' }));
   const insights = posts.map((p) => ({ social_post_id: p.id, engagement: 10, collected_at: '2026-11-19T00:00:00Z' }));
   return async (url) => {
@@ -58,6 +58,12 @@ function fakeF({ papel = 'viewer', contas = [{ id: A }, { id: B }], postsComMetr
   assert.strictEqual(r.seguidoresFim, 1504);
   assert.strictEqual(r.saldoSeguidores, 2, 'saldo = fim (1504) menos início (1502)');
   assert.strictEqual(r.contas, 2);
+  assert.deepStrictEqual(r.listaContas.map((c) => c.username), ["academia", "sorveteria"]);
+
+  // Filtro por conta: só a conta A entra nos totais e no público
+  const soA = await metricas.consultarMetricas({ orgId: ORG, ini: "2026-11-11", fim: "2026-11-12", cfg: CFG, f: fakeF(), contaId: A });
+  assert.deepStrictEqual(soA.totais, { alcance: 250, visualizacoes: 290, engajamento: 25, cliques: 7 });
+  assert.strictEqual(soA.contaAtual, A);
 
   // Público: só o snapshot mais recente (20/11), não o de 01/11
   assert.strictEqual(r.publico.snapshot, '2026-11-20');

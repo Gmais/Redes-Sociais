@@ -26213,6 +26213,7 @@ async function anContaIniciar() {
   const { data } = await anSb.auth.getSession();
   anSessao = data.session;
   await anContaRender();
+  anRender(); // sessão pronta: carrega os dados reais sem precisar trocar de aba
 }
 
 async function anContaRender() {
@@ -26394,6 +26395,8 @@ async function anSincronizar() {
     });
     anStatus(linhas.join(' · ') || 'Nada para sincronizar.', resultados.some((x) => !x.ok));
     anContasRender();
+    window.anRealChave = null; // força nova leitura dos dados sincronizados
+    anRender();
   } catch (e) {
     anStatus('Falha de conexão ao sincronizar. Tente de novo.', true);
   }
@@ -26602,20 +26605,24 @@ function anRenderPublico(r){
 // ── Visão geral com dados sincronizados ───────────────────────────────────────
 // Com conta conectada, a Visão geral lê o banco. Impressões, visitas e ganhos/perdidos não
 // são coletados pela sincronização: aparecem como "—", sem número inventado.
+function anChaveReal(p) {
+  return `${anOrgAtiva}|${p.ini}|${p.fim}|${(window.anState && window.anState.conta) || ''}`;
+}
+
 function anRealAtual() {
   const p = anResolve();
-  const chave = `${anOrgAtiva}|${p.ini}|${p.fim}`;
   const r = window.anReal;
-  return r && r.chave === chave && r.dados ? r.dados : null;
+  return r && r.chave === anChaveReal(p) && r.dados ? r.dados : null;
 }
 
 async function anCarregarReal(p) {
   if (!anSessao || !anOrgAtiva) return;
-  const chave = `${anOrgAtiva}|${p.ini}|${p.fim}`;
-  if (window.anRealChave === chave) return; // já pedido para este período
+  const chave = anChaveReal(p);
+  if (window.anRealChave === chave) return; // já pedido para este período e conta
   window.anRealChave = chave;
+  const conta = (window.anState && window.anState.conta) || '';
   try {
-    const r = await fetch(`/api/analise?acao=metricas&org=${encodeURIComponent(anOrgAtiva)}&ini=${p.ini}&fim=${p.fim}`, {
+    const r = await fetch(`/api/analise?acao=metricas&org=${encodeURIComponent(anOrgAtiva)}&ini=${p.ini}&fim=${p.fim}` + (conta ? `&conta=${encodeURIComponent(conta)}` : ''), {
       headers: { Authorization: 'Bearer ' + anSessao.access_token }
     });
     const j = await r.json().catch(() => ({}));
@@ -26632,6 +26639,21 @@ const AN_REAIS = [
   { k: 'engajamento', label: 'Engajamento', cor: '#ff6b35' },
   { k: 'cliques', label: 'Cliques no link', cor: '#f5c200' }
 ];
+// Filtro por conta: todas as contas do Instagram ou uma delas (vale também para público e horários).
+function seletorConta(d) {
+  const opcoes = ['<option value="">Todas as contas do Instagram</option>']
+    .concat((d.listaContas || []).map((c) => `<option value="${anEsc(c.id)}"${c.id === d.contaAtual ? ' selected' : ''}>@${anEsc(c.username)}</option>`))
+    .join('');
+  const facebook = d.temPaginaFacebook
+    ? '<div class="hint" style="margin-top:6px">A Página do Facebook não tem métricas sincronizadas. Os números são só das contas do Instagram.</div>'
+    : '';
+  return `<div class="an-custom" style="margin-bottom:12px"><label class="hint" for="an-conta-sel">Conta</label><select id="an-conta-sel" onchange="anMudarConta(this.value)" style="background:var(--s2);color:var(--txt);border:1px solid var(--border);border-radius:8px;padding:6px 8px">${opcoes}</select></div>${facebook}`;
+}
+function anMudarConta(id) {
+  window.anState.conta = id || '';
+  anRender();
+}
+
 function anMetricaRealAtual() { return window.anState.metricaReal || 'alcance'; }
 function anMetricaReal(k) { window.anState.metricaReal = k; anRender(); }
 
@@ -26677,6 +26699,7 @@ function anRenderVisaoReal(d) {
       <div class="hint">Total das contas, dia a dia.</div>
       <div class="an-chart"><canvas id="an-ch-seguidores" role="img" aria-label="Seguidores por dia"></canvas></div>
     </div>`;
+  body.insertAdjacentHTML('afterbegin', seletorConta(d));
   if (!vazio) {
     const labels = d.serie.map((x) => anDM(x.data));
     anChart('an-ch-evolucao', {
