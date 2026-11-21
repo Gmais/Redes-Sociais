@@ -319,6 +319,40 @@ function pzCardConcorrente(c, emp) {
   </article>`;
 }
 
+// Comentário para outra conta: a Meta não deixa o app comentar em posts de terceiros.
+// Você cola a legenda, o app gera o texto, e você copia e publica você mesmo.
+function pzBoxComentario() {
+  if (!pzPode('editor')) return '';
+  return `<div class="pz-card s12" style="margin-bottom:16px">
+    <div class="pz-card-h"><div><h3>Comentário para outra conta</h3><small>O app não comenta em posts de outras contas. Cole a legenda do post, gere o comentário e publique você mesmo.</small></div></div>
+    <div class="pz-form">
+      <label class="pz-rotulo" style="flex:1 1 100%">Legenda do post
+        <textarea class="pz-campo" id="pz-com-legenda" rows="3" maxlength="2200" placeholder="Cole aqui a legenda do post"></textarea></label>
+      <button type="button" class="pz-btn primario" onclick="pzGerarComentario()">Gerar comentário</button>
+    </div>
+    <div id="pz-com-saida"></div>
+  </div>`;
+}
+
+async function pzGerarComentario() {
+  const legenda = (document.getElementById('pz-com-legenda').value || '').trim();
+  const saida = document.getElementById('pz-com-saida');
+  if (!legenda) { saida.innerHTML = pzAviso('info', 'Cole a legenda', 'Preciso do texto do post para escrever um comentário que faça sentido.'); return; }
+  saida.innerHTML = '<div class="pz-skel" style="min-height:70px"></div>';
+  const r = await pzApi('escrita', { corpo: { tipo: 'comentario', pedido: legenda } });
+  if (!r.ok) { saida.innerHTML = pzAviso('erro', 'Não foi possível gerar o comentário', r.erro); return; }
+  const avisos = (r.dados.avisos || []).map((a) => pzAviso('info', a.trecho, a.dica)).join('');
+  saida.innerHTML = `<textarea class="pz-campo" id="pz-com-texto" rows="3" style="margin-top:12px;width:100%">${pzEsc(r.dados.texto)}</textarea>${avisos}
+    <button type="button" class="pz-btn fantasma" onclick="pzCopiarComentario()">Copiar</button>`;
+}
+
+function pzCopiarComentario() {
+  const campo = document.getElementById('pz-com-texto');
+  if (!campo) return;
+  campo.select();
+  if (navigator.clipboard) navigator.clipboard.writeText(campo.value);
+}
+
 async function pzSecConcorrentes(el, emp, dados, tok) {
   const r = await pzConcorrentes();
   if (tok !== PZ.token) return;
@@ -339,7 +373,7 @@ async function pzSecConcorrentes(el, emp, dados, tok) {
     : '';
   const aviso = r.dados.avisoConsulta ? pzAviso('info', 'Consulta indisponível', r.dados.avisoConsulta) : '';
   const extra = semEmpresa.length ? pzAviso('info', `${semEmpresa.length} concorrente(s) sem empresa`, 'Ligue cada um a uma empresa na aba Configurações, para aparecer aqui.') : '';
-  el.innerHTML = topo + aviso + extra + form + (meus.length
+  el.innerHTML = topo + aviso + extra + form + pzBoxComentario() + (meus.length
     ? `<div class="pz-grid">${meus.map((c) => pzCardConcorrente(c, emp)).join('')}</div>`
     : pzVazio('🎯', `Nenhum concorrente de ${emp.nome}`, 'Cadastre um perfil profissional para comparar alcance, frequência e engajamento.'));
 }
