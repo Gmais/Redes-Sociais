@@ -3,7 +3,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-const MIGRATIONS = ['20261120120000_analise_redes_sociais.sql', '20261121100000_visualizacoes_conta.sql', '20261122100000_concorrentes_resumo.sql', '20261123100000_ia_periodo.sql', '20261124100000_empresa_contas.sql', '20261125100000_concorrentes_por_empresa.sql']
+const MIGRATIONS = ['20261120120000_analise_redes_sociais.sql', '20261121100000_visualizacoes_conta.sql', '20261122100000_concorrentes_resumo.sql', '20261123100000_ia_periodo.sql', '20261124100000_empresa_contas.sql', '20261125100000_concorrentes_por_empresa.sql', '20261126100000_respostas_comentarios.sql']
   .map((nome) => fileURLToPath(new URL('../../supabase/migrations/' + nome, import.meta.url)));
 const db = new PGlite();
 let falhas = 0, ok = 0;

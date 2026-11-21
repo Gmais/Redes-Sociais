@@ -220,6 +220,71 @@ async function pzSecPublico(el, emp, dados, conta, tok) {
 }
 
 // ── Publicações ──────────────────────────────────────────────────────────────
+// Comentários recebidos nos seus posts: a fila para responder (Fase 2).
+// Ler e aprovar funciona já. Enviar só aparece com o envio ligado, depois da liberação da Meta.
+function pzBoxRespostas() {
+  if (!pzPode('viewer')) return '';
+  setTimeout(pzRespostasCarregar, 0);
+  return `<div class="pz-card s12" style="margin-bottom:16px">
+    <div class="pz-card-h"><div><h3>Comentários para responder</h3><small>Os comentários dos seus posts mais recentes. Você revisa cada resposta antes de sair.</small></div>
+      ${pzPode('editor') ? '<button type="button" class="pz-btn primario sm" onclick="pzRespostasSincronizar()">Buscar comentários</button>' : ''}</div>
+    <div id="pz-resp-lista"><div class="pz-skel" style="min-height:60px"></div></div>
+  </div>`;
+}
+
+async function pzRespostasCarregar() {
+  const alvo = document.getElementById('pz-resp-lista');
+  if (!alvo) return;
+  const r = await pzApi('respostas');
+  if (!document.getElementById('pz-resp-lista')) return;
+  if (!r.ok) { alvo.innerHTML = pzAviso('erro', 'Não foi possível carregar os comentários', r.erro); return; }
+  alvo.innerHTML = pzHtmlRespostas(r.dados);
+}
+
+function pzHtmlRespostas(d) {
+  const linhas = d.linhas || [];
+  const aviso = d.envioLigado ? '' : pzAviso('info', 'Envio desligado', 'As respostas podem ser escritas e aprovadas aqui. Elas só saem depois que a Meta liberar a permissão de comentários.');
+  if (!linhas.length) return aviso + pzVazio('💬', 'Nenhum comentário para responder', 'Clique em Buscar comentários para ler os posts mais recentes.');
+  return aviso + linhas.map((l) => {
+    const id = pzEsc(l.id);
+    return `<div class="pz-post" style="padding:14px;margin-top:10px">
+      <div class="pz-form" style="align-items:center;justify-content:space-between"><b>@${pzEsc(l.comment_usuario || 'alguém')}</b><span class="pz-pill">${pzEsc(l.categoria)}</span></div>
+      <p style="margin:8px 0">${pzEsc(l.comment_texto)}</p>
+      <textarea class="pz-campo" rows="2" style="width:100%" id="pz-resp-${id}">${pzEsc(l.rascunho || '')}</textarea>
+      <div class="pz-form" style="margin-top:8px">
+        <button type="button" class="pz-btn fantasma sm" onclick="pzRespostaAcao('${id}','editar')">Salvar texto</button>
+        ${l.status === 'pendente' ? `<button type="button" class="pz-btn primario sm" onclick="pzRespostaAcao('${id}','aprovar')">Aprovar</button>` : ''}
+        <button type="button" class="pz-btn fantasma sm" onclick="pzRespostaAcao('${id}','descartar')">Descartar</button>
+        ${d.envioLigado ? `<button type="button" class="pz-btn escuro sm" onclick="pzRespostaAcao('${id}','enviar')">Enviar</button>` : ''}
+      </div>
+      ${l.erro ? pzAviso('erro', 'Erro', l.erro) : ''}
+    </div>`;
+  }).join('');
+}
+
+async function pzRespostasSincronizar() {
+  const alvo = document.getElementById('pz-resp-lista');
+  if (alvo) alvo.innerHTML = '<div class="pz-skel" style="min-height:60px"></div>';
+  const r = await pzApi('respostas-sincronizar', { corpo: {} });
+  if (!r.ok) pzToast(r.erro, true);
+  else {
+    const d = r.dados;
+    const avisos = (d.avisos || []).length ? ` ${d.avisos.join(' ')}` : '';
+    pzToast(`${d.novos} comentário(s) novo(s), ${d.rascunhos} rascunho(s).${avisos}`, Boolean((d.avisos || []).length));
+  }
+  pzRespostasCarregar();
+}
+
+async function pzRespostaAcao(id, acao) {
+  const campo = document.getElementById('pz-resp-' + id);
+  const texto = campo ? campo.value : undefined;
+  const r = await pzApi('respostas-acao', { corpo: { id, acao, texto } });
+  if (!r.ok) { pzToast(r.erro, true); return; }
+  const mensagens = { editar: 'Texto salvo.', aprovar: 'Resposta aprovada.', descartar: 'Resposta descartada.', enviar: 'Resposta enviada.' };
+  pzToast(mensagens[acao] || 'Pronto.');
+  pzRespostasCarregar();
+}
+
 async function pzSecPublicacoes(el, emp, dados, conta, tok) {
   const res = await pzPublicacoes(conta, PZ.filtroPub.tipo, PZ.filtroPub.ordem);
   if (tok !== PZ.token) return;
@@ -229,7 +294,7 @@ async function pzSecPublicacoes(el, emp, dados, conta, tok) {
   const ordem = `<label class="pz-rotulo" style="flex-direction:row;align-items:center;gap:8px">Ordenar
       <select class="pz-campo pequeno" onchange="pzFiltroPub('ordem', this.value)">${ordens.map(([v, t]) => `<option value="${v}"${PZ.filtroPub.ordem === v ? ' selected' : ''}>${t}</option>`).join('')}</select></label>`;
   const barra = `<div class="pz-card s12" style="padding:14px 16px;margin-bottom:16px"><div class="pz-form" style="align-items:center;justify-content:space-between"><div class="pz-chips">${chips}</div>${ordem}</div></div>`;
-  const cabeca = pzBarraConta(emp, dados, conta);
+  const cabeca = pzBarraConta(emp, dados, conta) + pzBoxRespostas();
   if (!res.ok) { el.innerHTML = cabeca + barra + pzAviso('erro', 'Não foi possível carregar as publicações', res.erro); return; }
   const lista = res.dados.publicacoes || [];
   if (!lista.length) { el.innerHTML = cabeca + barra + pzVazio('🖼️', 'Nenhuma publicação com estes filtros', 'Troque o tipo ou sincronize as contas em Configurações.'); return; }
