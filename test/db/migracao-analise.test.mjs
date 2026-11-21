@@ -3,7 +3,8 @@ import { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-const MIGRATION = fileURLToPath(new URL('../../supabase/migrations/20261120120000_analise_redes_sociais.sql', import.meta.url));
+const MIGRATIONS = ['20261120120000_analise_redes_sociais.sql', '20261121100000_visualizacoes_conta.sql', '20261122100000_concorrentes_resumo.sql']
+  .map((nome) => fileURLToPath(new URL('../../supabase/migrations/' + nome, import.meta.url)));
 const db = new PGlite();
 let falhas = 0, ok = 0;
 const teste = (nome, cond) => { if (cond) { ok++; console.log('  ok   ' + nome); } else { falhas++; console.log('  FALHA ' + nome); } };
@@ -49,7 +50,7 @@ await db.exec(`insert into auth.users (id, email, raw_user_meta_data) values
 
 // ── Migration ────────────────────────────────────────────────────────────────
 console.log('Aplicando migration...');
-await db.exec(readFileSync(MIGRATION, 'utf8'));
+for (const arquivo of MIGRATIONS) await db.exec(readFileSync(arquivo, 'utf8'));
 teste('migration aplicada sem erro', true);
 
 const A = '11111111-1111-1111-1111-111111111111';
@@ -108,6 +109,8 @@ await como('authenticated', C);
 await expectOk('editor cria concorrente', `insert into public.competitor_accounts (organization_id, handle) values ('${orgA}', 'concorrente.y')`);
 await expectErro('editor não grava snapshot de fonte automática', `insert into public.competitor_snapshots (competitor_id, organization_id, source, followers_count) select id, organization_id, 'business_discovery', 10 from public.competitor_accounts limit 1`, 'row-level security');
 await expectOk('editor grava snapshot manual', `insert into public.competitor_snapshots (competitor_id, organization_id, source, followers_count) select id, organization_id, 'manual', 10 from public.competitor_accounts limit 1`);
+await expectOk('snapshot com resumo público (colunas novas)', `insert into public.competitor_snapshots (competitor_id, organization_id, source, followers_count, publicacoes_30d, engajamento_medio, amostra_publicacoes, tipos, ultima_publicacao_em) select id, organization_id, 'manual', 10, 3, 15.3, 4, '{"post": 2}'::jsonb, now() from public.competitor_accounts limit 1`);
+await expectErro('publicações de 30 dias não podem ser negativas', `insert into public.competitor_snapshots (competitor_id, organization_id, source, publicacoes_30d) select id, organization_id, 'manual', -1 from public.competitor_accounts limit 1`, 'check');
 
 await como('authenticated', A);
 await expectErro('owner não deixa a organização sem owner', `update public.organization_members set role = 'viewer' where user_id = '${A}'`, 'pelo menos um owner');

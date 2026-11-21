@@ -93,6 +93,11 @@ body[data-tab="analise"]    { --bg: #120d1f; background: linear-gradient(180deg,
 .an-pub-medidas span { display:block; font-size:11px; color:var(--txt3); }
 .an-pub-medidas b { display:block; font:700 15px 'Inter',sans-serif; color:var(--txt); }
 .an-pub-link { font:600 12px 'Inter',sans-serif; color:#7c5cff; text-decoration:none; align-self:flex-start; }
+.an-conc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+.an-conc { display:flex; flex-direction:column; gap:10px; }
+.an-conc-topo { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.an-conc-remover { background:none; border:1px solid var(--border); color:var(--txt2); border-radius:8px; padding:4px 10px; font:600 12px 'Inter',sans-serif; cursor:pointer; }
+.an-conc-remover:hover { color:#ff8a8a; border-color:#ff8a8a; }
 .an-empty { text-align:center; padding:56px 20px; background:var(--s1); border:1px dashed var(--border); border-radius:14px; color:var(--txt3); }
 .an-empty .eico { font-size:36px; margin-bottom:12px; }
 .an-empty h3 { color:var(--txt2); font:600 16px 'Inter',sans-serif; margin-bottom:6px; }
@@ -1087,7 +1092,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 
         <section class="an-sec" id="an-concorrentes">
           <div class="an-head"><div><h2>Concorrentes</h2><p>Apenas dados públicos dos perfis cadastrados.</p></div></div>
-          <div class="an-empty"><div class="eico">🎯</div><h3>Nenhum concorrente cadastrado</h3><p>Métricas privadas de concorrentes não são acessadas. Só seguidores, frequência e tipos de conteúdo públicos.</p></div>
+          <div id="an-concorrentes-body"></div>
         </section>
 
         <section class="an-sec" id="an-ia">
@@ -26489,6 +26494,7 @@ function anChart(id, cfg){
     el.parentElement.innerHTML = '<div class="an-empty"><p>Gráfico indisponível: a biblioteca de gráficos não carregou. Recarregue a página.</p></div>';
     return;
   }
+  if (window.anCharts[id]) window.anCharts[id].destroy(); // evita dois gráficos no mesmo canvas
   window.anCharts[id] = new Chart(el, cfg);
 }
 
@@ -26508,6 +26514,7 @@ function anRender(){
   anRenderPublico(r);
   anRenderHorarios();
   if (document.getElementById('an-publicacoes').classList.contains('on')) anCarregarPublicacoes();
+  if (document.getElementById('an-concorrentes').classList.contains('on')) anCarregarConcorrentes();
 }
 
 function anRenderVisao(r){
@@ -26876,6 +26883,150 @@ function anCardPub(p) {
       ${link}
     </div>
   </article>`;
+}
+
+// ── Concorrentes (Business Discovery: só dados públicos) ──────────────────────
+// Perfis profissionais e públicos de outras marcas, consultados pela conta conectada da organização.
+// Cadastrar, remover e atualizar: editor ou mais. Quem só lê vê a lista e o histórico.
+const AN_ROTULO_TIPO_CONC = { post: 'Posts', video: 'Vídeos e reels', carousel: 'Carrosséis', story: 'Stories', reel: 'Reels', other: 'Outros' };
+const anDec = (n) => Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+
+function anStatusConc(texto, erro) {
+  const el = document.getElementById('an-conc-status');
+  if (!el) return;
+  el.textContent = texto;
+  el.style.color = erro ? '#ff8a8a' : '';
+}
+
+// Uma chamada à API de concorrentes. Sem corpo é GET (com a organização na URL); com corpo é POST.
+async function anApiConc(acao, corpo) {
+  const post = corpo !== undefined;
+  const url = post ? `/api/analise?acao=${acao}` : `/api/analise?acao=${acao}&org=${encodeURIComponent(anOrgAtiva)}`;
+  const cabecalhos = { Authorization: 'Bearer ' + anSessao.access_token };
+  if (post) cabecalhos['Content-Type'] = 'application/json';
+  try {
+    const r = await fetch(url, { method: post ? 'POST' : 'GET', headers: cabecalhos, body: post ? JSON.stringify({ ...corpo, orgId: anOrgAtiva }) : undefined });
+    const dados = await r.json().catch(() => ({}));
+    return { ok: r.ok, dados, erro: r.ok ? null : (dados.error || 'Não foi possível concluir. Tente de novo.') };
+  } catch (e) {
+    return { ok: false, dados: {}, erro: 'Falha de conexão. Tente de novo.' };
+  }
+}
+
+async function anCarregarConcorrentes() {
+  const el = document.getElementById('an-concorrentes-body');
+  if (!el) return;
+  if (!anSessao || !anOrgAtiva) {
+    el.innerHTML = '<div class="an-empty"><div class="eico">🎯</div><h3>Entre para ver os concorrentes</h3><p>Só dados públicos das contas cadastradas.</p></div>';
+    return;
+  }
+  if (window.anConc && window.anConc.org === anOrgAtiva) {
+    renderConcorrentes(el, window.anConc.dados);
+    return;
+  }
+  el.innerHTML = '<div class="an-empty"><p>Carregando concorrentes…</p></div>';
+  const org = anOrgAtiva;
+  const r = await anApiConc('concorrentes');
+  if (anOrgAtiva !== org) return; // a organização mudou enquanto carregava
+  if (!r.ok) {
+    el.innerHTML = `<div class="an-empty"><div class="eico">⚠️</div><h3>Não foi possível carregar</h3><p>${anEsc(r.erro)}</p></div>`;
+    return;
+  }
+  window.anConc = { org, dados: r.dados };
+  renderConcorrentes(el, r.dados);
+}
+
+function renderConcorrentes(el, d) {
+  const podeEditar = ['editor', 'admin', 'owner'].includes(d.papel);
+  const lista = d.concorrentes || [];
+  const aviso = window.anConcAviso; // mensagem da última ação (cadastrar, remover, atualizar)
+  window.anConcAviso = null;
+  const formulario = podeEditar
+    ? `<form class="an-custom" style="margin-bottom:8px" onsubmit="anAdicionarConc(event)">
+         <input id="an-conc-handle" type="text" placeholder="@perfil do concorrente" aria-label="@ do concorrente no Instagram" autocomplete="off" maxlength="31" required>
+         <input id="an-conc-nome" type="text" placeholder="Nome (opcional)" aria-label="Nome do concorrente, opcional" maxlength="80">
+         <button type="submit">Adicionar concorrente</button>
+         <button type="button" onclick="anAtualizarConc()">Atualizar agora</button>
+       </form>`
+    : '<div class="hint" style="margin-bottom:8px">Você pode ver os concorrentes. Para cadastrar, remover ou atualizar, peça a um editor da organização.</div>';
+  const estado = `<div class="hint" id="an-conc-status" role="status" style="margin:6px 0 12px;min-height:16px${aviso && aviso.erro ? ';color:#ff8a8a' : ''}">${anEsc(aviso ? aviso.texto : '')}</div>`;
+  const avisoConsulta = d.avisoConsulta ? `<div class="an-erro" role="alert" style="margin-bottom:10px">${anEsc(d.avisoConsulta)}</div>` : '';
+  const cartoes = lista.length
+    ? `<div class="an-conc-grid">${lista.map((c) => anCardConc(c, podeEditar)).join('')}</div>`
+    : '<div class="an-empty"><div class="eico">🎯</div><h3>Nenhum concorrente cadastrado</h3><p>Digite o @ de uma conta profissional e pública. Só dados públicos: seguidores, publicações, frequência e engajamento.</p></div>';
+  el.innerHTML = avisoConsulta + formulario + estado + cartoes
+    + '<div class="hint" style="margin-top:14px">Atualização automática todo dia, às 08h. Engajamento médio = curtidas + comentários, nas últimas publicações que a Meta devolve. Alcance e visualizações de concorrentes não são liberados pela API.</div>';
+  lista.forEach((c) => {
+    if (c.historico.length < 2) return;
+    anChart('an-conc-ch-' + c.id, {
+      type: 'line',
+      data: { labels: c.historico.map((h) => anDM(h.data)), datasets: [{ label: 'Seguidores', data: c.historico.map((h) => h.seguidores),
+        borderColor: '#7c5cff', backgroundColor: '#7c5cff26', fill: true, tension: 0.3, pointRadius: 2, borderWidth: 2 }] },
+      options: anOpcoes({ legenda: false, zero: false })
+    });
+  });
+}
+
+function anCardConc(c, podeEditar) {
+  const u = c.ultimo;
+  const medida = (rotulo, valor) => `<div><span>${rotulo}</span><b>${valor == null ? '—' : anDec(valor)}</b></div>`;
+  const porSemana = u && u.publicacoes30d != null ? u.publicacoes30d / (30 / 7) : null;
+  const tipos = u && u.tipos
+    ? Object.entries(u.tipos).filter(([, n]) => n > 0).map(([k, n]) => `<span class="an-pub-tipo">${anEsc(AN_ROTULO_TIPO_CONC[k] || k)}: ${n}</span>`).join(' ')
+    : '';
+  const quando = u ? `Atualizado em ${anDataHora(u.capturadoEm)}` : 'Ainda sem consulta';
+  const ultima = u && u.ultimaPublicacaoEm ? ` · última publicação em ${anDataHora(u.ultimaPublicacaoEm)}` : '';
+  const grafico = c.historico.length >= 2
+    ? `<div class="an-chart" style="height:120px"><canvas id="an-conc-ch-${c.id}" role="img" aria-label="Seguidores de @${anEsc(c.handle)} ao longo do tempo"></canvas></div>`
+    : '';
+  const remover = podeEditar ? `<button type="button" class="an-conc-remover" onclick="anRemoverConc('${c.id}', '${anEsc(c.handle)}')">Remover</button>` : '';
+  return `<article class="an-card an-conc">
+    <div class="an-conc-topo"><div><b>@${anEsc(c.handle)}</b>${c.displayName ? `<div class="hint">${anEsc(c.displayName)}</div>` : ''}</div>${remover}</div>
+    <div class="hint">${quando}${ultima}</div>
+    <div class="an-pub-medidas">
+      ${medida('Seguidores', u && u.seguidores)}
+      ${medida('Publicações no total', u && u.totalPublicacoes)}
+      ${medida('Publicações em 30 dias', u && u.publicacoes30d)}
+      ${medida('Por semana', porSemana)}
+      ${medida('Engajamento médio', u && u.engajamentoMedio)}
+    </div>
+    ${tipos ? `<div class="an-chips">${tipos}</div>` : ''}
+    ${grafico}
+  </article>`;
+}
+
+async function anAdicionarConc(ev) {
+  ev.preventDefault();
+  const handle = document.getElementById('an-conc-handle').value;
+  const nome = document.getElementById('an-conc-nome').value;
+  anStatusConc('Consultando o perfil na Meta…');
+  const r = await anApiConc('concorrentes-adicionar', { handle, displayName: nome });
+  if (!r.ok) { anStatusConc(r.erro, true); return; }
+  window.anConc = null;
+  window.anConcAviso = { texto: `@${r.dados.concorrente.handle} cadastrado.`, erro: false };
+  anCarregarConcorrentes();
+}
+
+async function anRemoverConc(id, handle) {
+  if (!confirm(`Remover @${handle}? O histórico dela também será apagado.`)) return;
+  anStatusConc('Removendo…');
+  const r = await anApiConc('concorrentes-remover', { id });
+  if (!r.ok) { anStatusConc(r.erro, true); return; }
+  window.anConc = null;
+  window.anConcAviso = { texto: `@${handle} removido.`, erro: false };
+  anCarregarConcorrentes();
+}
+
+async function anAtualizarConc() {
+  anStatusConc('Atualizando os concorrentes… isso pode levar alguns segundos.');
+  const r = await anApiConc('concorrentes-sincronizar', {});
+  if (!r.ok || !r.dados.ok) { anStatusConc(r.erro || r.dados.erro || 'Não foi possível atualizar.', true); return; }
+  const resultados = r.dados.resultados || [];
+  const falhas = resultados.filter((x) => !x.ok);
+  window.anConc = null;
+  if (falhas.length) window.anConcAviso = { texto: falhas.map((x) => x.erro).join(' '), erro: true };
+  else window.anConcAviso = { texto: resultados.length ? 'Concorrentes atualizados.' : 'Nenhum concorrente para atualizar.', erro: false };
+  anCarregarConcorrentes();
 }
 
 // ── ESTRATÉGIA ────────────────────────────────────────────────────────────
