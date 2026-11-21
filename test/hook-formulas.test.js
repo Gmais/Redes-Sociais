@@ -1,6 +1,7 @@
 // Fórmulas de gancho do ig-reel: identificação por expressão regular, sem rede.
 const assert = require('assert');
 const H = require('../lib/hook-formulas');
+const P = require('../lib/publicacoes');
 
 assert.strictEqual(H.FORMULAS.length, 26);
 assert.strictEqual(H.identificarFormula(''), null);
@@ -19,4 +20,10 @@ assert.deepStrictEqual(H.identificarFormula('Ninguém te conta isso sobre academ
 assert.deepStrictEqual(H.identificarFormula('Por que você ainda posta sem estratégia?'), { id: 16, nome: 'The Verbatim Question' });
 // Palavras que terminam com acento precisam casar (o \b do JavaScript não reconhece acento)
 assert.deepStrictEqual(H.identificarFormula('Se você treina 3x por semana, leia isso'), { id: 10, nome: 'If This, Then Watch' });
+
+// Na lista de publicações: só Reels recebem fórmula, pela primeira linha da legenda
+assert.strictEqual(P.formulaDoPost({ content_type: 'reel', caption: 'Ninguém te conta isso\nResto da legenda' }), 'Nobody Tells You');
+assert.strictEqual(P.formulaDoPost({ content_type: 'post', caption: 'Ninguém te conta isso' }), null, 'post que não é Reel fica sem fórmula');
+assert.strictEqual(P.formulaDoPost({ content_type: 'reel', caption: '' }), null, 'legenda vazia fica sem fórmula');
+assert.strictEqual(P.formulaDoPost({ content_type: 'reel', caption: null }), null);
 console.log('hook-formulas: ok');

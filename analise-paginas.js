@@ -322,9 +322,9 @@ function pzHtmlViral(lista, concR, emp) {
   let corpo;
   if (!d.suficiente) corpo = pzAviso('info', 'Poucas publicações medidas', 'Preciso de pelo menos 4 publicações com visualizações para comparar com a sua mediana.');
   else if (!d.itens.length) corpo = `<div class="muted" style="font-size:13px">Nenhuma publicação passou de 1,5 vez a sua mediana de ${fmtI(d.mediana)} visualizações.</div>`;
-  else corpo = `<ol style="margin:0;padding-left:18px;display:grid;gap:8px">${d.itens.map((p) => `<li style="font-size:13px">${pzEsc(p.tipoLabel)} · ${AnInsights.dataHora(p.publicadoEm)} · <b>${fmtI(p.valor)}</b> visualizações, ${p.vezesMediana}× a mediana${p.permalink ? ` · <a href="${pzEsc(p.permalink)}" target="_blank" rel="noopener">abrir</a>` : ''}</li>`).join('')}</ol>`;
+  else corpo = `<ol style="margin:0;padding-left:18px;display:grid;gap:8px">${d.itens.map((p) => `<li style="font-size:13px">${pzEsc(p.tipoLabel)} · ${AnInsights.dataHora(p.publicadoEm)} · <b>${fmtI(p.valor)}</b> visualizações, ${p.vezesMediana}× a mediana${p.formula ? ` · fórmula: <b>${pzEsc(p.formula)}</b>` : ''}${p.permalink ? ` · <a href="${pzEsc(p.permalink)}" target="_blank" rel="noopener">abrir</a>` : ''}</li>`).join('')}</ol>`;
   return `<div class="pz-card s12" style="margin-bottom:16px">
-    <div class="pz-card-h"><div><h3>O que se destacou</h3><small>Publicações acima de 1,5 vez a sua mediana de visualizações. Nada é estimado.${d.suficiente ? ` Mediana: ${fmtI(d.mediana)}.` : ''}</small></div></div>
+    <div class="pz-card-h"><div><h3>O que se destacou</h3><small>Publicações acima de 1,5 vez a sua mediana de visualizações. Nada é estimado. A fórmula de gancho vem da primeira linha da legenda, só em Reels.${d.suficiente ? ` Mediana: ${fmtI(d.mediana)}.` : ''}</small></div></div>
     ${comparacao}${corpo}
   </div>`;
 }
