@@ -96,7 +96,6 @@ async function pzPaginaEmpresa(el, id, sub, tok) {
   const contas = await pzContas();
   if (tok !== PZ.token) return;
   if (!contas.ok) { el.innerHTML = pzAviso('erro', 'Não foi possível carregar as contas', contas.erro); return; }
-  pzAtualizarCab();
   const dados = contas.dados;
   const conta = pzContaDaEmpresa(dados, id);
   if (conta) PZ.contaPor[id] = conta;
@@ -521,6 +520,16 @@ async function pzGerarIA() {
   pzRender();
 }
 
+// Topo da aba Contas: última sincronização e saída da conta.
+function pzAcoesContas() {
+  const ultima = pzUltimaSincronizacao();
+  const sync = ultima
+    ? `<span class="pz-pill ok">Sincronizado ${pzEsc(AnInsights.dataHora(ultima))}</span>`
+    : '<span class="pz-pill warn">Sem sincronização ainda</span>';
+  const inicial = pzEsc(((PZ.sessao && PZ.sessao.user && PZ.sessao.user.email) || '?').charAt(0).toUpperCase());
+  return `${sync}<span class="pz-avatar" aria-hidden="true">${inicial}</span><button type="button" class="pz-btn fantasma sm" onclick="pzSair()">Sair</button>`;
+}
+
 // ── Contas (conexões e empresa de cada conta) ────────────────────────────────
 async function pzSecContas(el, emp, dados, tok) {
   const todas = dados.accounts || [];
@@ -564,7 +573,7 @@ async function pzSecContas(el, emp, dados, tok) {
        <button type="button" class="pz-btn fantasma" onclick="pzImportarPortfolio()">Importar do portfólio</button>
        <button type="button" class="pz-btn escuro" onclick="pzSincronizar()">Sincronizar agora</button>`
     : '<span class="muted">Só owner ou admin conectam contas e sincronizam.</span>';
-  el.innerHTML = pzCabecalho('Contas', `Contas de ${emp.nome} e a sincronização. A sincronização automática roda todo dia, às 08h (Brasília).`) +
+  el.innerHTML = pzCabecalho('Contas', `Contas de ${emp.nome} e a sincronização. A sincronização automática roda todo dia, às 08h (Brasília).`, pzAcoesContas()) +
     `<div class="pz-grid">
       <div class="pz-card s12"><div class="pz-card-h"><div><h3>Conectar e sincronizar</h3><small>Você entra no login oficial da Meta. Nenhuma senha de rede social é pedida.</small></div></div>
         <div class="pz-chips">${acoes}</div></div>

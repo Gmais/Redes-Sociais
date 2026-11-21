@@ -149,8 +149,9 @@ const emp = PZ_EMPRESAS[0];
 
   semLixo(run("pzHtmlLogin")(), 'login');
   semLixo(run("pzHtmlSemOrg")(), 'sem organização');
-  semLixo(run("pzHtmlCab")(emp), 'cabeçalho da empresa');
-  assert.ok(run("pzHtmlCab")(emp).includes('Academia'));
+  semLixo(run("pzHtmlBarra")(emp), 'barra da empresa');
+  assert.ok(run("pzHtmlBarra")(emp).includes('pz-sub'));
+  assert.ok(run("pzHtmlBarra")(emp).includes('pz-seg'));
   semLixo(run("pzKpi")('Alcance', '400', { delta: 33.3, serie: [1, 2, 3] }), 'indicador');
   semLixo(run("pzKpi")('Alcance', 'n/d', { delta: null }), 'indicador sem comparação');
   semLixo(run("pzPostCard")(pubs[0], 47), 'card de publicação');

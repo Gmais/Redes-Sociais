@@ -270,16 +270,17 @@ function pzRender() {
   const emp = pzEmpresaAtual();
   const sub = pzSubAtual();
   pzTela(`<div class="pz" style="--c:${emp.cor}">
-    ${pzHtmlCab(emp)}
-    <nav class="pz-sub" aria-label="Seções de ${pzEsc(emp.nome)}" role="tablist">${PZ_SUBS.map(([v, t]) =>
-      `<button type="button" role="tab" aria-selected="${sub === v}" class="${sub === v ? 'on' : ''}" onclick="pzSubir('${v}')">${t}</button>`).join('')}</nav>
+    ${pzHtmlBarra(emp)}
     <div id="pz-pagina"></div>
   </div>`);
   pzDesenharEmpresa(emp.id, ++PZ.token, sub);
 }
 
-// Cabeçalho da empresa: nome, contas, período e sincronização. Sai com a conta da empresa.
-function pzHtmlCab(emp) {
+// Barra da empresa: as abas da análise e o período, numa linha só, sem cabeçalho separado.
+function pzHtmlBarra(emp) {
+  const sub = pzSubAtual();
+  const nav = `<nav class="pz-sub" aria-label="Seções de ${pzEsc(emp.nome)}" role="tablist">${PZ_SUBS.map(([v, t]) =>
+    `<button type="button" role="tab" aria-selected="${sub === v}" class="${sub === v ? 'on' : ''}" onclick="pzSubir('${v}')">${t}</button>`).join('')}</nav>`;
   const seg = [['7', '7 dias'], ['30', '30 dias'], ['90', '90 dias'], ['custom', 'Outro']]
     .map(([v, t]) => `<button type="button" class="${PZ.periodo.tipo === v ? 'on' : ''}" onclick="pzPeriodoSet('${v}')" aria-pressed="${PZ.periodo.tipo === v}">${t}</button>`).join('');
   const datas = PZ.periodo.tipo === 'custom'
@@ -287,29 +288,7 @@ function pzHtmlCab(emp) {
        <input type="date" class="pz-campo pequeno" id="pz-fim" value="${pzEsc(PZ.periodo.fim)}" aria-label="Data final">
        <button type="button" class="pz-btn primario sm" onclick="pzAplicarPeriodo()">Aplicar</button>`
     : '';
-  const hit = PZ.cache['contas:' + PZ.org];
-  const lista = hit && hit.v.dados ? (hit.v.dados.accounts || []) : null;
-  const ig = lista ? pzIgDaEmpresa({ accounts: lista }, emp.id).length : null;
-  const ultima = pzUltimaSincronizacao();
-  const sync = lista === null ? ''
-    : !lista.length ? '<span class="pz-pill warn">Nenhuma conta conectada</span>'
-    : ultima ? `<span class="pz-pill ok" title="Última sincronização das contas">Sincronizado ${pzEsc(AnInsights.dataHora(ultima))}</span>`
-    : '<span class="pz-pill warn">Contas ainda não sincronizadas</span>';
-  const resumo = ig === null ? '' : ig ? `${ig} conta(s) do Instagram` : 'Sem conta do Instagram ainda';
-  const inicial = pzEsc(((PZ.sessao && PZ.sessao.user && PZ.sessao.user.email) || '?').charAt(0).toUpperCase());
-  return `<header class="pz-cab" id="pz-cab">
-    <div class="pz-cab-marca"><span class="pz-empresa-ico" aria-hidden="true">${emp.ini}</span><div><h1>${pzEsc(emp.nome)}</h1><small>${pzEsc(resumo)}</small></div></div>
-    ${sync}
-    <div class="pz-seg" role="group" aria-label="Período da análise">${seg}</div>
-    ${datas}
-    <div class="pz-usuario"><span class="pz-avatar" aria-hidden="true">${inicial}</span><button type="button" class="pz-btn fantasma sm" onclick="pzSair()">Sair</button></div>
-  </header>`;
-}
-
-// Refaz só o cabeçalho (depois que as contas chegam), sem redesenhar a página.
-function pzAtualizarCab() {
-  const atual = document.getElementById('pz-cab');
-  if (atual) atual.outerHTML = pzHtmlCab(pzEmpresaAtual());
+  return `<div class="pz-barra">${nav}<div class="pz-barra-dir"><div class="pz-seg" role="group" aria-label="Período da análise">${seg}</div>${datas}</div></div>`;
 }
 
 function pzPeriodoSet(tipo) {
