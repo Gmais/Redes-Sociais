@@ -283,6 +283,20 @@ body[data-tab="analise"] .tabs-wrap { background: rgba(245,246,251,.85); backdro
   .pz-login-card { padding: 26px; }
 }
 
+/* Aba Análise ocupa a tela toda (o app limita o main a 800px para as outras abas) */
+body[data-tab="analise"] main { max-width: none; padding: 0; margin: 0; }
+
+/* Cartões de empresa: a grade se ajusta sozinha à largura disponível */
+.pz-empresas { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 16px; }
+.pz-empresas .pz-empresa { cursor: pointer; }
+.pz-empresa .pz-btn { white-space: normal; text-align: center; }
+.pz-pill { white-space: normal; }
+
+/* Banner de próximo passo, no topo do Resumo */
+.pz-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; color: #fff; border-radius: 22px; padding: 18px 22px; margin-bottom: 16px; background: radial-gradient(500px 200px at 100% 0%, rgba(255,95,162,.35), transparent 60%), radial-gradient(500px 200px at 0% 100%, rgba(109,74,255,.55), transparent 60%), #0F1222; box-shadow: 0 24px 50px -28px rgba(15,18,34,.8); }
+.pz-banner b { display: block; font-size: 16px; font-weight: 800; letter-spacing: -.01em; margin-bottom: 4px; }
+.pz-banner span { color: rgba(255,255,255,.78); font-size: 13px; }
+
 /* Lista da análise com IA */
 .pz-ia-lista { margin: 0; padding-left: 18px; color: var(--ink2); }
 .pz-ia-lista li { margin: 6px 0; line-height: 1.5; }

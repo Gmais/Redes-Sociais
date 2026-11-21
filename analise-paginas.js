@@ -75,15 +75,6 @@ function pzHtmlDestaques(lista, titulo = 'Destaques do período', texto = 'Frase
     </div>`;
 }
 
-function pzSaudacao() {
-  const h = (new Date().getUTCHours() - 3 + 24) % 24;
-  return h < 12 ? 'Bom dia' : (h < 18 ? 'Boa tarde' : 'Boa noite');
-}
-function pzPrimeiroNome() {
-  const e = (PZ.sessao && PZ.sessao.user && PZ.sessao.user.email) || '';
-  const n = e.split('@')[0].split(/[._-]/)[0] || '';
-  return n ? n.charAt(0).toUpperCase() + n.slice(1) : '';
-}
 
 // ── Resumo ───────────────────────────────────────────────────────────────────
 async function pzPaginaResumo(el, tok) {
@@ -113,7 +104,7 @@ async function pzPaginaResumo(el, tok) {
     return `<article class="pz-card pz-empresa s4" style="--c:${e.cor}" onclick="pzIr('${e.id}')" tabindex="0" onkeydown="if(event.key==='Enter')pzIr('${e.id}')" aria-label="Abrir ${pzEsc(e.nome)}">
       <div class="pz-empresa-topo">
         <span class="pz-empresa-ico" style="--c:${e.cor}">${e.ini}</span>
-        <div><h3>${pzEsc(e.nome)}</h3><small>${contasDaEmpresa.length} conta(s) ligada(s)</small></div>
+        <div><h3>${pzEsc(e.nome)}</h3><small>${contasDaEmpresa.length ? contasDaEmpresa.length + ' conta(s) ligada(s)' : 'Nenhuma conta ligada'}</small></div>
       </div>
       ${sem
         ? '<span class="pz-pill warn">Sem conta do Instagram</span>'
@@ -123,7 +114,7 @@ async function pzPaginaResumo(el, tok) {
             <div><b>${engajamento == null ? 'n/d' : fmtI(engajamento)}</b><span>engajamento</span></div>
             <div><b>${ok && ok.saldoSeguidores != null ? AnInsights.fmtSinal(ok.saldoSeguidores, 0) : 'n/d'}</b><span>saldo de seguidores</span></div>
           </div>`}
-      <span class="pz-btn fantasma sm" style="align-self:flex-start">Abrir ${pzEsc(e.nome)} ${pzIco('seta')}</span>
+      <span class="pz-btn ${sem ? 'primario' : 'fantasma'} sm" style="align-self:flex-start">${sem ? 'Ligar conta do Instagram' : 'Abrir ' + pzEsc(e.nome)} ${pzIco('seta')}</span>
     </article>`;
   }).join('');
 
@@ -160,10 +151,19 @@ async function pzPaginaResumo(el, tok) {
        <button type="button" class="pz-btn fantasma sm" style="margin-top:14px" onclick="pzIr('ia')">Ver análise completa</button>`
     : pzVazio('🧠', 'Nenhuma análise ainda', 'A análise com IA usa só números reais do período e diz o que falta quando faltam dados.', '<button type="button" class="pz-btn primario" onclick="pzIr(\'ia\')">Gerar análise</button>');
 
+  // Próximo passo, em destaque: conectar contas, ou ligar as que ainda não estão em uma empresa.
+  const todas = dados.accounts || [];
+  const semEmpresa = todas.filter((c) => !c.empresa);
+  const banner = !todas.length
+    ? `<div class="pz-banner"><div><b>Conecte o Instagram para começar</b><span>Depois de conectar, escolha a empresa de cada conta. As análises aparecem na página certa.</span></div><button type="button" class="pz-btn primario" onclick="pzIr('conexoes')">Conectar contas</button></div>`
+    : semEmpresa.length
+      ? `<div class="pz-banner"><div><b>${semEmpresa.length} conta(s) ainda não estão em uma empresa</b><span>Ligue cada conta à empresa dela. Assim as análises aparecem na página certa.</span></div><button type="button" class="pz-btn primario" onclick="pzIr('conexoes')">Ligar contas às empresas</button></div>`
+      : '';
   el.innerHTML = `
-    ${pzCabecalho(`${pzSaudacao()}${pzPrimeiroNome() ? ', ' + pzPrimeiroNome() : ''}`, `Período ${AnInsights.diaCurto(p.ini)} a ${AnInsights.diaCurto(p.fim)} · ${PZ_EMPRESAS.length} empresas. Escolha uma empresa para ver os detalhes.`)}
+    ${pzCabecalho('Resumo', `Período ${AnInsights.diaCurto(p.ini)} a ${AnInsights.diaCurto(p.fim)}. Três empresas: escolha uma para ver os detalhes.`)}
+    ${banner}
+    <div class="pz-empresas">${cartoes}</div>
     <div class="pz-grid">
-      ${cartoes}
       ${destaques.length ? pzHtmlDestaques(destaques, 'Visão da organização', 'Somas e comparações das empresas com conta do Instagram.') : ''}
       <div class="pz-card s4"><div class="pz-card-h"><div><h3>Atenção</h3><small>O que precisa de ajuste</small></div></div>${listaAtencao}</div>
       <div class="pz-card s4"><div class="pz-card-h"><div><h3>Concorrentes</h3><small>Dados públicos</small></div></div>${resumoConc}</div>

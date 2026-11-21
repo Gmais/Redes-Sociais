@@ -152,4 +152,48 @@ semLixo(contexto.pzContasEmpresa(emp, dadosContas), 'contas da empresa');
 semLixo(contexto.pzCabecalhoEmpresa(emp, dadosContas), 'cabeçalho da empresa');
 assert.strictEqual(contexto.pzContaDaEmpresa(dadosContas, 'academia'), 'c1', 'a conta do Instagram é a das análises');
 
+// 8) Resumo de ponta a ponta com uma API simulada (contas, métricas, concorrentes e IA)
+(async () => {
+let chamadasContas = 0;
+const respostas = {
+  contas: { ok: true, role: 'owner', accounts: [
+    { id: 'c1', platform: 'instagram', username: 'planetacorpoclubmais', status: 'active', empresa: 'academia', last_synced_at: '2026-11-21T11:00:00Z' },
+    { id: 'c2', platform: 'instagram', username: 'sorvetesguriturvo', status: 'active', empresa: null, last_synced_at: null }
+  ] },
+  concorrentes: { ok: true, papel: 'owner', concorrentes: [], avisoConsulta: null },
+  'ia-historico': { ok: true, papel: 'owner', analises: [] }
+};
+contexto.fetch = async (url) => {
+  const acao = /acao=([\w-]+)/.exec(url)[1];
+  if (acao === 'contas') chamadasContas += 1;
+  // Pausa curta para os pedidos iguais se sobreporem de verdade
+  await new Promise((r) => setTimeout(r, 5));
+  const corpo = acao === 'metricas' ? metricas : respostas[acao];
+  return { ok: true, status: 200, json: async () => corpo, text: async () => '' };
+};
+
+// Pedidos iguais em paralelo viram uma só busca
+PZ.cache = {};
+await Promise.all([vm.runInContext('pzContas()', contexto), vm.runInContext('pzContas()', contexto)]);
+assert.strictEqual(chamadasContas, 1, 'dois pedidos iguais fazem uma só chamada');
+
+const tela = { innerHTML: '' };
+await contexto.pzPaginaResumo(tela, PZ.token);
+semLixo(tela.innerHTML, 'resumo');
+assert.ok(tela.innerHTML.includes('1 conta(s) ainda não estão em uma empresa'), 'banner: conta sem empresa');
+assert.ok(tela.innerHTML.includes('Ligar contas às empresas'), 'banner tem o próximo passo');
+assert.ok(tela.innerHTML.includes('Nenhuma conta ligada'), 'empresa sem conta diz isso, sem zero');
+assert.ok(tela.innerHTML.includes('Ligar conta do Instagram'), 'cartão sem conta tem a ação certa');
+assert.ok(!tela.innerHTML.includes('Apcturvo') && !tela.innerHTML.includes('Boa tarde,'), 'sem saudação com nome tirado do e-mail');
+assert.ok(tela.innerHTML.includes('Resumo'), 'título da página');
+
+// Barra de topo: com contas carregadas, mostra a última sincronização
+const topo = contexto.pzHtmlTopo();
+semLixo(topo, 'topo com contas');
+assert.ok(topo.includes('Sincronizado'), 'topo mostra a última sincronização das contas');
+
 console.log('ok (analise-render)');
+})().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

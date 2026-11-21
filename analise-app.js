@@ -18,7 +18,8 @@ const PZ = {
   token: 0,
   cache: {},
   charts: {},
-  aviso: null
+  aviso: null,
+  voo: {}
 };
 
 const PZ_CHAVE_ORG = 'an_org_ativa';
@@ -115,12 +116,22 @@ async function pzApi(acao, opts = {}) {
   }
 }
 
+// Cache curto e sem busca duplicada: pedidos iguais enquanto um ainda anda compartilham a mesma resposta.
 async function pzCache(chave, buscar, ttl = 60000) {
   const hit = PZ.cache[chave];
   if (hit && Date.now() - hit.t < ttl) return hit.v;
-  const v = await buscar();
-  if (v && v.ok) PZ.cache[chave] = { t: Date.now(), v };
-  return v;
+  if (PZ.voo[chave]) return PZ.voo[chave];
+  const busca = (async () => {
+    try {
+      const v = await buscar();
+      if (v && v.ok) PZ.cache[chave] = { t: Date.now(), v };
+      return v;
+    } finally {
+      delete PZ.voo[chave];
+    }
+  })();
+  PZ.voo[chave] = busca;
+  return busca;
 }
 function pzLimparCache() { PZ.cache = {}; }
 
@@ -250,6 +261,14 @@ function pzRender() {
   pzDesenharPagina();
 }
 
+// Refaz só o menu lateral e a barra de topo (dependem das contas, que chegam depois da primeira pintura).
+function pzAtualizarChrome() {
+  const rail = document.querySelector('.pz-rail');
+  if (rail) rail.outerHTML = pzHtmlRail();
+  const topo = document.querySelector('.pz-top');
+  if (topo) topo.outerHTML = pzHtmlTopo();
+}
+
 function pzTituloPagina() {
   const emp = PZ_EMPRESAS.find((e) => e.id === PZ.pagina);
   if (emp) return emp.nome;
@@ -285,10 +304,14 @@ function pzHtmlTopo() {
        <input type="date" class="pz-campo pequeno" id="pz-fim" value="${pzEsc(PZ.periodo.fim)}" aria-label="Data final">
        <button type="button" class="pz-btn primario sm" onclick="pzAplicarPeriodo()">Aplicar</button>`
     : '';
+  // Enquanto as contas não chegaram, o indicador fica vazio (não mostra "sem sincronização" por engano).
+  const hit = PZ.cache['contas:' + PZ.org];
+  const lista = hit && hit.v.dados ? (hit.v.dados.accounts || []) : null;
   const ultima = pzUltimaSincronizacao();
-  const sync = ultima
-    ? `<span class="pz-pill ok" title="Última sincronização das contas">Sincronizado ${pzEsc(AnInsights.dataHora(ultima))}</span>`
-    : '<span class="pz-pill warn">Sem sincronização ainda</span>';
+  const sync = lista === null ? ''
+    : !lista.length ? '<span class="pz-pill warn">Nenhuma conta conectada</span>'
+    : ultima ? `<span class="pz-pill ok" title="Última sincronização das contas">Sincronizado ${pzEsc(AnInsights.dataHora(ultima))}</span>`
+    : '<span class="pz-pill warn">Contas ainda não sincronizadas</span>';
   const inicial = pzEsc(((PZ.sessao && PZ.sessao.user && PZ.sessao.user.email) || '?').charAt(0).toUpperCase());
   return `<header class="pz-top">
     <div class="pz-titulo-mini">${pzEsc(pzTituloPagina())}</div>
@@ -347,6 +370,7 @@ function pzDesenharPagina() {
     : p === 'ia' ? () => pzPaginaIA(el, tok)
     : p === 'conexoes' ? () => pzPaginaConexoes(el, tok)
     : () => pzPaginaResumo(el, tok);
+  pzContas().then((r) => { if (tok === PZ.token && r.ok) pzAtualizarChrome(); });
   Promise.resolve().then(tarefa).catch((e) => {
     console.error('análise:', e);
     el.innerHTML = pzAviso('erro', 'Algo não carregou', 'Tente de novo. Se continuar, recarregue a página.');
