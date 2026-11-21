@@ -297,11 +297,12 @@ async function pzSecPublicacoes(el, emp, dados, conta, tok) {
   const cabeca = pzBarraConta(emp, dados, conta) + pzBoxRespostas();
   if (!res.ok) { el.innerHTML = cabeca + barra + pzAviso('erro', 'Não foi possível carregar as publicações', res.erro); return; }
   const lista = res.dados.publicacoes || [];
+  PZ.listaPub = lista;
   const concR = await pzConcorrentes();
   if (tok !== PZ.token) return;
   if (!lista.length) { el.innerHTML = cabeca + barra + pzVazio('🖼️', 'Nenhuma publicação com estes filtros', 'Troque o tipo ou sincronize as contas em Configurações.'); return; }
   const max = Math.max(...lista.map((p) => p.engajamento || 0), 1);
-  el.innerHTML = cabeca + barra + pzHtmlViral(lista, concR, emp) + `<div class="pz-posts">${lista.slice(0, 60).map((p) => pzPostCard(p, max)).join('')}</div>
+  el.innerHTML = cabeca + barra + pzHtmlViral(lista, concR, emp) + pzBoxAuditoria() + `<div class="pz-posts">${lista.slice(0, 60).map((p) => pzPostCard(p, max)).join('')}</div>
     <div class="muted" style="font-size:12px;margin-top:14px">Até 60 publicações mais recentes. A ordenação vale para estas publicações.</div>`;
 }
 
@@ -326,6 +327,75 @@ function pzHtmlViral(lista, concR, emp) {
     <div class="pz-card-h"><div><h3>O que se destacou</h3><small>Publicações acima de 1,5 vez a sua mediana de visualizações. Nada é estimado.${d.suficiente ? ` Mediana: ${fmtI(d.mediana)}.` : ''}</small></div></div>
     ${comparacao}${corpo}
   </div>`;
+}
+
+// ig-audit: post-mortem das publicações carregadas, com a IA (só lê os números sincronizados).
+function pzBoxAuditoria() {
+  if (!pzPode('editor')) return '';
+  return `<div class="pz-card s12" style="margin-bottom:16px">
+    <div class="pz-card-h"><div><h3>Análise com IA</h3><small>Diz o que funcionou, o que parar de fazer e o que testar, usando só os números das publicações acima.</small></div>
+      <button type="button" class="pz-btn primario sm" onclick="pzAuditoriaIA()">Analisar com IA</button></div>
+    <div id="pz-aud-saida"></div>
+  </div>`;
+}
+
+async function pzAuditoriaIA() {
+  const saida = document.getElementById('pz-aud-saida');
+  const lista = PZ.listaPub || [];
+  if (lista.length < 4) { saida.innerHTML = pzAviso('info', 'Poucas publicações', 'Preciso de pelo menos 4 publicações com números para analisar.'); return; }
+  const linhas = lista.slice(0, 30).map((p, i) => `#${i + 1} | ${p.tipoLabel} | ${p.publicadoEm ? AnInsights.dataHora(p.publicadoEm) : 'sem data'} | alcance ${p.alcance ?? 'n/d'} | visualizações ${p.visualizacoes ?? 'n/d'} | curtidas ${p.curtidas ?? 'n/d'} | comentários ${p.comentarios ?? 'n/d'} | legenda: ${String(p.legenda || '').slice(0, 120)}`);
+  saida.innerHTML = '<div class="pz-skel" style="min-height:70px"></div>';
+  const r = await pzApi('escrita', { corpo: { tipo: 'auditoria', pedido: `Publicações (mais recentes primeiro):\n${linhas.join('\n')}` } });
+  if (!r.ok) { saida.innerHTML = pzAviso('erro', 'Não foi possível analisar', r.erro); return; }
+  saida.innerHTML = `<div style="white-space:pre-line;font-size:14px;line-height:1.55;margin-top:12px">${pzEsc(r.dados.texto)}</div>`
+    + (r.dados.notas || []).map((n) => pzAviso('info', 'Atenção', n)).join('');
+}
+
+// ig-profile: auditoria do perfil com o que a API mostra. Itens que a API não mostra ficam fora da nota.
+function pzBoxPerfil(contaId) {
+  if (!contaId || !pzPode('viewer')) return '';
+  return `<div class="pz-card s12" style="margin-bottom:16px">
+    <div class="pz-card-h"><div><h3>Perfil do Instagram</h3><small>Nota com o que a API mostra: nome, bio, link, usuário e atividade. Destaques, posts fixados e capas não aparecem na API, então não entram na nota.</small></div>
+      <button type="button" class="pz-btn primario sm" onclick="pzPerfilAuditar('${pzEsc(contaId)}')">Auditar perfil</button></div>
+    <div id="pz-perfil-saida"></div>
+  </div>`;
+}
+
+async function pzPerfilAuditar(contaId) {
+  const saida = document.getElementById('pz-perfil-saida');
+  saida.innerHTML = '<div class="pz-skel" style="min-height:90px"></div>';
+  const r = await pzApi('perfil', { query: { conta: contaId } });
+  if (!r.ok) { saida.innerHTML = pzAviso('erro', 'Não foi possível auditar o perfil', r.erro); return; }
+  const d = r.dados;
+  PZ.perfilAtual = d;
+  const itens = d.itens.map((i) => `<li style="margin:6px 0"><b>${pzEsc(i.titulo)}</b>: <span class="pz-pill ${i.status === 'ok' ? 'ok' : i.status === 'parcial' ? 'warn' : 'bad'}">${i.pontos}/${i.max}</span>${i.dica ? ` <span class="muted">${pzEsc(i.dica)}</span>` : ''}</li>`).join('');
+  const naoVer = d.naoVerificados.map((i) => i.titulo).join(', ');
+  saida.innerHTML = `<div style="display:flex;gap:14px;align-items:baseline;margin-top:12px"><b style="font-size:34px">${d.nota}</b><span class="muted">de 100, nos itens que a API mostra</span></div>
+    <ul style="margin:10px 0 0;padding-left:18px">${itens}</ul>
+    <div class="muted" style="font-size:12px;margin-top:10px">Não verificado pela API (fora da nota): ${pzEsc(naoVer)}.</div>
+    <div class="pz-form" style="margin-top:14px;flex-direction:column;align-items:stretch">
+      <label class="pz-rotulo">Quem você é e o que oferece (para reescrever a bio)
+        <textarea class="pz-campo" id="pz-perfil-oferta" rows="3" maxlength="600" placeholder="Ex.: personal trainer de corrida para iniciantes, turmas às terças e quintas"></textarea></label>
+      <button type="button" class="pz-btn fantasma sm" style="align-self:flex-start" onclick="pzPerfilBio()">Sugerir bio</button>
+    </div>
+    <div id="pz-perfil-bio"></div>`;
+}
+
+async function pzPerfilBio() {
+  const d = PZ.perfilAtual;
+  const alvo = document.getElementById('pz-perfil-bio');
+  const oferta = (document.getElementById('pz-perfil-oferta').value || '').trim();
+  if (!d) return;
+  if (!oferta) { alvo.innerHTML = pzAviso('info', 'Descreva a oferta', 'Preciso de quem você é e do que oferece para escrever a bio sem inventar nada.'); return; }
+  alvo.innerHTML = '<div class="pz-skel" style="min-height:60px"></div>';
+  const pedido = `Bio atual: ${d.bio || '(vazia)'}\nNome: ${d.nome || '(sem nome)'}\nQuem é e o que oferece: ${oferta}`;
+  const r = await pzApi('escrita', { corpo: { tipo: 'bio', pedido } });
+  if (!r.ok) { alvo.innerHTML = pzAviso('erro', 'Não foi possível sugerir a bio', r.erro); return; }
+  alvo.innerHTML = `<div class="pz-card" style="margin-top:12px"><b>Sugestão</b>
+      <div style="white-space:pre-line;margin-top:6px">${pzEsc(r.dados.texto)}</div>
+      <div class="muted" style="font-size:12px;margin-top:6px">${[...r.dados.texto].length} caracteres. Copie e edite no Instagram.</div>
+      ${(r.dados.notas || []).map((n) => pzAviso('info', 'Confira', n)).join('')}
+    </div>`;
 }
 
 function pzFiltroPub(campo, valor) {
@@ -712,6 +782,7 @@ async function pzSecContas(el, emp, dados, tok) {
     : '<span class="muted">Só owner ou admin conectam contas e sincronizam.</span>';
   el.innerHTML = pzCabecalho('Configurações', `Contas de ${emp.nome} e a sincronização. A sincronização automática roda todo dia, às 08h (Brasília).`, pzAcoesContas()) +
     `<div class="pz-grid">
+      ${pzBoxPerfil(pzContaDaEmpresa(dados, emp.id))}
       <div class="pz-card s12"><div class="pz-card-h"><div><h3>Conectar e sincronizar</h3><small>Você entra no login oficial da Meta. Nenhuma senha de rede social é pedida.</small></div></div>
         <div class="pz-chips">${acoes}</div></div>
       <div class="pz-card s12"><div class="pz-card-h"><div><h3>Contas de ${pzEsc(emp.nome)}</h3><small>Mude a empresa de uma conta pelo seletor</small></div></div>${tabelaMinhas}</div>
