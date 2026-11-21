@@ -98,6 +98,14 @@ body[data-tab="analise"]    { --bg: #120d1f; background: linear-gradient(180deg,
 .an-conc-topo { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
 .an-conc-remover { background:none; border:1px solid var(--border); color:var(--txt2); border-radius:8px; padding:4px 10px; font:600 12px 'Inter',sans-serif; cursor:pointer; }
 .an-conc-remover:hover { color:#ff8a8a; border-color:#ff8a8a; }
+.an-ia-topo { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+.an-ia h3 { margin:4px 0 8px; }
+.an-ia h4 { margin:14px 0 4px; font-size:13px; color:var(--txt2); }
+.an-ia p { margin:0; line-height:1.5; color:var(--txt); }
+.an-ia ul { margin:0; padding-left:18px; }
+.an-ia li { margin:4px 0; color:var(--txt2); line-height:1.45; }
+.an-ia-hist { margin-top:14px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.an-ia-hist h3 { width:100%; margin:0; }
 .an-empty { text-align:center; padding:56px 20px; background:var(--s1); border:1px dashed var(--border); border-radius:14px; color:var(--txt3); }
 .an-empty .eico { font-size:36px; margin-bottom:12px; }
 .an-empty h3 { color:var(--txt2); font:600 16px 'Inter',sans-serif; margin-bottom:6px; }
@@ -1097,7 +1105,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 
         <section class="an-sec" id="an-ia">
           <div class="an-head"><div><h2>Inteligência artificial</h2><p>Análises feitas sobre os dados reais guardados no sistema.</p></div></div>
-          <div class="an-empty"><div class="eico">🧠</div><h3>Ainda não há dados para analisar</h3><p>A IA só analisa números reais. Quando faltar informação, ela vai dizer qual é a limitação, sem completar com estimativas.</p></div>
+          <div id="an-ia-body"></div>
         </section>
 
         <section class="an-sec" id="an-relatorios">
@@ -26515,6 +26523,7 @@ function anRender(){
   anRenderHorarios();
   if (document.getElementById('an-publicacoes').classList.contains('on')) anCarregarPublicacoes();
   if (document.getElementById('an-concorrentes').classList.contains('on')) anCarregarConcorrentes();
+  if (document.getElementById('an-ia').classList.contains('on')) anCarregarIA();
 }
 
 function anRenderVisao(r){
@@ -26898,8 +26907,8 @@ function anStatusConc(texto, erro) {
   el.style.color = erro ? '#ff8a8a' : '';
 }
 
-// Uma chamada à API de concorrentes. Sem corpo é GET (com a organização na URL); com corpo é POST.
-async function anApiConc(acao, corpo) {
+// Uma chamada à API da organização (concorrentes, IA). Sem corpo é GET (com a organização na URL); com corpo é POST.
+async function anApiOrg(acao, corpo) {
   const post = corpo !== undefined;
   const url = post ? `/api/analise?acao=${acao}` : `/api/analise?acao=${acao}&org=${encodeURIComponent(anOrgAtiva)}`;
   const cabecalhos = { Authorization: 'Bearer ' + anSessao.access_token };
@@ -26926,7 +26935,7 @@ async function anCarregarConcorrentes() {
   }
   el.innerHTML = '<div class="an-empty"><p>Carregando concorrentes…</p></div>';
   const org = anOrgAtiva;
-  const r = await anApiConc('concorrentes');
+  const r = await anApiOrg('concorrentes');
   if (anOrgAtiva !== org) return; // a organização mudou enquanto carregava
   if (!r.ok) {
     el.innerHTML = `<div class="an-empty"><div class="eico">⚠️</div><h3>Não foi possível carregar</h3><p>${anEsc(r.erro)}</p></div>`;
@@ -27000,7 +27009,7 @@ async function anAdicionarConc(ev) {
   const handle = document.getElementById('an-conc-handle').value;
   const nome = document.getElementById('an-conc-nome').value;
   anStatusConc('Consultando o perfil na Meta…');
-  const r = await anApiConc('concorrentes-adicionar', { handle, displayName: nome });
+  const r = await anApiOrg('concorrentes-adicionar', { handle, displayName: nome });
   if (!r.ok) { anStatusConc(r.erro, true); return; }
   window.anConc = null;
   window.anConcAviso = { texto: `@${r.dados.concorrente.handle} cadastrado.`, erro: false };
@@ -27010,7 +27019,7 @@ async function anAdicionarConc(ev) {
 async function anRemoverConc(id, handle) {
   if (!confirm(`Remover @${handle}? O histórico dela também será apagado.`)) return;
   anStatusConc('Removendo…');
-  const r = await anApiConc('concorrentes-remover', { id });
+  const r = await anApiOrg('concorrentes-remover', { id });
   if (!r.ok) { anStatusConc(r.erro, true); return; }
   window.anConc = null;
   window.anConcAviso = { texto: `@${handle} removido.`, erro: false };
@@ -27019,7 +27028,7 @@ async function anRemoverConc(id, handle) {
 
 async function anAtualizarConc() {
   anStatusConc('Atualizando os concorrentes… isso pode levar alguns segundos.');
-  const r = await anApiConc('concorrentes-sincronizar', {});
+  const r = await anApiOrg('concorrentes-sincronizar', {});
   if (!r.ok || !r.dados.ok) { anStatusConc(r.erro || r.dados.erro || 'Não foi possível atualizar.', true); return; }
   const resultados = r.dados.resultados || [];
   const falhas = resultados.filter((x) => !x.ok);
@@ -27027,6 +27036,116 @@ async function anAtualizarConc() {
   if (falhas.length) window.anConcAviso = { texto: falhas.map((x) => x.erro).join(' '), erro: true };
   else window.anConcAviso = { texto: resultados.length ? 'Concorrentes atualizados.' : 'Nenhum concorrente para atualizar.', erro: false };
   anCarregarConcorrentes();
+}
+
+// ── Inteligência artificial: análise do período ───────────────────────────────
+// O servidor calcula os números e a IA só redige a partir deles. Sem dado sincronizado, a análise diz o que falta.
+// Gerar: editor ou mais. O histórico é lido por qualquer membro.
+const AN_ROTULO_STATUS_IA = { ok: 'análise', insufficient_data: 'sem dados', error: 'erro' };
+
+function anStatusIA(texto, erro) {
+  const el = document.getElementById('an-ia-status');
+  if (!el) return;
+  el.textContent = texto;
+  el.style.color = erro ? '#ff8a8a' : '';
+}
+
+async function anCarregarIA() {
+  const el = document.getElementById('an-ia-body');
+  if (!el) return;
+  if (!anSessao || !anOrgAtiva) {
+    el.innerHTML = '<div class="an-empty"><div class="eico">🧠</div><h3>Entre para gerar análises</h3><p>A IA só analisa números reais guardados no sistema.</p></div>';
+    return;
+  }
+  if (window.anIAHist && window.anIAHist.org === anOrgAtiva) {
+    renderIA(el, window.anIAHist.dados);
+    return;
+  }
+  el.innerHTML = '<div class="an-empty"><p>Carregando análises…</p></div>';
+  const org = anOrgAtiva;
+  const r = await anApiOrg('ia-historico');
+  if (anOrgAtiva !== org) return; // a organização mudou enquanto carregava
+  if (!r.ok) {
+    el.innerHTML = `<div class="an-empty"><div class="eico">⚠️</div><h3>Não foi possível carregar</h3><p>${anEsc(r.erro)}</p></div>`;
+    return;
+  }
+  window.anIAHist = { org, dados: r.dados };
+  renderIA(el, r.dados);
+}
+
+function renderIA(el, d) {
+  const podeGerar = ['editor', 'admin', 'owner'].includes(d.papel);
+  const analises = d.analises || [];
+  const p = anResolve();
+  const real = anRealAtual();
+  const idConta = window.anState && window.anState.conta;
+  const contaEscolhida = real && real.listaContas ? real.listaContas.find((c) => c.id === idConta) : null;
+  const escopo = !idConta ? 'todas as contas do Instagram' : (contaEscolhida ? '@' + contaEscolhida.username : 'conta selecionada');
+  const aviso = window.anIAAviso;
+  window.anIAAviso = null;
+
+  const topo = `<div class="an-card an-ia-topo">
+      <div><b>Período:</b> ${anDM(p.ini)} a ${anDM(p.fim)} · <b>Conta:</b> ${anEsc(escopo)}</div>
+      <div class="hint">A IA recebe números do período, médias por tipo de publicação, horários, público agregado e o resumo dos concorrentes. Não recebe legendas nem dados individuais de seguidores.</div>
+      ${podeGerar
+        ? '<div><button type="button" id="an-ia-gerar" onclick="anGerarIA()">Gerar análise</button></div>'
+        : '<div class="hint">Para gerar uma análise, peça a um editor da organização. Você pode ler as análises já feitas.</div>'}
+      <div class="hint" id="an-ia-status" role="status" style="min-height:16px"></div>
+    </div>`;
+  const aviso2 = aviso ? `<div class="hint" style="margin-bottom:10px;${aviso.erro ? 'color:#ff8a8a' : ''}">${anEsc(aviso.texto)}</div>` : '';
+
+  const escolhida = analises.find((a) => a.id === window.anIAVer) || analises[0];
+  const corpo = escolhida
+    ? anCardIA(escolhida)
+    : '<div class="an-empty"><div class="eico">🧠</div><h3>Nenhuma análise gerada ainda</h3><p>Escolha o período e a conta acima e clique em Gerar análise.</p></div>';
+  const historico = analises.length > 1
+    ? `<div class="an-ia-hist"><h3>Histórico</h3>${analises.map((a) => `<button type="button" class="an-chip${escolhida && a.id === escolhida.id ? ' on' : ''}" onclick="anVerIA('${a.id}')">${anDM(a.periodo.ini)} a ${anDM(a.periodo.fim)} · ${anEsc(AN_ROTULO_STATUS_IA[a.status] || a.status)} · ${anDataHora(a.criadaEm)}</button>`).join('')}</div>`
+    : '';
+  el.innerHTML = aviso2 + topo + corpo + historico;
+}
+
+function anCardIA(a) {
+  const info = `<div class="hint">Período ${anDM(a.periodo.ini)} a ${anDM(a.periodo.fim)} · gerada em ${anDataHora(a.criadaEm)}${a.modelo ? ' · modelo ' + anEsc(a.modelo) : ''}</div>`;
+  const an = a.analise || {};
+  const lista = (titulo, itens) => (itens && itens.length
+    ? `<h4>${titulo}</h4><ul>${itens.map((x) => `<li>${anEsc(x)}</li>`).join('')}</ul>`
+    : '');
+  if (a.status === 'insufficient_data' || a.status === 'error') {
+    const titulo = a.status === 'error' ? 'A análise não foi gerada' : 'Dados insuficientes para analisar';
+    return `<div class="an-card an-ia">${info}<h3>${titulo}</h3>${lista('O que faltou', an.limitacoes)}</div>`;
+  }
+  return `<div class="an-card an-ia">${info}
+    <h3>Resumo</h3><p>${anEsc(an.resumo || '')}</p>
+    ${lista('Pontos fortes', an.pontos_fortes)}
+    ${lista('Pontos de atenção', an.pontos_de_atencao)}
+    ${lista('Próximos passos', an.proximos_passos)}
+    ${lista('Limitações', an.limitacoes)}
+  </div>`;
+}
+
+function anVerIA(id) {
+  window.anIAVer = id;
+  anCarregarIA();
+}
+
+async function anGerarIA() {
+  const botao = document.getElementById('an-ia-gerar');
+  const p = anResolve();
+  const conta = (window.anState && window.anState.conta) || '';
+  if (botao) botao.disabled = true;
+  anStatusIA('Analisando os dados do período… pode levar até meio minuto.');
+  const r = await anApiOrg('ia-analisar', { ini: p.ini, fim: p.fim, conta: conta || undefined });
+  if (!r.ok) {
+    anStatusIA(r.erro, true);
+    if (botao) botao.disabled = false;
+    return;
+  }
+  window.anIAHist = null;
+  window.anIAVer = r.dados.id || null;
+  window.anIAAviso = r.dados.status === 'ok'
+    ? { texto: 'Análise gerada.', erro: false }
+    : { texto: r.dados.status === 'insufficient_data' ? 'Não havia dados sincronizados neste período. Veja o motivo abaixo.' : 'A análise não foi gerada. Veja o motivo abaixo.', erro: r.dados.status === 'error' };
+  anCarregarIA();
 }
 
 // ── ESTRATÉGIA ────────────────────────────────────────────────────────────
