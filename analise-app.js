@@ -457,3 +457,6 @@ function anContaIniciar() { return pzIniciar(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', finalizar);
   else finalizar();
 })();
+
+// Abertura da página: a aba ativa é uma empresa, então a análise dela carrega junto com o conteúdo (sem passar por go()).
+pzAplicarEmpresa(document.body.dataset.tab || 'academia');

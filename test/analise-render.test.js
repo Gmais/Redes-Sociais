@@ -10,10 +10,12 @@ const raiz = path.join(__dirname, '..');
 const arquivos = ['analise-insights.js', 'analise-app.js', 'analise-paginas.js'];
 
 // Elementos da página que o código procura pelo id (os que existem no index.html).
+// Elemento falso com o mesmo formato que o navegador usa (innerHTML e classList).
+const novoElemento = (id) => ({ id, innerHTML: '', classList: { add() {}, remove() {}, toggle() {} } });
 const elementos = {
-  'pa-academia': { id: 'pa-academia', innerHTML: '' },
-  'pa-sorveteria': { id: 'pa-sorveteria', innerHTML: '' },
-  'pa-gympulse': { id: 'pa-gympulse', innerHTML: '' }
+  'pa-academia': novoElemento('pa-academia'),
+  'pa-sorveteria': novoElemento('pa-sorveteria'),
+  'pa-gympulse': novoElemento('pa-gympulse')
 };
 
 const contexto = {
@@ -196,7 +198,7 @@ const emp = PZ_EMPRESAS[0];
   PZ.empresa = 'academia';
   PZ.sub = { academia: 'visao' };
   PZ.token = 0;
-  elementos['pz-pagina'] = { id: 'pz-pagina', innerHTML: '' };
+  elementos['pz-pagina'] = novoElemento('pz-pagina');
   run('pzRender')();
   await espera(60);
   const painel = elementos['pa-academia'].innerHTML;
