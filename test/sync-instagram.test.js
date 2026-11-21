@@ -59,7 +59,8 @@ function criarFake({ expiraEm = DIAS(60), tokenPlain = 'token-atual', falhaInsig
     if (u.pathname === '/v27.0/m1/insights') return resposta(200, { data: [
       { name: 'reach', values: [{ value: 300 }] },
       { name: 'saved', values: [{ value: 5 }] },
-      { name: 'total_interactions', values: [{ value: 22 }] }
+      { name: 'total_interactions', values: [{ value: 22 }] },
+      { name: 'follows', values: [{ value: 3 }] }
     ] });
     if (u.pathname === '/v27.0/m2/insights') return resposta(200, { data: [
       { name: 'views', values: [{ value: 900 }] },
@@ -124,8 +125,11 @@ const chamadas = (log, metodo, caminho) => log.filter((x) => x.metodo === metodo
   const m1 = metricasPosts.find((x) => x.social_post_id === 'post-m1');
   assert.strictEqual(m1.saves, 5, 'saved -> saves');
   assert.strictEqual(m1.engagement, 22);
+  assert.strictEqual(m1.follows_gained, 3, 'follows -> follows_gained (post de feed)');
+  assert.ok(fake.log.find((x) => x.u.pathname === '/v27.0/m1/insights').u.searchParams.get('metric').split(',').includes('follows'), 'feed pede follows');
   const m2 = metricasPosts.find((x) => x.social_post_id === 'post-m2');
   assert.strictEqual(m2.views, 900);
+  assert.strictEqual(m2.follows_gained, null, 'reel: a Meta não informa seguidores gerados');
 
   const logs = chamadas(fake.log, 'POST', '/rest/v1/synchronization_logs')[0].corpo;
   assert.strictEqual(logs.status, 'ok');

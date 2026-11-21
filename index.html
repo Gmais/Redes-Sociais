@@ -79,6 +79,20 @@ body[data-tab="analise"]    { --bg: #120d1f; background: linear-gradient(180deg,
 .an-top b { color:var(--txt); }
 .an-card { background:var(--s1); border:1px solid var(--border); border-radius:14px; padding:20px; }
 .an-card + .an-card { margin-top:14px; }
+.an-pub-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; }
+.an-pub { padding:0; overflow:hidden; display:flex; flex-direction:column; }
+.an-pub + .an-pub { margin-top:0; }
+.an-pub-midia { aspect-ratio:1/1; background:var(--s2); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.an-pub-midia img { width:100%; height:100%; object-fit:cover; display:block; }
+.an-pub-sem-foto { color:var(--txt3); font:600 13px 'Inter',sans-serif; }
+.an-pub-corpo { padding:14px 16px 16px; display:flex; flex-direction:column; gap:10px; flex:1; }
+.an-pub-topo { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+.an-pub-tipo { font:700 11px 'Inter',sans-serif; text-transform:uppercase; letter-spacing:.05em; color:var(--txt2); background:var(--s2); border:1px solid var(--border); border-radius:999px; padding:3px 9px; }
+.an-pub-legenda { margin:0; font-size:13px; color:var(--txt2); line-height:1.45; }
+.an-pub-medidas { display:grid; grid-template-columns:1fr 1fr; gap:8px 12px; }
+.an-pub-medidas span { display:block; font-size:11px; color:var(--txt3); }
+.an-pub-medidas b { display:block; font:700 15px 'Inter',sans-serif; color:var(--txt); }
+.an-pub-link { font:600 12px 'Inter',sans-serif; color:#7c5cff; text-decoration:none; align-self:flex-start; }
 .an-empty { text-align:center; padding:56px 20px; background:var(--s1); border:1px dashed var(--border); border-radius:14px; color:var(--txt3); }
 .an-empty .eico { font-size:36px; margin-bottom:12px; }
 .an-empty h3 { color:var(--txt2); font:600 16px 'Inter',sans-serif; margin-bottom:6px; }
@@ -1063,7 +1077,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 
         <section class="an-sec" id="an-publicacoes">
           <div class="an-head"><div><h2>Publicações</h2><p>Posts, Reels e Stories com alcance, curtidas, comentários, salvamentos e compartilhamentos.</p></div></div>
-          <div class="an-empty"><div class="eico">🖼️</div><h3>Sem publicações sincronizadas</h3><p>Ordenação, filtros e a ação "Analisar com IA" aparecem aqui quando houver publicações com métricas.</p></div>
+          <div id="an-publicacoes-body"></div>
         </section>
 
         <section class="an-sec" id="an-horarios">
@@ -26396,6 +26410,7 @@ async function anSincronizar() {
     anStatus(linhas.join(' · ') || 'Nada para sincronizar.', resultados.some((x) => !x.ok));
     anContasRender();
     window.anRealChave = null; // força nova leitura dos dados sincronizados
+    window.anPub = null; // e da lista de publicações
     anRender();
   } catch (e) {
     anStatus('Falha de conexão ao sincronizar. Tente de novo.', true);
@@ -26492,6 +26507,7 @@ function anRender(){
   anRenderVisao(r);
   anRenderPublico(r);
   anRenderHorarios();
+  if (document.getElementById('an-publicacoes').classList.contains('on')) anCarregarPublicacoes();
 }
 
 function anRenderVisao(r){
@@ -26640,14 +26656,14 @@ const AN_REAIS = [
   { k: 'cliques', label: 'Cliques no link', cor: '#f5c200' }
 ];
 // Filtro por conta: todas as contas do Instagram ou uma delas (vale também para público e horários).
-function seletorConta(d) {
+function seletorConta(d, sufixo = '') {
   const opcoes = ['<option value="">Todas as contas do Instagram</option>']
     .concat((d.listaContas || []).map((c) => `<option value="${anEsc(c.id)}"${c.id === d.contaAtual ? ' selected' : ''}>@${anEsc(c.username)}</option>`))
     .join('');
   const facebook = d.temPaginaFacebook
     ? '<div class="hint" style="margin-top:6px">A Página do Facebook não tem métricas sincronizadas. Os números são só das contas do Instagram.</div>'
     : '';
-  return `<div class="an-custom" style="margin-bottom:12px"><label class="hint" for="an-conta-sel">Conta</label><select id="an-conta-sel" onchange="anMudarConta(this.value)" style="background:var(--s2);color:var(--txt);border:1px solid var(--border);border-radius:8px;padding:6px 8px">${opcoes}</select></div>${facebook}`;
+  return `<div class="an-custom" style="margin-bottom:12px"><label class="hint" for="an-conta-sel${sufixo}">Conta</label><select id="an-conta-sel${sufixo}" onchange="anMudarConta(this.value)" style="background:var(--s2);color:var(--txt);border:1px solid var(--border);border-radius:8px;padding:6px 8px">${opcoes}</select></div>${facebook}`;
 }
 function anMudarConta(id) {
   window.anState.conta = id || '';
@@ -26754,6 +26770,113 @@ function anRenderHorarios(){
 
 
 
+
+// ── Publicações ───────────────────────────────────────────────────────────────
+// Lista as publicações sincronizadas, com filtro por rede social (a mesma conta da Visão geral),
+// por tipo e ordenação. A ordenação vale para as publicações carregadas (até 60, as mais recentes).
+// Sem dados sincronizados, a tela não mostra exemplos: diz o que falta.
+const AN_TIPOS_PUB = [['', 'Todos'], ['post', 'Posts'], ['reel', 'Reels'], ['story', 'Stories'], ['carousel', 'Carrosséis'], ['video', 'Vídeos']];
+const AN_ORDENS_PUB = [['data', 'Mais recentes'], ['alcance', 'Maior alcance'], ['visualizacoes', 'Mais visualizações'], ['engajamento', 'Maior engajamento']];
+const AN_MEDIDAS_PUB = [['alcance', 'Alcance'], ['visualizacoes', 'Visualizações'], ['curtidas', 'Curtidas'], ['comentarios', 'Comentários'], ['salvamentos', 'Salvamentos'], ['compartilhamentos', 'Compartilhamentos'], ['engajamento', 'Engajamento'], ['seguidoresGerados', 'Seguidores gerados']];
+const anDataHora = (iso) => new Date(iso).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+function anFiltroPub(campo, valor) {
+  window.anState[campo === 'ordem' ? 'pubOrdem' : 'pubTipo'] = valor;
+  anCarregarPublicacoes();
+}
+
+function anFiltrosPubAtuais() {
+  const st = window.anState;
+  return { conta: st.conta || '', tipo: st.pubTipo || '', ordem: st.pubOrdem || 'data' };
+}
+
+// Uma busca por combinação de filtros: pedidos repetidos enquanto ela anda compartilham a mesma resposta.
+function anBuscarPublicacoes(chave, f) {
+  window.anPubBuscas = window.anPubBuscas || {};
+  if (!window.anPubBuscas[chave]) {
+    window.anPubBuscas[chave] = (async () => {
+      try {
+        const qs = new URLSearchParams({ acao: 'publicacoes', org: anOrgAtiva, ordem: f.ordem });
+        if (f.conta) qs.set('conta', f.conta);
+        if (f.tipo) qs.set('tipo', f.tipo);
+        const r = await fetch('/api/analise?' + qs.toString(), { headers: { Authorization: 'Bearer ' + anSessao.access_token } });
+        const j = await r.json().catch(() => ({}));
+        return r.ok ? j : { erro: j.error || 'Não foi possível carregar as publicações.' };
+      } catch (e) {
+        return { erro: 'Falha de conexão. Tente de novo.' };
+      } finally {
+        delete window.anPubBuscas[chave];
+      }
+    })();
+  }
+  return window.anPubBuscas[chave];
+}
+
+async function anCarregarPublicacoes() {
+  const el = document.getElementById('an-publicacoes-body');
+  if (!el) return;
+  const f = anFiltrosPubAtuais();
+  const chave = [anOrgAtiva, f.conta, f.tipo, f.ordem].join('|');
+  window.anPubPedido = chave;
+  if (!anSessao || !anOrgAtiva) {
+    el.innerHTML = '<div class="an-empty"><div class="eico">🖼️</div><h3>Entre para ver as publicações</h3><p>As publicações e as métricas de cada uma aparecem depois de conectar a conta do Instagram e sincronizar.</p></div>';
+    return;
+  }
+  if (window.anPub && window.anPub.chave === chave) {
+    renderPublicacoes(el, window.anPub.dados, f);
+    return;
+  }
+  el.innerHTML = '<div class="an-empty"><p>Carregando publicações…</p></div>';
+  const dados = await anBuscarPublicacoes(chave, f);
+  if (!dados.erro) window.anPub = { chave, dados };
+  if (window.anPubPedido !== chave) return; // o filtro mudou enquanto buscava
+  renderPublicacoes(el, dados, f);
+}
+
+function renderPublicacoes(el, dados, f) {
+  const contas = dados.contas || [];
+  const chips = AN_TIPOS_PUB.map(([v, rotulo]) => `<button class="an-chip${f.tipo === v ? ' on' : ''}" onclick="anFiltroPub('tipo','${v}')">${rotulo}</button>`).join('');
+  const ordens = AN_ORDENS_PUB.map(([v, rotulo]) => `<option value="${v}"${f.ordem === v ? ' selected' : ''}>${rotulo}</option>`).join('');
+  const filtros = `${seletorConta({ listaContas: contas, contaAtual: f.conta }, '-pub')}
+    <div class="an-chips" style="margin-bottom:12px">${chips}</div>
+    <div class="an-custom" style="margin:0 0 14px"><label class="hint" for="an-pub-ordem">Ordenar por</label><select id="an-pub-ordem" onchange="anFiltroPub('ordem', this.value)" style="background:var(--s2);color:var(--txt);border:1px solid var(--border);border-radius:8px;padding:6px 8px">${ordens}</select></div>`;
+  if (dados.erro) {
+    el.innerHTML = filtros + `<div class="an-empty"><div class="eico">⚠️</div><h3>Não foi possível carregar</h3><p>${anEsc(dados.erro)}</p></div>`;
+    return;
+  }
+  const lista = dados.publicacoes || [];
+  if (!lista.length) {
+    const aviso = !contas.length
+      ? '<h3>Nenhuma conta do Instagram conectada</h3><p>Conecte a conta em Contas conectadas e sincronize.</p>'
+      : (f.tipo || f.conta
+        ? '<h3>Nenhuma publicação com estes filtros</h3><p>Escolha outro tipo ou outra conta.</p>'
+        : '<h3>Nenhuma publicação sincronizada ainda</h3><p>Clique em <b>Sincronizar agora</b> em Contas conectadas.</p>');
+    el.innerHTML = filtros + `<div class="an-empty"><div class="eico">🖼️</div>${aviso}</div>`;
+    return;
+  }
+  el.innerHTML = filtros
+    + `<div class="hint" style="margin-bottom:12px">Até 60 publicações mais recentes${f.ordem !== 'data' ? ', ordenadas pela métrica escolhida' : ''}. Seguidores gerados: a Meta informa para posts e stories, não para reels. "—" = dado não disponível.</div>`
+    + `<div class="an-pub-grid">${lista.map(anCardPub).join('')}</div>`;
+}
+
+function anCardPub(p) {
+  const foto = p.miniatura
+    ? `<img src="${anEsc(p.miniatura)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`
+    : `<span class="an-pub-sem-foto">${anEsc(p.tipoLabel)}</span>`;
+  const medidas = AN_MEDIDAS_PUB.map(([k, rotulo]) => `<div><span>${rotulo}</span><b>${p[k] == null ? '—' : anNum(p[k])}</b></div>`).join('');
+  const link = /^https:\/\//.test(p.permalink || '')
+    ? `<a class="an-pub-link" href="${anEsc(p.permalink)}" target="_blank" rel="noopener noreferrer">Ver no Instagram ↗</a>`
+    : '';
+  return `<article class="an-card an-pub">
+    <div class="an-pub-midia">${foto}</div>
+    <div class="an-pub-corpo">
+      <div class="an-pub-topo"><span class="an-pub-tipo">${anEsc(p.tipoLabel)}</span><span class="hint">@${anEsc(p.conta || '')} · ${anDataHora(p.publicadoEm)}</span></div>
+      <p class="an-pub-legenda">${anEsc(p.legenda || 'Sem legenda')}</p>
+      <div class="an-pub-medidas">${medidas}</div>
+      ${link}
+    </div>
+  </article>`;
+}
 
 // ── ESTRATÉGIA ────────────────────────────────────────────────────────────
 const ESTRATEGIA = {
