@@ -106,6 +106,29 @@ body[data-tab="analise"]    { --bg: #120d1f; background: linear-gradient(180deg,
 .an-ia li { margin:4px 0; color:var(--txt2); line-height:1.45; }
 .an-ia-hist { margin-top:14px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
 .an-ia-hist h3 { width:100%; margin:0; }
+.an-rel-acoes { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:14px 0; }
+.an-rel-wrap { overflow-x:auto; }
+.an-rel-folha { background:#fbfbfd; color:#15151f; border-radius:14px; padding:26px 28px; }
+.an-rel-folha h2 { margin:0 0 6px; font-size:20px; color:#15151f; }
+.an-rel-folha h3 { margin:22px 0 8px; font-size:14px; color:#15151f; }
+.an-rel-folha .sub { color:#5a5a6e; font-size:12px; margin-top:2px; }
+.an-rel-kpis { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+.an-rel-kpi { background:#fff; border:1px solid #e2e2ea; border-radius:10px; padding:10px 12px; }
+.an-rel-kpi span { display:block; font-size:11px; color:#5a5a6e; }
+.an-rel-kpi b { display:block; font-size:18px; color:#15151f; margin:2px 0; }
+.an-rel-kpi small { font-size:11px; color:#5a5a6e; }
+.an-rel-folha table { width:100%; border-collapse:collapse; font-size:12px; }
+.an-rel-folha th, .an-rel-folha td { text-align:left; padding:5px 6px; border-bottom:1px solid #e6e6ee; vertical-align:top; }
+.an-rel-folha th { color:#5a5a6e; font-weight:600; }
+.an-rel-folha .n { text-align:right; }
+.an-rel-folha ul { margin:0; padding-left:18px; font-size:12px; color:#333347; }
+.an-rel-folha li { margin:3px 0; }
+@media print {
+  body * { visibility: hidden !important; }
+  #an-rel-print, #an-rel-print * { visibility: visible !important; }
+  #an-rel-print { position: absolute; left: 0; top: 0; width: 100%; padding: 0; border-radius: 0; }
+  @page { size: A4; margin: 14mm; }
+}
 .an-empty { text-align:center; padding:56px 20px; background:var(--s1); border:1px dashed var(--border); border-radius:14px; color:var(--txt3); }
 .an-empty .eico { font-size:36px; margin-bottom:12px; }
 .an-empty h3 { color:var(--txt2); font:600 16px 'Inter',sans-serif; margin-bottom:6px; }
@@ -1110,7 +1133,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 
         <section class="an-sec" id="an-relatorios">
           <div class="an-head"><div><h2>Relatórios</h2><p>Semanal, mensal e personalizado, com exportação em PDF e CSV.</p></div></div>
-          <div class="an-empty"><div class="eico">📄</div><h3>Nenhum relatório gerado</h3><p>Os relatórios são montados a partir dos dados sincronizados da conta conectada.</p></div>
+          <div id="an-relatorios-body"></div>
         </section>
 
         <section class="an-sec" id="an-config">
@@ -26524,6 +26547,7 @@ function anRender(){
   if (document.getElementById('an-publicacoes').classList.contains('on')) anCarregarPublicacoes();
   if (document.getElementById('an-concorrentes').classList.contains('on')) anCarregarConcorrentes();
   if (document.getElementById('an-ia').classList.contains('on')) anCarregarIA();
+  if (document.getElementById('an-relatorios').classList.contains('on')) anCarregarRelatorios();
 }
 
 function anRenderVisao(r){
@@ -27146,6 +27170,161 @@ async function anGerarIA() {
     ? { texto: 'Análise gerada.', erro: false }
     : { texto: r.dados.status === 'insufficient_data' ? 'Não havia dados sincronizados neste período. Veja o motivo abaixo.' : 'A análise não foi gerada. Veja o motivo abaixo.', erro: r.dados.status === 'error' };
   anCarregarIA();
+}
+
+// ── Relatórios: semanal, mensal ou personalizado ──────────────────────────────
+// O servidor monta o relatório e o CSV com os mesmos números da Visão geral. Relatório não grava nada.
+// PDF: a impressão do navegador ("Salvar como PDF"), com um CSS de impressão que deixa só a folha visível.
+const AN_TIPOS_REL = [['semanal', 'Semanal (últimos 7 dias)'], ['mensal', 'Mensal (mês anterior)'], ['personalizado', 'Personalizado']];
+
+function anEstadoRel() {
+  if (!window.anRel) window.anRel = { tipo: 'semanal', ini: '', fim: '', conta: '', org: null, relatorio: null, csv: null };
+  return window.anRel;
+}
+
+function anStatusRel(texto, erro) {
+  const el = document.getElementById('an-rel-status');
+  if (!el) return;
+  el.textContent = texto;
+  el.style.color = erro ? '#ff8a8a' : '';
+}
+
+// Contas para o seletor: as da Visão geral, ou as da última consulta de publicações.
+function anContasDoPainel() {
+  const real = anRealAtual();
+  if (real && real.listaContas) return real.listaContas;
+  if (window.anPub && window.anPub.dados && window.anPub.dados.contas) return window.anPub.dados.contas;
+  return [];
+}
+
+function anCarregarRelatorios() {
+  const el = document.getElementById('an-relatorios-body');
+  if (!el) return;
+  if (!anSessao || !anOrgAtiva) {
+    el.innerHTML = '<div class="an-empty"><div class="eico">📄</div><h3>Entre para gerar relatórios</h3><p>Os relatórios usam os dados sincronizados das contas conectadas.</p></div>';
+    return;
+  }
+  const st = anEstadoRel();
+  if (st.org !== anOrgAtiva) { st.org = anOrgAtiva; st.relatorio = null; st.csv = null; }
+  const opcoes = ['<option value="">Todas as contas do Instagram</option>']
+    .concat(anContasDoPainel().map((c) => `<option value="${anEsc(c.id)}"${c.id === st.conta ? ' selected' : ''}>@${anEsc(c.username)}</option>`))
+    .join('');
+  const chips = AN_TIPOS_REL.map(([v, rotulo]) => `<button type="button" class="an-chip${st.tipo === v ? ' on' : ''}" onclick="anTipoRel('${v}')">${rotulo}</button>`).join('');
+  const datas = st.tipo === 'personalizado'
+    ? `<div class="an-custom"><input type="date" id="an-rel-ini" aria-label="Data inicial" value="${anEsc(st.ini)}"><span>até</span><input type="date" id="an-rel-fim" aria-label="Data final" value="${anEsc(st.fim)}"></div>`
+    : '';
+  const controles = `<div class="an-card">
+      <h3>Gerar relatório</h3>
+      <div class="an-chips">${chips}</div>
+      ${datas}
+      <div class="an-custom" style="margin-top:10px"><label class="hint" for="an-rel-conta">Conta</label><select id="an-rel-conta" style="background:var(--s2);color:var(--txt);border:1px solid var(--border);border-radius:8px;padding:6px 8px">${opcoes}</select></div>
+      <div class="an-custom" style="margin-top:12px"><button type="button" id="an-rel-gerar" onclick="anGerarRelatorio()">Gerar relatório</button></div>
+      <div class="hint" id="an-rel-status" role="status" style="min-height:16px;margin-top:8px"></div>
+    </div>`;
+  const saida = st.relatorio
+    ? `<div class="an-custom an-rel-acoes">
+         <button type="button" onclick="anBaixarCsvRel()">Baixar CSV</button>
+         <button type="button" onclick="anImprimirRel()">Salvar como PDF</button>
+         <span class="hint">PDF: na janela de impressão, escolha "Salvar como PDF".</span>
+       </div>
+       <div class="an-rel-wrap"><div id="an-rel-print" class="an-rel-folha">${htmlRelatorio(st.relatorio)}</div></div>`
+    : '<div class="hint" style="margin-top:14px">Escolha o tipo e clique em Gerar relatório. O relatório traz os números do período e a comparação com o período anterior.</div>';
+  el.innerHTML = controles + saida;
+}
+
+function htmlRelatorio(r) {
+  const num = (v) => (v == null ? 'n/d' : anNum(v));
+  const pct = (v) => (v > 0 ? '+' : '') + anDec(v) + '%';
+  const kpis = r.indicadores.map((i) => `<div class="an-rel-kpi"><span>${anEsc(i.rotulo)}</span><b>${num(i.valor)}</b><small>${i.variacao == null ? 'sem comparação com o anterior' : pct(i.variacao) + ' vs período anterior'}</small></div>`).join('')
+    + `<div class="an-rel-kpi"><span>Seguidores no fim</span><b>${num(r.seguidores.noFim)}</b><small>último valor sincronizado</small></div>`
+    + `<div class="an-rel-kpi"><span>Saldo de seguidores</span><b>${r.seguidores.saldo == null ? 'n/d' : (r.seguidores.saldo >= 0 ? '+' : '') + anNum(r.seguidores.saldo)}</b><small>ganhos menos perdidos</small></div>`;
+  const aviso = r.semDados ? '<div style="color:#b03a3a;font-size:12px;margin-top:10px">Sem dados sincronizados neste período. Os números aparecem como n/d.</div>' : '';
+  const cabecalho = `<h2>${anEsc(r.titulo)}</h2>
+    <div class="sub">Período: ${anDM(r.periodo.ini)} a ${anDM(r.periodo.fim)} (${r.periodo.dias} dias) · anterior: ${anDM(r.periodoAnterior.ini)} a ${anDM(r.periodoAnterior.fim)}</div>
+    <div class="sub">Escopo: ${anEsc(r.escopo)} · Gerado em ${anDataHora(r.geradoEm)}</div>${aviso}`;
+  const diario = r.diario.length
+    ? `<h3>Dia a dia</h3><div class="an-rel-wrap"><table><thead><tr><th>Data</th><th class="n">Alcance</th><th class="n">Visualizações</th><th class="n">Engajamento</th><th class="n">Cliques</th><th class="n">Seguidores</th></tr></thead><tbody>${r.diario.map((d) => `<tr><td>${anDM(d.data)}</td><td class="n">${num(d.alcance)}</td><td class="n">${num(d.visualizacoes)}</td><td class="n">${num(d.engajamento)}</td><td class="n">${num(d.cliques)}</td><td class="n">${num(d.seguidores)}</td></tr>`).join('')}</tbody></table></div>`
+    : '';
+  const pubs = r.publicacoes.length
+    ? `<h3>Publicações no período (${r.publicacoes.length})</h3><div class="an-rel-wrap"><table><thead><tr><th>Tipo</th><th>Data</th><th>Conta</th><th class="n">Alcance</th><th class="n">Curtidas</th><th class="n">Comentários</th><th class="n">Salvamentos</th><th class="n">Engajamento</th><th class="n">Seguidores gerados</th></tr></thead><tbody>${r.publicacoes.map((p) => `<tr><td>${anEsc(p.tipo)}</td><td>${anDM(p.data)} ${String(p.hora).padStart(2, '0')}h</td><td>@${anEsc(p.conta || '')}</td><td class="n">${num(p.alcance)}</td><td class="n">${num(p.curtidas)}</td><td class="n">${num(p.comentarios)}</td><td class="n">${num(p.salvamentos)}</td><td class="n">${num(p.engajamento)}</td><td class="n">${num(p.seguidoresGerados)}</td></tr>`).join('')}</tbody></table></div>`
+    : '';
+  const horarios = r.horarios.suficiente
+    ? `<h3>Melhores horários</h3><ul>${r.horarios.top.map((t) => `<li>${anEsc(t.dia)} às ${String(t.hora).padStart(2, '0')}h · média de engajamento ${anDec(t.media)} em ${t.posts} publicações</li>`).join('')}</ul>`
+    : '';
+  const lista = (titulo, itens) => (itens && itens.length ? `<li><b>${titulo}:</b> ${itens.map((x) => `${anEsc(x.rotulo)} ${anDec(x.pct)}%`).join(' · ')}</li>` : '');
+  const publico = r.publico
+    ? `<h3>Público dos seguidores (${anDM(r.publico.atualizadoEm)})</h3><ul>${lista('Idade', r.publico.idade)}${lista('Gênero', r.publico.genero)}${lista('Cidades', r.publico.cidades)}</ul>`
+    : '';
+  const conc = r.concorrentes.length
+    ? `<h3>Concorrentes (dados públicos)</h3><div class="an-rel-wrap"><table><thead><tr><th>Perfil</th><th class="n">Seguidores</th><th class="n">Publicações em 30 dias</th><th class="n">Engajamento médio</th><th>Atualizado em</th></tr></thead><tbody>${r.concorrentes.map((c) => `<tr><td>@${anEsc(c.perfil)}</td><td class="n">${num(c.seguidores)}</td><td class="n">${num(c.publicacoes30d)}</td><td class="n">${c.engajamentoMedio == null ? 'n/d' : anDec(c.engajamentoMedio)}</td><td>${anDM(c.capturadoEm)}</td></tr>`).join('')}</tbody></table></div>`
+    : '';
+  const limitacoes = `<h3>Limitações e o que não aparece</h3><ul>${r.limitacoes.map((x) => `<li>${anEsc(x)}</li>`).join('')}</ul>`;
+  return cabecalho + `<h3>Indicadores</h3><div class="an-rel-kpis">${kpis}</div>` + diario + pubs + horarios + publico + conc + limitacoes;
+}
+
+function anTipoRel(tipo) {
+  const st = anEstadoRel();
+  const seletor = document.getElementById('an-rel-conta');
+  if (seletor) st.conta = seletor.value;
+  st.tipo = tipo;
+  st.relatorio = null;
+  st.csv = null;
+  anCarregarRelatorios();
+}
+
+async function anGerarRelatorio() {
+  const st = anEstadoRel();
+  const seletor = document.getElementById('an-rel-conta');
+  st.conta = seletor ? seletor.value : '';
+  if (st.tipo === 'personalizado') {
+    const ini = document.getElementById('an-rel-ini');
+    const fim = document.getElementById('an-rel-fim');
+    st.ini = ini ? ini.value : '';
+    st.fim = fim ? fim.value : '';
+    if (!st.ini || !st.fim) { anStatusRel('Escolha a data inicial e a final.', true); return; }
+    if (st.ini > st.fim) { anStatusRel('A data inicial é depois da final.', true); return; }
+  }
+  const botao = document.getElementById('an-rel-gerar');
+  if (botao) botao.disabled = true;
+  anStatusRel('Montando o relatório…');
+  const qs = new URLSearchParams({ acao: 'relatorio', org: anOrgAtiva, tipo: st.tipo });
+  if (st.tipo === 'personalizado') { qs.set('ini', st.ini); qs.set('fim', st.fim); }
+  if (st.conta) qs.set('conta', st.conta);
+  let dados = null;
+  let erro = null;
+  try {
+    const r = await fetch('/api/analise?' + qs.toString(), { headers: { Authorization: 'Bearer ' + anSessao.access_token } });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) dados = j; else erro = j.error || 'Não foi possível montar o relatório.';
+  } catch (e) {
+    erro = 'Falha de conexão. Tente de novo.';
+  }
+  if (erro) {
+    anStatusRel(erro, true);
+    if (botao) botao.disabled = false;
+    return;
+  }
+  st.relatorio = dados.relatorio;
+  st.csv = dados.csv;
+  anCarregarRelatorios();
+}
+
+function anBaixarCsvRel() {
+  const st = anEstadoRel();
+  if (!st.csv || !st.relatorio) return;
+  const blob = new Blob([st.csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `relatorio-${st.relatorio.tipo}-${st.relatorio.periodo.ini}-${st.relatorio.periodo.fim}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function anImprimirRel() {
+  window.print();
 }
 
 // ── ESTRATÉGIA ────────────────────────────────────────────────────────────
