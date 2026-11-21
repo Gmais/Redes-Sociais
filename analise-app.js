@@ -1,6 +1,7 @@
-// Análise · Pulse — aplicação: sessão, organizações, dados (com cache), rotas e casca da tela.
-// As páginas ficam em analise-paginas.js. Os números vêm sempre das rotas /api/analise, que conferem login e papel.
-// Nomes com prefixo pz/PZ para não colidir com o resto do painel (index.html).
+// Análise por empresa — aplicação: sessão, organizações, dados (com cache), modo Conteúdo/Análise e casca.
+// Cada aba de empresa (Academia, Sorveteria, GympulsePro) tem o painel #pa-<empresa> para o modo Análise.
+// As telas de cada aba interna ficam em analise-paginas.js. Os números vêm sempre das rotas /api/analise.
+// Nomes com prefixo pz/PZ para não colidir com o resto do painel.
 
 const PZ = {
   sb: null,
@@ -9,17 +10,19 @@ const PZ = {
   orgs: [],
   orgsCarregadas: false,
   org: null,
-  pagina: 'resumo',
-  sub: 'visao',
+  empresa: 'academia',
+  sub: {},
+  modo: {},
   periodo: { tipo: '30', ini: '', fim: '' },
   metrica: 'alcance',
   filtroPub: { tipo: '', ordem: 'data' },
   contaPor: {},
   token: 0,
   cache: {},
+  voo: {},
   charts: {},
-  aviso: null,
-  voo: {}
+  rel: { tipo: 'semanal', ini: '', fim: '', conta: '', relatorio: null, csv: null, empresa: null, org: null },
+  ia: { conta: '', ver: null, gerando: false }
 };
 
 const PZ_CHAVE_ORG = 'an_org_ativa';
@@ -28,21 +31,16 @@ const PZ_EMPRESAS = [
   { id: 'sorveteria', nome: 'Sorveteria', cor: '#F5B400', ini: 'S' },
   { id: 'gympulse', nome: 'GympulsePro', cor: '#6D4AFF', ini: 'G' }
 ];
+const PZ_SUBS = [
+  ['visao', 'Visão geral'], ['publico', 'Público'], ['publicacoes', 'Publicações'], ['horarios', 'Melhores horários'],
+  ['concorrentes', 'Concorrentes'], ['relatorios', 'Relatórios'], ['ia', 'Inteligência'], ['contas', 'Contas']
+];
 const PZ_NIVEL = { viewer: 0, editor: 1, admin: 2, owner: 3 };
+// Destinos antigos (botões de ação das telas) para as abas atuais.
+const PZ_ALIAS_SUB = { conexoes: 'contas', resumo: 'visao' };
 
-const PZ_ICONES = {
-  resumo: '<rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/>',
-  concorrentes: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
-  relatorios: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>',
-  ia: '<path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/>',
-  conexoes: '<path d="M9 7V3M15 7V3M7 7h10v5a5 5 0 0 1-10 0z"/><path d="M12 17v4"/>',
-  seta: '<path d="M5 12h14M13 6l6 6-6 6"/>',
-  seguranca: '<rect x="4" y="11" width="16" height="10" rx="3"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'
-};
-
-function pzIco(nome) {
-  return `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${PZ_ICONES[nome] || ''}</svg>`;
-}
+const pzEmpresaAtual = () => PZ_EMPRESAS.find((e) => e.id === PZ.empresa) || PZ_EMPRESAS[0];
+const pzSubAtual = () => PZ.sub[PZ.empresa] || 'visao';
 
 function pzEsc(s) {
   return String(s ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
@@ -94,7 +92,7 @@ function pzPeriodo() {
   return { ini: AnaliseDemo.addDays(hoje, -(dias - 1)), fim: hoje, dias };
 }
 
-// ── Dados: rotas com cache curto (troca de página não refaz a consulta) ────────
+// ── Dados: rotas com cache curto e sem busca duplicada ────────────────────────
 async function pzApi(acao, opts = {}) {
   const metodo = opts.corpo !== undefined ? 'POST' : 'GET';
   const qs = new URLSearchParams({ acao });
@@ -116,7 +114,7 @@ async function pzApi(acao, opts = {}) {
   }
 }
 
-// Cache curto e sem busca duplicada: pedidos iguais enquanto um ainda anda compartilham a mesma resposta.
+// Pedidos iguais enquanto um ainda anda compartilham a mesma resposta. Só sucesso fica no cache.
 async function pzCache(chave, buscar, ttl = 60000) {
   const hit = PZ.cache[chave];
   if (hit && Date.now() - hit.t < ttl) return hit.v;
@@ -154,10 +152,8 @@ function pzContaDaEmpresa(dados, id) {
   const escolhida = ig.find((c) => c.id === PZ.contaPor[id]);
   return escolhida ? escolhida.id : (ig[0] ? ig[0].id : '');
 }
-function pzNomeConta(c) {
-  return c.username ? '@' + c.username : (c.display_name || c.external_id || 'conta');
-}
-// Última sincronização entre todas as contas (para o indicador do topo).
+const pzNomeConta = (c) => (c.username ? '@' + c.username : (c.display_name || c.external_id || 'conta'));
+// Última sincronização entre todas as contas (para o indicador do cabeçalho).
 function pzUltimaSincronizacao() {
   const hit = PZ.cache['contas:' + PZ.org];
   if (!hit || !hit.v.dados) return null;
@@ -194,7 +190,6 @@ async function pzCarregarOrgs() {
   if (!PZ.sessao) { PZ.org = null; PZ.orgsCarregadas = true; return; }
   const { data, error } = await PZ.sb.from('organization_members').select('role, organization_id, organizations(name)');
   if (error) {
-    PZ.orgs = [];
     PZ.erroOrgs = error.message;
     PZ.orgsCarregadas = true;
     return;
@@ -208,7 +203,7 @@ async function pzCarregarOrgs() {
 
 function pzTrocarOrg(id) {
   PZ.org = id;
-  try { localStorage.setItem(PZ_CHAVE_ORG, id); } catch (e) { /* sem armazenamento: vale só nesta aba */ }
+  try { localStorage.setItem(PZ_CHAVE_ORG, id); } catch (e) { /* vale só nesta aba */ }
   pzLimparCache();
   pzRender();
 }
@@ -245,58 +240,64 @@ async function pzSair() {
   pzRender();
 }
 
-// ── Casca da tela ────────────────────────────────────────────────────────────
+// ── Modo Conteúdo / Análise (o seletor fica na faixa de ações de cada empresa) ──
+// Cada empresa lembra o modo em que foi deixada. Fora das abas de empresa, o modo some.
+function pzAplicarModo(tab) {
+  const emp = PZ_EMPRESAS.find((e) => e.id === tab);
+  if (!emp) { document.body.dataset.modo = ''; return; }
+  const modo = PZ.modo[tab] === 'analise' ? 'analise' : 'conteudo';
+  PZ.empresa = tab;
+  document.body.dataset.modo = modo;
+  const conteudo = document.getElementById('p-' + tab);
+  if (conteudo) conteudo.classList.toggle('on', modo === 'conteudo');
+  const analise = document.getElementById('pa-' + tab);
+  if (analise) analise.classList.toggle('on', modo === 'analise');
+  document.getElementById('mdConteudo')?.classList.toggle('on', modo === 'conteudo');
+  document.getElementById('mdAnalise')?.classList.toggle('on', modo === 'analise');
+  if (modo === 'analise') {
+    if (!PZ.sb) pzIniciar();
+    else pzRender();
+  }
+}
+
+// Botões do seletor (chamados pelo HTML).
+function setModoEmpresa(modo) {
+  const tab = document.body.dataset.tab;
+  if (!PZ_EMPRESAS.some((e) => e.id === tab)) return;
+  PZ.modo[tab] = modo === 'analise' ? 'analise' : 'conteudo';
+  pzAplicarModo(tab);
+}
+
+// ── Casca da análise dentro da aba da empresa ────────────────────────────────
 function pzTela(html) {
-  const app = document.getElementById('an-app');
-  if (app) app.innerHTML = html;
+  const el = document.getElementById('pa-' + PZ.empresa);
+  if (el) el.innerHTML = html;
+}
+
+function pzSkeletonHtml() {
+  return '<div class="pz"><div class="pz-skel" style="min-height:260px"></div></div>';
 }
 
 function pzRender() {
-  if (!document.getElementById('an-app')) return;
-  if (!PZ.iniciado) { pzTela('<div class="pz-page"><div class="pz-skel" style="min-height:260px"></div></div>'); return; }
+  if (!document.getElementById('pa-' + PZ.empresa)) return;
+  pzDestruirGraficos();
+  if (!PZ.iniciado) { pzTela(pzSkeletonHtml()); return; }
   if (!PZ.sessao) { pzTela(pzHtmlLogin()); return; }
-  if (!PZ.orgsCarregadas) { pzTela('<div class="pz-page"><div class="pz-skel" style="min-height:260px"></div></div>'); return; }
+  if (!PZ.orgsCarregadas) { pzTela(pzSkeletonHtml()); return; }
   if (!PZ.orgs.length) { pzTela(pzHtmlSemOrg()); return; }
-  pzTela(`<div class="pz">${pzHtmlRail()}<div class="pz-main">${pzHtmlTopo()}<div class="pz-page" id="pz-page"></div></div></div>`);
-  pzDesenharPagina();
+  const emp = pzEmpresaAtual();
+  const sub = pzSubAtual();
+  pzTela(`<div class="pz" style="--c:${emp.cor}">
+    ${pzHtmlCab(emp)}
+    <nav class="pz-sub" aria-label="Seções de ${pzEsc(emp.nome)}" role="tablist">${PZ_SUBS.map(([v, t]) =>
+      `<button type="button" role="tab" aria-selected="${sub === v}" class="${sub === v ? 'on' : ''}" onclick="pzSubir('${v}')">${t}</button>`).join('')}</nav>
+    <div id="pz-pagina"></div>
+  </div>`);
+  pzDesenharEmpresa(emp.id, ++PZ.token, sub);
 }
 
-// Refaz só o menu lateral e a barra de topo (dependem das contas, que chegam depois da primeira pintura).
-function pzAtualizarChrome() {
-  const rail = document.querySelector('.pz-rail');
-  if (rail) rail.outerHTML = pzHtmlRail();
-  const topo = document.querySelector('.pz-top');
-  if (topo) topo.outerHTML = pzHtmlTopo();
-}
-
-function pzTituloPagina() {
-  const emp = PZ_EMPRESAS.find((e) => e.id === PZ.pagina);
-  if (emp) return emp.nome;
-  return { resumo: 'Resumo', concorrentes: 'Concorrentes', relatorios: 'Relatórios', ia: 'Inteligência', conexoes: 'Conexões' }[PZ.pagina] || 'Resumo';
-}
-
-function pzHtmlRail() {
-  const item = (id, nome, ico) => `<button type="button" class="pz-nav${PZ.pagina === id ? ' on' : ''}" onclick="pzIr('${id}')" ${PZ.pagina === id ? 'aria-current="page"' : ''}><span class="pz-ico">${pzIco(ico)}</span>${pzEsc(nome)}</button>`;
-  const empresas = PZ_EMPRESAS.map((e) => {
-    const semConta = PZ.cache['contas:' + PZ.org] && PZ.cache['contas:' + PZ.org].v.dados
-      ? pzIgDaEmpresa(PZ.cache['contas:' + PZ.org].v.dados, e.id).length === 0 : false;
-    return `<button type="button" class="pz-nav${PZ.pagina === e.id ? ' on' : ''}" onclick="pzIr('${e.id}')" ${PZ.pagina === e.id ? 'aria-current="page"' : ''}><span class="pz-empresa-ico" style="--c:${e.cor}">${e.ini}</span>${pzEsc(e.nome)}${semConta ? '<span class="pz-aviso-rail" title="Sem conta do Instagram">!</span>' : ''}</button>`;
-  }).join('');
-  return `<aside class="pz-rail" aria-label="Navegação da análise">
-    <div class="pz-marca"><div class="pz-marca-logo" aria-hidden="true">A</div><div><b>Análise</b><small>Redes sociais</small></div></div>
-    <div class="pz-rail-titulo">Visão</div>
-    ${item('resumo', 'Resumo', 'resumo')}
-    <div class="pz-rail-titulo">Empresas</div>
-    ${empresas}
-    <div class="pz-rail-titulo">Ferramentas</div>
-    ${item('concorrentes', 'Concorrentes', 'concorrentes')}
-    ${item('relatorios', 'Relatórios', 'relatorios')}
-    ${item('ia', 'Inteligência', 'ia')}
-    ${item('conexoes', 'Conexões', 'conexoes')}
-  </aside>`;
-}
-
-function pzHtmlTopo() {
+// Cabeçalho da empresa: nome, contas, período e sincronização. Sai com a conta da empresa.
+function pzHtmlCab(emp) {
   const seg = [['7', '7 dias'], ['30', '30 dias'], ['90', '90 dias'], ['custom', 'Outro']]
     .map(([v, t]) => `<button type="button" class="${PZ.periodo.tipo === v ? 'on' : ''}" onclick="pzPeriodoSet('${v}')" aria-pressed="${PZ.periodo.tipo === v}">${t}</button>`).join('');
   const datas = PZ.periodo.tipo === 'custom'
@@ -304,17 +305,18 @@ function pzHtmlTopo() {
        <input type="date" class="pz-campo pequeno" id="pz-fim" value="${pzEsc(PZ.periodo.fim)}" aria-label="Data final">
        <button type="button" class="pz-btn primario sm" onclick="pzAplicarPeriodo()">Aplicar</button>`
     : '';
-  // Enquanto as contas não chegaram, o indicador fica vazio (não mostra "sem sincronização" por engano).
   const hit = PZ.cache['contas:' + PZ.org];
   const lista = hit && hit.v.dados ? (hit.v.dados.accounts || []) : null;
+  const ig = lista ? pzIgDaEmpresa({ accounts: lista }, emp.id).length : null;
   const ultima = pzUltimaSincronizacao();
   const sync = lista === null ? ''
     : !lista.length ? '<span class="pz-pill warn">Nenhuma conta conectada</span>'
     : ultima ? `<span class="pz-pill ok" title="Última sincronização das contas">Sincronizado ${pzEsc(AnInsights.dataHora(ultima))}</span>`
     : '<span class="pz-pill warn">Contas ainda não sincronizadas</span>';
+  const resumo = ig === null ? '' : ig ? `${ig} conta(s) do Instagram` : 'Sem conta do Instagram ainda';
   const inicial = pzEsc(((PZ.sessao && PZ.sessao.user && PZ.sessao.user.email) || '?').charAt(0).toUpperCase());
-  return `<header class="pz-top">
-    <div class="pz-titulo-mini">${pzEsc(pzTituloPagina())}</div>
+  return `<header class="pz-cab" id="pz-cab">
+    <div class="pz-cab-marca"><span class="pz-empresa-ico" aria-hidden="true">${emp.ini}</span><div><h1>${pzEsc(emp.nome)}</h1><small>${pzEsc(resumo)}</small></div></div>
     ${sync}
     <div class="pz-seg" role="group" aria-label="Período da análise">${seg}</div>
     ${datas}
@@ -322,11 +324,17 @@ function pzHtmlTopo() {
   </header>`;
 }
 
+// Refaz só o cabeçalho (depois que as contas chegam), sem redesenhar a página.
+function pzAtualizarCab() {
+  const atual = document.getElementById('pz-cab');
+  if (atual) atual.outerHTML = pzHtmlCab(pzEmpresaAtual());
+}
+
 function pzPeriodoSet(tipo) {
   if (tipo === 'custom') {
-    const p = pzPeriodo();
-    PZ.periodo = { tipo: 'custom', ini: PZ.periodo.ini || AnaliseDemo.addDays(todayBR(), -29), fim: PZ.periodo.fim || todayBR() };
-    if (!PZ.periodo.ini) PZ.periodo.ini = p.ini;
+    const fim = PZ.periodo.fim || todayBR();
+    const ini = PZ.periodo.ini || AnaliseDemo.addDays(todayBR(), -29);
+    PZ.periodo = { tipo: 'custom', ini, fim };
   } else {
     PZ.periodo = { tipo, ini: '', fim: '' };
   }
@@ -344,40 +352,26 @@ function pzAplicarPeriodo() {
   pzRender();
 }
 
-function pzIr(id, sub) {
-  PZ.pagina = id;
-  if (sub) PZ.sub = sub;
-  else if (PZ_EMPRESAS.some((e) => e.id === id)) PZ.sub = 'visao';
-  pzRender();
-  const pag = document.getElementById('pz-page');
-  if (pag) pag.scrollTop = 0;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
+// Troca de aba interna. Os destinos antigos (botões das telas) são convertidos.
 function pzSubir(sub) {
-  PZ.sub = sub;
+  PZ.sub[PZ.empresa] = PZ_ALIAS_SUB[sub] || sub;
   pzRender();
 }
+const pzIr = (destino) => pzSubir(destino);
 
-function pzDesenharPagina() {
-  const el = document.getElementById('pz-page');
+function pzDesenharEmpresa(id, tok, sub) {
+  const el = document.getElementById('pz-pagina');
   if (!el) return;
-  const tok = ++PZ.token;
-  const p = PZ.pagina;
-  const tarefa = PZ_EMPRESAS.some((e) => e.id === p) ? () => pzPaginaEmpresa(el, p, tok)
-    : p === 'concorrentes' ? () => pzPaginaConcorrentes(el, tok)
-    : p === 'relatorios' ? () => pzPaginaRelatorios(el, tok)
-    : p === 'ia' ? () => pzPaginaIA(el, tok)
-    : p === 'conexoes' ? () => pzPaginaConexoes(el, tok)
-    : () => pzPaginaResumo(el, tok);
-  pzContas().then((r) => { if (tok === PZ.token && r.ok) pzAtualizarChrome(); });
-  Promise.resolve().then(tarefa).catch((e) => {
-    console.error('análise:', e);
-    el.innerHTML = pzAviso('erro', 'Algo não carregou', 'Tente de novo. Se continuar, recarregue a página.');
-  });
+  el.innerHTML = '<div class="pz-skel" style="min-height:220px"></div>';
+  Promise.resolve()
+    .then(() => pzPaginaEmpresa(el, id, sub, tok))
+    .catch((e) => {
+      console.error('análise:', e);
+      el.innerHTML = pzAviso('erro', 'Algo não carregou', 'Tente de novo. Se continuar, recarregue a página.');
+    });
 }
 
-// Gráficos: cada chamada destrói o anterior com o mesmo id (evita dois gráficos no mesmo canvas).
+// Gráficos: cada chamada destrói o anterior com o mesmo id.
 function pzGrafico(id, cfg) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -393,7 +387,7 @@ function pzDestruirGraficos() {
   PZ.charts = {};
 }
 
-// Opções padrão dos gráficos: claros, sem poluição.
+// Opções padrão dos gráficos: claros e sem poluição.
 function pzOpcoes(extra = {}) {
   const base = {
     responsive: true,
@@ -415,13 +409,12 @@ function pzOpcoes(extra = {}) {
   return base;
 }
 
-// ── Telas de entrada ─────────────────────────────────────────────────────────
+// ── Telas de entrada (dentro do painel da empresa) ───────────────────────────
 function pzHtmlLogin() {
-  return `<div class="pz" style="grid-template-columns:minmax(0,1fr)">
-    <div class="pz-login"><div class="pz-login-card">
+  return `<div class="pz"><div class="pz-login"><div class="pz-login-card">
       <div class="pz-login-logo" aria-hidden="true">A</div>
       <h1>Análise das redes</h1>
-      <p>Acompanhe o Instagram das suas empresas num só lugar. Entre com seu e-mail: enviamos um link de acesso. Nenhuma senha de rede social é pedida.</p>
+      <p>Acompanhe o Instagram das suas empresas. Entre com seu e-mail: enviamos um link de acesso. Nenhuma senha de rede social é pedida.</p>
       <form class="pz-form" onsubmit="pzEnviarLink(event)">
         <label class="pz-rotulo">E-mail
           <input class="pz-campo" type="email" id="pz-email" required placeholder="voce@empresa.com" autocomplete="email">
@@ -429,13 +422,11 @@ function pzHtmlLogin() {
         <button class="pz-btn primario" type="submit">Enviar link de acesso</button>
       </form>
       <div class="pz-login-nota" id="pz-login-msg" role="status"></div>
-    </div></div>
-  </div>`;
+    </div></div></div>`;
 }
 
 function pzHtmlSemOrg() {
-  return `<div class="pz" style="grid-template-columns:minmax(0,1fr)">
-    <div class="pz-login"><div class="pz-login-card">
+  return `<div class="pz"><div class="pz-login"><div class="pz-login-card">
       <div class="pz-login-logo" aria-hidden="true">A</div>
       <h1>Crie a organização</h1>
       <p>Uma organização reúne as empresas e as contas. Você pode criar uma e convidar quem precisar depois.</p>
@@ -446,15 +437,14 @@ function pzHtmlSemOrg() {
         <button class="pz-btn primario" type="submit">Criar organização</button>
       </form>
       <div class="pz-login-nota"><button type="button" class="pz-btn fantasma sm" onclick="pzSair()">Sair</button></div>
-    </div></div>
-  </div>`;
+    </div></div></div>`;
 }
 
-// ── Pontes com o painel (index.html chama estas duas funções) ─────────────────
+// ── Pontes com o painel (index.html chama estas funções) ─────────────────────
 function anRender() { pzRender(); }
 function anContaIniciar() { return pzIniciar(); }
 
-// Volta da Meta (?analise=conectada|erro) ou do link de e-mail (?analise=1).
+// Volta da Meta (?analise=conectada|erro) ou do link de e-mail (?analise=1): abre a Academia em Análise, em Contas.
 (function pzRetorno() {
   const p = new URLSearchParams(location.search);
   if (!p.has('analise')) return;
@@ -468,9 +458,11 @@ function anContaIniciar() { return pzIniciar(); }
     instagram: 'O Instagram não concluiu a conexão. Tente de novo em instantes.'
   };
   const finalizar = () => {
-    PZ.pagina = 'conexoes';
-    const botao = document.querySelector('.tab[data-p="analise"]');
-    if (botao && typeof go === 'function') go('analise', botao);
+    PZ.empresa = 'academia';
+    PZ.modo.academia = 'analise';
+    PZ.sub.academia = 'contas';
+    const botao = document.querySelector('.tab[data-p="academia"]');
+    if (botao && typeof go === 'function') go('academia', botao);
     if (p.get('analise') === 'conectada' && p.get('tipo') === 'ig') {
       pzToast('Conta do Instagram conectada pelo login direto.');
     } else if (p.get('analise') === 'conectada') {

@@ -1,6 +1,6 @@
-// Executa os arquivos reais da Análise (analise-insights.js, analise-app.js, analise-paginas.js) num
-// contexto simulado e renderiza as telas com dados de exemplo. Pega erro de variável e de template
-// sem precisar abrir o navegador. Sem rede: o fetch e o Supabase não são chamados aqui.
+// Executa os arquivos reais da análise por empresa (analise-insights.js, analise-app.js, analise-paginas.js)
+// num contexto simulado, com a API e os elementos da página simulados. Confere cada aba interna com
+// dados de exemplo e pega erro de variável ou de template sem abrir o navegador. Sem rede.
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
@@ -9,22 +9,29 @@ const vm = require('vm');
 const raiz = path.join(__dirname, '..');
 const arquivos = ['analise-insights.js', 'analise-app.js', 'analise-paginas.js'];
 
+// Elementos da página que o código procura pelo id (os que existem no index.html).
+const elementos = {
+  'pa-academia': { id: 'pa-academia', innerHTML: '' },
+  'pa-sorveteria': { id: 'pa-sorveteria', innerHTML: '' },
+  'pa-gympulse': { id: 'pa-gympulse', innerHTML: '' }
+};
+
 const contexto = {
   console,
   setTimeout, clearTimeout,
-  location: { search: '', pathname: '/', hash: '' },
+  location: { search: '', pathname: '/', hash: '', origin: 'https://painel.test' },
   history: { replaceState() {} },
   localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
   document: {
     readyState: 'complete',
-    getElementById: () => null,
+    getElementById: (id) => elementos[id] || null,
     querySelector: () => null,
     addEventListener() {},
     createElement: () => ({ style: {}, setAttribute() {} }),
     body: { appendChild() {}, dataset: {} }
   },
   window: {},
-  fetch: async () => { throw new Error('fetch não deve ser chamado nesta simulação'); },
+  fetch: async () => { throw new Error('fetch não configurado'); },
   Chart: undefined,
   URLSearchParams,
   Blob: function () {},
@@ -44,16 +51,18 @@ for (const nome of arquivos) {
   vm.runInContext(fs.readFileSync(path.join(raiz, nome), 'utf8'), contexto, { filename: nome });
 }
 
-// PZ e PZ_EMPRESAS são 'const' no topo do script: não viram propriedades do contexto, então leio pelo vm.
+// PZ e PZ_EMPRESAS são 'const' no topo do script: leio pelo vm.
 const PZ = vm.runInContext('PZ', contexto);
 const PZ_EMPRESAS = vm.runInContext('PZ_EMPRESAS', contexto);
+const run = (expr) => vm.runInContext(expr, contexto);
 
 const semLixo = (html, onde) => {
   assert.ok(typeof html === 'string' && html.length > 20, onde + ': HTML vazio');
   assert.ok(!/undefined|NaN|\[object Object\]/.test(html), onde + ': apareceu undefined/NaN/[object Object]');
 };
+const espera = (ms = 30) => new Promise((r) => setTimeout(r, ms));
 
-// Dados de exemplo no formato que a API devolve.
+// ── Dados de exemplo, no formato que a API devolve ───────────────────────────
 const serie = [
   { data: '2026-11-19', alcance: 120, visualizacoes: 150, engajamento: 12, cliques: 3, seguidores: 1002 },
   { data: '2026-11-20', alcance: 130, visualizacoes: 140, engajamento: 13, cliques: 4, seguidores: 1004 },
@@ -73,126 +82,137 @@ const metricas = {
   }
 };
 const pubs = [
-  { id: 'a', tipo: 'reel', tipoLabel: 'Reel', conta: 'academia', publicadoEm: '2026-11-18T15:00:00Z', legenda: 'Treino de hoje', alcance: 500, curtidas: 40, comentarios: 4, engajamento: 47, permalink: 'https://www.instagram.com/reel/1/', miniatura: null },
-  { id: 'b', tipo: 'post', tipoLabel: 'Post', conta: 'academia', publicadoEm: '2026-11-19T12:00:00Z', legenda: 'Outra', alcance: 300, curtidas: 20, comentarios: 6, engajamento: 27, permalink: null, miniatura: null }
+  { id: 'a', tipo: 'reel', tipoLabel: 'Reel', conta: 'planetacorpoclubmais', publicadoEm: '2026-11-18T15:00:00Z', legenda: 'Treino de hoje', alcance: 500, curtidas: 40, comentarios: 4, engajamento: 47, permalink: 'https://www.instagram.com/reel/1/', miniatura: null },
+  { id: 'b', tipo: 'post', tipoLabel: 'Post', conta: 'planetacorpoclubmais', publicadoEm: '2026-11-19T12:00:00Z', legenda: 'Outra', alcance: 300, curtidas: 20, comentarios: 6, engajamento: 27, permalink: null, miniatura: null }
 ];
-
-// 1) Visão da empresa, com dados
-PZ.sessao = { user: { email: 'gilson@empresa.com' } };
-PZ.orgs = [{ id: 'o1', nome: 'Grupo', papel: 'owner' }];
-PZ.org = 'o1';
-PZ.iniciado = true;
-const visao = contexto.pzHtmlVisao(metricas, pubs, 0);
-semLixo(visao, 'visão');
-assert.ok(visao.includes('pz-ch-evo') && visao.includes('pz-ch-seg'), 'visão tem os dois gráficos');
-assert.ok(visao.includes('+33,3%') || visao.includes('+33.3%'), 'alcance: 400 contra 300 = +33%');
-assert.ok(visao.includes('Melhores horários') && visao.includes('Qua'), 'horários aparecem');
-assert.ok(visao.includes('Reel'), 'publicação em destaque aparece');
-
-// 2) Público: com dados e sem dados
-semLixo(contexto.pzHtmlPublico(metricas, 0), 'público');
-const semPublico = contexto.pzHtmlPublico({ ...metricas, publico: null }, 0);
-semLixo(semPublico, 'público sem dados');
-assert.ok(semPublico.includes('100 seguidores'), 'sem público, explica o limite da Meta');
-
-// 3) Horários: suficiente e insuficiente
-semLixo(contexto.pzHtmlHorarios(metricas), 'horários');
-const poucos = contexto.pzHtmlHorarios({ ...metricas, melhoresHorarios: { suficiente: false, posts: 3, top: [] } });
-semLixo(poucos, 'horários com pouca base');
-assert.ok(poucos.includes('Hoje há 3'), 'mostra quantas publicações faltam');
-
-// 4) Publicações com filtro e lista vazia
-semLixo(contexto.pzHtmlPublicacoes({ ok: true, dados: { publicacoes: pubs } }), 'publicações');
-semLixo(contexto.pzHtmlPublicacoes({ ok: true, dados: { publicacoes: [] } }), 'publicações vazias');
-semLixo(contexto.pzHtmlPublicacoes({ ok: false, erro: 'falhou' }), 'publicações com erro');
-
-// 5) Relatório (folha) e análise com IA
-const relatorio = {
-  tipo: 'semanal', titulo: 'Relatório semanal',
-  periodo: { ini: '2026-11-14', fim: '2026-11-20', dias: 7 },
-  periodoAnterior: { ini: '2026-11-07', fim: '2026-11-13' },
-  escopo: 'todas as contas do Instagram', geradoEm: '2026-11-21T15:00:00Z', semDados: false,
-  indicadores: [{ chave: 'alcance', rotulo: 'Alcance', valor: 400, anterior: 300, variacao: 33.3 }, { chave: 'cliques', rotulo: 'Cliques no link', valor: null, anterior: null, variacao: null }],
-  seguidores: { noFim: 1010, saldo: 8 },
-  diario: serie.map((d) => ({ ...d, data: d.data })),
-  publicacoes: [{ tipo: 'Reel', data: '2026-11-18', hora: 12, conta: 'academia', alcance: 500, curtidas: 40, comentarios: 4, engajamento: 47 }],
-  concorrentes: [], horarios: { suficiente: false, publicacoesComMedicao: 3, top: [] }, publico: null,
-  limitacoes: ['Impressões: a Meta descontinuou a métrica.']
-};
-const folha = contexto.pzHtmlRelatorio(relatorio);
-semLixo(folha, 'relatório');
-assert.ok(folha.includes('Relatório semanal') && folha.includes('Cliques no link'), 'folha traz título e indicadores');
-const analise = contexto.pzHtmlAnaliseIA({ status: 'ok', periodo: { ini: '2026-11-14', fim: '2026-11-20' }, criadaEm: '2026-11-21T15:00:00Z', modelo: 'gpt-4.1', analise: { resumo: 'Alcance estável.', pontos_fortes: ['Reels'], pontos_de_atencao: [], proximos_passos: ['Publicar mais'], limitacoes: [] } });
-semLixo(analise, 'análise com IA');
-assert.ok(analise.includes('Alcance estável.') && analise.includes('Pontos fortes'));
-const semDados = contexto.pzHtmlAnaliseIA({ status: 'insufficient_data', periodo: { ini: '2026-11-14', fim: '2026-11-20' }, criadaEm: '2026-11-21T15:00:00Z', analise: { limitacoes: ['Sem dados sincronizados.'] } });
-semLixo(semDados, 'análise sem dados');
-assert.ok(semDados.includes('Dados insuficientes'));
-
-// 6) Componentes genéricos e telas de entrada
-semLixo(contexto.pzKpi('Alcance', '400', { delta: 33.3, serie: [1, 2, 3] }), 'indicador');
-semLixo(contexto.pzKpi('Alcance', 'n/d', { delta: null }), 'indicador sem comparação');
-semLixo(contexto.pzRanking([{ rotulo: 'Reels', valor: 40 }, { rotulo: 'Posts', valor: null }], (v) => contexto.AnInsights.fmtDec(v), ' interações'), 'ranking');
-semLixo(contexto.pzPostCard(pubs[0], 47), 'card de publicação');
-semLixo(contexto.pzHtmlDestaques(contexto.AnInsights.destaques({ totais: metricas.totais, anteriores: metricas.anteriores, publicacoes: pubs, horarios: metricas.melhoresHorarios, saldoSeguidores: 8, dias: 3 })), 'destaques');
-semLixo(contexto.pzHtmlLogin(), 'login');
-semLixo(contexto.pzHtmlSemOrg(), 'sem organização');
-semLixo(contexto.pzHtmlTopo(), 'topo');
-semLixo(contexto.pzHtmlRail(), 'menu lateral');
-semLixo(contexto.pzVazio('🖼️', 'Vazio', 'Texto'), 'vazio');
-semLixo(contexto.pzAviso('erro', 'Erro', 'Texto'), 'aviso');
-
-// 7) Página de empresa: estrutura de contas e a lista de contas da empresa
-const dadosContas = { accounts: [
+const contasAPI = [
   { id: 'c1', platform: 'instagram', username: 'planetacorpoclubmais', status: 'active', empresa: 'academia', last_synced_at: '2026-11-21T11:00:00Z' },
-  { id: 'c2', platform: 'facebook', username: null, display_name: 'Academia Planeta', status: 'active', empresa: 'academia', last_synced_at: null }
+  { id: 'c2', platform: 'instagram', username: 'sorvetesguriturvo', status: 'active', empresa: null, last_synced_at: null },
+  { id: 'c3', platform: 'facebook', username: null, display_name: 'Academia Planeta', status: 'active', empresa: 'academia', last_synced_at: null }
+];
+const concorrentesAPI = [
+  { id: 'k1', handle: 'concorrente.x', displayName: 'Concorrente X', empresa: 'academia', ultimo: { capturadoEm: '2026-11-20T12:00:00Z', seguidores: 1200, totalPublicacoes: 210, publicacoes30d: 3, engajamentoMedio: 15.3, amostra: 4, tipos: { post: 2 }, ultimaPublicacaoEm: '2026-11-19T10:00:00Z' }, historico: [{ data: '2026-11-19', seguidores: 1190 }, { data: '2026-11-20', seguidores: 1200 }] },
+  { id: 'k2', handle: 'outro.perfil', displayName: null, empresa: null, ultimo: null, historico: [] }
+];
+const iaAPI = { papel: 'owner', analises: [
+  { id: 'ia1', status: 'ok', periodo: { ini: '2026-11-14', fim: '2026-11-20' }, criadaEm: '2026-11-21T15:00:00Z', modelo: 'gpt-4.1', contaId: 'c1', analise: { resumo: 'Alcance estável nos dois últimos dias.', pontos_fortes: ['Reels'], pontos_de_atencao: [], proximos_passos: ['Publicar mais'], limitacoes: [] } }
 ] };
-const emp = PZ_EMPRESAS[0];
-semLixo(contexto.pzContasEmpresa(emp, dadosContas), 'contas da empresa');
-semLixo(contexto.pzCabecalhoEmpresa(emp, dadosContas), 'cabeçalho da empresa');
-assert.strictEqual(contexto.pzContaDaEmpresa(dadosContas, 'academia'), 'c1', 'a conta do Instagram é a das análises');
 
-// 8) Resumo de ponta a ponta com uma API simulada (contas, métricas, concorrentes e IA)
-(async () => {
-let chamadasContas = 0;
 const respostas = {
-  contas: { ok: true, role: 'owner', accounts: [
-    { id: 'c1', platform: 'instagram', username: 'planetacorpoclubmais', status: 'active', empresa: 'academia', last_synced_at: '2026-11-21T11:00:00Z' },
-    { id: 'c2', platform: 'instagram', username: 'sorvetesguriturvo', status: 'active', empresa: null, last_synced_at: null }
-  ] },
-  concorrentes: { ok: true, papel: 'owner', concorrentes: [], avisoConsulta: null },
-  'ia-historico': { ok: true, papel: 'owner', analises: [] }
+  contas: { ok: true, role: 'owner', accounts: contasAPI },
+  metricas,
+  publicacoes: { publicacoes: pubs, contas: [] },
+  concorrentes: { ok: true, papel: 'owner', concorrentes: concorrentesAPI, avisoConsulta: null },
+  'ia-historico': iaAPI
 };
+let chamadasContas = 0;
 contexto.fetch = async (url) => {
   const acao = /acao=([\w-]+)/.exec(url)[1];
   if (acao === 'contas') chamadasContas += 1;
-  // Pausa curta para os pedidos iguais se sobreporem de verdade
-  await new Promise((r) => setTimeout(r, 5));
-  const corpo = acao === 'metricas' ? metricas : respostas[acao];
-  return { ok: true, status: 200, json: async () => corpo, text: async () => '' };
+  await espera(3);
+  return { ok: true, status: 200, json: async () => respostas[acao], text: async () => '' };
 };
 
-// Pedidos iguais em paralelo viram uma só busca
-PZ.cache = {};
-await Promise.all([vm.runInContext('pzContas()', contexto), vm.runInContext('pzContas()', contexto)]);
-assert.strictEqual(chamadasContas, 1, 'dois pedidos iguais fazem uma só chamada');
+// ── Sessão simulada ─────────────────────────────────────────────────────────
+PZ.sessao = { user: { email: 'gilson@empresa.com' }, access_token: 't' };
+PZ.orgs = [{ id: 'o1', nome: 'Grupo', papel: 'owner' }];
+PZ.org = 'o1';
+PZ.iniciado = true;
+PZ.orgsCarregadas = true;
+const emp = PZ_EMPRESAS[0];
 
-const tela = { innerHTML: '' };
-await contexto.pzPaginaResumo(tela, PZ.token);
-semLixo(tela.innerHTML, 'resumo');
-assert.ok(tela.innerHTML.includes('1 conta(s) ainda não estão em uma empresa'), 'banner: conta sem empresa');
-assert.ok(tela.innerHTML.includes('Ligar contas às empresas'), 'banner tem o próximo passo');
-assert.ok(tela.innerHTML.includes('Nenhuma conta ligada'), 'empresa sem conta diz isso, sem zero');
-assert.ok(tela.innerHTML.includes('Ligar conta do Instagram'), 'cartão sem conta tem a ação certa');
-assert.ok(!tela.innerHTML.includes('Apcturvo') && !tela.innerHTML.includes('Boa tarde,'), 'sem saudação com nome tirado do e-mail');
-assert.ok(tela.innerHTML.includes('Resumo'), 'título da página');
+(async () => {
+  // 1) Telas puras com dados de exemplo
+  const visao = run("pzHtmlVisao")(metricas, pubs);
+  semLixo(visao, 'visão');
+  assert.ok(visao.includes('pz-ch-evo') && visao.includes('pz-ch-seg'), 'visão tem os dois gráficos');
+  assert.ok(visao.includes('+33'), 'alcance: 400 contra 300 = +33%');
+  assert.ok(visao.includes('Qua'), 'melhor horário aparece');
 
-// Barra de topo: com contas carregadas, mostra a última sincronização
-const topo = contexto.pzHtmlTopo();
-semLixo(topo, 'topo com contas');
-assert.ok(topo.includes('Sincronizado'), 'topo mostra a última sincronização das contas');
+  const folha = run("pzHtmlRelatorio")({
+    tipo: 'semanal', titulo: 'Relatório semanal',
+    periodo: { ini: '2026-11-14', fim: '2026-11-20', dias: 7 }, periodoAnterior: { ini: '2026-11-07', fim: '2026-11-13' },
+    escopo: '@planetacorpoclubmais', geradoEm: '2026-11-21T15:00:00Z', semDados: false,
+    indicadores: [{ chave: 'alcance', rotulo: 'Alcance', valor: 400, anterior: 300, variacao: 33.3 }, { chave: 'cliques', rotulo: 'Cliques no link', valor: null, anterior: null, variacao: null }],
+    seguidores: { noFim: 1010, saldo: 8 }, diario: serie, publicacoes: [{ tipo: 'Reel', data: '2026-11-18', hora: 12, conta: 'planetacorpoclubmais', alcance: 500, curtidas: 40, comentarios: 4, engajamento: 47 }],
+    concorrentes: [], horarios: { suficiente: false, publicacoesComMedicao: 3, top: [] }, publico: null,
+    limitacoes: ['Impressões: a Meta descontinuou a métrica.']
+  });
+  semLixo(folha, 'relatório');
+  assert.ok(folha.includes('Cliques no link') && folha.includes('Relatório semanal'));
 
-console.log('ok (analise-render)');
+  const analise = run("pzHtmlAnaliseIA")(iaAPI.analises[0]);
+  semLixo(analise, 'análise com IA');
+  assert.ok(analise.includes('Alcance estável nos dois últimos dias.'));
+
+  semLixo(run("pzHtmlLogin")(), 'login');
+  semLixo(run("pzHtmlSemOrg")(), 'sem organização');
+  semLixo(run("pzHtmlCab")(emp), 'cabeçalho da empresa');
+  assert.ok(run("pzHtmlCab")(emp).includes('Academia'));
+  semLixo(run("pzKpi")('Alcance', '400', { delta: 33.3, serie: [1, 2, 3] }), 'indicador');
+  semLixo(run("pzKpi")('Alcance', 'n/d', { delta: null }), 'indicador sem comparação');
+  semLixo(run("pzPostCard")(pubs[0], 47), 'card de publicação');
+  semLixo(run("pzHtmlDestaques")(run("AnInsights").destaques({ totais: metricas.totais, anteriores: metricas.anteriores, publicacoes: pubs, horarios: metricas.melhoresHorarios, saldoSeguidores: 8, dias: 3 })), 'destaques');
+
+  // 2) Uma empresa com conta: as abas internas, com a conta dela
+  const sec = async (sub) => {
+    const el = { innerHTML: '' };
+    await run('(el, id, sub, tok) => pzPaginaEmpresa(el, id, sub, tok)')(el, 'academia', sub, PZ.token);
+    await espera(5);
+    return el.innerHTML;
+  };
+  const visaoTela = await sec('visao');
+  semLixo(visaoTela, 'aba visão');
+  assert.ok(visaoTela.includes('Alcance') && visaoTela.includes('planetacorpoclubmais'), 'visão da empresa mostra a conta dela');
+  semLixo(await sec('publico'), 'aba público');
+  assert.ok((await sec('publico')).includes('Faixa etária'));
+  semLixo(await sec('publicacoes'), 'aba publicações');
+  assert.ok((await sec('publicacoes')).includes('Treino de hoje'), 'publicações da conta aparecem');
+  semLixo(await sec('horarios'), 'aba horários');
+  const concorr = await sec('concorrentes');
+  semLixo(concorr, 'aba concorrentes');
+  assert.ok(concorr.includes('@concorrente.x'), 'concorrente da empresa aparece');
+  assert.ok(!concorr.includes('@outro.perfil'), 'concorrente sem empresa não aparece na aba da empresa');
+  const relatorios = await sec('relatorios');
+  semLixo(relatorios, 'aba relatórios');
+  assert.ok(relatorios.includes('Gerar relatório') && relatorios.includes('planetacorpoclubmais'));
+  const ia = await sec('ia');
+  semLixo(ia, 'aba inteligência');
+  assert.ok(ia.includes('Alcance estável nos dois últimos dias.'), 'a análise da conta da empresa aparece');
+  const contas = await sec('contas');
+  semLixo(contas, 'aba contas');
+  assert.ok(contas.includes('Conectar Instagram') && contas.includes('Contas sem empresa'), 'contas: conectar e ligar contas sem empresa');
+  assert.ok(contas.includes('sorvetesguriturvo'), 'conta sem empresa aparece para ligar');
+  assert.ok(contas.includes('Concorrentes sem empresa') && contas.includes('outro.perfil'), 'concorrente sem empresa aparece para ligar');
+
+  // 3) Empresa sem conta do Instagram: explica em vez de mostrar zero ou exemplo
+  const semConta = { innerHTML: '' };
+  await run('(el, id, sub, tok) => pzPaginaEmpresa(el, id, sub, tok)')(semConta, 'sorveteria', 'visao', PZ.token);
+  await espera(5);
+  assert.ok(semConta.innerHTML.includes('ainda não tem conta do Instagram'), 'sem conta: diz o que falta');
+  assert.ok(!/Alcance/.test(semConta.innerHTML), 'sem conta: nenhum indicador de exemplo');
+
+  // 4) Carregamento completo: o painel da empresa monta cabeçalho, abas e a página
+  PZ.empresa = 'academia';
+  PZ.sub = { academia: 'visao' };
+  PZ.token = 0;
+  elementos['pz-pagina'] = { id: 'pz-pagina', innerHTML: '' };
+  run('pzRender')();
+  await espera(60);
+  const painel = elementos['pa-academia'].innerHTML;
+  semLixo(painel, 'painel da academia');
+  assert.ok(painel.includes('pz-sub') && painel.includes('Visão geral') && painel.includes('Contas'), 'abas internas aparecem');
+  const pagina = elementos['pz-pagina'].innerHTML;
+  semLixo(pagina, 'página da visão geral');
+  assert.ok(pagina.includes('Alcance'), 'a página da visão geral chegou ao painel');
+
+  // 5) Pedidos iguais em paralelo viram uma só busca
+  PZ.cache = {};
+  chamadasContas = 0;
+  await Promise.all([run('pzContas')(), run('pzContas')()]);
+  assert.strictEqual(chamadasContas, 1, 'dois pedidos iguais fazem uma só chamada');
+
+  console.log('ok (analise-render)');
 })().catch((e) => {
   console.error(e);
   process.exit(1);

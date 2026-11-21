@@ -256,6 +256,28 @@ async function chamar(rota, f, { query = {}, corpo, metodo = 'POST', cabecalhos 
   assert.strictEqual(h.body.concorrentes[0].ok, true);
   assert.strictEqual(h.body.concorrentes[0].consultados, 1);
 
+  // ── Concorrentes por empresa ───────────────────────────────────────────────────
+  const comEmpresa = criarFake();
+  const novoCom = await conc.adicionarConcorrente({ orgId: ORG, userId: USUARIO, handle: 'concorrente.x', displayName: null, empresa: 'academia', cfg: CFG, f: comEmpresa.f, chave: CHAVE, agora: AGORA });
+  assert.strictEqual(novoCom.empresa, 'academia');
+  assert.strictEqual(comEmpresa.log.find((x) => x.metodo === 'POST' && x.u.pathname === '/rest/v1/competitor_accounts').corpo.empresa, 'academia', 'o cadastro grava a empresa');
+
+  const mudaFake = criarFake({ concorrentes: [{ id: C1, handle: 'concorrente.x', empresa: null }] });
+  const mudou = await conc.definirEmpresaConcorrente({ orgId: ORG, id: C1, empresa: 'gympulse', cfg: CFG, f: mudaFake.f });
+  assert.deepStrictEqual(mudou, { id: C1, empresa: 'gympulse' });
+  const patch = mudaFake.log.find((x) => x.metodo === 'PATCH');
+  assert.deepStrictEqual(patch.corpo, { empresa: 'gympulse' });
+  assert.strictEqual(patch.u.searchParams.get('organization_id'), 'eq.' + ORG, 'só dentro da organização');
+  await assert.rejects(conc.definirEmpresaConcorrente({ orgId: ORG, id: 'nao-uuid', empresa: 'gympulse', cfg: CFG, f: criarFake().f }), (e) => e.status === 400);
+  await assert.rejects(conc.definirEmpresaConcorrente({ orgId: ORG, id: C2, empresa: 'gympulse', cfg: CFG, f: criarFake().f }), (e) => e.status === 404);
+
+  h = await chamar('concorrentes-empresa', criarFake({ papel: 'viewer', concorrentes: [{ id: C1, handle: 'concorrente.x' }] }).f, { corpo: { orgId: ORG, id: C1, empresa: 'academia' } });
+  assert.strictEqual(h.statusCode, 403, 'viewer não muda a empresa do concorrente');
+  h = await chamar('concorrentes-empresa', criarFake({ concorrentes: [{ id: C1, handle: 'concorrente.x' }] }).f, { corpo: { orgId: ORG, id: C1, empresa: 'nike' } });
+  assert.strictEqual(h.statusCode, 400, 'empresa desconhecida é recusada');
+  h = await chamar('concorrentes-empresa', criarFake({ concorrentes: [{ id: C1, handle: 'concorrente.x' }] }).f, { corpo: { orgId: ORG, id: C1, empresa: 'sorveteria' } });
+  assert.strictEqual(h.statusCode, 200, 'editor muda a empresa do concorrente');
+
   console.log('ok (concorrentes)');
 })().catch((e) => {
   console.error(e);

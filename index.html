@@ -920,28 +920,31 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
     <button class="tab on" data-p="academia" onclick="go('academia',this)">🏋️ Academia</button>
     <button class="tab" data-p="sorveteria" onclick="go('sorveteria',this)">🍦 Sorveteria</button>
     <button class="tab" data-p="gympulse" onclick="go('gympulse',this)">🎮 GympulsePro</button>
-    <button class="tab" data-p="analise" onclick="go('analise',this)">📊 Análise das Redes Sociais</button>
     <button class="tab" data-p="historico" onclick="go('historico',this)">📋 Histórico</button>
   </div>
 </div>
 
 <div class="filter-bar">
-  <label class="hide-done-check">
+  <div class="modo-switch" role="group" aria-label="Modo da empresa">
+    <button type="button" id="mdConteudo" class="on" onclick="setModoEmpresa('conteudo')">Conteúdo</button>
+    <button type="button" id="mdAnalise" onclick="setModoEmpresa('analise')">Análise</button>
+  </div>
+  <label class="hide-done-check so-conteudo">
     <input type="checkbox" id="hideDoneCheck" onchange="toggleHideDone()">
     <span class="checkmark"></span>
     <span class="hide-done-label">Esconder ações já realizadas</span>
   </label>
-  <button class="cal-open-btn" id="calOpenBtn" onclick="openCalendar()">📅 Calendário</button>
-  <button class="new-post-btn" id="newPostBtn" onclick="openNewPostModal()">＋ Nova Postagem</button>
+  <button class="cal-open-btn so-conteudo" id="calOpenBtn" onclick="openCalendar()">📅 Calendário</button>
+  <button class="new-post-btn so-conteudo" id="newPostBtn" onclick="openNewPostModal()">＋ Nova Postagem</button>
 </div>
 
 <main>
   <div class="panel on" id="p-academia"></div>
   <div class="panel" id="p-sorveteria"></div>
   <div class="panel" id="p-gympulse"></div>
-  <div class="panel" id="p-analise">
-    <div id="an-app"></div>
-  </div>
+  <div class="panel" id="pa-academia"></div>
+  <div class="panel" id="pa-sorveteria"></div>
+  <div class="panel" id="pa-gympulse"></div>
   <div class="panel" id="p-historico"></div>
 </main>
 
@@ -25934,17 +25937,17 @@ function cp(id,btn){
 let activeProfile = 'academia';
 function go(tab,el){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
-  document.getElementById('p-'+tab).classList.add('on');
+  document.getElementById('p-'+tab)?.classList.add('on');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   el.classList.add('on');
   document.body.dataset.tab = tab; // cor de fundo da aba (CSS body[data-tab=...])
   if(['academia','sorveteria','gympulse'].includes(tab)) activeProfile = tab;
   // Esconder botão Nova Postagem no Histórico/Estratégia
   const npBtn = document.getElementById('newPostBtn');
-  if(npBtn) npBtn.style.display = ['historico','estrategia','analise'].includes(tab) ? 'none' : 'flex';
+  if(npBtn) npBtn.style.display = ['historico','estrategia'].includes(tab) ? 'none' : 'flex';
   const calBtn = document.getElementById('calOpenBtn');
-  if(calBtn) calBtn.style.display = ['historico','estrategia','analise'].includes(tab) ? 'none' : 'flex';
-  if(tab==='analise'){ anRender(); anContaIniciar(); }
+  if(calBtn) calBtn.style.display = ['historico','estrategia'].includes(tab) ? 'none' : 'flex';
+  pzAplicarModo(tab); // empresa em Análise mostra o painel da análise; fora das empresas o seletor some
   if(tab==='historico') buildHist();
   if(tab==='estrategia') buildEstrategia();
 }
