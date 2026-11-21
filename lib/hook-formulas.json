@@ -32,132 +32,158 @@
     {
       "id": 1,
       "name": "Cost Confession",
-      "match": "\\$\\s?\\d[\\d,]*\\s+(?:is|was) what\\b|\\bcost (?:me|us|him|her|them)\\b|\\blost\\b[^.!?]{0,20}\\$\\s?\\d"
+      "match": "\\$\\s?\\d[\\d,]*\\s+(?:is|was) what\\b|\\bcost (?:me|us|him|her|them)\\b|\\blost\\b[^.!?]{0,20}\\$\\s?\\d",
+      "matchPt": "R?\\$\\s?\\d[\\d.,]*\\s+(?:é|foi) o que\\b|\\b(?:me|nos|lhe) custou\\b|\\bperdi\\b[^.!?]{0,20}R?\\$\\s?\\d"
     },
     {
       "id": 2,
       "name": "Negative Command",
-      "match": "^\\s*(?:stop|quit|never|don'?t|dont|please)\\b[^.!?]{0,30}\\b(?:do|be|make|buy|use|start|say|post|send|take|charge)?\\b|\\b(?:do not|don'?t|dont|never) (?:do|be|make|buy|use|start|say|post|take)\\b|\\bquit your\\b"
+      "match": "^\\s*(?:stop|quit|never|don'?t|dont|please)\\b[^.!?]{0,30}\\b(?:do|be|make|buy|use|start|say|post|send|take|charge)?\\b|\\b(?:do not|don'?t|dont|never) (?:do|be|make|buy|use|start|say|post|take)\\b|\\bquit your\\b",
+      "matchPt": "^\\s*(?:pare|pare de|nunca|não|nao|jamais|por favor)(?![wÀ-ÿ])|\\b(?:não|nao|nunca) (?:faça|faca|compre|use|comece|poste|envie|espere)(?![wÀ-ÿ])"
     },
     {
       "id": 3,
       "name": "Nobody Tells You",
-      "match": "\\b(?:nobody|no one|nobody ever)\\s+(?:ever\\s+)?(?:tells|told|talks|talked|says|said|mentions|teaches)\\b|\\bwhat (?:nobody|no one) (?:tells|says)\\b"
+      "match": "\\b(?:nobody|no one|nobody ever)\\s+(?:ever\\s+)?(?:tells|told|talks|talked|says|said|mentions|teaches)\\b|\\bwhat (?:nobody|no one) (?:tells|says)\\b",
+      "matchPt": "\\b(?:ninguém|ninguem)\\s+(?:nunca\\s+)?(?:te\\s+)?(?:conta|contou|fala|falou|diz|disse|ensina|ensinou)\\b|\\bo que ninguém (?:conta|diz|fala)\\b"
     },
     {
       "id": 4,
       "name": "The Replacement",
-      "match": "\\breplaced?\\b[^.!?]*\\$\\s?\\d|\\$\\s?\\d[^.!?]*\\breplaced?\\b|\\binstead of (?:paying|hiring)\\b"
+      "match": "\\breplaced?\\b[^.!?]*\\$\\s?\\d|\\$\\s?\\d[^.!?]*\\breplaced?\\b|\\binstead of (?:paying|hiring)\\b",
+      "matchPt": "\\bsubstitu\\w+\\b[^.!?]*R?\\$\\s?\\d|R?\\$\\s?\\d[^.!?]*\\bsubstitu\\w+\\b|\\bem vez de (?:pagar|contratar)\\b"
     },
     {
       "id": 5,
       "name": "Time Collapse",
-      "match": "\\bused to take\\b|\\bnow (?:it )?(?:only )?takes?\\b|\\btakes? (?:me )?\\d+\\s*(?:sec|second|min|minute|hour|hr)"
+      "match": "\\bused to take\\b|\\bnow (?:it )?(?:only )?takes?\\b|\\btakes? (?:me )?\\d+\\s*(?:sec|second|min|minute|hour|hr)",
+      "matchPt": "\\bantes (?:eu )?(?:levava|demorava|gastava)(?![wÀ-ÿ])|\\bagora (?:leva|demora|é só|so)(?![wÀ-ÿ])|\\b(?:levo|demoro|gasto) (?:apenas |só )?\\d+\\s*(?:seg|segundo|min|minuto|hora|h)(?![wÀ-ÿ])"
     },
     {
       "id": 6,
       "name": "The Receipt",
-      "match": "\\bi\\s+\\w+(?:ed)?\\s+[^.!?]{0,30}\\bfor\\s+\\d+\\s+(?:days?|weeks?|months?|years?)\\b|\\bhere (?:are|is) (?:the|my)\\b[^.!?]*\\bnumbers\\b|\\bwe(?:'ll| will)? do \\$\\s?\\d"
+      "match": "\\bi\\s+\\w+(?:ed)?\\s+[^.!?]{0,30}\\bfor\\s+\\d+\\s+(?:days?|weeks?|months?|years?)\\b|\\bhere (?:are|is) (?:the|my)\\b[^.!?]*\\bnumbers\\b|\\bwe(?:'ll| will)? do \\$\\s?\\d",
+      "matchPt": "\\beu\\s+\\w+\\s+[^.!?]{0,30}\\bpor\\s+\\d+\\s+(?:dias?|semanas?|meses|anos?)\\b|\\baqui (?:estão|estao|está|esta) (?:os|meus) (?:números|numeros)\\b|\\bfiz\\s+R?\\$\\s?\\d"
     },
     {
       "id": 7,
       "name": "Wrong Way, Right Way",
-      "match": "\\b(?:big(?:gest)?|common|the) mistake\\b|\\bmistake (?:that|people|i)\\b|\\byou'?(?:re| are) doing\\b[^.!?]*\\bwrong\\b|\\bdoing (?:it|this) wrong\\b"
+      "match": "\\b(?:big(?:gest)?|common|the) mistake\\b|\\bmistake (?:that|people|i)\\b|\\byou'?(?:re| are) doing\\b[^.!?]*\\bwrong\\b|\\bdoing (?:it|this) wrong\\b",
+      "matchPt": "\\b(?:o|um|maior|grande|principal) (?:maior |grande |principal )?erro\\b|\\berro comum\\b|\\bfazendo (?:isso|isto) errado\\b"
     },
     {
       "id": 8,
       "name": "Insider Leak",
-      "match": "\\bi (?:spent|worked|ran|was|have been)\\b[^.!?]*\\b\\d+\\s*\\+?\\s*years?\\b|\\bwe never (?:told|said|showed)\\b|\\bnobody (?:puts|tells you about)\\b|\\bi (?:sell|sold|run)\\b[^.!?]*\\$\\s?\\d"
+      "match": "\\bi (?:spent|worked|ran|was|have been)\\b[^.!?]*\\b\\d+\\s*\\+?\\s*years?\\b|\\bwe never (?:told|said|showed)\\b|\\bnobody (?:puts|tells you about)\\b|\\bi (?:sell|sold|run)\\b[^.!?]*\\$\\s?\\d",
+      "matchPt": "\\beu (?:trabalhei|rodei|vendi|passei|fui)\\b[^.!?]*\\b\\d+\\s*\\+?\\s*anos?\\b|\\bnunca (?:contamos|falamos|mostramos)\\b|\\bbastidor(?:es)?\\b"
     },
     {
       "id": 9,
       "name": "The Steal",
-      "match": "^\\s*steal\\b|\\bsteal (?:this|these|my)\\b|^\\s*(?:here'?s|this is) (?:the|my) (?:exact|literal)\\b"
+      "match": "^\\s*steal\\b|\\bsteal (?:this|these|my)\\b|^\\s*(?:here'?s|this is) (?:the|my) (?:exact|literal)\\b",
+      "matchPt": "^\\s*(?:copie|copia|roube|rouba|salve)\\b|\\bpode (?:copiar|roubar|usar)\\b|^\\s*(?:aqui está|aqui esta|esse é|este é) (?:o|meu) (?:exato|literal|exata|script)\\b"
     },
     {
       "id": 10,
       "name": "If This, Then Watch",
-      "match": "^\\s*if (?:you|i|we|your|my|they)\\b"
+      "match": "^\\s*if (?:you|i|we|your|my|they)\\b",
+      "matchPt": "^\\s*se (?:você|voce|eu|nós|nos|seu|seus|sua|minha|meu|eles)(?![wÀ-ÿ])"
     },
     {
       "id": 11,
       "name": "Numbered With A Favourite",
-      "match": "^\\s*(?:here are\\s+)?\\d+\\s+\\w+|\\bnumber \\d+\\b|\\b(?:three|four|five|seven|ten)\\s+\\w+\\s+(?:every|that|you)\\b"
+      "match": "^\\s*(?:here are\\s+)?\\d+\\s+\\w+|\\bnumber \\d+\\b|\\b(?:three|four|five|seven|ten)\\s+\\w+\\s+(?:every|that|you)\\b",
+      "matchPt": "^\\s*(?:aqui (?:estão|estao|vão|vao) )?\\d+\\s+\\w+|\\bnúmero \\d+\\b|\\bnumero \\d+\\b|\\b(?:três|tres|quatro|cinco|sete|dez)\\s+\\w+\\s+(?:que|todo|todos|para|pra)\\b"
     },
     {
       "id": 12,
       "name": "The Objection",
-      "match": "^\\s*[\\\"“'][^\\\"”']{5,120}[\\\"”'][,.]?\\s*(?:fine|ok|okay|sure|right|here)"
+      "match": "^\\s*[\\\"“'][^\\\"”']{5,120}[\\\"”'][,.]?\\s*(?:fine|ok|okay|sure|right|here)",
+      "matchPt": "^\\s*[\"“'][^\"”']{5,120}[\"”'][,.]?\\s*(?:tudo bem|ok|certo|claro|verdade|justo|entendo)"
     },
     {
       "id": 13,
       "name": "Before And After, On Screen",
-      "match": "\\b(?:this|that) was\\b[^.!?]*[.!?]\\s*(?:this|that) is\\b|\\bbefore\\b[^.!?]*\\bafter\\b|\\bi (?:look|looked) back at\\b"
+      "match": "\\b(?:this|that) was\\b[^.!?]*[.!?]\\s*(?:this|that) is\\b|\\bbefore\\b[^.!?]*\\bafter\\b|\\bi (?:look|looked) back at\\b",
+      "matchPt": "\\bisso era\\b[^.!?]*[.!?]\\s*(?:isso|isto) é\\b|\\bantes\\b[^.!?]*\\bdepois\\b|\\bolhando (?:para|pra) trás\\b"
     },
     {
       "id": 14,
       "name": "The Callout",
-      "match": "^\\s*(?:every|all|any)\\s+\\w+|^\\s*[a-z][\\w ]{2,28}(?:ers|ists|ors|ants)\\b\\s*[,:]|^\\s*for (?:viewers|people|anyone|those|everyone)\\b|^\\s*(?:attention|listen up)\\b"
+      "match": "^\\s*(?:every|all|any)\\s+\\w+|^\\s*[a-z][\\w ]{2,28}(?:ers|ists|ors|ants)\\b\\s*[,:]|^\\s*for (?:viewers|people|anyone|those|everyone)\\b|^\\s*(?:attention|listen up)\\b",
+      "matchPt": "^\\s*(?:todo|toda|todos|todas|qualquer)\\s+\\w+|^\\s*(?:para|pra) (?:quem|você|voce|vocês|voces|todo mundo)(?![wÀ-ÿ])|^\\s*(?:atenção|atencao|presta atenção|presta atencao)(?![wÀ-ÿ])"
     },
     {
       "id": 15,
       "name": "The Flop Record",
-      "match": "\\bmy first\\s+\\d+\\b|\\bfirst\\s+\\d+\\s+(?:reels?|videos?|posts?|clients?|months?)\\b"
+      "match": "\\bmy first\\s+\\d+\\b|\\bfirst\\s+\\d+\\s+(?:reels?|videos?|posts?|clients?|months?)\\b",
+      "matchPt": "\\bmeu primeiro\\s+(?:\\d+|fracasso|erro|reel|vídeo|video|post|cliente)\\b|\\bprimeir[oa]s?\\s+\\d+\\s+(?:reels?|vídeos?|videos?|posts?|clientes?|meses)\\b"
     },
     {
       "id": 16,
       "name": "The Verbatim Question",
-      "match": "^\\s*[\\\"“']?(?:how|what|what'?s|why|when|where|who|which|can|should|do|does|did|is|are|have you|would you)\\b[^?]{3,110}\\?"
+      "match": "^\\s*[\\\"“']?(?:how|what|what'?s|why|when|where|who|which|can|should|do|does|did|is|are|have you|would you)\\b[^?]{3,110}\\?",
+      "matchPt": "^\\s*[\"“']?(?:como|o que|qual|quais|por que|porque|quando|onde|quem|pode|posso|devo|você|voce|vocês|voces)(?![wÀ-ÿ])[^?]{3,110}\\?"
     },
     {
       "id": 17,
       "name": "Head To Head",
-      "match": "\\b(?:vs\\.?|versus)\\b|\\bdifferences? between\\b|\\b(?:a|the) or (?:b|the)\\b"
+      "match": "\\b(?:vs\\.?|versus)\\b|\\bdifferences? between\\b|\\b(?:a|the) or (?:b|the)\\b",
+      "matchPt": "\\b(?:vs\\.?|versus)\\b|\\bdiferenças? entre\\b|\\bou (?:a|o) (?:opção )?b\\b"
     },
     {
       "id": 18,
       "name": "Cold Open Demo",
-      "match": "^\\s*watch (?:what|this|me)\\b|^\\s*(?:let me|lemme) show you\\b|^\\s*repeat after me\\b"
+      "match": "^\\s*watch (?:what|this|me)\\b|^\\s*(?:let me|lemme) show you\\b|^\\s*repeat after me\\b",
+      "matchPt": "^\\s*(?:olha|veja|assista) (?:o que|isso|isto|eu)\\b|^\\s*(?:deixa eu|deixa que eu) (?:te )?mostrar\\b|^\\s*repita comigo\\b"
     },
     {
       "id": 19,
       "name": "The Deadline",
-      "match": "\\bbefore (?:you|it|they|the)\\b[^.!?]*\\b(?:change|changes|end|ends|close|closes|expires|goes)\\b|\\bchanges on\\b|\\bby 20\\d\\d\\b"
+      "match": "\\bbefore (?:you|it|they|the)\\b[^.!?]*\\b(?:change|changes|end|ends|close|closes|expires|goes)\\b|\\bchanges on\\b|\\bby 20\\d\\d\\b",
+      "matchPt": "\\bantes (?:que|de que|de) (?:você|voce|eles|elas|isso|a|o)\\b[^.!?]*\\b(?:mudar|mudam|acabar|acaba|fecha|fechar|expira|muda)\\b|\\bmudanças? (?:em|no dia)\\b|\\bprazo\\b"
     },
     {
       "id": 20,
       "name": "Permission",
-      "match": "\\byou (?:do not|don'?t|dont) need\\b|\\bstop (?:trying to|worrying about)\\b"
+      "match": "\\byou (?:do not|don'?t|dont) need\\b|\\bstop (?:trying to|worrying about)\\b",
+      "matchPt": "\\bvocê (?:não|nao) precisa\\b|\\bvoce (?:não|nao) precisa\\b|\\bpare de (?:tentar|se preocupar)\\b"
     },
     {
       "id": 21,
       "name": "Mid-Sentence Start",
-      "match": "^\\s*(?:\\.\\.\\.|…)|^\\s*(?:and (?:that'?s|that is|then) when|so (?:he|she|they) (?:said|asked))\\b|^\\s*(?:uh|um)\\b"
+      "match": "^\\s*(?:\\.\\.\\.|…)|^\\s*(?:and (?:that'?s|that is|then) when|so (?:he|she|they) (?:said|asked))\\b|^\\s*(?:uh|um)\\b",
+      "matchPt": "^\\s*(?:\\.\\.\\.|…)|^\\s*(?:e (?:foi|aí|ai) quando|então (?:ele|ela|eles|elas) (?:disse|perguntou))\\b|^\\s*(?:tipo|né|ne)(?=[\\s,.!?]|$)"
     },
     {
       "id": 22,
       "name": "Contrarian Flip",
-      "match": "^\\s*[A-Za-z][\\w' ]{2,34}\\b(?:finish|finishes|win|wins|lose|loses|beats?|is|are)\\s+(?:first|last|dead|wrong|right|better|overrated|underrated)\\b"
+      "match": "^\\s*[A-Za-z][\\w' ]{2,34}\\b(?:finish|finishes|win|wins|lose|loses|beats?|is|are)\\s+(?:first|last|dead|wrong|right|better|overrated|underrated)\\b",
+      "matchPt": "^\\s*[A-Za-zÀ-ú][\\wÀ-ú' ]{2,34}\\b(?:termina|vence|perde|ganha|é|são)\\s+(?:primeiro|último|ultimo|errado|certo|melhor|superestimad[oa]|subestimad[oa])\\b"
     },
     {
       "id": 23,
       "name": "The Statistic",
-      "match": "^\\s*\\d[\\d,.]*\\s?%|\\b\\d[\\d,.]*\\s?%\\s+of\\b"
+      "match": "^\\s*\\d[\\d,.]*\\s?%|\\b\\d[\\d,.]*\\s?%\\s+of\\b",
+      "matchPt": "^\\s*\\d[\\d.,]*\\s?%|\\b\\d[\\d.,]*\\s?%\\s+(?:das?|dos|de)\\b"
     },
     {
       "id": 24,
       "name": "The Reveal",
-      "match": "^\\s*(?:so,?\\s+)?(?:this|these|here) (?:is|are)\\s+(?:the\\s+)?(?:new|my new)\\b|^\\s*(?:so,?\\s+)?this (?:new|tiny|little)\\b|^\\s*this \\w+ has (?:the|a)\\b"
+      "match": "^\\s*(?:so,?\\s+)?(?:this|these|here) (?:is|are)\\s+(?:the\\s+)?(?:new|my new)\\b|^\\s*(?:so,?\\s+)?this (?:new|tiny|little)\\b|^\\s*this \\w+ has (?:the|a)\\b",
+      "matchPt": "^\\s*(?:então,?\\s+)?(?:isso|isto|aqui) (?:é|são|e)\\s+(?:o|a|os|as)?\\s*(?:novo|nova|meu novo|minha nova)\\b|^\\s*(?:então,?\\s+)?(?:este|esta|esse|essa) (?:novo|nova|pequeno|pequena|novinho|novinha) \\w*|^\\s*(?:este|esta|esse|essa) \\w+ tem (?:o|a|um|uma)\\b"
     },
     {
       "id": 25,
       "name": "Someone Else's Result",
-      "match": "\\bthere (?:was|is) (?:one|a|this)\\b|\\b(?:one|a) (?:guy|girl|creator|student|founder|kid|client|friend) (?:i know |who |that )(?:\\w+ed|grew|made|built|went|took|got|hit)\\b|\\bwe had a new\\b"
+      "match": "\\bthere (?:was|is) (?:one|a|this)\\b|\\b(?:one|a) (?:guy|girl|creator|student|founder|kid|client|friend) (?:i know |who |that )(?:\\w+ed|grew|made|built|went|took|got|hit)\\b|\\bwe had a new\\b",
+      "matchPt": "\\bteve um\\b|\\bhouve um\\b|\\b(?:um|uma) (?:cara|menina|criador|criadora|aluno|aluna|fundador|fundadora|cliente|amigo|amiga) (?:que|que eu conheço)\\b[^.!?]*\\b(?:cresceu|fez|construiu|foi|ganhou|saiu)\\b"
     },
     {
       "id": 26,
       "name": "The Superlative",
-      "match": "^\\s*(?:the\\s+)?(?:fastest|quickest|best|worst|biggest|greatest|easiest|hardest|only|number one|#1|most important)\\s+\\w+|\\bthe (?:fastest|best|worst|biggest|greatest|only) way to\\b"
+      "match": "^\\s*(?:the\\s+)?(?:fastest|quickest|best|worst|biggest|greatest|easiest|hardest|only|number one|#1|most important)\\s+\\w+|\\bthe (?:fastest|best|worst|biggest|greatest|only) way to\\b",
+      "matchPt": "^\\s*(?:o|a)\\s+(?:mais )?(?:rápid[oa]|melhor|pior|maior|mais barat[oa]|mais fácil|mais dificil|único|unica|número um|numero um|#1)\\s+\\w+|\\bo (?:mais )?(?:rápido|melhor|pior|maior|mais fácil)\\b"
     }
   ]
 }
