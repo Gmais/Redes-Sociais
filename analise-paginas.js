@@ -325,7 +325,7 @@ function pzHtmlViral(lista, concR, emp) {
   else corpo = `<ol style="margin:0;padding-left:18px;display:grid;gap:8px">${d.itens.map((p) => `<li style="font-size:13px">${pzEsc(p.tipoLabel)} · ${AnInsights.dataHora(p.publicadoEm)} · <b>${fmtI(p.valor)}</b> visualizações, ${p.vezesMediana}× a mediana${p.formula ? ` · fórmula: <b>${pzEsc(p.formula)}</b>` : ''}${p.permalink ? ` · <a href="${pzEsc(p.permalink)}" target="_blank" rel="noopener">abrir</a>` : ''}</li>`).join('')}</ol>`;
   return `<div class="pz-card s12" style="margin-bottom:16px">
     <div class="pz-card-h"><div><h3>O que se destacou</h3><small>Publicações acima de 1,5 vez a sua mediana de visualizações. Nada é estimado. A fórmula de gancho vem da primeira linha da legenda, só em Reels.${d.suficiente ? ` Mediana: ${fmtI(d.mediana)}.` : ''}</small></div></div>
-    ${comparacao}${corpo}
+    ${comparacao}${corpo}<div style="margin-top:12px"><button type="button" class="pz-btn fantasma sm" onclick="pzSwipeFileCsv()">Baixar swipe file (CSV)</button></div>
   </div>`;
 }
 
@@ -485,6 +485,40 @@ async function pzDMAcao(id, acao) {
   const mensagens = { editar: 'Texto salvo.', aprovar: 'Resposta aprovada.', descartar: 'Resposta descartada.', enviar: 'Mensagem enviada.' };
   pzToast(mensagens[acao] || 'Pronto.');
   pzDMCarregar();
+}
+
+// ig-viral: swipe file. Todas as publicações medidas, com a fórmula e quantas vezes passaram da mediana.
+function pzSwipeFileCsv() {
+  const lista = PZ.listaPub || [];
+  const d = AnInsights.destaquesDaMediana(lista, 'visualizacoes', 0, 100000);
+  if (!d.suficiente || !d.itens.length) { pzToast('Não há publicações medidas para montar o swipe file.', true); return; }
+  const cabecalho = ['data', 'tipo', 'formula', 'visualizacoes', 'vezes_a_mediana', 'alcance', 'curtidas', 'comentarios', 'legenda', 'link'];
+  const campo = (v) => {
+    const s = v == null ? '' : String(v);
+    return /[";\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const linhas = d.itens.map((p) => [
+    p.publicadoEm ? AnInsights.dataHora(p.publicadoEm) : '',
+    p.tipoLabel || '',
+    p.formula || '',
+    p.valor,
+    p.vezesMediana,
+    p.alcance,
+    p.curtidas,
+    p.comentarios,
+    String(p.legenda || '').split('\n')[0],
+    p.permalink || ''
+  ].map(campo).join(';'));
+  const csv = '\uFEFF' + [cabecalho.join(';')].concat(linhas).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'swipe-file-' + pzEmpresaAtual().id + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function pzFiltroPub(campo, valor) {
