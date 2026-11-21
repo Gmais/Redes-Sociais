@@ -26551,7 +26551,9 @@ function anRenderVisao(r){
 function anRenderPublico(r){
   const real = anRealAtual();
   if (real) r = { ...r, serie: real.serie, dias: real.dias, seguidoresFim: real.seguidoresFim, ini: real.ini, fim: real.fim };
-  const P = AnaliseDemo.publico();
+  const pub = real && real.publico ? real.publico : null;
+  const P = pub || AnaliseDemo.publico();
+  const rotulo = pub ? ' · dados reais' : ' · demonstração';
   const labels = r.serie.map((d) => anDM(d.data));
   const fimSeg = r.seguidoresFim != null ? ` Fim do período: ${anNum(r.seguidoresFim)} seguidores.` : '';
   document.getElementById('an-publico-body').innerHTML = `
@@ -26561,12 +26563,12 @@ function anRenderPublico(r){
       <div class="an-chart"><canvas id="an-ch-cresc" role="img" aria-label="Crescimento de seguidores no período"></canvas></div>
     </div>
     <div class="an-grid2">
-      <div class="an-card"><h3>Faixa etária</h3><div class="hint">% dos seguidores · demonstração</div><div class="an-chart"><canvas id="an-ch-idade" role="img" aria-label="Seguidores por faixa etária"></canvas></div></div>
-      <div class="an-card"><h3>Gênero</h3><div class="hint">% dos seguidores · demonstração</div><div class="an-chart"><canvas id="an-ch-genero" role="img" aria-label="Seguidores por gênero"></canvas></div></div>
+      <div class="an-card"><h3>Faixa etária</h3><div class="hint">% dos seguidores${rotulo}</div><div class="an-chart"><canvas id="an-ch-idade" role="img" aria-label="Seguidores por faixa etária"></canvas></div></div>
+      <div class="an-card"><h3>Gênero</h3><div class="hint">% dos seguidores${rotulo}</div><div class="an-chart"><canvas id="an-ch-genero" role="img" aria-label="Seguidores por gênero"></canvas></div></div>
     </div>
     <div class="an-card" style="margin-top:14px">
       <h3>Localização</h3>
-      <div class="hint">Principais cidades, % dos seguidores · demonstração</div>
+      <div class="hint">Principais cidades, % dos seguidores${rotulo}</div>
       <div class="an-chart"><canvas id="an-ch-cidades" role="img" aria-label="Seguidores por cidade"></canvas></div>
     </div>`;
 
@@ -26626,6 +26628,7 @@ async function anCarregarReal(p) {
 
 const AN_REAIS = [
   { k: 'alcance', label: 'Alcance', cor: '#7c5cff' },
+  { k: 'visualizacoes', label: 'Visualizações', cor: '#00b4d8' },
   { k: 'engajamento', label: 'Engajamento', cor: '#ff6b35' },
   { k: 'cliques', label: 'Cliques no link', cor: '#f5c200' }
 ];
@@ -26634,7 +26637,7 @@ function anMetricaReal(k) { window.anState.metricaReal = k; anRender(); }
 
 function anBannerReal() {
   const b = document.getElementById('an-demo');
-  if (b) b.innerHTML = '<b>Dados reais</b> A Visão geral mostra os números sincronizados das contas conectadas. Público e melhores horários ainda são de demonstração.';
+  if (b) b.innerHTML = '<b>Dados reais</b> Visão geral, público e melhores horários vêm das contas sincronizadas quando há dados suficientes. Onde não há, o painel mostra a demonstração e avisa.';
 }
 
 function anRenderVisaoReal(d) {
@@ -26655,13 +26658,13 @@ function anRenderVisaoReal(d) {
     : `
     <div class="an-kpis">
       ${kpi('Alcance total', anNum(T.alcance ?? 0), delta('alcance').sub, delta('alcance').cls)}
+      ${kpi('Visualizações', anNum(T.visualizacoes ?? 0), delta('visualizacoes').sub, delta('visualizacoes').cls)}
       ${kpi('Engajamento', anNum(T.engajamento ?? 0), delta('engajamento').sub, delta('engajamento').cls)}
       ${kpi('Cliques no link', anNum(T.cliques ?? 0), delta('cliques').sub, delta('cliques').cls)}
       ${kpi('Seguidores (fim do período)', d.seguidoresFim != null ? anNum(d.seguidoresFim) : '—', 'último valor sincronizado', '')}
-      ${kpi('Impressões', '—', na, '')}
-      ${kpi('Visitas ao perfil', '—', na, '')}
-      ${kpi('Seguidores ganhos', '—', na, '')}
-      ${kpi('Seguidores perdidos', '—', na, '')}
+      ${kpi('Saldo de seguidores', d.saldoSeguidores != null ? (d.saldoSeguidores >= 0 ? '+' : '') + anNum(d.saldoSeguidores) : '—', 'ganhos menos perdidos, pela contagem diária', d.saldoSeguidores >= 0 ? 'up' : 'down')}
+      ${kpi('Visitas ao perfil', '—', 'não disponível pela API', '')}
+      ${kpi('Impressões', '—', 'métrica descontinuada pela Meta', '')}
     </div>
     <div class="an-card">
       <h3>Evolução</h3>
@@ -26696,7 +26699,9 @@ function anRenderVisaoReal(d) {
 
 function anRenderHorarios(){
   const m = AnaliseDemo.mapaDeCalor();
-  const top = AnaliseDemo.melhoresHorarios(m, 3);
+  const real = anRealAtual();
+  const horarios = real && real.melhoresHorarios && real.melhoresHorarios.suficiente ? real.melhoresHorarios : null;
+  const top = horarios ? horarios.top : AnaliseDemo.melhoresHorarios(m, 3);
   const cel = (v, d, h) => `<span class="an-heat-cell" title="${AnaliseDemo.DIAS_SEMANA[d]} ${String(h).padStart(2, '0')}h · intensidade ${Math.round(v * 100)}%" style="background:rgba(124,92,255,${(0.08 + 0.92 * v).toFixed(2)})"></span>`;
   let grade = '<span></span>' + Array.from({ length: 24 }, (_, h) => `<span class="an-heat-lbl">${h}</span>`).join('');
   m.forEach((linha, d) => {
@@ -26707,8 +26712,11 @@ function anRenderHorarios(){
       <h3>Mapa de calor: dia e horário</h3>
       <div class="hint">Demonstração: padrão fictício de atividade. Quanto mais forte a cor, maior a atividade.</div>
       <div class="an-heat"><div class="an-heat-grid">${grade}</div></div>
-      <div class="hint" style="margin:14px 0 0">Horários mais fortes na demonstração:</div>
-      <div class="an-top">${top.map((t) => `<span>${t.dia} às <b>${String(t.hora).padStart(2, '0')}h</b> · ${Math.round(t.valor * 100)}%</span>`).join('')}</div>
+      <div class="hint" style="margin:14px 0 0">${horarios ? `Horários com melhor média de engajamento nas suas publicações (${horarios.posts} publicações, últimos 90 dias):` : 'Horários mais fortes na demonstração:'}</div>
+      <div class="an-top">${top.map((t) => (horarios
+        ? `<span>${t.dia} às <b>${String(t.hora).padStart(2, '0')}h</b> · média de ${t.media} interações</span>`
+        : `<span>${t.dia} às <b>${String(t.hora).padStart(2, '0')}h</b> · ${Math.round(t.valor * 100)}%</span>`)).join('')}</div>
+      ${horarios ? '' : '<div class="hint" style="margin-top:8px">Ainda não há publicações suficientes com métricas para calcular os horários reais (mínimo de 10).</div>'}
     </div>`;
 }
 

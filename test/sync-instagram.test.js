@@ -18,13 +18,28 @@ const resposta = (status, corpo) => {
   return { ok: status >= 200 && status < 300, status, text: async () => texto, json: async () => JSON.parse(texto || '{}') };
 };
 
-function criarFake({ expiraEm = DIAS(60), tokenPlain = 'token-atual', falhaInsights = false, falhaTudo = false } = {}) {
+function criarFake({ expiraEm = DIAS(60), tokenPlain = 'token-atual', falhaInsights = false, falhaTudo = false, publico = false } = {}) {
   const log = [];
+  const opts = { publico };
   const f = async (url, o = {}) => {
     const metodo = o.method || 'GET';
     const u = new URL(url);
     log.push({ metodo, u, corpo: o.body ? JSON.parse(o.body) : null });
     if (u.pathname.endsWith('/refresh_access_token')) return resposta(200, { access_token: 'token-novo', expires_in: 5184000 });
+    if (u.searchParams.get('metric') === 'follower_demographics') {
+      if (!opts.publico) return resposta(200, { data: [] });
+      const quebra = u.searchParams.get('breakdown');
+      const mapa = {
+        age: [['LAST_30_DAYS', '18-24', 30], ['LAST_30_DAYS', '25-34', 70]],
+        gender: [['LAST_30_DAYS', 'F', 80], ['LAST_30_DAYS', 'M', 20]],
+        city: [['LAST_30_DAYS', 'Turvo', 60]],
+        country: [['LAST_30_DAYS', 'BR', 100]]
+      }[quebra] || [];
+      return resposta(200, { data: [{ name: 'follower_demographics', total_value: { breakdowns: [{
+        dimension_keys: ['timeframe', quebra],
+        results: mapa.map(([t, k, v]) => ({ dimension_values: [t, k], value: v }))
+      }] } }] });
+    }
     if (falhaTudo && ['/v27.0/555', '/v27.0/555/media', '/v27.0/555/insights'].includes(u.pathname)) {
       return resposta(400, { error: { message: 'Token inválido' } });
     }
@@ -165,6 +180,20 @@ const chamadas = (log, metodo, caminho) => log.filter((x) => x.metodo === metodo
   const semLinha = async (url, o) => (url.includes('social_tokens') && (o?.method || 'GET') === 'GET' ? resposta(200, []) : semToken.f(url, o));
   r = await sync.sincronizarContaComToken({ conta: conta(), cfg: CFG, f: semLinha, chave: CHAVE, agora: AGORA, origem: 'manual' });
   assert.strictEqual(r.ok, false);
+
+  // ── Público: idade, gênero, cidade e país vão para audience_insights com as chaves certas ──
+  fake = criarFake({ publico: true });
+  r = await sync.sincronizarContaComToken({ conta: conta(), cfg: CFG, f: fake.f, chave: CHAVE, agora: AGORA, origem: 'manual' });
+  assert.strictEqual(r.ok, true);
+  const audiencia = chamadas(fake.log, 'POST', '/rest/v1/audience_insights')[0].corpo;
+  const chaves = audiencia.map((x) => x.dimension + '|' + x.dimension_key + '|' + x.value).sort();
+  assert.deepStrictEqual(chaves, [
+    'age_gender|age:18-24|30', 'age_gender|age:25-34|70',
+    'age_gender|gender:F|80', 'age_gender|gender:M|20',
+    'city|Turvo|60', 'country|BR|100'
+  ].sort());
+  assert.ok(audiencia.every((x) => x.snapshot_date === '2026-11-19'), 'snapshot do dia anterior');
+  assert.strictEqual(chamadas(fake.log, 'POST', '/rest/v1/account_insights')[0].corpo.views, null, 'views vem da métrica da conta quando disponível');
 
   // ── Handler: só admin dispara, e o resultado vem por conta ─────────────────────
   const comPapel = (papel) => {
