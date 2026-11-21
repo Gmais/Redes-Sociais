@@ -163,6 +163,8 @@ body[data-tab="academia"] main, body[data-tab="sorveteria"] main, body[data-tab=
 .pz-rotulo { font-size: 12px; font-weight: 600; color: var(--ink2); display: flex; flex-direction: column; gap: 6px; }
 .pz-barra-conta { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
 .pz-barra-conta .pz-rotulo select { min-width: 240px; }
+/* Publicar: o conteúdo da empresa usa as mesmas cores claras da folha das outras abas */
+.pz-publicar-slot { margin-top: 6px; color: var(--ink); --bg: #F5F6FB; --s1: #FFFFFF; --s2: #F6F7FB; --border: #E7E9F2; --txt: #0F1222; --txt2: #4A4F6A; --txt3: #8A90AB; }
 .pz-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
 .pz-form .pz-campo { flex: 1 1 200px; }
 .pz-chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }

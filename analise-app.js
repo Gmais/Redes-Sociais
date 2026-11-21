@@ -300,7 +300,7 @@ function pzRender() {
   const emp = pzEmpresaAtual();
   const sub = pzSubAtual();
   if (sub === 'publicar') {
-    pzTela(`<div class="pz" style="--c:${emp.cor}">${pzHtmlBarra(emp)}</div><div class="pz-publicar-slot"></div>`);
+    pzTela(`<div class="pz" style="--c:${emp.cor}">${pzHtmlBarra(emp)}<div class="pz-publicar-slot"></div></div>`);
     pzMostrarConteudo(document.querySelector('#pa-' + PZ.empresa + ' .pz-publicar-slot'));
     return;
   }
