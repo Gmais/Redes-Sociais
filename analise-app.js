@@ -32,7 +32,7 @@ const PZ_EMPRESAS = [
 ];
 const PZ_SUBS = [
   ['visao', 'Visão geral'], ['publico', 'Público'], ['publicacoes', 'Análise'], ['horarios', 'Melhores horários'],
-  ['concorrentes', 'Concorrentes'], ['relatorios', 'Relatórios'], ['ia', 'Inteligência']
+  ['concorrentes', 'Concorrentes'], ['relatorios', 'Relatórios'], ['ia', 'Inteligência'], ['publicar', 'Publicar']
 ];
 const PZ_NIVEL = { viewer: 0, editor: 1, admin: 2, owner: 3 };
 // Destinos antigos (botões de ação das telas) para as abas atuais.
@@ -252,8 +252,32 @@ function pzAplicarEmpresa(tab) {
 
 // ── Casca da análise dentro da aba da empresa ────────────────────────────────
 function pzTela(html) {
+  pzGuardarConteudo();
   const el = document.getElementById('pa-' + PZ.empresa);
   if (el) el.innerHTML = html;
+}
+
+// Publicar: o conteúdo da empresa (calendário, posts e Modo Automático) fica guardado em #pz-guarda
+// e só entra na tela dentro da subaba Publicar. Antes de cada desenho da análise, volta para a guarda.
+function pzGuardarConteudo() {
+  const guarda = document.getElementById('pz-guarda');
+  if (!guarda) return;
+  const filtro = document.getElementById('pz-filtro-conteudo');
+  if (filtro && filtro.parentElement !== guarda) guarda.appendChild(filtro);
+  PZ_EMPRESAS.forEach((e) => {
+    const c = document.getElementById('p-' + e.id);
+    if (!c) return;
+    if (c.parentElement !== guarda) guarda.appendChild(c);
+    c.classList.remove('on');
+  });
+}
+
+function pzMostrarConteudo(slot) {
+  if (!slot) return;
+  const filtro = document.getElementById('pz-filtro-conteudo');
+  if (filtro) slot.appendChild(filtro);
+  const c = document.getElementById('p-' + PZ.empresa);
+  if (c) { slot.appendChild(c); c.classList.add('on'); }
 }
 
 function pzSkeletonHtml() {
@@ -269,6 +293,11 @@ function pzRender() {
   if (!PZ.orgs.length) { pzTela(pzHtmlSemOrg()); return; }
   const emp = pzEmpresaAtual();
   const sub = pzSubAtual();
+  if (sub === 'publicar') {
+    pzTela(`<div class="pz" style="--c:${emp.cor}">${pzHtmlBarra(emp)}</div><div class="pz-publicar-slot"></div>`);
+    pzMostrarConteudo(document.querySelector('#pa-' + PZ.empresa + ' .pz-publicar-slot'));
+    return;
+  }
   pzTela(`<div class="pz" style="--c:${emp.cor}">
     ${pzHtmlBarra(emp)}
     <div id="pz-pagina"></div>
@@ -288,6 +317,7 @@ function pzHtmlBarra(emp) {
        <input type="date" class="pz-campo pequeno" id="pz-fim" value="${pzEsc(PZ.periodo.fim)}" aria-label="Data final">
        <button type="button" class="pz-btn primario sm" onclick="pzAplicarPeriodo()">Aplicar</button>`
     : '';
+  if (sub === 'publicar') return `<div class="pz-barra">${nav}</div>`;
   return `<div class="pz-barra">${nav}<div class="pz-barra-dir"><div class="pz-seg" role="group" aria-label="Período da análise">${seg}</div>${datas}</div></div>`;
 }
 

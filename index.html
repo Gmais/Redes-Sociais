@@ -920,7 +920,6 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
     <button class="tab on" data-p="academia" onclick="go('academia',this)">🏋️ Academia</button>
     <button class="tab" data-p="sorveteria" onclick="go('sorveteria',this)">🍦 Sorveteria</button>
     <button class="tab" data-p="gympulse" onclick="go('gympulse',this)">🎮 GympulsePro</button>
-    <button class="tab" data-p="publicar" onclick="go('publicar',this)">📤 Publicar</button>
     <button class="tab" data-p="historico" onclick="go('historico',this)">📋 Histórico</button>
   </div>
 </div>
@@ -930,16 +929,8 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   <div class="panel" id="pa-sorveteria"></div>
   <div class="panel" id="pa-gympulse"></div>
   <div class="panel" id="p-historico"></div>
-  <div class="panel" id="p-publicar">
-    <div class="pub-cab">
-      <div class="pub-titulo">Publicar</div>
-      <div class="pub-emp" role="group" aria-label="Empresa do conteúdo">
-        <button class="pub-emp-btn" data-emp="academia" onclick="pubEmpresa('academia')">🏋️ Academia</button>
-        <button class="pub-emp-btn" data-emp="sorveteria" onclick="pubEmpresa('sorveteria')">🍦 Sorveteria</button>
-        <button class="pub-emp-btn" data-emp="gympulse" onclick="pubEmpresa('gympulse')">🎮 GympulsePro</button>
-      </div>
-    </div>
-    <div class="filter-bar">
+  <div class="panel" id="pz-guarda">
+    <div class="filter-bar" id="pz-filtro-conteudo">
       <label class="hide-done-check so-conteudo">
         <input type="checkbox" id="hideDoneCheck" onchange="toggleHideDone()">
         <span class="checkmark"></span>
@@ -25941,13 +25932,6 @@ function cp(id,btn){
 }
 
 let activeProfile = 'academia';
-// Menu Publicar: o conteúdo de cada empresa (calendário, posts e Modo Automático) fica aqui, fora da análise.
-function pubMostrar(id){
-  ['academia','sorveteria','gympulse'].forEach(p=>document.getElementById('p-'+p)?.classList.toggle('on', p===id));
-  document.querySelectorAll('.pub-emp-btn').forEach(b=>b.classList.toggle('on', b.dataset.emp===id));
-}
-function pubEmpresa(id){ activeProfile = id; pubMostrar(id); }
-
 function go(tab,el){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
   document.getElementById('p-'+tab)?.classList.add('on');
@@ -25960,8 +25944,7 @@ function go(tab,el){
   if(npBtn) npBtn.style.display = ['historico','estrategia'].includes(tab) ? 'none' : 'flex';
   const calBtn = document.getElementById('calOpenBtn');
   if(calBtn) calBtn.style.display = ['historico','estrategia'].includes(tab) ? 'none' : 'flex';
-  pzAplicarEmpresa(tab); // empresa: a análise; o conteúdo fica no menu Publicar
-  if(tab==='publicar') pubMostrar(activeProfile);
+  pzAplicarEmpresa(tab); // empresa: a análise (o conteúdo aparece na subaba Publicar)
   if(tab==='historico') buildHist();
   if(tab==='estrategia') buildEstrategia();
 }

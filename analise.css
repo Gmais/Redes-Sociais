@@ -6,15 +6,8 @@
 /* Análise e conteúdo na mesma página da empresa: um só fluxo, sem troca de modo */
 /* Fundo neutro escuro, o mesmo do conteúdo */
 body[data-tab="academia"], body[data-tab="sorveteria"], body[data-tab="gympulse"] { --bg: #0F1222; background: #0F1222; }
-/* Nas abas de empresa a faixa do topo (marca, data, sincronização e Conectar Drive) some; o menu continua */
-body:is([data-tab="academia"], [data-tab="sorveteria"], [data-tab="gympulse"]) .hero { display: none; }
-/* Menu Publicar: o conteúdo da empresa (calendário, posts e Modo Automático) */
-#p-publicar { max-width: 800px; margin: 0 auto; }
-.pub-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 22px 0 14px; }
-.pub-titulo { font: 800 18px 'Inter', sans-serif; color: var(--txt); }
-.pub-emp { display: flex; gap: 6px; flex-wrap: wrap; }
-.pub-emp-btn { background: transparent; border: 1px solid var(--border); color: var(--txt2); border-radius: 999px; padding: 8px 14px; font: 700 12px 'Inter', sans-serif; cursor: pointer; }
-.pub-emp-btn.on { background: var(--txt); color: var(--bg); border-color: transparent; }
+/* Nas abas de empresa o topo inteiro some (faixa e menu): a página começa pela análise */
+body:is([data-tab="academia"], [data-tab="sorveteria"], [data-tab="gympulse"]) :is(.hero, .tabs-wrap) { display: none; }
 body[data-tab="academia"] main, body[data-tab="sorveteria"] main, body[data-tab="gympulse"] main { max-width: 1320px; }
 #p-academia, #p-sorveteria, #p-gympulse { max-width: 800px; margin: 0 auto; }
 
