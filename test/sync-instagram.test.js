@@ -18,13 +18,16 @@ const resposta = (status, corpo) => {
   return { ok: status >= 200 && status < 300, status, text: async () => texto, json: async () => JSON.parse(texto || '{}') };
 };
 
-function criarFake({ expiraEm = DIAS(60), tokenPlain = 'token-atual', falhaInsights = false } = {}) {
+function criarFake({ expiraEm = DIAS(60), tokenPlain = 'token-atual', falhaInsights = false, falhaTudo = false } = {}) {
   const log = [];
   const f = async (url, o = {}) => {
     const metodo = o.method || 'GET';
     const u = new URL(url);
     log.push({ metodo, u, corpo: o.body ? JSON.parse(o.body) : null });
     if (u.pathname.endsWith('/refresh_access_token')) return resposta(200, { access_token: 'token-novo', expires_in: 5184000 });
+    if (falhaTudo && ['/v27.0/555', '/v27.0/555/media', '/v27.0/555/insights'].includes(u.pathname)) {
+      return resposta(400, { error: { message: 'Token inválido' } });
+    }
     if (falhaInsights && u.pathname === '/v27.0/555/insights') return resposta(400, { error: { message: 'Permissão insuficiente' } });
     if (u.pathname === '/v27.0/555/insights') return resposta(200, { data: [
       { name: 'reach', total_value: { value: 1200 } },
@@ -134,14 +137,28 @@ const chamadas = (log, metodo, caminho) => log.filter((x) => x.metodo === metodo
   const insightsComNovo = fake.log.find((x) => x.u.pathname === '/v27.0/555/insights');
   assert.strictEqual(insightsComNovo.u.searchParams.get('access_token'), 'token-novo', 'usa o token renovado');
 
-  // ── Erro da Meta: fica no log e não derruba o restante ─────────────────────────
+  // ── Insights negados: seguidores e publicações continuam sendo gravados ────────────
   fake = criarFake({ falhaInsights: true });
   r = await sync.sincronizarContaComToken({ conta: conta(), cfg: CFG, f: fake.f, chave: CHAVE, agora: AGORA, origem: 'manual' });
+  assert.strictEqual(r.ok, true, 'falha só de insights não pode derrubar a sincronização');
+  assert.strictEqual(r.registros, 6, 'conta com seguidores + 3 posts + 2 métricas de post');
+  assert.ok(r.avisos.some((a) => /Permissão insuficiente/.test(a)), 'o aviso dos insights fica registrado');
+  const linhaSemInsights = chamadas(fake.log, 'POST', '/rest/v1/account_insights')[0].corpo;
+  assert.strictEqual(linhaSemInsights.followers_count, 1500, 'seguidores gravados mesmo sem insights');
+  assert.strictEqual(linhaSemInsights.reach, null, 'métrica negada fica vazia, não inventada');
+  assert.strictEqual(chamadas(fake.log, 'POST', '/rest/v1/social_posts')[0].corpo.length, 3, 'publicações gravadas');
+  const logParcial = chamadas(fake.log, 'POST', '/rest/v1/synchronization_logs')[0].corpo;
+  assert.strictEqual(logParcial.status, 'partial');
+  assert.match(logParcial.error_message, /Permissão insuficiente/);
+
+  // ── Falha total: nada gravado, log de erro, conta reportada como falha ─────────────
+  fake = criarFake({ falhaTudo: true });
+  r = await sync.sincronizarContaComToken({ conta: conta(), cfg: CFG, f: fake.f, chave: CHAVE, agora: AGORA, origem: 'manual' });
   assert.strictEqual(r.ok, false);
-  assert.match(r.erro, /Permissão insuficiente/);
+  assert.match(r.erro, /Token inválido/);
   const logErro = chamadas(fake.log, 'POST', '/rest/v1/synchronization_logs')[0].corpo;
   assert.strictEqual(logErro.status, 'error');
-  assert.match(logErro.error_message, /Permissão insuficiente/);
+  assert.strictEqual(chamadas(fake.log, 'POST', '/rest/v1/account_insights').length, 0, 'nada gravado na falha total');
 
   // Conta sem token guardado
   const semToken = criarFake();

@@ -26361,7 +26361,11 @@ async function anSincronizar() {
   if (!r.ok) { anMsg(j.error || 'Não foi possível sincronizar agora.', true); return; }
   if (j.aviso) { anMsg(j.aviso); return; }
   const resultados = j.resultados || [];
-  const linhas = resultados.map((x) => (x.ok ? `@${x.conta}: ${x.registros} registros` : `@${x.conta}: ${x.erro}`));
+  const linhas = resultados.map((x) => {
+    if (!x.ok) return `@${x.conta}: ${x.erro}`;
+    const aviso = x.avisos && x.avisos.length ? ` (parcial: ${x.avisos[0]})` : '';
+    return `@${x.conta}: ${x.registros} registros${aviso}`;
+  });
   anMsg(linhas.join(' · ') || 'Nada para sincronizar.', resultados.some((x) => !x.ok));
   anContasRender();
 }
