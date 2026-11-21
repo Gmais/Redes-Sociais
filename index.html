@@ -106,6 +106,9 @@ body[data-tab="analise"]    { --bg: #120d1f; background: linear-gradient(180deg,
 .an-ia li { margin:4px 0; color:var(--txt2); line-height:1.45; }
 .an-ia-hist { margin-top:14px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
 .an-ia-hist h3 { width:100%; margin:0; }
+.an-cfg-tabela th, .an-cfg-tabela td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--border); vertical-align:top; font-size:12px; }
+.an-cfg-tabela th { color:var(--txt3); font-weight:600; }
+.an-cfg-alerta { color:#ff8a8a; }
 .an-rel-acoes { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:14px 0; }
 .an-rel-wrap { overflow-x:auto; }
 .an-rel-folha { background:#fbfbfd; color:#15151f; border-radius:14px; padding:26px 28px; }
@@ -1137,8 +1140,8 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
         </section>
 
         <section class="an-sec" id="an-config">
-          <div class="an-head"><div><h2>Configurações</h2><p>Conta, sincronização e preferências da análise.</p></div></div>
-          <div class="an-empty"><div class="eico">⚙️</div><h3>Nada para configurar ainda</h3><p>As opções de sincronização e de envio de relatórios por e-mail aparecem quando a conexão com a Meta estiver pronta.</p></div>
+          <div class="an-head"><div><h2>Configurações</h2><p>Situação das contas, sincronização e envio de relatórios.</p></div></div>
+          <div id="an-config-body"></div>
         </section>
       </div>
     </div>
@@ -26548,6 +26551,7 @@ function anRender(){
   if (document.getElementById('an-concorrentes').classList.contains('on')) anCarregarConcorrentes();
   if (document.getElementById('an-ia').classList.contains('on')) anCarregarIA();
   if (document.getElementById('an-relatorios').classList.contains('on')) anCarregarRelatorios();
+  if (document.getElementById('an-config').classList.contains('on')) anCarregarConfig();
 }
 
 function anRenderVisao(r){
@@ -27325,6 +27329,115 @@ function anBaixarCsvRel() {
 
 function anImprimirRel() {
   window.print();
+}
+
+// ── Configurações: contas, sincronização e envio de relatórios ────────────────
+// Situação e validade vêm do servidor (sem tokens). O resultado detalhado só aparece para owner e admin.
+function anStatusCfg(texto, erro) {
+  const el = document.getElementById('an-cfg-status');
+  if (!el) return;
+  el.textContent = texto;
+  el.style.color = erro ? '#ff8a8a' : '';
+}
+
+async function anCarregarConfig() {
+  const el = document.getElementById('an-config-body');
+  if (!el) return;
+  if (!anSessao || !anOrgAtiva) {
+    el.innerHTML = '<div class="an-empty"><div class="eico">⚙️</div><h3>Entre para ver as configurações</h3><p>Aqui aparecem a situação das contas conectadas e a sincronização.</p></div>';
+    return;
+  }
+  if (window.anCfg && window.anCfg.org === anOrgAtiva) {
+    renderConfig(el, window.anCfg.dados);
+    return;
+  }
+  el.innerHTML = '<div class="an-empty"><p>Carregando configurações…</p></div>';
+  const org = anOrgAtiva;
+  const r = await anApiOrg('configuracoes');
+  if (anOrgAtiva !== org) return; // a organização mudou enquanto carregava
+  if (!r.ok) {
+    el.innerHTML = `<div class="an-empty"><div class="eico">⚠️</div><h3>Não foi possível carregar</h3><p>${anEsc(r.erro)}</p></div>`;
+    return;
+  }
+  window.anCfg = { org, dados: r.dados };
+  renderConfig(el, r.dados);
+}
+
+function anRotuloResultado(u) {
+  const quando = anDataHora(u.em);
+  if (u.status === 'ok') return `OK em ${quando}: ${u.registros} registros`;
+  if (u.status === 'partial') return `Parcial em ${quando}: ${u.registros} registros${u.erro ? ' · ' + u.erro : ''}`;
+  return `Erro em ${quando}${u.erro ? ': ' + u.erro : ''}`;
+}
+
+function renderConfig(el, d) {
+  const aviso = window.anCfgAviso; // resultado da última sincronização manual
+  window.anCfgAviso = null;
+  const mostrarResultado = d.podeSincronizar;
+  const linhas = d.contas.map((c) => `<tr>
+      <td><b>@${anEsc(c.username)}</b></td>
+      <td>${anEsc(c.origem)}</td>
+      <td>${anEsc(c.situacaoRotulo)}</td>
+      <td>${c.ultimaSincronizacao ? anDataHora(c.ultimaSincronizacao) : 'nunca'}</td>
+      <td class="${c.token.expirado ? 'an-cfg-alerta' : ''}">${anEsc(c.token.rotulo)}</td>
+      ${mostrarResultado ? `<td>${c.ultimoResultado ? anEsc(anRotuloResultado(c.ultimoResultado)) : '—'}</td>` : ''}
+    </tr>`).join('');
+  const cabecalhoResultado = mostrarResultado ? '<th>Último resultado</th>' : '';
+  const tabela = d.contas.length
+    ? `<div class="an-rel-wrap"><table class="an-cfg-tabela"><thead><tr><th>Conta</th><th>Origem</th><th>Situação</th><th>Última sincronização</th><th>Token</th>${cabecalhoResultado}</tr></thead><tbody>${linhas}</tbody></table></div>`
+    : '<div class="an-empty"><div class="eico">🔌</div><h3>Nenhuma conta conectada</h3><p>Conecte o Instagram na seção Contas conectadas.</p></div>';
+
+  const ROTULO_STATUS_AUTO = { ok: 'ok', partial: 'parcial', error: 'erro' };
+  let auto = '';
+  if (d.automatica.ultimaEm) {
+    const st = ROTULO_STATUS_AUTO[d.automatica.ultimoStatus] || d.automatica.ultimoStatus;
+    auto = `Última automática: ${anDataHora(d.automatica.ultimaEm)} (${anEsc(st)}).`;
+  } else if (d.podeSincronizar) {
+    auto = 'Ainda não houve uma sincronização automática.';
+  }
+  const botao = d.podeSincronizar
+    ? '<div class="an-custom" style="margin-top:12px"><button type="button" id="an-cfg-sincronizar" onclick="anSincronizarConfig()">Sincronizar agora</button></div>'
+    : '<div class="hint" style="margin-top:10px">Só owner ou admin podem sincronizar manualmente.</div>';
+  const estado = `<div class="hint" id="an-cfg-status" role="status" style="min-height:16px;margin-top:8px;${aviso && aviso.erro ? 'color:#ff8a8a' : ''}">${aviso ? anEsc(aviso.texto) : ''}</div>`;
+
+  el.innerHTML = `<div class="an-card">
+      <h3>Contas</h3>
+      ${tabela}
+    </div>
+    <div class="an-card">
+      <h3>Sincronização</h3>
+      <div class="hint">Automática: ${anEsc(d.automatica.horario)}. ${auto}</div>
+      ${botao}
+      ${estado}
+    </div>
+    <div class="an-card">
+      <h3>Envio de relatórios por e-mail</h3>
+      <div class="hint">Ainda não está ligado. Para enviar relatórios por e-mail, falta escolher um serviço de envio (por exemplo Resend ou SendGrid) e um endereço de remetente com domínio verificado. Enquanto isso, os relatórios podem ser baixados em Relatórios.</div>
+    </div>`;
+}
+
+async function anSincronizarConfig() {
+  const botao = document.getElementById('an-cfg-sincronizar');
+  if (botao) botao.disabled = true;
+  anStatusCfg('Sincronizando as contas… isso pode levar até um minuto.');
+  const r = await anApiOrg('sincronizar', {});
+  if (!r.ok) {
+    anStatusCfg(r.erro, true);
+    if (botao) botao.disabled = false;
+    return;
+  }
+  const resultados = r.dados.resultados || [];
+  const erros = resultados.filter((x) => !x.ok);
+  window.anCfg = null;
+  window.anRealChave = null; // a Visão geral lê os dados de novo
+  window.anPub = null; // e a lista de publicações
+  window.anCfgAviso = !resultados.length
+    ? { texto: r.dados.aviso || 'Nenhuma conta ativa para sincronizar.', erro: false }
+    : {
+      texto: resultados.map((x) => `@${x.conta}: ${x.ok ? x.registros + ' registros' : 'falhou' + (x.erro ? ' (' + x.erro + ')' : '')}`).join(' · '),
+      erro: erros.length > 0
+    };
+  anCarregarConfig();
 }
 
 // ── ESTRATÉGIA ────────────────────────────────────────────────────────────
