@@ -5,3 +5,6 @@ node_modules
 .env
 .env.*
 !.env.example
+
+# Cópia do pacote de skills (já instalado em .claude/skills)
+instagram-skills-pack/
