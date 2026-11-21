@@ -253,6 +253,12 @@ function pzAplicarEmpresa(tab) {
 // ── Casca da análise dentro da aba da empresa ────────────────────────────────
 function pzTela(html) {
   pzGuardarConteudo();
+  // Só a empresa atual tem análise na página: IDs como pz-pagina e os gráficos não podem repetir.
+  PZ_EMPRESAS.forEach((e) => {
+    if (e.id === PZ.empresa) return;
+    const outra = document.getElementById('pa-' + e.id);
+    if (outra) outra.innerHTML = '';
+  });
   const el = document.getElementById('pa-' + PZ.empresa);
   if (el) el.innerHTML = html;
 }
