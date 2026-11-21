@@ -1136,11 +1136,11 @@ body[data-tab="analise"] .an-top span { background:#f3f4fa; border-color:transpa
       </nav>
 
       <div class="an-main">
-        <div class="an-paginas" role="tablist" aria-label="Redes">
+        <div class="an-paginas" role="tablist" aria-label="Análise por empresa">
           <button type="button" class="an-pagina on" data-pag="geral" onclick="anPagina('geral')"><span class="an-ico" aria-hidden="true">📊</span>Análise das Redes Sociais</button>
-          <button type="button" class="an-pagina" data-pag="instagram" onclick="anPagina('instagram')"><span class="an-ico" aria-hidden="true">📸</span>Instagram</button>
-          <button type="button" class="an-pagina" data-pag="facebook" onclick="anPagina('facebook')"><span class="an-ico" aria-hidden="true">📘</span>Facebook</button>
-          <button type="button" class="an-pagina" data-pag="threads" onclick="anPagina('threads')"><span class="an-ico" aria-hidden="true">🧵</span>Threads</button>
+          <button type="button" class="an-pagina" data-pag="academia" onclick="anPagina('academia')"><span class="an-ico" aria-hidden="true">🏋️</span>Academia</button>
+          <button type="button" class="an-pagina" data-pag="sorveteria" onclick="anPagina('sorveteria')"><span class="an-ico" aria-hidden="true">🍦</span>Sorveteria</button>
+          <button type="button" class="an-pagina" data-pag="gympulse" onclick="anPagina('gympulse')"><span class="an-ico" aria-hidden="true">🎮</span>GympulsePro</button>
         </div>
         <div class="an-card" style="margin-bottom:16px">
           <h3>Conta e organização</h3>
@@ -1150,18 +1150,13 @@ body[data-tab="analise"] .an-top span { background:#f3f4fa; border-color:transpa
         </div>
         <div class="an-demo" id="an-demo" role="note"><b>Modo demonstração</b> Nenhuma conta conectada. Os números desta aba são fictícios, gerados para testar o painel. Não são métricas reais.</div>
         <section class="an-sec on" id="an-geral">
-          <div class="an-head"><div><h2>Análise das Redes Sociais</h2><p>Resumo das redes da organização. Escolha uma rede acima para ver os detalhes.</p></div></div>
+          <div class="an-head"><div><h2>Análise das Redes Sociais</h2><p>Resumo por empresa. Escolha uma empresa acima para ver as análises dela.</p></div></div>
           <div class="an-redes" id="an-redes-body"></div>
         </section>
 
-        <section class="an-sec" id="an-facebook">
-          <div class="an-head"><div><h2>Facebook</h2><p>Páginas do Facebook conectadas à organização.</p></div></div>
-          <div id="an-facebook-body"></div>
-        </section>
-
-        <section class="an-sec" id="an-threads">
-          <div class="an-head"><div><h2>Threads</h2><p>Métricas do Threads.</p></div></div>
-          <div class="an-empty"><div class="eico">🧵</div><h3>Em breve</h3><p>A integração com o Threads ainda não existe no painel. Quando existir, as métricas aparecem aqui. Até lá, nada é mostrado como se fosse dado real.</p></div>
+        <section class="an-sec" id="an-empresa">
+          <div class="an-head"><div><h2 id="an-empresa-titulo">Empresa</h2><p>Contas desta empresa e as análises da conta do Instagram.</p></div></div>
+          <div id="an-empresa-body"></div>
         </section>
 
         <section class="an-sec" id="an-visao">
@@ -26437,11 +26432,18 @@ async function anContasRender() {
   }
   const contas = j.accounts || [];
   anAtualizarBanner(contas.length);
+  const podeEmpresa = ['admin', 'owner'].includes(j.role);
+  const opcoesEmpresa = (atual) => ['<option value="">Sem empresa</option>']
+    .concat(EMPRESAS_UI.map((e) => `<option value="${e.id}"${atual === e.id ? ' selected' : ''}>${anEsc(e.nome)}</option>`))
+    .join('');
   lista.innerHTML = contas.length
     ? contas.map((c) => `
         <div class="an-top" style="margin-top:8px">
           <span><b>${c.platform === 'instagram' ? 'Instagram' : 'Facebook'}</b> ${c.username ? '@' + anEsc(c.username) : anEsc(c.display_name || c.external_id)}</span>
           <span>${anEsc(c.status)}</span>
+          ${podeEmpresa
+            ? `<select aria-label="Empresa desta conta" onchange="anDefinirEmpresa('${anEsc(c.id)}', this.value)" style="background:var(--s2);color:var(--txt);border:1px solid var(--border);border-radius:8px;padding:4px 8px">${opcoesEmpresa(c.empresa)}</select>`
+            : `<span>${anEsc((EMPRESAS_UI.find((e) => e.id === c.empresa) || { nome: 'sem empresa' }).nome)}</span>`}
         </div>`).join('')
     : '<div class="hint">Nenhuma conta conectada ainda.</div>';
 }
@@ -26638,7 +26640,7 @@ function anRender(){
   if (document.getElementById('an-relatorios').classList.contains('on')) anCarregarRelatorios();
   if (document.getElementById('an-config').classList.contains('on')) anCarregarConfig();
   if (document.getElementById('an-geral').classList.contains('on')) anCarregarGeral();
-  if (document.getElementById('an-facebook').classList.contains('on')) anCarregarFacebook();
+  if (document.getElementById('an-empresa').classList.contains('on')) anCarregarEmpresa();
 }
 
 function anRenderVisao(r){
@@ -27529,30 +27531,40 @@ async function anSincronizarConfig() {
 
 // ── Páginas por rede: Análise das Redes Sociais, Instagram, Facebook e Threads ─
 // Cada página tem o próprio menu lateral. Os números são sempre dados sincronizados; nada de exemplo.
-const AN_PAGINAS = {
-  geral: { nome: 'Análise das Redes Sociais', itens: [['geral', 'Resumo', '📊'], ['contas', 'Contas conectadas', '🔗'], ['ia', 'Inteligência artificial', '🧠'], ['relatorios', 'Relatórios', '📄'], ['config', 'Configurações', '⚙️']] },
-  instagram: { nome: 'Instagram', itens: [['visao', 'Visão geral', '📈'], ['publico', 'Público', '👥'], ['publicacoes', 'Publicações', '🖼️'], ['horarios', 'Melhores horários', '🕒'], ['concorrentes', 'Concorrentes', '🎯']] },
-  facebook: { nome: 'Facebook', itens: [['facebook', 'Páginas conectadas', '📘']] },
-  threads: { nome: 'Threads', itens: [['threads', 'Em breve', '🧵']] }
-};
+// Empresas: os mesmos nomes das abas do painel. Cada uma tem a sua página de análise.
+const EMPRESAS_UI = [
+  { id: 'academia', nome: 'Academia', ico: '🏋️', cor: '#e63900' },
+  { id: 'sorveteria', nome: 'Sorveteria', ico: '🍦', cor: '#f5a700' },
+  { id: 'gympulse', nome: 'GympulsePro', ico: '🎮', cor: '#7c5cff' }
+];
+const AN_MENU_GERAL = [['geral', 'Resumo', '📊'], ['concorrentes', 'Concorrentes', '🎯'], ['contas', 'Contas conectadas', '🔗'], ['ia', 'Inteligência artificial', '🧠'], ['relatorios', 'Relatórios', '📄'], ['config', 'Configurações', '⚙️']];
+const AN_MENU_EMPRESA_METRICAS = [['visao', 'Visão geral', '📈'], ['publico', 'Público', '👥'], ['publicacoes', 'Publicações', '🖼️'], ['horarios', 'Melhores horários', '🕒']];
 
-// Monta o menu lateral da página. Não desenha o conteúdo: quem desenha é anGo.
-function anMontarMenu(p) {
-  const pagina = AN_PAGINAS[p] || AN_PAGINAS.geral;
-  const titulo = document.getElementById('an-nav-titulo');
-  const itens = document.getElementById('an-nav-itens');
-  if (!titulo || !itens) return pagina;
-  titulo.textContent = pagina.nome;
-  itens.innerHTML = pagina.itens.map(([id, rotulo, ico]) =>
-    `<button type="button" class="an-navbtn" data-sec="${id}" onclick="anGo('${id}')"><span class="an-ico" aria-hidden="true">${ico}</span>${rotulo}</button>`).join('');
-  return pagina;
+// Monta o menu lateral. Não desenha o conteúdo: quem desenha é anGo.
+function anMontarMenu(titulo, itens, ativo) {
+  const tituloEl = document.getElementById('an-nav-titulo');
+  const lista = document.getElementById('an-nav-itens');
+  if (!tituloEl || !lista) return;
+  const atual = ativo || (itens[0] && itens[0][0]);
+  tituloEl.textContent = titulo;
+  lista.innerHTML = itens.map(([id, rotulo, ico]) =>
+    `<button type="button" class="an-navbtn${id === atual ? ' on' : ''}" data-sec="${id}" onclick="anGo('${id}')"><span class="an-ico" aria-hidden="true">${ico}</span>${rotulo}</button>`).join('');
 }
 
+// Troca de página: o resumo (geral) ou a página de uma empresa.
 function anPagina(p) {
-  const pagina = AN_PAGINAS[p] ? p : 'geral';
-  document.querySelectorAll('#p-analise .an-pagina').forEach((b) => b.classList.toggle('on', b.dataset.pag === pagina));
-  anMontarMenu(pagina);
-  anGo(AN_PAGINAS[pagina].itens[0][0]);
+  const empresa = EMPRESAS_UI.find((e) => e.id === p);
+  document.querySelectorAll('#p-analise .an-pagina').forEach((b) => b.classList.toggle('on', b.dataset.pag === (empresa ? p : 'geral')));
+  if (!empresa) {
+    window.anState.empresa = null;
+    window.anState.conta = ''; // o resumo não filtra por conta
+    anMontarMenu('Análise das Redes Sociais', AN_MENU_GERAL, 'geral');
+    anGo('geral');
+    return;
+  }
+  window.anState.empresa = empresa.id;
+  anMontarMenu(empresa.nome, [['empresa', 'Contas da empresa', '🏢']], 'empresa');
+  anGo('empresa'); // carrega as contas da empresa e monta o menu com as análises
 }
 
 function anIrContas() {
@@ -27578,73 +27590,101 @@ async function anCarregarGeral() {
   renderGeral(el, r.dados.accounts || []);
 }
 
+// Resumo: um cartão por empresa, com as contas ligadas a ela. Contas sem empresa aparecem num aviso.
 function renderGeral(el, contas) {
-  const ig = contas.filter((c) => c.platform === 'instagram');
-  const fb = contas.filter((c) => c.platform === 'facebook');
-  const ativas = (lista) => lista.filter((c) => c.status === 'active').length;
-  const real = anRealAtual();
-  const seguidores = real && real.seguidoresFim != null ? anNum(real.seguidoresFim) : '—';
-  const alcance = real && real.totais && real.totais.alcance != null ? anNum(real.totais.alcance) : '—';
-  const linha = (rotulo, valor) => `<div class="an-rede-linha"><span>${rotulo}</span><b>${valor}</b></div>`;
-  el.innerHTML = [
-    `<div class="an-rede-card" style="--c:#e1306c">
-       <div class="an-rede-topo"><span class="an-rede-ico" aria-hidden="true">📸</span>Instagram</div>
-       ${linha('Contas ativas', `${ativas(ig)} de ${ig.length}`)}
-       ${linha('Seguidores (fim do período)', seguidores)}
-       ${linha('Alcance do período', alcance)}
-       <button type="button" class="an-rede-btn" onclick="anPagina('instagram')">Ver Instagram →</button>
-     </div>`,
-    `<div class="an-rede-card" style="--c:#1877f2">
-       <div class="an-rede-topo"><span class="an-rede-ico" aria-hidden="true">📘</span>Facebook</div>
-       ${linha('Páginas ativas', `${ativas(fb)} de ${fb.length}`)}
-       ${linha('Métricas', 'ainda não coletadas')}
-       <button type="button" class="an-rede-btn" onclick="anPagina('facebook')">Ver Facebook →</button>
-     </div>`,
-    `<div class="an-rede-card em-breve" style="--c:#14142b">
-       <div class="an-rede-topo"><span class="an-rede-ico" aria-hidden="true">🧵</span>Threads</div>
-       ${linha('Situação', 'em breve')}
-       <button type="button" class="an-rede-btn" onclick="anPagina('threads')">Ver Threads →</button>
-     </div>`
-  ].join('');
+  const cards = EMPRESAS_UI.map((e) => {
+    const lista = contas.filter((c) => c.empresa === e.id);
+    const ig = lista.filter((c) => c.platform === 'instagram').length;
+    const fb = lista.filter((c) => c.platform === 'facebook').length;
+    const linha = (rotulo, valor) => `<div class="an-rede-linha"><span>${rotulo}</span><b>${valor}</b></div>`;
+    return `<div class="an-rede-card" style="--c:${e.cor}">
+       <div class="an-rede-topo"><span class="an-rede-ico" aria-hidden="true">${e.ico}</span>${anEsc(e.nome)}</div>
+       ${linha('Contas do Instagram', ig)}
+       ${linha('Páginas do Facebook', fb)}
+       <button type="button" class="an-rede-btn" onclick="anPagina('${e.id}')">Abrir ${anEsc(e.nome)} →</button>
+     </div>`;
+  }).join('');
+  const semEmpresa = contas.filter((c) => !c.empresa);
+  const aviso = semEmpresa.length
+    ? `<div class="an-card" style="grid-column:1 / -1">
+         <h3>Contas sem empresa</h3>
+         <div class="hint">${semEmpresa.length} conta(s) ainda não estão ligadas a uma empresa. Escolha a empresa de cada uma em Contas conectadas: assim as análises aparecem na página certa.</div>
+         <div class="an-custom" style="margin-top:10px"><button type="button" onclick="anIrContas()">Ir para Contas conectadas</button></div>
+       </div>`
+    : '';
+  el.innerHTML = cards + aviso;
 }
 
-// Facebook: lista as Páginas conectadas. Ainda não há métricas de Página; o painel diz isso.
-async function anCarregarFacebook() {
-  const el = document.getElementById('an-facebook-body');
-  if (!el) return;
+// Página da empresa: as contas dela e, se houver conta do Instagram, as análises dessa conta.
+async function anCarregarEmpresa() {
+  const el = document.getElementById('an-empresa-body');
+  const empresa = EMPRESAS_UI.find((e) => e.id === window.anState.empresa);
+  if (!el || !empresa) return;
   if (!anSessao || !anOrgAtiva) {
-    el.innerHTML = '<div class="an-empty"><div class="eico">📘</div><h3>Entre para ver as Páginas</h3><p>As Páginas do Facebook conectadas aparecem aqui.</p></div>';
+    el.innerHTML = '<div class="an-empty"><div class="eico">🏢</div><h3>Entre para ver a empresa</h3><p>As contas e as análises desta empresa aparecem aqui.</p></div>';
     return;
   }
   const org = anOrgAtiva;
   const r = await anApiOrg('contas');
-  if (anOrgAtiva !== org) return;
+  if (anOrgAtiva !== org || window.anState.empresa !== empresa.id) return; // mudou de organização ou de página
   if (!r.ok) {
     el.innerHTML = `<div class="an-empty"><div class="eico">⚠️</div><h3>Não foi possível carregar</h3><p>${anEsc(r.erro)}</p></div>`;
     return;
   }
-  renderFacebook(el, (r.dados.accounts || []).filter((c) => c.platform === 'facebook'));
+  const contas = (r.dados.accounts || []).filter((c) => c.empresa === empresa.id);
+  const ig = contas.filter((c) => c.platform === 'instagram');
+  // As análises usam a conta do Instagram escolhida, ou a primeira desta empresa. Sem conta, nenhuma análise aparece.
+  let mudou = false;
+  if (ig.length && !ig.some((c) => c.id === window.anState.conta)) { window.anState.conta = ig[0].id; mudou = true; }
+  if (!ig.length && window.anState.conta) { window.anState.conta = ''; mudou = true; }
+  const menu = ig.length ? [['empresa', 'Contas da empresa', '🏢']].concat(AN_MENU_EMPRESA_METRICAS) : [['empresa', 'Contas da empresa', '🏢']];
+  anMontarMenu(empresa.nome, menu, 'empresa');
+  renderEmpresa(el, empresa, contas, ig);
+  if (mudou) anRender(); // carrega as análises da conta escolhida
 }
 
-function renderFacebook(el, paginas) {
-  const linhas = paginas.map((c) => `<tr>
-      <td><b>${anEsc(c.display_name || c.username || c.external_id)}</b></td>
-      <td>${c.status === 'active' ? 'Ativa' : anEsc(c.status || '')}</td>
-      <td>${c.last_synced_at ? anDataHora(c.last_synced_at) : 'nunca'}</td>
-    </tr>`).join('');
-  const tabela = paginas.length
-    ? `<div class="an-rel-wrap"><table class="an-cfg-tabela"><thead><tr><th>Página</th><th>Situação</th><th>Última sincronização</th></tr></thead><tbody>${linhas}</tbody></table></div>`
-    : '<div class="an-empty"><div class="eico">📘</div><h3>Nenhuma Página conectada</h3><p>Conecte uma Página do Facebook em Contas conectadas.</p></div>';
+function renderEmpresa(el, empresa, contas, ig) {
+  document.getElementById('an-empresa-titulo').textContent = empresa.nome;
+  const linhas = contas.map((c) => `<div class="an-top" style="margin-top:8px">
+      <span><b>${c.platform === 'instagram' ? 'Instagram' : 'Facebook'}</b> ${c.username ? '@' + anEsc(c.username) : anEsc(c.display_name || c.external_id)}</span>
+      <span>${anEsc(c.status)}</span>
+    </div>`).join('');
+  const seletor = ig.length > 1
+    ? `<div class="an-custom" style="margin-top:12px"><label class="hint" for="an-emp-conta">Conta das análises</label><select id="an-emp-conta" onchange="anMudarConta(this.value)" style="background:var(--s2);color:var(--txt);border:1px solid var(--border);border-radius:8px;padding:6px 8px">${ig.map((c) => `<option value="${anEsc(c.id)}"${c.id === window.anState.conta ? ' selected' : ''}>@${anEsc(c.username || c.external_id)}</option>`).join('')}</select></div>`
+    : '';
+  const semIg = contas.length && !ig.length
+    ? '<div class="hint" style="margin-top:10px">Esta empresa só tem Página do Facebook. As análises são das contas do Instagram: conecte a conta do Instagram em Contas conectadas.</div>'
+    : '';
+  const vazio = !contas.length
+    ? `<div class="an-empty"><div class="eico">${empresa.ico}</div><h3>Nenhuma conta desta empresa</h3><p>Escolha a empresa de cada conta em Contas conectadas. Sem isso, as análises desta empresa ficam vazias.</p><div class="an-custom" style="justify-content:center;margin-top:12px"><button type="button" onclick="anIrContas()">Ir para Contas conectadas</button></div></div>`
+    : '';
   el.innerHTML = `<div class="an-card">
-      <h3>Páginas conectadas</h3>
-      <div class="hint">As Páginas do Facebook ainda não têm métricas no painel. Os números das análises são das contas do Instagram.</div>
-      <div style="margin-top:14px">${tabela}</div>
-      <div class="an-custom" style="margin-top:14px"><button type="button" onclick="anIrContas()">Conectar ou gerenciar contas</button></div>
-    </div>`;
+      <h3>Contas de ${anEsc(empresa.nome)}</h3>
+      ${contas.length ? '<div class="hint">As análises desta página usam a conta do Instagram selecionada.</div>' : ''}
+      ${linhas}
+      ${seletor}
+      ${semIg}
+      <div class="an-custom" style="margin-top:12px"><button type="button" onclick="anIrContas()">Gerenciar contas</button></div>
+    </div>
+    ${vazio}`;
+}
+
+// Muda a empresa de uma conta (owner ou admin). Atualiza a tela de Contas e as páginas.
+async function anDefinirEmpresa(contaId, valor) {
+  anStatus('Salvando a empresa da conta…');
+  const r = await anApiOrg('contas-empresa', { contaId, empresa: valor || null });
+  if (!r.ok) {
+    anStatus(r.erro, true);
+    await anContasRender();
+    return;
+  }
+  anStatus('Empresa salva.');
+  await anContasRender();
+  anRender();
 }
 
 // Monta o menu da página inicial (sem desenhar: o conteúdo aparece quando a aba Análise é aberta).
-anMontarMenu('geral');
+anMontarMenu('Análise das Redes Sociais', AN_MENU_GERAL, 'geral');
 
 // ── ESTRATÉGIA ────────────────────────────────────────────────────────────
 const ESTRATEGIA = {

@@ -3,7 +3,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-const MIGRATIONS = ['20261120120000_analise_redes_sociais.sql', '20261121100000_visualizacoes_conta.sql', '20261122100000_concorrentes_resumo.sql', '20261123100000_ia_periodo.sql']
+const MIGRATIONS = ['20261120120000_analise_redes_sociais.sql', '20261121100000_visualizacoes_conta.sql', '20261122100000_concorrentes_resumo.sql', '20261123100000_ia_periodo.sql', '20261124100000_empresa_contas.sql']
   .map((nome) => fileURLToPath(new URL('../../supabase/migrations/' + nome, import.meta.url)));
 const db = new PGlite();
 let falhas = 0, ok = 0;
@@ -142,6 +142,8 @@ await expectOk('servidor lê tokens', `select count(*) from public.social_tokens
 await expectErro('token que não é cifrado (formato v1.) é recusado', `insert into public.social_tokens (social_account_id, access_token_encrypted) select id, 'EAAB-em-texto-puro' from public.social_accounts where external_id = 'ig_guri'`, 'check');
 await expectOk('servidor grava análise do período (kind periodo)', `insert into public.ai_analyses (organization_id, kind, status, output) select id, 'periodo', 'ok', '{}' from public.organizations limit 1`);
 await expectErro('tipo de análise desconhecido é recusado', `insert into public.ai_analyses (organization_id, kind, status) select id, 'livre', 'ok' from public.organizations limit 1`, 'check');
+await expectOk('servidor marca a empresa de uma conta', `update public.social_accounts set empresa = 'academia' where external_id = 'ig_academia'`);
+await expectErro('empresa desconhecida é recusada', `update public.social_accounts set empresa = 'nike' where external_id = 'ig_academia'`, 'check');
 await expectErro('métrica negativa é recusada', `insert into public.account_insights (social_account_id, organization_id, metric_date, reach) select id, organization_id, '2026-11-20', -1 from public.social_accounts limit 1`, 'check');
 
 console.log('\nExclusão de organização (cascade)');
