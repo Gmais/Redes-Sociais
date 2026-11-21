@@ -31,8 +31,8 @@ const PZ_EMPRESAS = [
   { id: 'gympulse', nome: 'GympulsePro', cor: '#6D4AFF', ini: 'G' }
 ];
 const PZ_SUBS = [
-  ['visao', 'Visão geral'], ['publico', 'Público'], ['publicacoes', 'Publicações'], ['horarios', 'Melhores horários'],
-  ['concorrentes', 'Concorrentes'], ['relatorios', 'Relatórios'], ['ia', 'Inteligência'], ['contas', 'Contas']
+  ['visao', 'Visão geral'], ['publico', 'Público'], ['publicacoes', 'Análise'], ['horarios', 'Melhores horários'],
+  ['concorrentes', 'Concorrentes'], ['relatorios', 'Relatórios'], ['ia', 'Inteligência']
 ];
 const PZ_NIVEL = { viewer: 0, editor: 1, admin: 2, owner: 3 };
 // Destinos antigos (botões de ação das telas) para as abas atuais.

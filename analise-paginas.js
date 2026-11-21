@@ -72,17 +72,16 @@ function pzHtmlDestaques(lista, titulo = 'Destaques do período', texto = 'Frase
     </div>`;
 }
 
-// Seletor da conta das análises. Com uma conta só, mostra só o nome dela.
+// Seletor de conta das análises e botão Configurações (contas, conexões e sincronização).
 function pzBarraConta(emp, dados, conta) {
   const ig = pzIgDaEmpresa(dados, emp.id);
-  if (!ig.length) return '';
-  const seletor = ig.length > 1
-    ? `<label class="pz-rotulo">Conta das análises
-         <select class="pz-campo pequeno" onchange="pzTrocarContaEmpresa('${emp.id}', this.value)">
+  const seletor = ig.length
+    ? `<label class="pz-rotulo">Conta
+         <select class="pz-campo pequeno" aria-label="Conta das análises" onchange="pzTrocarContaEmpresa('${emp.id}', this.value)">
            ${ig.map((c) => `<option value="${pzEsc(c.id)}"${c.id === conta ? ' selected' : ''}>${pzEsc(pzNomeConta(c))}</option>`).join('')}
          </select></label>`
-    : `<span class="pz-pill roxo">${pzEsc(pzNomeConta(ig[0]))}</span>`;
-  return `<div class="pz-form" style="margin-bottom:16px;align-items:center;justify-content:space-between">${seletor}</div>`;
+    : '';
+  return `<div class="pz-form" style="margin-bottom:16px;align-items:center;justify-content:space-between">${seletor}<button type="button" class="pz-btn fantasma sm" onclick="pzSubir('contas')">⚙ Configurações</button></div>`;
 }
 
 function pzTrocarContaEmpresa(id, conta) {
@@ -103,8 +102,8 @@ async function pzPaginaEmpresa(el, id, sub, tok) {
   const precisaConta = ['visao', 'publico', 'publicacoes', 'horarios', 'relatorios', 'ia'].includes(sub);
   if (precisaConta && !ig.length) {
     el.innerHTML = pzVazio('📸', `${emp.nome} ainda não tem conta do Instagram`,
-      'Em Contas, escolha a empresa da conta do Instagram. Depois disso, esta aba mostra a análise da empresa.',
-      '<button type="button" class="pz-btn primario" onclick="pzIr(\'contas\')">Ir para Contas</button>');
+      'Em Configurações, escolha a empresa da conta do Instagram. Depois disso, esta aba mostra a análise da empresa.',
+      '<button type="button" class="pz-btn primario" onclick="pzIr(\'contas\')">Ir para Configurações</button>');
     return;
   }
   if (sub === 'visao') return pzSecVisao(el, emp, dados, conta, tok);
@@ -126,8 +125,8 @@ async function pzSecVisao(el, emp, dados, conta, tok) {
   const lista = pubs.ok ? pubs.dados.publicacoes || [] : [];
   if (!(d.serie && d.serie.length)) {
     el.innerHTML = pzBarraConta(emp, dados, conta) + pzVazio('⏳', 'Sem métricas neste período',
-      'Ainda não há dados sincronizados para esta conta no período. Sincronize em Contas ou escolha outro período.',
-      '<button type="button" class="pz-btn primario" onclick="pzIr(\'contas\')">Ir para Contas</button>');
+      'Ainda não há dados sincronizados para esta conta no período. Sincronize em Configurações ou escolha outro período.',
+      '<button type="button" class="pz-btn primario" onclick="pzIr(\'contas\')">Ir para Configurações</button>');
     return;
   }
   el.innerHTML = pzBarraConta(emp, dados, conta) + pzHtmlVisao(d, lista);
@@ -218,7 +217,7 @@ async function pzSecPublicacoes(el, emp, dados, conta, tok) {
   const cabeca = pzBarraConta(emp, dados, conta);
   if (!res.ok) { el.innerHTML = cabeca + barra + pzAviso('erro', 'Não foi possível carregar as publicações', res.erro); return; }
   const lista = res.dados.publicacoes || [];
-  if (!lista.length) { el.innerHTML = cabeca + barra + pzVazio('🖼️', 'Nenhuma publicação com estes filtros', 'Troque o tipo ou sincronize as contas em Contas.'); return; }
+  if (!lista.length) { el.innerHTML = cabeca + barra + pzVazio('🖼️', 'Nenhuma publicação com estes filtros', 'Troque o tipo ou sincronize as contas em Configurações.'); return; }
   const max = Math.max(...lista.map((p) => p.engajamento || 0), 1);
   el.innerHTML = cabeca + barra + `<div class="pz-posts">${lista.slice(0, 60).map((p) => pzPostCard(p, max)).join('')}</div>
     <div class="muted" style="font-size:12px;margin-top:14px">Até 60 publicações mais recentes. A ordenação vale para estas publicações.</div>`;
@@ -324,7 +323,7 @@ async function pzSecConcorrentes(el, emp, dados, tok) {
        </form><div class="muted" style="font-size:12px;margin-top:10px">Só entra conta profissional (comercial ou criador) e pública. A Meta confirma antes de salvar.</div></div>`
     : '';
   const aviso = r.dados.avisoConsulta ? pzAviso('info', 'Consulta indisponível', r.dados.avisoConsulta) : '';
-  const extra = semEmpresa.length ? pzAviso('info', `${semEmpresa.length} concorrente(s) sem empresa`, 'Ligue cada um a uma empresa na aba Contas, para aparecer aqui.') : '';
+  const extra = semEmpresa.length ? pzAviso('info', `${semEmpresa.length} concorrente(s) sem empresa`, 'Ligue cada um a uma empresa na aba Configurações, para aparecer aqui.') : '';
   el.innerHTML = topo + aviso + extra + form + (meus.length
     ? `<div class="pz-grid">${meus.map((c) => pzCardConcorrente(c, emp)).join('')}</div>`
     : pzVazio('🎯', `Nenhum concorrente de ${emp.nome}`, 'Cadastre um perfil profissional para comparar alcance, frequência e engajamento.'));
@@ -569,11 +568,9 @@ async function pzSecContas(el, emp, dados, tok) {
     : '';
   const acoes = podeAdm
     ? `<button type="button" class="pz-btn primario" onclick="pzConectar('meta-iniciar')">Conectar Instagram / Facebook</button>
-       <button type="button" class="pz-btn fantasma" onclick="pzConectar('ig-iniciar')">Conectar só o Instagram</button>
-       <button type="button" class="pz-btn fantasma" onclick="pzImportarPortfolio()">Importar do portfólio</button>
        <button type="button" class="pz-btn escuro" onclick="pzSincronizar()">Sincronizar agora</button>`
     : '<span class="muted">Só owner ou admin conectam contas e sincronizam.</span>';
-  el.innerHTML = pzCabecalho('Contas', `Contas de ${emp.nome} e a sincronização. A sincronização automática roda todo dia, às 08h (Brasília).`, pzAcoesContas()) +
+  el.innerHTML = pzCabecalho('Configurações', `Contas de ${emp.nome} e a sincronização. A sincronização automática roda todo dia, às 08h (Brasília).`, pzAcoesContas()) +
     `<div class="pz-grid">
       <div class="pz-card s12"><div class="pz-card-h"><div><h3>Conectar e sincronizar</h3><small>Você entra no login oficial da Meta. Nenhuma senha de rede social é pedida.</small></div></div>
         <div class="pz-chips">${acoes}</div></div>

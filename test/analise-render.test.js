@@ -204,10 +204,11 @@ const emp = PZ_EMPRESAS[0];
   await espera(60);
   const painel = elementos['pa-academia'].innerHTML;
   semLixo(painel, 'painel da academia');
-  assert.ok(painel.includes('pz-sub') && painel.includes('Visão geral') && painel.includes('Contas'), 'abas internas aparecem');
+  assert.ok(painel.includes('pz-sub') && painel.includes('Visão geral') && painel.includes('Análise') && !painel.includes('>Contas<'), 'abas internas aparecem, sem Contas');
   const pagina = elementos['pz-pagina'].innerHTML;
   semLixo(pagina, 'página da visão geral');
   assert.ok(pagina.includes('Alcance'), 'a página da visão geral chegou ao painel');
+  assert.ok(pagina.includes('Configurações'), 'botão Configurações ao lado da conta');
 
   // 5) Pedidos iguais em paralelo viram uma só busca
   PZ.cache = {};
