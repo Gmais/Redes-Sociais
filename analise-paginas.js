@@ -294,7 +294,7 @@ async function pzSecPublicacoes(el, emp, dados, conta, tok) {
   const ordem = `<label class="pz-rotulo" style="flex-direction:row;align-items:center;gap:8px">Ordenar
       <select class="pz-campo pequeno" onchange="pzFiltroPub('ordem', this.value)">${ordens.map(([v, t]) => `<option value="${v}"${PZ.filtroPub.ordem === v ? ' selected' : ''}>${t}</option>`).join('')}</select></label>`;
   const barra = `<div class="pz-card s12" style="padding:14px 16px;margin-bottom:16px"><div class="pz-form" style="align-items:center;justify-content:space-between"><div class="pz-chips">${chips}</div>${ordem}</div></div>`;
-  const cabeca = pzBarraConta(emp, dados, conta) + pzBoxRespostas();
+  const cabeca = pzBarraConta(emp, dados, conta) + pzBoxRespostas() + pzBoxDM();
   if (!res.ok) { el.innerHTML = cabeca + barra + pzAviso('erro', 'Não foi possível carregar as publicações', res.erro); return; }
   const lista = res.dados.publicacoes || [];
   PZ.listaPub = lista;
@@ -396,6 +396,72 @@ async function pzPerfilBio() {
       <div class="muted" style="font-size:12px;margin-top:6px">${[...r.dados.texto].length} caracteres. Copie e edite no Instagram.</div>
       ${(r.dados.notas || []).map((n) => pzAviso('info', 'Confira', n)).join('')}
     </div>`;
+}
+
+// Mensagens diretas (Fase 2): só quem escreveu nas últimas 24 horas. Enviar depende da liberação da Meta.
+function pzBoxDM() {
+  if (!pzPode('viewer')) return '';
+  setTimeout(pzDMCarregar, 0);
+  return `<div class="pz-card s12" style="margin-bottom:16px">
+    <div class="pz-card-h"><div><h3>Mensagens diretas para responder</h3><small>Só quem escreveu nas últimas 24 horas. Nada de prospecção: a resposta sempre parte de uma mensagem recebida.</small></div>
+      ${pzPode('editor') ? '<button type="button" class="pz-btn primario sm" onclick="pzDMSincronizar()">Buscar mensagens</button>' : ''}</div>
+    <div id="pz-dm-lista"><div class="pz-skel" style="min-height:60px"></div></div>
+  </div>`;
+}
+
+async function pzDMCarregar() {
+  const alvo = document.getElementById('pz-dm-lista');
+  if (!alvo) return;
+  const r = await pzApi('dm');
+  if (!document.getElementById('pz-dm-lista')) return;
+  if (!r.ok) { alvo.innerHTML = pzAviso('erro', 'Não foi possível carregar as mensagens', r.erro); return; }
+  alvo.innerHTML = pzHtmlDM(r.dados);
+}
+
+function pzHtmlDM(d) {
+  const linhas = d.linhas || [];
+  const aviso = d.envioLigado ? '' : pzAviso('info', 'Envio desligado', 'As respostas podem ser escritas e aprovadas aqui. Elas só saem depois que a Meta liberar a permissão de mensagens.');
+  if (!linhas.length) return aviso + pzVazio('✉️', 'Nenhuma mensagem para responder', 'Clique em Buscar mensagens. Só aparecem mensagens recebidas nas últimas 24 horas.');
+  return aviso + linhas.map((l) => {
+    const id = pzEsc(l.id);
+    const ate = AnInsights.dataHora(new Date(Date.parse(l.recebida_em) + 24 * 3600 * 1000).toISOString());
+    return `<div class="pz-post" style="padding:14px;margin-top:10px">
+      <div class="pz-form" style="align-items:center;justify-content:space-between"><b>@${pzEsc(l.remetente_nome || 'alguém')}</b><span class="pz-pill">${pzEsc(l.categoria)}</span></div>
+      <p style="margin:8px 0">${pzEsc(l.mensagem_texto)}</p>
+      <div class="muted" style="font-size:12px">Responda até ${pzEsc(ate)}</div>
+      <textarea class="pz-campo" rows="2" style="width:100%;margin-top:6px" id="pz-dm-${id}">${pzEsc(l.rascunho || '')}</textarea>
+      <div class="pz-form" style="margin-top:8px">
+        <button type="button" class="pz-btn fantasma sm" onclick="pzDMAcao('${id}','editar')">Salvar texto</button>
+        ${l.status === 'pendente' ? `<button type="button" class="pz-btn primario sm" onclick="pzDMAcao('${id}','aprovar')">Aprovar</button>` : ''}
+        <button type="button" class="pz-btn fantasma sm" onclick="pzDMAcao('${id}','descartar')">Descartar</button>
+        ${d.envioLigado ? `<button type="button" class="pz-btn escuro sm" onclick="pzDMAcao('${id}','enviar')">Enviar</button>` : ''}
+      </div>
+      ${l.erro ? pzAviso('erro', 'Erro', l.erro) : ''}
+    </div>`;
+  }).join('');
+}
+
+async function pzDMSincronizar() {
+  const alvo = document.getElementById('pz-dm-lista');
+  if (alvo) alvo.innerHTML = '<div class="pz-skel" style="min-height:60px"></div>';
+  const r = await pzApi('dm-sincronizar', { corpo: {} });
+  if (!r.ok) pzToast(r.erro, true);
+  else {
+    const d = r.dados;
+    const avisos = (d.avisos || []).length ? ` ${d.avisos.join(' ')}` : '';
+    pzToast(`${d.novos} mensagem(ns) nova(s), ${d.rascunhos} rascunho(s).${avisos}`, Boolean((d.avisos || []).length));
+  }
+  pzDMCarregar();
+}
+
+async function pzDMAcao(id, acao) {
+  const campo = document.getElementById('pz-dm-' + id);
+  const texto = campo ? campo.value : undefined;
+  const r = await pzApi('dm-acao', { corpo: { id, acao, texto } });
+  if (!r.ok) { pzToast(r.erro, true); return; }
+  const mensagens = { editar: 'Texto salvo.', aprovar: 'Resposta aprovada.', descartar: 'Resposta descartada.', enviar: 'Mensagem enviada.' };
+  pzToast(mensagens[acao] || 'Pronto.');
+  pzDMCarregar();
 }
 
 function pzFiltroPub(campo, valor) {
