@@ -925,10 +925,6 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 </div>
 
 <div class="filter-bar">
-  <div class="modo-switch" role="group" aria-label="Modo da empresa">
-    <button type="button" id="mdConteudo" class="on" onclick="setModoEmpresa('conteudo')">Conteúdo</button>
-    <button type="button" id="mdAnalise" onclick="setModoEmpresa('analise')">Análise</button>
-  </div>
   <label class="hide-done-check so-conteudo">
     <input type="checkbox" id="hideDoneCheck" onchange="toggleHideDone()">
     <span class="checkmark"></span>
@@ -939,12 +935,15 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 </div>
 
 <main>
-  <div class="panel on" id="p-academia"></div>
-  <div class="panel" id="p-sorveteria"></div>
-  <div class="panel" id="p-gympulse"></div>
   <div class="panel" id="pa-academia"></div>
+  <div class="pz-divisor" data-emp="academia">Conteúdo da empresa</div>
+  <div class="panel on" id="p-academia"></div>
   <div class="panel" id="pa-sorveteria"></div>
+  <div class="pz-divisor" data-emp="sorveteria">Conteúdo da empresa</div>
+  <div class="panel" id="p-sorveteria"></div>
   <div class="panel" id="pa-gympulse"></div>
+  <div class="pz-divisor" data-emp="gympulse">Conteúdo da empresa</div>
+  <div class="panel" id="p-gympulse"></div>
   <div class="panel" id="p-historico"></div>
 </main>
 
@@ -25947,7 +25946,7 @@ function go(tab,el){
   if(npBtn) npBtn.style.display = ['historico','estrategia'].includes(tab) ? 'none' : 'flex';
   const calBtn = document.getElementById('calOpenBtn');
   if(calBtn) calBtn.style.display = ['historico','estrategia'].includes(tab) ? 'none' : 'flex';
-  pzAplicarModo(tab); // empresa em Análise mostra o painel da análise; fora das empresas o seletor some
+  pzAplicarEmpresa(tab); // empresa: análise e conteúdo juntos na mesma página
   if(tab==='historico') buildHist();
   if(tab==='estrategia') buildEstrategia();
 }

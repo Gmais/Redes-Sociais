@@ -12,7 +12,6 @@ const PZ = {
   org: null,
   empresa: 'academia',
   sub: {},
-  modo: {},
   periodo: { tipo: '30', ini: '', fim: '' },
   metrica: 'alcance',
   filtroPub: { tipo: '', ordem: 'data' },
@@ -240,32 +239,15 @@ async function pzSair() {
   pzRender();
 }
 
-// ── Modo Conteúdo / Análise (o seletor fica na faixa de ações de cada empresa) ──
-// Cada empresa lembra o modo em que foi deixada. Fora das abas de empresa, o modo some.
-function pzAplicarModo(tab) {
-  const emp = PZ_EMPRESAS.find((e) => e.id === tab);
-  if (!emp) { document.body.dataset.modo = ''; return; }
-  const modo = PZ.modo[tab] === 'analise' ? 'analise' : 'conteudo';
-  PZ.empresa = tab;
-  document.body.dataset.modo = modo;
-  const conteudo = document.getElementById('p-' + tab);
-  if (conteudo) conteudo.classList.toggle('on', modo === 'conteudo');
-  const analise = document.getElementById('pa-' + tab);
-  if (analise) analise.classList.toggle('on', modo === 'analise');
-  document.getElementById('mdConteudo')?.classList.toggle('on', modo === 'conteudo');
-  document.getElementById('mdAnalise')?.classList.toggle('on', modo === 'analise');
-  if (modo === 'analise') {
-    if (!PZ.sb) pzIniciar();
-    else pzRender();
-  }
-}
-
-// Botões do seletor (chamados pelo HTML).
-function setModoEmpresa(modo) {
-  const tab = document.body.dataset.tab;
+// ── Abas de empresa: análise e conteúdo na mesma página, sem troca de modo ──
+// Ao abrir uma empresa, o bloco da análise e o conteúdo ficam visíveis juntos; a análise carrega aqui.
+function pzAplicarEmpresa(tab) {
   if (!PZ_EMPRESAS.some((e) => e.id === tab)) return;
-  PZ.modo[tab] = modo === 'analise' ? 'analise' : 'conteudo';
-  pzAplicarModo(tab);
+  PZ.empresa = tab;
+  document.getElementById('p-' + tab)?.classList.add('on');
+  document.getElementById('pa-' + tab)?.classList.add('on');
+  if (!PZ.sb) pzIniciar();
+  else pzRender();
 }
 
 // ── Casca da análise dentro da aba da empresa ────────────────────────────────
@@ -459,7 +441,6 @@ function anContaIniciar() { return pzIniciar(); }
   };
   const finalizar = () => {
     PZ.empresa = 'academia';
-    PZ.modo.academia = 'analise';
     PZ.sub.academia = 'contas';
     const botao = document.querySelector('.tab[data-p="academia"]');
     if (botao && typeof go === 'function') go('academia', botao);
