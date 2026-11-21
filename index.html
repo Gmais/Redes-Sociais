@@ -66,7 +66,7 @@ body[data-tab="analise"]    { --bg: #120d1f; background: linear-gradient(180deg,
 .an-custom input { background:var(--s2); border:1px solid var(--border); color:var(--txt); border-radius:8px; padding:6px 8px; font:500 12px 'Inter',sans-serif; color-scheme:dark; }
 .an-custom button { background:rgba(124,92,255,.2); border:1px solid rgba(124,92,255,.5); color:var(--txt); border-radius:8px; padding:6px 12px; font:600 12px 'Inter',sans-serif; cursor:pointer; }
 .an-custom span { font-size:12px; color:var(--txt3); }
-.an-erro { width:100%; color:#ff8a8a; font-size:12px; min-height:0; }
+.an-erro { width:100%; color:var(--erro,#ff8a8a); font-size:12px; min-height:0; }
 .an-erro:empty { display:none; }
 .an-head-ctrl { display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
 .an-heat { overflow-x:auto; }
@@ -97,7 +97,7 @@ body[data-tab="analise"]    { --bg: #120d1f; background: linear-gradient(180deg,
 .an-conc { display:flex; flex-direction:column; gap:10px; }
 .an-conc-topo { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
 .an-conc-remover { background:none; border:1px solid var(--border); color:var(--txt2); border-radius:8px; padding:4px 10px; font:600 12px 'Inter',sans-serif; cursor:pointer; }
-.an-conc-remover:hover { color:#ff8a8a; border-color:#ff8a8a; }
+.an-conc-remover:hover { color:var(--erro,#ff8a8a); border-color:var(--erro,#ff8a8a); }
 .an-ia-topo { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
 .an-ia h3 { margin:4px 0 8px; }
 .an-ia h4 { margin:14px 0 4px; font-size:13px; color:var(--txt2); }
@@ -108,7 +108,7 @@ body[data-tab="analise"]    { --bg: #120d1f; background: linear-gradient(180deg,
 .an-ia-hist h3 { width:100%; margin:0; }
 .an-cfg-tabela th, .an-cfg-tabela td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--border); vertical-align:top; font-size:12px; }
 .an-cfg-tabela th { color:var(--txt3); font-weight:600; }
-.an-cfg-alerta { color:#ff8a8a; }
+.an-cfg-alerta { color:var(--erro,#ff8a8a); }
 .an-rel-acoes { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:14px 0; }
 .an-rel-wrap { overflow-x:auto; }
 .an-rel-folha { background:#fbfbfd; color:#15151f; border-radius:14px; padding:26px 28px; }
@@ -1007,6 +1007,78 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 .edit-box { border:1px solid var(--border); border-radius:10px; padding:10px; background:var(--s2); display:flex; flex-direction:column; gap:8px; }
 .edit-box textarea { background:var(--s1); border:1px solid var(--border); color:var(--txt); border-radius:8px; padding:10px; font-size:13px; font-family:'Inter',sans-serif; resize:vertical; }
 #gen-use[style*="none"] ~ #gen-editbtn { display:none; }
+
+/* ── Análise: tema claro e navegação por rede (vale só na aba Análise) ─────── */
+body[data-tab="analise"] {
+  --bg: #f4f5fb; --s1: #ffffff; --s2: #f3f4fa; --border: #e6e8f2;
+  --txt: #14142b; --txt2: #5b5f7b; --txt3: #8e92ad; --erro: #d6336c;
+  background:
+    radial-gradient(900px 480px at 0% -8%, rgba(124,92,255,.16), transparent 60%),
+    radial-gradient(800px 460px at 100% 0%, rgba(255,95,162,.13), transparent 60%),
+    var(--bg);
+  color: var(--txt);
+  color-scheme: light;
+}
+body[data-tab="analise"] .hero-bg { background: none; }
+body[data-tab="analise"] .brand-text span { color: #6d4aff; }
+body[data-tab="analise"] .tabs-wrap { background: rgba(244,245,251,.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+body[data-tab="analise"] .tab.on { color: var(--txt); }
+
+.an-ico { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:10px; background:#f3f4fa; font-size:14px; flex:0 0 auto; }
+
+/* Menu lateral: cartão branco, itens com ícone */
+body[data-tab="analise"] .an-nav { background:#fff; border:none; border-radius:22px; padding:14px; box-shadow: 0 1px 2px rgba(20,20,43,.05), 0 12px 32px rgba(20,20,43,.08); }
+body[data-tab="analise"] .an-nav-title { color:var(--txt3); font-weight:700; letter-spacing:.12em; }
+body[data-tab="analise"] .an-navbtn { display:flex; align-items:center; gap:10px; width:100%; background:none; border:none; color:var(--txt2); font:600 13px 'Inter',sans-serif; padding:9px 10px; border-radius:14px; cursor:pointer; text-align:left; transition: background .15s, color .15s; }
+body[data-tab="analise"] .an-navbtn:hover { background:#f3f4fa; color:var(--txt); }
+body[data-tab="analise"] .an-navbtn.on { background: linear-gradient(135deg,#6d4aff,#ff5fa2); color:#fff; box-shadow: 0 10px 22px rgba(109,74,255,.26); }
+body[data-tab="analise"] .an-navbtn.on .an-ico { background: rgba(255,255,255,.22); }
+
+/* Abas de rede (no topo do conteúdo) */
+.an-paginas { display:flex; gap:6px; padding:6px; background:#fff; border-radius:18px; box-shadow: 0 1px 2px rgba(20,20,43,.05), 0 8px 24px rgba(20,20,43,.07); overflow-x:auto; scrollbar-width:none; margin-bottom:18px; }
+.an-paginas::-webkit-scrollbar { display:none; }
+.an-pagina { display:inline-flex; align-items:center; gap:8px; white-space:nowrap; background:none; border:none; padding:10px 16px; border-radius:13px; font:700 13px 'Inter',sans-serif; color:var(--txt2); cursor:pointer; transition: background .15s, color .15s; }
+.an-pagina:hover { background:#f3f4fa; color:var(--txt); }
+.an-pagina.on { background: linear-gradient(135deg,#6d4aff,#ff5fa2); color:#fff; box-shadow: 0 8px 18px rgba(109,74,255,.26); }
+.an-pagina.on .an-ico { background: rgba(255,255,255,.22); }
+
+/* Cartões, números e botões */
+body[data-tab="analise"] .an-head h2 { font:800 26px 'Inter',sans-serif; letter-spacing:-.02em; color:var(--txt); }
+body[data-tab="analise"] .an-head p { color:var(--txt2); font-size:14px; }
+body[data-tab="analise"] .an-card { background:#fff; border:1px solid var(--border); border-radius:22px; padding:22px; box-shadow: 0 1px 2px rgba(20,20,43,.04), 0 10px 28px rgba(20,20,43,.06); }
+body[data-tab="analise"] .an-card h3 { font:700 16px 'Inter',sans-serif; color:var(--txt); }
+body[data-tab="analise"] .hint { color:var(--txt3); }
+body[data-tab="analise"] .an-kpi { background:#fff; border:1px solid var(--border); border-radius:20px; padding:18px; box-shadow: 0 1px 2px rgba(20,20,43,.04), 0 10px 24px rgba(20,20,43,.05); }
+body[data-tab="analise"] .an-kpi .lbl { color:var(--txt3); font-weight:700; letter-spacing:.06em; }
+body[data-tab="analise"] .an-kpi .val { font:800 26px 'Inter',sans-serif; letter-spacing:-.02em; color:var(--txt); }
+body[data-tab="analise"] .an-kpi .sub { color:var(--txt3); }
+body[data-tab="analise"] .an-chip { background:#fff; border:1px solid var(--border); color:var(--txt2); font-weight:700; }
+body[data-tab="analise"] .an-chip.on { background:#14142b; border-color:#14142b; color:#fff; box-shadow:none; }
+body[data-tab="analise"] .an-period button { color:var(--txt2); font-weight:700; }
+body[data-tab="analise"] .an-period button.on { background: linear-gradient(135deg,#6d4aff,#ff5fa2); color:#fff; box-shadow:none; }
+body[data-tab="analise"] .an-custom input,
+body[data-tab="analise"] .an-custom select { background:#fff; border:1px solid var(--border); color:var(--txt); border-radius:12px; padding:8px 10px; color-scheme: light; }
+body[data-tab="analise"] .an-custom button { background: linear-gradient(135deg,#6d4aff,#8b5cf6); border:none; color:#fff; border-radius:12px; padding:8px 14px; font:700 12px 'Inter',sans-serif; box-shadow: 0 6px 14px rgba(109,74,255,.22); }
+body[data-tab="analise"] .an-custom button:disabled { opacity:.55; cursor:default; }
+body[data-tab="analise"] .an-empty { background:#fff; border:1.5px dashed #d8dbea; border-radius:22px; color:var(--txt3); }
+body[data-tab="analise"] .an-empty h3 { color:var(--txt2); }
+body[data-tab="analise"] .an-top span { background:#f3f4fa; border-color:transparent; color:var(--txt2); }
+
+/* Resumo por rede (aba Análise das Redes Sociais) */
+.an-redes { display:grid; grid-template-columns: repeat(auto-fill,minmax(250px,1fr)); gap:16px; }
+.an-rede-card { position:relative; overflow:hidden; background:#fff; border:1px solid var(--border); border-radius:22px; padding:24px 20px 20px; display:flex; flex-direction:column; gap:12px; box-shadow: 0 1px 2px rgba(20,20,43,.04), 0 10px 28px rgba(20,20,43,.06); }
+.an-rede-card::before { content:''; position:absolute; left:0; right:0; top:0; height:5px; background: var(--c, #6d4aff); }
+.an-rede-card.em-breve { opacity:.78; }
+.an-rede-topo { display:flex; align-items:center; gap:10px; font:800 17px 'Inter',sans-serif; color:var(--txt); }
+.an-rede-ico { width:38px; height:38px; border-radius:13px; display:inline-flex; align-items:center; justify-content:center; font-size:19px; background:#f3f4fa; }
+.an-rede-linha { display:flex; justify-content:space-between; gap:10px; font-size:13px; color:var(--txt2); border-top:1px dashed var(--border); padding-top:10px; }
+.an-rede-linha b { color:var(--txt); font-weight:800; text-align:right; }
+.an-rede-btn { margin-top:auto; background:#14142b; color:#fff; border:none; border-radius:14px; padding:11px 14px; font:700 13px 'Inter',sans-serif; cursor:pointer; }
+.an-rede-btn:hover { background:#2b2b4f; }
+
+@media (max-width:760px) {
+  body[data-tab="analise"] .an-navbtn { width:auto; white-space:nowrap; }
+}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://apis.google.com/js/api.js" async defer></script>
@@ -1059,19 +1131,17 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
   <div class="panel" id="p-analise">
     <div class="an-wrap">
       <nav class="an-nav" aria-label="Seções da análise">
-        <div class="an-nav-title">Análise</div>
-        <button class="on" onclick="anGo('visao',this)">Visão geral</button>
-        <button onclick="anGo('contas',this)">Contas conectadas</button>
-        <button onclick="anGo('publico',this)">Público</button>
-        <button onclick="anGo('publicacoes',this)">Publicações</button>
-        <button onclick="anGo('horarios',this)">Melhores horários</button>
-        <button onclick="anGo('concorrentes',this)">Concorrentes</button>
-        <button onclick="anGo('ia',this)">Inteligência artificial</button>
-        <button onclick="anGo('relatorios',this)">Relatórios</button>
-        <button onclick="anGo('config',this)">Configurações</button>
+        <div class="an-nav-title" id="an-nav-titulo">Análise das Redes Sociais</div>
+        <div id="an-nav-itens"></div>
       </nav>
 
       <div class="an-main">
+        <div class="an-paginas" role="tablist" aria-label="Redes">
+          <button type="button" class="an-pagina on" data-pag="geral" onclick="anPagina('geral')"><span class="an-ico" aria-hidden="true">📊</span>Análise das Redes Sociais</button>
+          <button type="button" class="an-pagina" data-pag="instagram" onclick="anPagina('instagram')"><span class="an-ico" aria-hidden="true">📸</span>Instagram</button>
+          <button type="button" class="an-pagina" data-pag="facebook" onclick="anPagina('facebook')"><span class="an-ico" aria-hidden="true">📘</span>Facebook</button>
+          <button type="button" class="an-pagina" data-pag="threads" onclick="anPagina('threads')"><span class="an-ico" aria-hidden="true">🧵</span>Threads</button>
+        </div>
         <div class="an-card" style="margin-bottom:16px">
           <h3>Conta e organização</h3>
           <div class="hint">Entre para conectar o Instagram e a Página do Facebook da sua organização.</div>
@@ -1079,7 +1149,22 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
           <div class="hint" id="an-msg" role="status" style="margin-top:10px;min-height:16px"></div>
         </div>
         <div class="an-demo" id="an-demo" role="note"><b>Modo demonstração</b> Nenhuma conta conectada. Os números desta aba são fictícios, gerados para testar o painel. Não são métricas reais.</div>
-        <section class="an-sec on" id="an-visao">
+        <section class="an-sec on" id="an-geral">
+          <div class="an-head"><div><h2>Análise das Redes Sociais</h2><p>Resumo das redes da organização. Escolha uma rede acima para ver os detalhes.</p></div></div>
+          <div class="an-redes" id="an-redes-body"></div>
+        </section>
+
+        <section class="an-sec" id="an-facebook">
+          <div class="an-head"><div><h2>Facebook</h2><p>Páginas do Facebook conectadas à organização.</p></div></div>
+          <div id="an-facebook-body"></div>
+        </section>
+
+        <section class="an-sec" id="an-threads">
+          <div class="an-head"><div><h2>Threads</h2><p>Métricas do Threads.</p></div></div>
+          <div class="an-empty"><div class="eico">🧵</div><h3>Em breve</h3><p>A integração com o Threads ainda não existe no painel. Quando existir, as métricas aparecem aqui. Até lá, nada é mostrado como se fosse dado real.</p></div>
+        </section>
+
+        <section class="an-sec" id="an-visao">
           <div class="an-head">
             <div>
               <h2>Visão geral</h2>
@@ -26168,9 +26253,9 @@ const AN_METRICAS = [
 const anNum = (n) => Math.round(n).toLocaleString('pt-BR');
 const anDM = (ds) => ds.slice(8, 10) + '/' + ds.slice(5, 7);
 
-function anGo(id, btn){
+function anGo(id){
   document.querySelectorAll('#p-analise .an-sec').forEach(s=>s.classList.toggle('on', s.id==='an-'+id));
-  document.querySelectorAll('#p-analise .an-nav button').forEach(b=>b.classList.toggle('on', b===btn));
+  document.querySelectorAll('#p-analise .an-navbtn').forEach(b=>b.classList.toggle('on', b.dataset.sec===id));
   anRender();
 }
 function anPeriod(dias, btn){
@@ -26239,7 +26324,7 @@ function anMsg(texto, erro) {
   const el = document.getElementById('an-msg');
   if (!el) return;
   el.textContent = texto || '';
-  el.style.color = erro ? '#ff8a8a' : '#4ade80';
+  el.style.color = erro ? 'var(--erro,#ff8a8a)' : '#4ade80';
 }
 
 function anAtualizarBanner(contas) {
@@ -26409,7 +26494,7 @@ async function anConectarMeta() {
 function anStatus(texto, erro) {
   anMsg(texto, erro);
   const el = document.getElementById('an-contas-status');
-  if (el) { el.textContent = texto || ''; el.style.color = erro ? '#ff8a8a' : '#4ade80'; }
+  if (el) { el.textContent = texto || ''; el.style.color = erro ? 'var(--erro,#ff8a8a)' : '#4ade80'; }
 }
 
 async function anImportarPortfolio() {
@@ -26501,7 +26586,7 @@ function anOpcoes(o){
   const eixoValor = horiz ? 'x' : 'y', eixoCat = horiz ? 'y' : 'x';
   const escalas = {};
   escalas[eixoCat] = { grid: { display: false }, ticks: { maxTicksLimit: 10, autoSkip: true } };
-  escalas[eixoValor] = { beginAtZero: o.zero !== false, grid: { color: 'rgba(255,255,255,.06)' },
+  escalas[eixoValor] = { beginAtZero: o.zero !== false, grid: { color: 'rgba(20,20,43,.07)' },
     ticks: { callback: (v) => Number(v).toLocaleString('pt-BR') } };
   return {
     responsive: true,
@@ -26509,7 +26594,7 @@ function anOpcoes(o){
     indexAxis: horiz ? 'y' : 'x',
     interaction: { mode: 'index', intersect: false },
     plugins: {
-      legend: { display: !!o.legenda, labels: { boxWidth: 10, color: '#9999bb' } },
+      legend: { display: !!o.legenda, labels: { boxWidth: 10, color: '#6e7191' } },
       tooltip: {
         backgroundColor: '#101018', borderColor: '#26262f', borderWidth: 1,
         titleColor: '#f5f5fa', bodyColor: '#f5f5fa',
@@ -26537,8 +26622,8 @@ function anRender(){
   Object.values(window.anCharts).forEach((c) => c.destroy());
   window.anCharts = {};
   if (typeof Chart !== 'undefined') {
-    Chart.defaults.color = '#9999bb';
-    Chart.defaults.borderColor = 'rgba(255,255,255,.06)';
+    Chart.defaults.color = '#6e7191';
+    Chart.defaults.borderColor = 'rgba(20,20,43,.07)';
     Chart.defaults.font.family = "'Inter', sans-serif";
   }
   const p = anResolve();
@@ -26552,6 +26637,8 @@ function anRender(){
   if (document.getElementById('an-ia').classList.contains('on')) anCarregarIA();
   if (document.getElementById('an-relatorios').classList.contains('on')) anCarregarRelatorios();
   if (document.getElementById('an-config').classList.contains('on')) anCarregarConfig();
+  if (document.getElementById('an-geral').classList.contains('on')) anCarregarGeral();
+  if (document.getElementById('an-facebook').classList.contains('on')) anCarregarFacebook();
 }
 
 function anRenderVisao(r){
@@ -26652,7 +26739,7 @@ function anRenderPublico(r){
     data: { labels: P.genero.map((x) => x.rotulo), datasets: [{ data: P.genero.map((x) => x.pct),
       backgroundColor: ['#ff6b35', '#00b4d8', '#44445a'], borderColor: '#101018', borderWidth: 2 }] },
     options: { responsive: true, maintainAspectRatio: false, cutout: '62%',
-      plugins: { legend: { position: 'bottom', labels: { color: '#9999bb', boxWidth: 10 } },
+      plugins: { legend: { position: 'bottom', labels: { color: '#6e7191', boxWidth: 10 } },
         tooltip: { callbacks: { label: (c) => ' ' + c.label + ': ' + c.parsed + '%' } } } }
   });
   anChart('an-ch-cidades', {
@@ -26932,7 +27019,7 @@ function anStatusConc(texto, erro) {
   const el = document.getElementById('an-conc-status');
   if (!el) return;
   el.textContent = texto;
-  el.style.color = erro ? '#ff8a8a' : '';
+  el.style.color = erro ? 'var(--erro,#ff8a8a)' : '';
 }
 
 // Uma chamada à API da organização (concorrentes, IA). Sem corpo é GET (com a organização na URL); com corpo é POST.
@@ -26986,7 +27073,7 @@ function renderConcorrentes(el, d) {
          <button type="button" onclick="anAtualizarConc()">Atualizar agora</button>
        </form>`
     : '<div class="hint" style="margin-bottom:8px">Você pode ver os concorrentes. Para cadastrar, remover ou atualizar, peça a um editor da organização.</div>';
-  const estado = `<div class="hint" id="an-conc-status" role="status" style="margin:6px 0 12px;min-height:16px${aviso && aviso.erro ? ';color:#ff8a8a' : ''}">${anEsc(aviso ? aviso.texto : '')}</div>`;
+  const estado = `<div class="hint" id="an-conc-status" role="status" style="margin:6px 0 12px;min-height:16px${aviso && aviso.erro ? ';color:var(--erro,#ff8a8a)' : ''}">${anEsc(aviso ? aviso.texto : '')}</div>`;
   const avisoConsulta = d.avisoConsulta ? `<div class="an-erro" role="alert" style="margin-bottom:10px">${anEsc(d.avisoConsulta)}</div>` : '';
   const cartoes = lista.length
     ? `<div class="an-conc-grid">${lista.map((c) => anCardConc(c, podeEditar)).join('')}</div>`
@@ -27075,7 +27162,7 @@ function anStatusIA(texto, erro) {
   const el = document.getElementById('an-ia-status');
   if (!el) return;
   el.textContent = texto;
-  el.style.color = erro ? '#ff8a8a' : '';
+  el.style.color = erro ? 'var(--erro,#ff8a8a)' : '';
 }
 
 async function anCarregarIA() {
@@ -27120,7 +27207,7 @@ function renderIA(el, d) {
         : '<div class="hint">Para gerar uma análise, peça a um editor da organização. Você pode ler as análises já feitas.</div>'}
       <div class="hint" id="an-ia-status" role="status" style="min-height:16px"></div>
     </div>`;
-  const aviso2 = aviso ? `<div class="hint" style="margin-bottom:10px;${aviso.erro ? 'color:#ff8a8a' : ''}">${anEsc(aviso.texto)}</div>` : '';
+  const aviso2 = aviso ? `<div class="hint" style="margin-bottom:10px;${aviso.erro ? 'color:var(--erro,#ff8a8a)' : ''}">${anEsc(aviso.texto)}</div>` : '';
 
   const escolhida = analises.find((a) => a.id === window.anIAVer) || analises[0];
   const corpo = escolhida
@@ -27190,7 +27277,7 @@ function anStatusRel(texto, erro) {
   const el = document.getElementById('an-rel-status');
   if (!el) return;
   el.textContent = texto;
-  el.style.color = erro ? '#ff8a8a' : '';
+  el.style.color = erro ? 'var(--erro,#ff8a8a)' : '';
 }
 
 // Contas para o seletor: as da Visão geral, ou as da última consulta de publicações.
@@ -27337,7 +27424,7 @@ function anStatusCfg(texto, erro) {
   const el = document.getElementById('an-cfg-status');
   if (!el) return;
   el.textContent = texto;
-  el.style.color = erro ? '#ff8a8a' : '';
+  el.style.color = erro ? 'var(--erro,#ff8a8a)' : '';
 }
 
 async function anCarregarConfig() {
@@ -27398,7 +27485,7 @@ function renderConfig(el, d) {
   const botao = d.podeSincronizar
     ? '<div class="an-custom" style="margin-top:12px"><button type="button" id="an-cfg-sincronizar" onclick="anSincronizarConfig()">Sincronizar agora</button></div>'
     : '<div class="hint" style="margin-top:10px">Só owner ou admin podem sincronizar manualmente.</div>';
-  const estado = `<div class="hint" id="an-cfg-status" role="status" style="min-height:16px;margin-top:8px;${aviso && aviso.erro ? 'color:#ff8a8a' : ''}">${aviso ? anEsc(aviso.texto) : ''}</div>`;
+  const estado = `<div class="hint" id="an-cfg-status" role="status" style="min-height:16px;margin-top:8px;${aviso && aviso.erro ? 'color:var(--erro,#ff8a8a)' : ''}">${aviso ? anEsc(aviso.texto) : ''}</div>`;
 
   el.innerHTML = `<div class="an-card">
       <h3>Contas</h3>
@@ -27439,6 +27526,125 @@ async function anSincronizarConfig() {
     };
   anCarregarConfig();
 }
+
+// ── Páginas por rede: Análise das Redes Sociais, Instagram, Facebook e Threads ─
+// Cada página tem o próprio menu lateral. Os números são sempre dados sincronizados; nada de exemplo.
+const AN_PAGINAS = {
+  geral: { nome: 'Análise das Redes Sociais', itens: [['geral', 'Resumo', '📊'], ['contas', 'Contas conectadas', '🔗'], ['ia', 'Inteligência artificial', '🧠'], ['relatorios', 'Relatórios', '📄'], ['config', 'Configurações', '⚙️']] },
+  instagram: { nome: 'Instagram', itens: [['visao', 'Visão geral', '📈'], ['publico', 'Público', '👥'], ['publicacoes', 'Publicações', '🖼️'], ['horarios', 'Melhores horários', '🕒'], ['concorrentes', 'Concorrentes', '🎯']] },
+  facebook: { nome: 'Facebook', itens: [['facebook', 'Páginas conectadas', '📘']] },
+  threads: { nome: 'Threads', itens: [['threads', 'Em breve', '🧵']] }
+};
+
+// Monta o menu lateral da página. Não desenha o conteúdo: quem desenha é anGo.
+function anMontarMenu(p) {
+  const pagina = AN_PAGINAS[p] || AN_PAGINAS.geral;
+  const titulo = document.getElementById('an-nav-titulo');
+  const itens = document.getElementById('an-nav-itens');
+  if (!titulo || !itens) return pagina;
+  titulo.textContent = pagina.nome;
+  itens.innerHTML = pagina.itens.map(([id, rotulo, ico]) =>
+    `<button type="button" class="an-navbtn" data-sec="${id}" onclick="anGo('${id}')"><span class="an-ico" aria-hidden="true">${ico}</span>${rotulo}</button>`).join('');
+  return pagina;
+}
+
+function anPagina(p) {
+  const pagina = AN_PAGINAS[p] ? p : 'geral';
+  document.querySelectorAll('#p-analise .an-pagina').forEach((b) => b.classList.toggle('on', b.dataset.pag === pagina));
+  anMontarMenu(pagina);
+  anGo(AN_PAGINAS[pagina].itens[0][0]);
+}
+
+function anIrContas() {
+  anPagina('geral');
+  anGo('contas');
+}
+
+// Resumo: um cartão por rede, com as contas conectadas e a última medição do Instagram (quando existe).
+async function anCarregarGeral() {
+  const el = document.getElementById('an-redes-body');
+  if (!el) return;
+  if (!anSessao || !anOrgAtiva) {
+    el.innerHTML = '<div class="an-empty"><div class="eico">📊</div><h3>Entre para ver o resumo</h3><p>O resumo mostra as contas conectadas em cada rede.</p></div>';
+    return;
+  }
+  const org = anOrgAtiva;
+  const r = await anApiOrg('contas');
+  if (anOrgAtiva !== org) return; // a organização mudou enquanto carregava
+  if (!r.ok) {
+    el.innerHTML = `<div class="an-empty"><div class="eico">⚠️</div><h3>Não foi possível carregar</h3><p>${anEsc(r.erro)}</p></div>`;
+    return;
+  }
+  renderGeral(el, r.dados.accounts || []);
+}
+
+function renderGeral(el, contas) {
+  const ig = contas.filter((c) => c.platform === 'instagram');
+  const fb = contas.filter((c) => c.platform === 'facebook');
+  const ativas = (lista) => lista.filter((c) => c.status === 'active').length;
+  const real = anRealAtual();
+  const seguidores = real && real.seguidoresFim != null ? anNum(real.seguidoresFim) : '—';
+  const alcance = real && real.totais && real.totais.alcance != null ? anNum(real.totais.alcance) : '—';
+  const linha = (rotulo, valor) => `<div class="an-rede-linha"><span>${rotulo}</span><b>${valor}</b></div>`;
+  el.innerHTML = [
+    `<div class="an-rede-card" style="--c:#e1306c">
+       <div class="an-rede-topo"><span class="an-rede-ico" aria-hidden="true">📸</span>Instagram</div>
+       ${linha('Contas ativas', `${ativas(ig)} de ${ig.length}`)}
+       ${linha('Seguidores (fim do período)', seguidores)}
+       ${linha('Alcance do período', alcance)}
+       <button type="button" class="an-rede-btn" onclick="anPagina('instagram')">Ver Instagram →</button>
+     </div>`,
+    `<div class="an-rede-card" style="--c:#1877f2">
+       <div class="an-rede-topo"><span class="an-rede-ico" aria-hidden="true">📘</span>Facebook</div>
+       ${linha('Páginas ativas', `${ativas(fb)} de ${fb.length}`)}
+       ${linha('Métricas', 'ainda não coletadas')}
+       <button type="button" class="an-rede-btn" onclick="anPagina('facebook')">Ver Facebook →</button>
+     </div>`,
+    `<div class="an-rede-card em-breve" style="--c:#14142b">
+       <div class="an-rede-topo"><span class="an-rede-ico" aria-hidden="true">🧵</span>Threads</div>
+       ${linha('Situação', 'em breve')}
+       <button type="button" class="an-rede-btn" onclick="anPagina('threads')">Ver Threads →</button>
+     </div>`
+  ].join('');
+}
+
+// Facebook: lista as Páginas conectadas. Ainda não há métricas de Página; o painel diz isso.
+async function anCarregarFacebook() {
+  const el = document.getElementById('an-facebook-body');
+  if (!el) return;
+  if (!anSessao || !anOrgAtiva) {
+    el.innerHTML = '<div class="an-empty"><div class="eico">📘</div><h3>Entre para ver as Páginas</h3><p>As Páginas do Facebook conectadas aparecem aqui.</p></div>';
+    return;
+  }
+  const org = anOrgAtiva;
+  const r = await anApiOrg('contas');
+  if (anOrgAtiva !== org) return;
+  if (!r.ok) {
+    el.innerHTML = `<div class="an-empty"><div class="eico">⚠️</div><h3>Não foi possível carregar</h3><p>${anEsc(r.erro)}</p></div>`;
+    return;
+  }
+  renderFacebook(el, (r.dados.accounts || []).filter((c) => c.platform === 'facebook'));
+}
+
+function renderFacebook(el, paginas) {
+  const linhas = paginas.map((c) => `<tr>
+      <td><b>${anEsc(c.display_name || c.username || c.external_id)}</b></td>
+      <td>${c.status === 'active' ? 'Ativa' : anEsc(c.status || '')}</td>
+      <td>${c.last_synced_at ? anDataHora(c.last_synced_at) : 'nunca'}</td>
+    </tr>`).join('');
+  const tabela = paginas.length
+    ? `<div class="an-rel-wrap"><table class="an-cfg-tabela"><thead><tr><th>Página</th><th>Situação</th><th>Última sincronização</th></tr></thead><tbody>${linhas}</tbody></table></div>`
+    : '<div class="an-empty"><div class="eico">📘</div><h3>Nenhuma Página conectada</h3><p>Conecte uma Página do Facebook em Contas conectadas.</p></div>';
+  el.innerHTML = `<div class="an-card">
+      <h3>Páginas conectadas</h3>
+      <div class="hint">As Páginas do Facebook ainda não têm métricas no painel. Os números das análises são das contas do Instagram.</div>
+      <div style="margin-top:14px">${tabela}</div>
+      <div class="an-custom" style="margin-top:14px"><button type="button" onclick="anIrContas()">Conectar ou gerenciar contas</button></div>
+    </div>`;
+}
+
+// Monta o menu da página inicial (sem desenhar: o conteúdo aparece quando a aba Análise é aberta).
+anMontarMenu('geral');
 
 // ── ESTRATÉGIA ────────────────────────────────────────────────────────────
 const ESTRATEGIA = {
