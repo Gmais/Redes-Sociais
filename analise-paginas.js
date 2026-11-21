@@ -72,16 +72,30 @@ function pzHtmlDestaques(lista, titulo = 'Destaques do período', texto = 'Frase
     </div>`;
 }
 
-// Seletor da conta das análises e botão Configurações (contas, conexões e sincronização).
+// Seletor de conta: lista as contas do Instagram de todas as empresas, agrupadas por empresa.
+// Escolher uma conta de outra empresa abre essa empresa (o menu do topo fica oculto nessas abas).
 function pzBarraConta(emp, dados, conta) {
-  const ig = pzIgDaEmpresa(dados, emp.id);
-  const seletor = ig.length
+  const contas = (dados.accounts || []).filter((c) => c.platform === 'instagram' && c.empresa);
+  const grupos = PZ_EMPRESAS.map((e) => {
+    const deEmpresa = contas.filter((c) => c.empresa === e.id);
+    if (!deEmpresa.length) return '';
+    const opcoes = deEmpresa.map((c) =>
+      `<option value="${pzEsc(c.id)}" data-empresa="${e.id}"${c.id === conta && e.id === emp.id ? ' selected' : ''}>${pzEsc(pzNomeConta(c))}</option>`).join('');
+    return `<optgroup label="${pzEsc(e.nome)}">${opcoes}</optgroup>`;
+  }).join('');
+  const seletor = contas.length
     ? `<label class="pz-rotulo">Conta das análises
-         <select class="pz-campo pequeno" aria-label="Conta das análises" onchange="pzTrocarContaEmpresa('${emp.id}', this.value)">
-           ${ig.map((c) => `<option value="${pzEsc(c.id)}"${c.id === conta ? ' selected' : ''}>${pzEsc(pzNomeConta(c))}</option>`).join('')}
-         </select></label>`
+         <select class="pz-campo pequeno" aria-label="Conta das análises" onchange="pzEscolherConta(this)">${grupos}</select></label>`
     : '';
   return `<div class="pz-barra-conta">${seletor}<button type="button" class="pz-btn fantasma sm" onclick="pzSubir('contas')">⚙ Configurações</button></div>`;
+}
+
+function pzEscolherConta(select) {
+  const opcao = select.options[select.selectedIndex];
+  const empresa = opcao.dataset.empresa;
+  PZ.contaPor[empresa] = select.value;
+  if (empresa === PZ.empresa) { pzRender(); return; }
+  go(empresa, document.querySelector(`.tab[data-p="${empresa}"]`));
 }
 
 function pzTrocarContaEmpresa(id, conta) {
