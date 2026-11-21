@@ -297,10 +297,35 @@ async function pzSecPublicacoes(el, emp, dados, conta, tok) {
   const cabeca = pzBarraConta(emp, dados, conta) + pzBoxRespostas();
   if (!res.ok) { el.innerHTML = cabeca + barra + pzAviso('erro', 'Não foi possível carregar as publicações', res.erro); return; }
   const lista = res.dados.publicacoes || [];
+  const concR = await pzConcorrentes();
+  if (tok !== PZ.token) return;
   if (!lista.length) { el.innerHTML = cabeca + barra + pzVazio('🖼️', 'Nenhuma publicação com estes filtros', 'Troque o tipo ou sincronize as contas em Configurações.'); return; }
   const max = Math.max(...lista.map((p) => p.engajamento || 0), 1);
-  el.innerHTML = cabeca + barra + `<div class="pz-posts">${lista.slice(0, 60).map((p) => pzPostCard(p, max)).join('')}</div>
+  el.innerHTML = cabeca + barra + pzHtmlViral(lista, concR, emp) + `<div class="pz-posts">${lista.slice(0, 60).map((p) => pzPostCard(p, max)).join('')}</div>
     <div class="muted" style="font-size:12px;margin-top:14px">Até 60 publicações mais recentes. A ordenação vale para estas publicações.</div>`;
+}
+
+// ig-viral: o que se destacou contra a sua própria mediana, e a média de Reels contra os concorrentes.
+function pzHtmlViral(lista, concR, emp) {
+  const d = AnInsights.destaquesDaMediana(lista, 'visualizacoes');
+  const seus = lista.filter((p) => p.tipo === 'reel' && p.visualizacoes != null).map((p) => p.visualizacoes);
+  const mediaSeus = seus.length ? Math.round(seus.reduce((s, v) => s + v, 0) / seus.length) : null;
+  const comDado = concR && concR.ok
+    ? (concR.dados.concorrentes || []).filter((c) => c.empresa === emp.id && c.ultimo && c.ultimo.visualizacoesReelsMedia != null)
+    : [];
+  const mediaConc = comDado.length ? Math.round(comDado.reduce((s, c) => s + c.ultimo.visualizacoesReelsMedia, 0) / comDado.length) : null;
+  const comparacao = `<div class="pz-form" style="gap:22px;margin-bottom:10px">
+      <div><b>${mediaSeus == null ? 'n/d' : fmtI(mediaSeus)}</b> <span class="muted">média de visualizações dos seus Reels (${seus.length})</span></div>
+      <div><b>${mediaConc == null ? 'n/d' : fmtI(mediaConc)}</b> <span class="muted">média dos Reels dos concorrentes com dado (${comDado.length})</span></div>
+    </div>`;
+  let corpo;
+  if (!d.suficiente) corpo = pzAviso('info', 'Poucas publicações medidas', 'Preciso de pelo menos 4 publicações com visualizações para comparar com a sua mediana.');
+  else if (!d.itens.length) corpo = `<div class="muted" style="font-size:13px">Nenhuma publicação passou de 1,5 vez a sua mediana de ${fmtI(d.mediana)} visualizações.</div>`;
+  else corpo = `<ol style="margin:0;padding-left:18px;display:grid;gap:8px">${d.itens.map((p) => `<li style="font-size:13px">${pzEsc(p.tipoLabel)} · ${AnInsights.dataHora(p.publicadoEm)} · <b>${fmtI(p.valor)}</b> visualizações, ${p.vezesMediana}× a mediana${p.permalink ? ` · <a href="${pzEsc(p.permalink)}" target="_blank" rel="noopener">abrir</a>` : ''}</li>`).join('')}</ol>`;
+  return `<div class="pz-card s12" style="margin-bottom:16px">
+    <div class="pz-card-h"><div><h3>O que se destacou</h3><small>Publicações acima de 1,5 vez a sua mediana de visualizações. Nada é estimado.${d.suficiente ? ` Mediana: ${fmtI(d.mediana)}.` : ''}</small></div></div>
+    ${comparacao}${corpo}
+  </div>`;
 }
 
 function pzFiltroPub(campo, valor) {
@@ -378,6 +403,7 @@ function pzCardConcorrente(c, emp) {
       </div>
       ${linha ? `<svg class="pz-spark" viewBox="0 0 240 44" preserveAspectRatio="none" aria-hidden="true"><path d="${linha}" fill="none" stroke="${emp.cor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>` : ''}
       ${tipos ? `<div class="pz-chips">${tipos}</div>` : ''}
+      ${u.reelsComViews ? `<div class="muted" style="font-size:12px">Reels: média de ${fmtI(u.visualizacoesReelsMedia)} visualizações (${u.reelsComViews} Reels). Inclui pagas e orgânicas.</div>` : ''}
       <div class="muted" style="font-size:12px">Atualizado ${AnInsights.dataHora(u.capturadoEm)}</div>`
       : '<span class="pz-pill warn">Ainda sem consulta</span>'}
     ${pzPode('editor') ? `<button type="button" class="pz-btn fantasma sm" style="align-self:flex-start" onclick="pzConcRemover('${c.id}','${pzEsc(c.handle)}')">Remover</button>` : ''}

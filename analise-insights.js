@@ -123,9 +123,30 @@
     return `${p(br.getUTCDate())}/${p(br.getUTCMonth() + 1)} ${p(br.getUTCHours())}:${p(br.getUTCMinutes())}`;
   }
 
+  // ig-viral (contra a própria mediana): publicações cujo campo passa de `fator` vezes a mediana.
+  // Precisa de pelo menos 4 publicações com o campo medido, senão não há mediana que signifique algo.
+  function destaquesDaMediana(publicacoes, campo, fator, max) {
+    const f = fator == null ? 1.5 : fator;
+    const m = max == null ? 5 : max;
+    const valores = (publicacoes || [])
+      .map((p) => ({ p, v: Number(p[campo]) }))
+      .filter((x) => Number.isFinite(x.v) && x.v >= 0);
+    if (valores.length < 4) return { suficiente: false, mediana: null, itens: [] };
+    const ordenados = valores.map((x) => x.v).sort((a, b) => a - b);
+    const meio = Math.floor(ordenados.length / 2);
+    const mediana = ordenados.length % 2 ? ordenados[meio] : (ordenados[meio - 1] + ordenados[meio]) / 2;
+    if (!mediana) return { suficiente: true, mediana, itens: [] };
+    const itens = valores
+      .filter((x) => x.v >= f * mediana)
+      .sort((a, b) => b.v - a.v)
+      .slice(0, m)
+      .map((x) => ({ ...x.p, valor: x.v, vezesMediana: Math.round((x.v / mediana) * 10) / 10 }));
+    return { suficiente: true, mediana, itens };
+  }
+
   const api = {
     fmtInt, fmtDec, fmtSinal, variacao, tomDe, media, caminhoLinha,
-    resumoPorTipo, topPublicacoes, destaques, diaCurto, dataHora, ROTULO_TIPO
+    resumoPorTipo, topPublicacoes, destaques, destaquesDaMediana, diaCurto, dataHora, ROTULO_TIPO
   };
   raiz.AnInsights = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
