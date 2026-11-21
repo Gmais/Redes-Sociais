@@ -27403,6 +27403,34 @@ document.addEventListener('change', function(e) {
 // ── PARSE DO PROMPT DA POSTAGEM ──────────────────────────────────────────────
 // Detecta seções no prompt colado e distribui nos campos corretos.
 // Funciona nos modos 'np' (Nova Postagem) e 'edit' (Edição).
+// Escrita com IA para a Nova Postagem: o texto gerado entra no formato que o separador já entende.
+const NP_IA_FORMATO = { legenda: 'Post', carrossel: 'Carrossel', reel: 'Reel', story: 'Story', repurpose: 'Reel' };
+async function npIaGerar() {
+  const tipo = document.getElementById('np-ia-tipo').value;
+  const pedido = document.getElementById('np-ia-pedido').value.trim();
+  const btn = document.getElementById('np-ia-btn');
+  const aviso = document.getElementById('np-ia-avisos');
+  aviso.style.whiteSpace = 'pre-line';
+  if (!PZ.sessao) { aviso.textContent = 'Entre na aba Análise (login) para usar a IA.'; return; }
+  if (!pedido) { aviso.textContent = 'Descreva o que você quer postar.'; return; }
+  btn.disabled = true;
+  aviso.textContent = 'Gerando o texto...';
+  const r = await pzApi('escrita', { corpo: { tipo, pedido } });
+  btn.disabled = false;
+  if (!r.ok) { aviso.textContent = r.erro; return; }
+  const d = r.dados;
+  const notas = (d.notas || []).join('\n');
+  document.getElementById('np-texto').value =
+    `TEXTO DA POSTAGEM\n${d.texto}\n\nFORMATO E ESPECIFICAÇÃO\n${NP_IA_FORMATO[tipo]}\n\nBRIEFING CRIATIVO\n${notas}`;
+  parseAndFillPrompt('np');
+  const formato = document.getElementById('np-format');
+  if (formato) { formato.value = NP_IA_FORMATO[tipo]; if (typeof npFormatChanged === 'function') npFormatChanged(); }
+  const linhas = [];
+  if (d.avisos && d.avisos.length) linhas.push('Revise antes de salvar:', ...d.avisos.map((a) => `• ${a.trecho}: ${a.dica}`));
+  if (d.notas && d.notas.length) linhas.push('A IA pediu que você confira:', ...d.notas.map((n) => `• ${n}`));
+  aviso.textContent = linhas.length ? linhas.join('\n') : 'Texto pronto. Confira e salve.';
+}
+
 function parseAndFillPrompt(mode) {
   const textoId   = mode === 'np' ? 'np-texto'    : 'edit-texto';
   const sec01Id   = mode === 'np' ? null          : 'edit-sec01';
@@ -29339,6 +29367,19 @@ if (!localStorage.getItem('lastCleanup') || new Date(localStorage.getItem('lastC
         <div class="field-label" style="color:#00b4d8">📋 Prompt da postagem</div>
         <textarea class="field-input" id="np-texto" rows="5" placeholder="Cole o prompt completo aqui — o sistema vai separar automaticamente em: Texto da Postagem, Formato e Especificação, Intenção da Postagem e Briefing Criativo..." onpaste="setTimeout(()=>parseAndFillPrompt('np'),0)"></textarea>
         <div class="field-hint" style="color:#00b4d8">💡 Cole o prompt completo — ele será separado automaticamente nos painéis</div>
+      </div>
+      <div class="field-group np-full">
+        <div class="field-label" style="color:#a855f7">✨ Escrever com IA</div>
+        <select class="field-input" id="np-ia-tipo">
+          <option value="legenda">Legenda (post ou Reel)</option>
+          <option value="carrossel">Carrossel (slides)</option>
+          <option value="reel">Reel (roteiro)</option>
+          <option value="story">Story (sequência de quadros)</option>
+          <option value="repurpose">Semana de posts a partir de um texto longo</option>
+        </select>
+        <textarea class="field-input" id="np-ia-pedido" rows="3" placeholder="O que você quer postar? Ex.: divulgar a aula de força de sábado, com horário e preço"></textarea>
+        <button type="button" class="cal-open-btn" id="np-ia-btn" onclick="npIaGerar()">✨ Gerar com IA</button>
+        <div class="field-hint" id="np-ia-avisos"></div>
       </div>
 
       <div class="field-group np-full">
