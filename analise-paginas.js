@@ -106,6 +106,7 @@ function pzTrocarContaEmpresa(id, conta) {
 // ── Roteamento da empresa ────────────────────────────────────────────────────
 async function pzPaginaEmpresa(el, id, sub, tok) {
   const emp = PZ_EMPRESAS.find((e) => e.id === id);
+  el.innerHTML = '<div class="pz-skel" style="min-height:260px"></div>';
   const contas = await pzContas();
   if (tok !== PZ.token) return;
   if (!contas.ok) { el.innerHTML = pzAviso('erro', 'Não foi possível carregar as contas', contas.erro); return; }
