@@ -11,6 +11,9 @@
     "api/auto-content.js": {
       "maxDuration": 120,
       "includeFiles": "{CONTEXTO.md,instagram/*/voice.md}"
+    },
+    "api/analise.js": {
+      "maxDuration": 60
     }
   },
   "rewrites": [

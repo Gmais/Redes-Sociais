@@ -26282,6 +26282,7 @@ async function anContasRender() {
     </div>
     <div class="an-card" style="margin-top:14px">
       <h3>Contas da organização</h3>
+      ${podeConectar ? '<button class="an-chip" onclick="anSincronizar()">Sincronizar agora</button>' : ''}
       <div id="an-contas-lista"><div class="hint">Carregando…</div></div>
     </div>`;
   const r = await fetch(`/api/analise?acao=contas&org=${encodeURIComponent(anOrgAtiva)}`, {
@@ -26347,6 +26348,22 @@ async function anConectarMeta() {
   const j = await r.json().catch(() => ({}));
   if (!r.ok || !j.url) { anMsg(j.error || 'Não foi possível iniciar a conexão.', true); return; }
   window.location.href = j.url;
+}
+
+async function anSincronizar() {
+  anMsg('Sincronizando as contas…');
+  const r = await fetch('/api/analise?acao=sincronizar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + anSessao.access_token },
+    body: JSON.stringify({ orgId: anOrgAtiva })
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) { anMsg(j.error || 'Não foi possível sincronizar agora.', true); return; }
+  if (j.aviso) { anMsg(j.aviso); return; }
+  const resultados = j.resultados || [];
+  const linhas = resultados.map((x) => (x.ok ? `@${x.conta}: ${x.registros} registros` : `@${x.conta}: ${x.erro}`));
+  anMsg(linhas.join(' · ') || 'Nada para sincronizar.', resultados.some((x) => !x.ok));
+  anContasRender();
 }
 
 async function anConectarInstagram() {
