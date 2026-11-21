@@ -7,7 +7,7 @@
     "satori": "0.10.14"
   },
   "scripts": {
-    "test": "node test/caption-similarity.test.js && node test/guri-catalog.test.js && node test/analise-demo.test.js && node test/token-vault.test.js && node test/supabase-server.test.js && node test/zernio-dispatch.test.js && node test/analise-api.test.js && node test/instagram-login.test.js && node test/sync-instagram.test.js",
+    "test": "node test/caption-similarity.test.js && node test/guri-catalog.test.js && node test/analise-demo.test.js && node test/token-vault.test.js && node test/supabase-server.test.js && node test/zernio-dispatch.test.js && node test/analise-api.test.js && node test/instagram-login.test.js && node test/sync-instagram.test.js && node test/meta-callbacks.test.js",
     "sync:similarity": "node scripts/sync-caption-similarity.js",
     "test:db": "node test/db/migracao-analise.test.mjs"
   },
