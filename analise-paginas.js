@@ -368,15 +368,16 @@ async function pzPerfilAuditar(contaId) {
   if (!r.ok) { saida.innerHTML = pzAviso('erro', 'Não foi possível auditar o perfil', r.erro); return; }
   const d = r.dados;
   PZ.perfilAtual = d;
+  PZ.perfilConta = contaId;
   const itens = d.itens.map((i) => `<li style="margin:6px 0"><b>${pzEsc(i.titulo)}</b>: <span class="pz-pill ${i.status === 'ok' ? 'ok' : i.status === 'parcial' ? 'warn' : 'bad'}">${i.pontos}/${i.max}</span>${i.dica ? ` <span class="muted">${pzEsc(i.dica)}</span>` : ''}</li>`).join('');
   const naoVer = d.naoVerificados.map((i) => i.titulo).join(', ');
   saida.innerHTML = `<div style="display:flex;gap:14px;align-items:baseline;margin-top:12px"><b style="font-size:34px">${d.nota}</b><span class="muted">de 100, nos itens que a API mostra</span></div>
     <ul style="margin:10px 0 0;padding-left:18px">${itens}</ul>
     <div class="muted" style="font-size:12px;margin-top:10px">Não verificado pela API (fora da nota): ${pzEsc(naoVer)}.</div>
     <div class="pz-form" style="margin-top:14px;flex-direction:column;align-items:stretch">
-      <label class="pz-rotulo">Quem você é e o que oferece (para reescrever a bio)
-        <textarea class="pz-campo" id="pz-perfil-oferta" rows="3" maxlength="600" placeholder="Ex.: personal trainer de corrida para iniciantes, turmas às terças e quintas"></textarea></label>
-      <button type="button" class="pz-btn fantasma sm" style="align-self:flex-start" onclick="pzPerfilBio()">Sugerir bio</button>
+      <label class="pz-rotulo">Quer acrescentar algo? (opcional)
+        <textarea class="pz-campo" id="pz-perfil-oferta" rows="3" maxlength="600" placeholder="Ex.: aulas experimentais grátis esta semana"></textarea></label>
+      <button type="button" class="pz-btn fantasma sm" style="align-self:flex-start" onclick="pzPerfilBio()">Sugerir bio com IA</button>
     </div>
     <div id="pz-perfil-bio"></div>`;
 }
@@ -384,18 +385,40 @@ async function pzPerfilAuditar(contaId) {
 async function pzPerfilBio() {
   const d = PZ.perfilAtual;
   const alvo = document.getElementById('pz-perfil-bio');
-  const oferta = (document.getElementById('pz-perfil-oferta').value || '').trim();
-  if (!d) return;
-  if (!oferta) { alvo.innerHTML = pzAviso('info', 'Descreva a oferta', 'Preciso de quem você é e do que oferece para escrever a bio sem inventar nada.'); return; }
+  if (!d || !alvo) return;
+  const acrescimo = (document.getElementById('pz-perfil-oferta').value || '').trim();
   alvo.innerHTML = '<div class="pz-skel" style="min-height:60px"></div>';
-  const pedido = `Bio atual: ${d.bio || '(vazia)'}\nNome: ${d.nome || '(sem nome)'}\nQuem é e o que oferece: ${oferta}`;
+  alvo.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  // Legendas reais das publicações sincronizadas: a IA descreve a página com o que ela já publica
+  const pubs = await pzPublicacoes(PZ.perfilConta, '', 'data');
+  const legendas = pubs.ok
+    ? (pubs.dados.publicacoes || []).slice(0, 8).map((x) => String(x.legenda || '').trim().slice(0, 120)).filter((x) => x.length > 0)
+    : [];
+  const emp = pzEmpresaAtual();
+  const pedido = [
+    'Empresa: ' + emp.nome,
+    'Nome atual do perfil: ' + (d.nome || '(sem nome)'),
+    'Usuário: @' + (d.usuario || ''),
+    'Bio atual: ' + (d.bio || '(vazia)'),
+    'Link na bio: ' + (d.link ? 'sim' : 'não'),
+    legendas.length ? 'Legendas recentes (dados reais):\n- ' + legendas.join('\n- ') : 'Legendas recentes: nenhuma sincronizada.',
+    acrescimo ? 'O que a pessoa acrescentou: ' + acrescimo : ''
+  ].filter(Boolean).join('\n');
   const r = await pzApi('escrita', { corpo: { tipo: 'bio', pedido } });
   if (!r.ok) { alvo.innerHTML = pzAviso('erro', 'Não foi possível sugerir a bio', r.erro); return; }
-  alvo.innerHTML = `<div class="pz-card" style="margin-top:12px"><b>Sugestão</b>
-      <div style="white-space:pre-line;margin-top:6px">${pzEsc(r.dados.texto)}</div>
-      <div class="muted" style="font-size:12px;margin-top:6px">${[...r.dados.texto].length} caracteres. Copie e edite no Instagram.</div>
-      ${(r.dados.notas || []).map((n) => pzAviso('info', 'Confira', n)).join('')}
-    </div>`;
+  const texto = r.dados.texto || '';
+  alvo.innerHTML = '<div class="pz-card" style="margin-top:12px"><b>Sugestão de bio</b>'
+    + '<div id="pz-bio-texto" style="white-space:pre-line;margin-top:6px">' + pzEsc(texto) + '</div>'
+    + '<div class="muted" style="font-size:12px;margin-top:6px">' + [...texto].length + ' caracteres. Confira e copie para o Instagram.</div>'
+    + '<button type="button" class="pz-btn fantasma sm" style="margin-top:8px" onclick="pzCopiarBio()">Copiar</button>'
+    + (r.dados.notas || []).map((n) => pzAviso('info', 'Confira', n)).join('')
+    + '</div>';
+  alvo.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function pzCopiarBio() {
+  const el = document.getElementById('pz-bio-texto');
+  if (el && navigator.clipboard) navigator.clipboard.writeText(el.textContent);
 }
 
 // Mensagens diretas (Fase 2): só quem escreveu nas últimas 24 horas. Enviar depende da liberação da Meta.
