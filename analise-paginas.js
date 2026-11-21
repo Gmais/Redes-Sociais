@@ -72,16 +72,16 @@ function pzHtmlDestaques(lista, titulo = 'Destaques do período', texto = 'Frase
     </div>`;
 }
 
-// Seletor de conta das análises e botão Configurações (contas, conexões e sincronização).
+// Conta das análises e botão Configurações. Com mais de uma conta, a conta vira seletor; com uma só, aparece o nome.
 function pzBarraConta(emp, dados, conta) {
   const ig = pzIgDaEmpresa(dados, emp.id);
-  const seletor = ig.length
-    ? `<label class="pz-rotulo">Conta
+  const escolha = ig.length > 1
+    ? `<label class="pz-rotulo">Conta das análises
          <select class="pz-campo pequeno" aria-label="Conta das análises" onchange="pzTrocarContaEmpresa('${emp.id}', this.value)">
            ${ig.map((c) => `<option value="${pzEsc(c.id)}"${c.id === conta ? ' selected' : ''}>${pzEsc(pzNomeConta(c))}</option>`).join('')}
          </select></label>`
-    : '';
-  return `<div class="pz-form" style="margin-bottom:16px;align-items:center;justify-content:space-between">${seletor}<button type="button" class="pz-btn fantasma sm" onclick="pzSubir('contas')">⚙ Configurações</button></div>`;
+    : (ig.length ? `<span class="pz-pill roxo">${pzEsc(pzNomeConta(ig[0]))}</span>` : '');
+  return `<div class="pz-barra-conta">${escolha}<button type="button" class="pz-btn fantasma sm" onclick="pzSubir('contas')">⚙ Configurações</button></div>`;
 }
 
 function pzTrocarContaEmpresa(id, conta) {

@@ -161,6 +161,8 @@ body[data-tab="academia"] main, body[data-tab="sorveteria"] main, body[data-tab=
 .pz-campo.pequeno { padding: 7px 10px; border-radius: 12px; }
 .pz-campo[type="date"] { min-width: 150px; }
 .pz-rotulo { font-size: 12px; font-weight: 600; color: var(--ink2); display: flex; flex-direction: column; gap: 6px; }
+.pz-barra-conta { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.pz-barra-conta .pz-rotulo select { min-width: 240px; }
 .pz-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
 .pz-form .pz-campo { flex: 1 1 200px; }
 .pz-chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
