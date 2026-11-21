@@ -26190,6 +26190,7 @@ function anMsg(texto, erro) {
 }
 
 function anAtualizarBanner(contas) {
+  if (anRealAtual()) { anBannerReal(); return; }
   const b = document.getElementById('an-demo');
   if (!b) return;
   b.innerHTML = contas > 0
@@ -26483,6 +26484,7 @@ function anRender(){
     Chart.defaults.font.family = "'Inter', sans-serif";
   }
   const p = anResolve();
+  anCarregarReal(p); // busca os dados sincronizados (não bloqueia; redesenha quando chegar)
   const r = AnaliseDemo.comparar(p.ini, p.fim);
   anRenderVisao(r);
   anRenderPublico(r);
@@ -26490,6 +26492,8 @@ function anRender(){
 }
 
 function anRenderVisao(r){
+  const real = anRealAtual();
+  if (real) { anRenderVisaoReal(real); return; }
   const T = r.totais, A = r.anteriorTotais;
   const periodo = `${anDM(r.ini)} a ${anDM(r.fim)} · ${r.dias} dias`;
   const kpi = (lbl, k, inverte) => {
@@ -26545,6 +26549,8 @@ function anRenderVisao(r){
 }
 
 function anRenderPublico(r){
+  const real = anRealAtual();
+  if (real) r = { ...r, serie: real.serie, dias: real.dias, seguidoresFim: real.seguidoresFim, ini: real.ini, fim: real.fim };
   const P = AnaliseDemo.publico();
   const labels = r.serie.map((d) => anDM(d.data));
   const fimSeg = r.seguidoresFim != null ? ` Fim do período: ${anNum(r.seguidoresFim)} seguidores.` : '';
@@ -26555,12 +26561,12 @@ function anRenderPublico(r){
       <div class="an-chart"><canvas id="an-ch-cresc" role="img" aria-label="Crescimento de seguidores no período"></canvas></div>
     </div>
     <div class="an-grid2">
-      <div class="an-card"><h3>Faixa etária</h3><div class="hint">% dos seguidores</div><div class="an-chart"><canvas id="an-ch-idade" role="img" aria-label="Seguidores por faixa etária"></canvas></div></div>
-      <div class="an-card"><h3>Gênero</h3><div class="hint">% dos seguidores</div><div class="an-chart"><canvas id="an-ch-genero" role="img" aria-label="Seguidores por gênero"></canvas></div></div>
+      <div class="an-card"><h3>Faixa etária</h3><div class="hint">% dos seguidores · demonstração</div><div class="an-chart"><canvas id="an-ch-idade" role="img" aria-label="Seguidores por faixa etária"></canvas></div></div>
+      <div class="an-card"><h3>Gênero</h3><div class="hint">% dos seguidores · demonstração</div><div class="an-chart"><canvas id="an-ch-genero" role="img" aria-label="Seguidores por gênero"></canvas></div></div>
     </div>
     <div class="an-card" style="margin-top:14px">
       <h3>Localização</h3>
-      <div class="hint">Principais cidades, % dos seguidores</div>
+      <div class="hint">Principais cidades, % dos seguidores · demonstração</div>
       <div class="an-chart"><canvas id="an-ch-cidades" role="img" aria-label="Seguidores por cidade"></canvas></div>
     </div>`;
 
@@ -26589,6 +26595,103 @@ function anRenderPublico(r){
     data: { labels: P.cidades.map((x) => x.rotulo), datasets: [{ label: '%', data: P.cidades.map((x) => x.pct), backgroundColor: '#4ade80', borderRadius: 6 }] },
     options: anOpcoes({ legenda: false, pct: true, horizontal: true })
   });
+}
+
+// ── Visão geral com dados sincronizados ───────────────────────────────────────
+// Com conta conectada, a Visão geral lê o banco. Impressões, visitas e ganhos/perdidos não
+// são coletados pela sincronização: aparecem como "—", sem número inventado.
+function anRealAtual() {
+  const p = anResolve();
+  const chave = `${anOrgAtiva}|${p.ini}|${p.fim}`;
+  const r = window.anReal;
+  return r && r.chave === chave && r.dados ? r.dados : null;
+}
+
+async function anCarregarReal(p) {
+  if (!anSessao || !anOrgAtiva) return;
+  const chave = `${anOrgAtiva}|${p.ini}|${p.fim}`;
+  if (window.anRealChave === chave) return; // já pedido para este período
+  window.anRealChave = chave;
+  try {
+    const r = await fetch(`/api/analise?acao=metricas&org=${encodeURIComponent(anOrgAtiva)}&ini=${p.ini}&fim=${p.fim}`, {
+      headers: { Authorization: 'Bearer ' + anSessao.access_token }
+    });
+    const j = await r.json().catch(() => ({}));
+    window.anReal = { chave, dados: r.ok && j.contas > 0 ? j : null };
+  } catch (e) {
+    window.anReal = { chave, dados: null };
+  }
+  anRender();
+}
+
+const AN_REAIS = [
+  { k: 'alcance', label: 'Alcance', cor: '#7c5cff' },
+  { k: 'engajamento', label: 'Engajamento', cor: '#ff6b35' },
+  { k: 'cliques', label: 'Cliques no link', cor: '#f5c200' }
+];
+function anMetricaRealAtual() { return window.anState.metricaReal || 'alcance'; }
+function anMetricaReal(k) { window.anState.metricaReal = k; anRender(); }
+
+function anBannerReal() {
+  const b = document.getElementById('an-demo');
+  if (b) b.innerHTML = '<b>Dados reais</b> A Visão geral mostra os números sincronizados das contas conectadas. Público e melhores horários ainda são de demonstração.';
+}
+
+function anRenderVisaoReal(d) {
+  const body = document.getElementById('an-visao-body');
+  if (!body) return;
+  const T = d.totais, A = d.anteriores;
+  const kpi = (lbl, valor, sub, cls) => `<div class="an-kpi"><div class="lbl">${lbl}</div><div class="val">${valor}</div><div class="sub ${cls || ''}">${sub}</div></div>`;
+  const delta = (k) => {
+    const v = AnaliseDemo.variacao(T[k] ?? 0, A[k] ?? 0);
+    if (v === null) return { sub: 'sem período anterior para comparar', cls: '' };
+    return { sub: (v >= 0 ? '▲ ' : '▼ ') + Math.abs(v).toFixed(1).replace('.', ',') + '% vs período anterior', cls: v >= 0 ? 'up' : 'down' };
+  };
+  const na = 'não disponível pela API';
+  const vazio = d.serie.length === 0;
+  const met = AN_REAIS.find((m) => m.k === anMetricaRealAtual()) || AN_REAIS[0];
+  body.innerHTML = vazio
+    ? '<div class="an-empty"><div class="eico">⏳</div><h3>Sem dados sincronizados neste período</h3><p>Clique em <b>Sincronizar agora</b> em Contas conectadas, ou escolha outro período.</p></div>'
+    : `
+    <div class="an-kpis">
+      ${kpi('Alcance total', anNum(T.alcance ?? 0), delta('alcance').sub, delta('alcance').cls)}
+      ${kpi('Engajamento', anNum(T.engajamento ?? 0), delta('engajamento').sub, delta('engajamento').cls)}
+      ${kpi('Cliques no link', anNum(T.cliques ?? 0), delta('cliques').sub, delta('cliques').cls)}
+      ${kpi('Seguidores (fim do período)', d.seguidoresFim != null ? anNum(d.seguidoresFim) : '—', 'último valor sincronizado', '')}
+      ${kpi('Impressões', '—', na, '')}
+      ${kpi('Visitas ao perfil', '—', na, '')}
+      ${kpi('Seguidores ganhos', '—', na, '')}
+      ${kpi('Seguidores perdidos', '—', na, '')}
+    </div>
+    <div class="an-card">
+      <h3>Evolução</h3>
+      <div class="hint">Período: ${anDM(d.ini)} a ${anDM(d.fim)} · ${d.dias} dias. Dados das contas conectadas.</div>
+      <div class="an-chips">${AN_REAIS.map((m) => `<button class="an-chip${m.k === met.k ? ' on' : ''}" style="--c:${m.cor}" onclick="anMetricaReal('${m.k}')">${m.label}</button>`).join('')}</div>
+      <div class="an-chart"><canvas id="an-ch-evolucao" role="img" aria-label="Evolução das métricas sincronizadas"></canvas></div>
+    </div>
+    <div class="an-card" style="margin-top:14px">
+      <h3>Seguidores</h3>
+      <div class="hint">Total das contas, dia a dia.</div>
+      <div class="an-chart"><canvas id="an-ch-seguidores" role="img" aria-label="Seguidores por dia"></canvas></div>
+    </div>`;
+  if (!vazio) {
+    const labels = d.serie.map((x) => anDM(x.data));
+    anChart('an-ch-evolucao', {
+      type: 'line',
+      data: { labels, datasets: [{ label: met.label, data: d.serie.map((x) => x[met.k]),
+        borderColor: met.cor, backgroundColor: met.cor + '26', fill: true, tension: 0.35,
+        pointRadius: d.dias > 45 ? 0 : 3, pointHoverRadius: 5, borderWidth: 2 }] },
+      options: anOpcoes({ legenda: false })
+    });
+    anChart('an-ch-seguidores', {
+      type: 'line',
+      data: { labels, datasets: [{ label: 'Seguidores', data: d.serie.map((x) => x.seguidores),
+        borderColor: '#4ade80', backgroundColor: '#4ade8026', fill: true, tension: 0.3,
+        pointRadius: d.dias > 45 ? 0 : 3, borderWidth: 2 }] },
+      options: anOpcoes({ legenda: false, zero: false })
+    });
+  }
+  anBannerReal();
 }
 
 function anRenderHorarios(){
