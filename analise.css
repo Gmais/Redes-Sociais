@@ -20,23 +20,6 @@ body[data-tab="gympulse"] .pz-divisor[data-emp="gympulse"] { display: flex; }
 .pz-barra { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
 .pz-barra-dir { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
-/* Dentro das abas de empresa, a análise segue o tema escuro do conteúdo: integrada, sem folha clara */
-body:is([data-tab="academia"], [data-tab="sorveteria"], [data-tab="gympulse"]) .pz {
-  --ink: #F5F5FA; --ink2: #B3B3CC; --ink3: #7C7C98;
-  --card: #101018; --soft: #18181F; --line: #26262F;
-  --sombra: 0 14px 34px -18px rgba(0,0,0,.65);
-  color-scheme: dark;
-}
-body:is([data-tab="academia"], [data-tab="sorveteria"], [data-tab="gympulse"]) :is(.pz-seg, .pz-sub, .pz-campo, .pz-post, .pz-chipbtn, .pz-btn.fantasma, .pz-vazio, .pz-login-card, .pz-vazio-ico) {
-  background: var(--card); color: var(--ink); border-color: var(--line);
-}
-body:is([data-tab="academia"], [data-tab="sorveteria"], [data-tab="gympulse"]) .pz-chipbtn.on { background: rgba(255,255,255,.14); color: var(--ink); border-color: transparent; }
-body:is([data-tab="academia"], [data-tab="sorveteria"], [data-tab="gympulse"]) .pz-btn.escuro { background: #FFFFFF; color: #0F1222; }
-body:is([data-tab="academia"], [data-tab="sorveteria"], [data-tab="gympulse"]) .pz-rank-trilho,
-body:is([data-tab="academia"], [data-tab="sorveteria"], [data-tab="gympulse"]) .pz-delta { background: #26262F; }
-body:is([data-tab="academia"], [data-tab="sorveteria"], [data-tab="gympulse"]) .pz-post-capa { background: linear-gradient(135deg, #18181F, #101018); }
-body:is([data-tab="academia"], [data-tab="sorveteria"], [data-tab="gympulse"]) .pz-skel { background: linear-gradient(90deg, #18181F 0%, #22222C 50%, #18181F 100%); background-size: 200% 100%; }
-
 /* ── Casca da análise (dentro da aba da empresa) ───────────────────────────── */
 .pz {
   --ink: #0F1222; --ink2: #4A4F6A; --ink3: #8A90AB;
@@ -49,7 +32,9 @@ body:is([data-tab="academia"], [data-tab="sorveteria"], [data-tab="gympulse"]) .
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 14px; line-height: 1.45;
   font-variant-numeric: tabular-nums;
-  max-width: 1320px; margin: 0 auto; padding: 0 0 28px;
+  max-width: 1320px; margin: 18px auto 28px; padding: 22px 26px 30px;
+  background: #F5F6FB; border-radius: 28px;
+  box-shadow: 0 34px 70px -34px rgba(0,0,0,.7);
   color-scheme: light;
 }
 .pz *, .pz *::before, .pz *::after { box-sizing: border-box; }
