@@ -27437,7 +27437,7 @@ async function progAgendarPendentes() {
       if (pub && pub.status) continue;
       const ms = Programacao.dataHoraMs(card.date, card.time);
       if (!(ms > agora + 60000)) continue;
-      if (!hasValidImage(card.id) || !String(card.texto || '').trim()) continue;
+      if (!hasValidImage(card.id)) continue;
       await publishToInstagram(card.id, new Date(ms).toISOString());
       const depois = getPublishData(card.id);
       if (depois && depois.status === 'sent') agendados++; else falhas++;

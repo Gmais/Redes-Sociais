@@ -213,6 +213,22 @@ assert.strictEqual(S.hojeBR(Date.parse('2026-11-23T02:30:00Z')), '2026-11-22', '
   assert.strictEqual(banco.zernio[0].corpo.scheduledFor, '2026-11-29T12:00:00.000Z');
 }
 
+// 14. Card só com imagem (sem texto) é agendado, com legenda vazia
+{
+  const ID_SEM_TEXTO = 'so_prog_promo_20261123';
+  const banco = criarBanco({
+    programacao: { regras: [], feriadosExtras: [] },
+    edits: { [ID_SEM_TEXTO]: { date: '2026-11-23', time: '09h00', format: 'Story', title: 'Só imagem', texto: '', secoes: [] } },
+    images: { [ID_SEM_TEXTO]: { status: 'ok', zernioUrl: 'https://img.exemplo.com/s.jpg', zernioStatus: 'ok' } }
+  });
+  const r = await S.gerarEAgendar({ env: ENV, f: banco.f, agora: DOMINGO, pausa: 0 });
+  assert.strictEqual(r.agendados, 1, 'card sem texto é agendado');
+  assert.strictEqual(r.sem_dados, 0);
+  assert.strictEqual(banco.zernio.length, 1);
+  assert.strictEqual(banco.zernio[0].corpo.content, '');
+  assert.deepStrictEqual(banco.zernio[0].corpo.platforms[0].platformSpecificData, { contentType: 'story' });
+}
+
 console.log('programacao-servidor: ok');
 })().catch((e) => {
   console.error(e);
