@@ -1,4 +1,4 @@
-// Programação de postagens que se repetem: feriados, datas e escolha de opção. Sem rede e sem navegador.
+// Programação de postagens que se repetem: feriados, datas e ordem das opções. Sem rede e sem navegador.
 const assert = require('assert');
 const P = require('../programacao.js');
 
@@ -23,67 +23,80 @@ assert.strictEqual(P.diaSemana('2026-11-22'), 0, '22 de novembro de 2026 é domi
 assert.deepStrictEqual(P.proximasDatas('2026-11-22', 3), ['2026-11-22', '2026-11-23', '2026-11-24']);
 assert.strictEqual(P.deslocar('2026-12-31', 1), '2027-01-01', 'virada de ano');
 
-// ── Escolha de opção: não repete em sequência e não sai duas vezes em curto prazo ──
+// ── Ordem das opções: 1 = sempre a mesma; 2 = alterna; 3 = ciclo 1-2-3 ─────────
 {
-  const variantes = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
-  let semente = 42;
-  const rnd = () => { semente = (semente * 1103515245 + 12345) % 2147483648; return semente / 2147483648; };
-  let recentes = [];
-  let anterior = null;
-  for (let i = 0; i < 30; i++) {
-    const r = P.escolherVariante(variantes, recentes, rnd);
-    assert.notStrictEqual(r.variante.id, anterior, 'nunca repete a opção da semana anterior');
-    assert.ok(!recentes.slice(-1).includes(r.variante.id) || recentes.length === 0, 'não repete a última');
-    anterior = r.variante.id;
-    recentes = r.recentes;
-  }
-  // Com uma opção só, sempre a mesma (não quebra)
-  const unica = P.escolherVariante([{ id: 'x' }], [], () => 0.9);
-  assert.strictEqual(unica.variante.id, 'x');
-  assert.deepStrictEqual(unica.recentes, []);
-  // Sem opções, nada
-  assert.strictEqual(P.escolherVariante([], [], Math.random).variante, null);
+  const um = [{ id: 'a' }];
+  const dois = [{ id: 'a' }, { id: 'b' }];
+  const tres = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+  assert.deepStrictEqual([0, 1, 2, 3].map((i) => P.escolherPelaOrdem(um, i).id), ['a', 'a', 'a', 'a'], 'uma opção: sempre a mesma');
+  assert.deepStrictEqual([0, 1, 2, 3].map((i) => P.escolherPelaOrdem(dois, i).id), ['a', 'b', 'a', 'b'], 'duas opções: alterna');
+  assert.deepStrictEqual([0, 1, 2, 3, 4, 5, 6].map((i) => P.escolherPelaOrdem(tres, i).id), ['a', 'b', 'c', 'a', 'b', 'c', 'a'], 'três opções: ciclo');
+  assert.strictEqual(P.escolherPelaOrdem([], 0), null, 'sem opções, nada');
 }
 
 // ── Planejamento de uma regra de segunda-feira ───────────────────────────────
-const regra = {
-  id: 'promo', nome: 'Promoção', empresa: 'academia', dias: [1], hora: '09h00', formato: 'Post',
-  pularFeriados: true, ativa: true, gerados: {}, recentes: [],
-  variantes: [{ id: 'v1', titulo: 'A', texto: 'Texto A' }, { id: 'v2', titulo: 'B', texto: 'Texto B' }, { id: 'v3', titulo: 'C', texto: 'Texto C' }]
+const base = {
+  id: 'promo', nome: 'Promoção', empresa: 'academia', dias: [1], hora: '09:00', formato: 'Post',
+  pularFeriados: true, ativa: true, gerados: {}, proximo: 0
 };
+const tresOpcoes = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+
 {
   // Janela de 22/11 a 12/12: segundas 23/11, 30/11 e 07/12
-  const { regra: r1, novos } = P.planejarRegra(regra, '2026-11-22', 21, [], () => 0.5);
+  const { regra: r1, novos } = P.planejarRegra(Object.assign({}, base, { variantes: tresOpcoes }), '2026-11-22', 21, []);
   assert.deepStrictEqual(novos.map((n) => n.data), ['2026-11-23', '2026-11-30', '2026-12-07'], 'uma postagem por segunda');
+  assert.deepStrictEqual(novos.map((n) => n.variante.id), ['a', 'b', 'c'], 'semana a semana, na ordem das opções');
   assert.ok(novos.every((n) => n.cardId.startsWith('ac_prog_promo_')), 'ID do card traz o prefixo da empresa');
   assert.strictEqual(novos[0].cardId, 'ac_prog_promo_20261123');
-  assert.deepStrictEqual(Object.keys(r1.gerados).sort(), ['2026-11-23', '2026-11-30', '2026-12-07']);
+  assert.strictEqual(r1.proximo, 3, 'o contador avança a cada postagem criada');
 
   // Gerar de novo não duplica
-  const { novos: outra } = P.planejarRegra(r1, '2026-11-22', 21, [], () => 0.5);
+  const { novos: outra } = P.planejarRegra(r1, '2026-11-22', 21, []);
   assert.strictEqual(outra.length, 0, 'datas já geradas não se repetem');
 }
 {
-  // Feriado marcado pela pessoa: 30/11 sai da programação
-  const { novos } = P.planejarRegra(regra, '2026-11-22', 21, ['2026-11-30'], () => 0.5);
-  assert.deepStrictEqual(novos.map((n) => n.data), ['2026-11-23', '2026-12-07'], 'pula o feriado marcado');
+  // Uma opção: a mesma em todas as semanas
+  const { novos } = P.planejarRegra(Object.assign({}, base, { variantes: [{ id: 'unica' }] }), '2026-11-22', 21, []);
+  assert.deepStrictEqual(novos.map((n) => n.variante.id), ['unica', 'unica', 'unica']);
+}
+{
+  // Duas opções em quatro semanas: alterna
+  const { novos } = P.planejarRegra(Object.assign({}, base, { variantes: [{ id: 'a' }, { id: 'b' }] }), '2026-11-22', 28, []);
+  assert.deepStrictEqual(novos.map((n) => n.variante.id), ['a', 'b', 'a', 'b']);
+}
+{
+  // Três opções em seis semanas: ciclo 1-2-3
+  const { novos } = P.planejarRegra(Object.assign({}, base, { variantes: tresOpcoes }), '2026-11-22', 42, []);
+  assert.deepStrictEqual(novos.map((n) => n.variante.id), ['a', 'b', 'c', 'a', 'b', 'c']);
+}
+{
+  // A ordem continua de uma geração para a outra (uma semana por vez)
+  let regra = Object.assign({}, base, { variantes: tresOpcoes });
+  const ids = [];
+  const datas = [['2026-11-22', 'semana 1'], ['2026-11-24', 'semana 2'], ['2026-11-30', 'semana 3'], ['2026-12-05', 'semana 4'], ['2026-12-12', 'semana 5']];
+  for (const [hoje] of datas) {
+    const { regra: nova, novos } = P.planejarRegra(regra, hoje, 7, []);
+    regra = nova;
+    novos.forEach((n) => ids.push(n.variante.id));
+  }
+  assert.deepStrictEqual(ids, ['a', 'b', 'c', 'a'], 'gerações separadas mantêm a sequência');
+}
+{
+  // Feriado pulado: a semana fica sem post, e a sequência segue na semana seguinte
+  const { novos } = P.planejarRegra(Object.assign({}, base, { variantes: tresOpcoes }), '2026-11-22', 42, ['2026-11-30']);
+  assert.deepStrictEqual(novos.map((n) => n.data), ['2026-11-23', '2026-12-07', '2026-12-14', '2026-12-21', '2026-12-28'], 'pula o dia marcado');
+  assert.deepStrictEqual(novos.map((n) => n.variante.id), ['a', 'b', 'c', 'a', 'b'], 'a sequência não é quebrada pelo feriado');
 }
 {
   // Sem a opção de pular feriados, o dia entra
-  const semPular = Object.assign({}, regra, { pularFeriados: false });
-  const { novos } = P.planejarRegra(semPular, '2026-11-22', 21, ['2026-11-30'], () => 0.5);
+  const semPular = Object.assign({}, base, { variantes: tresOpcoes, pularFeriados: false });
+  const { novos } = P.planejarRegra(semPular, '2026-11-22', 21, ['2026-11-30']);
   assert.strictEqual(novos.length, 3, 'com "pular feriados" desligado, o dia entra');
 }
 {
   // Regra desligada ou sem empresa válida não gera nada
-  assert.strictEqual(P.planejarRegra(Object.assign({}, regra, { ativa: false }), '2026-11-22', 21, [], () => 0.5).novos.length, 0);
-  assert.strictEqual(P.planejarRegra(Object.assign({}, regra, { empresa: 'outra' }), '2026-11-22', 21, [], () => 0.5).novos.length, 0);
-}
-{
-  // A rotação passa pelas opções ao longo das semanas
-  const { novos } = P.planejarRegra(Object.assign({}, regra, { gerados: {} }), '2026-11-22', 21, [], () => 0.0);
-  const ids = novos.map((n) => n.variante.id);
-  assert.strictEqual(new Set(ids).size, ids.length === 3 ? 3 : ids.length, 'semanas seguidas usam opções diferentes');
+  assert.strictEqual(P.planejarRegra(Object.assign({}, base, { variantes: tresOpcoes, ativa: false }), '2026-11-22', 21, []).novos.length, 0);
+  assert.strictEqual(P.planejarRegra(Object.assign({}, base, { variantes: tresOpcoes, empresa: 'outra' }), '2026-11-22', 21, []).novos.length, 0);
 }
 
 console.log('programacao: ok');

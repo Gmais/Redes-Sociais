@@ -1,6 +1,10 @@
 // Programação de postagens que se repetem (ex.: "Promoção" toda segunda).
-// Lógica pura: feriados, datas e escolha da opção. Sem rede e sem DOM.
+// Lógica pura: feriados, datas e a ordem das opções. Sem rede e sem DOM.
 // Usado pelo painel (index.html) e pelos testes (test/programacao.test.js).
+//
+// Regra das opções: a 1ª postagem usa a 1ª opção, a 2ª usa a 2ª, e assim por diante,
+// voltando para a 1ª depois da última. Com 1 opção, sempre a mesma; com 2, alterna;
+// com 3, segue o ciclo 1-2-3-1-2-3, uma por semana.
 (function (raiz) {
   'use strict';
 
@@ -76,26 +80,20 @@
     return out;
   }
 
-  // Escolhe uma opção que não saiu nas últimas (opções - 1) vezes. Com uma opção só, repete.
-  function escolherVariante(variantes, recentes, rnd) {
-    const sorteio = rnd || Math.random;
+  // Opção da vez: a ordem se repete. Sem opções, nada.
+  function escolherPelaOrdem(variantes, indice) {
     const lista = Array.isArray(variantes) ? variantes : [];
-    if (!lista.length) return { variante: null, recentes: [] };
-    const usadas = Array.isArray(recentes) ? recentes : [];
-    let candidatas = lista.filter((v) => !usadas.includes(v.id));
-    if (!candidatas.length) candidatas = lista;
-    const escolhida = candidatas[Math.floor(sorteio() * candidatas.length)];
-    const manter = Math.max(lista.length - 1, 0);
-    const novas = manter ? usadas.concat([escolhida.id]).slice(-manter) : [];
-    return { variante: escolhida, recentes: novas };
+    if (!lista.length) return null;
+    return lista[indice % lista.length];
   }
 
   // Quais posts criar para uma regra nas próximas datas. Não repete data já gerada.
-  // Devolve a regra atualizada (gerados e recentes) e a lista de posts novos.
-  function planejarRegra(regra, hojeIso, dias, extras, rnd) {
+  // O contador "proximo" guarda a posição da próxima opção, e continua de uma geração para a outra.
+  // Devolve a regra atualizada (gerados e proximo) e a lista de posts novos.
+  function planejarRegra(regra, hojeIso, dias, extras) {
     const r = Object.assign({}, regra, {
       gerados: Object.assign({}, regra.gerados || {}),
-      recentes: (regra.recentes || []).slice()
+      proximo: Number(regra.proximo) || 0
     });
     const novos = [];
     if (!r.ativa || !Array.isArray(r.variantes) || !r.variantes.length) return { regra: r, novos };
@@ -105,18 +103,18 @@
       if (!(r.dias || []).includes(diaSemana(data))) continue;
       if (r.gerados[data]) continue;
       if (r.pularFeriados && ehFeriado(data, extras)) continue;
-      const esc = escolherVariante(r.variantes, r.recentes, rnd);
-      r.recentes = esc.recentes;
+      const variante = escolherPelaOrdem(r.variantes, r.proximo);
+      r.proximo += 1;
       const cardId = `${prefixo}_prog_${r.id}_${data.replace(/-/g, '')}`;
       r.gerados[data] = cardId;
-      novos.push({ data, variante: esc.variante, cardId });
+      novos.push({ data, variante, cardId });
     }
     return { regra: r, novos };
   }
 
   const api = {
     PREFIXO, iso, deslocar, diaSemana, pascoa, feriadosNacionais, ehFeriado,
-    proximasDatas, escolherVariante, planejarRegra
+    proximasDatas, escolherPelaOrdem, planejarRegra
   };
   raiz.Programacao = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

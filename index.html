@@ -27350,7 +27350,7 @@ async function progSalvarRegra() {
     pularFeriados: !!r.pularFeriados, ativa: r.ativa !== false,
     variantes,
     gerados: (existente && existente.gerados) || {},
-    recentes: ((existente && existente.recentes) || []).filter(x => ids.has(x))
+    proximo: (existente && existente.proximo) || 0
   });
   PROG.regras = existente ? PROG.regras.map(x => x.id === nova.id ? nova : x) : PROG.regras.concat([nova]);
   await progPersistir();
