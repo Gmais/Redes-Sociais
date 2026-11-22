@@ -101,6 +101,7 @@
     if (!prefixo) return { regra: r, novos };
     for (const data of proximasDatas(hojeIso, dias)) {
       if (!(r.dias || []).includes(diaSemana(data))) continue;
+      if (r.inicio && data < r.inicio) continue; // só gera a partir da data de início, se houver
       if (r.gerados[data]) continue;
       if (r.pularFeriados && ehFeriado(data, extras)) continue;
       const variante = escolherPelaOrdem(r.variantes, r.proximo);

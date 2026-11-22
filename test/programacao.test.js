@@ -106,4 +106,12 @@ const tresOpcoes = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
   assert.ok(Number.isNaN(P.dataHoraMs('2026-11-23', 'xx')), 'hora inválida não agenda');
 }
 
+// ── Data de início: a regra não gera datas antes dela ─────────────────────────
+{
+  const sem = P.planejarRegra(Object.assign({}, base, { variantes: tresOpcoes }), '2026-11-22', 21, []);
+  assert.deepStrictEqual(sem.novos.map((n) => n.data), ['2026-11-23', '2026-11-30', '2026-12-07'], 'sem data de início, começa hoje');
+  const com = P.planejarRegra(Object.assign({}, base, { variantes: tresOpcoes, inicio: '2026-11-30' }), '2026-11-22', 21, []);
+  assert.deepStrictEqual(com.novos.map((n) => n.data), ['2026-11-30', '2026-12-07'], 'com início em 30/11, a 23/11 não entra');
+}
+
 console.log('programacao: ok');

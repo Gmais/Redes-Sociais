@@ -27219,6 +27219,7 @@ function progFormHtml() {
     + '<label>Horário padrão de publicação<input class="field-input" id="prog-hora" type="time" value="' + progEsc(r.hora || '09:00') + '"></label>'
     + '<label>Formato<select class="field-input" id="prog-formato">' + formatos + '</select></label>'
     + '<div class="prog-dias"><span>Dias da semana</span><div>' + dias + '</div></div>'
+    + '<label>Data de início (vazio = começa hoje)<input class="field-input" id="prog-inicio" type="date" value="' + progEsc(r.inicio || '') + '"></label>'
     + '<label class="prog-ativa"><input type="checkbox" id="prog-pular"' + (r.pularFeriados ? ' checked' : '') + '> Pular feriados</label>'
     + '<label class="prog-ativa"><input type="checkbox" id="prog-ativa-campo"' + (r.ativa !== false ? ' checked' : '') + '> Ativa</label>'
     + '</div>'
@@ -27245,6 +27246,8 @@ function progLerFormulario() {
   if (pular) progEditando.pularFeriados = pular.checked;
   const ativa = document.getElementById('prog-ativa-campo');
   if (ativa) progEditando.ativa = ativa.checked;
+  const inicio = document.getElementById('prog-inicio');
+  if (inicio) progEditando.inicio = inicio.value || '';
   progEditando.dias = Array.from(document.querySelectorAll('input[name="prog-dia"]:checked')).map(c => Number(c.value));
   progOpcoes = progOpcoes.map((o, i) => {
     const imagemDigitada = (v('prog-op-imagem-' + i) || '').trim();
@@ -27361,7 +27364,7 @@ async function progSalvarRegra() {
   const nova = Object.assign({}, existente || {}, {
     id: r.id || progNovoId(),
     nome: r.nome, empresa: r.empresa, dias: r.dias, hora: r.hora || '09:00', formato: r.formato,
-    pularFeriados: !!r.pularFeriados, ativa: r.ativa !== false,
+    pularFeriados: !!r.pularFeriados, ativa: r.ativa !== false, inicio: r.inicio || '',
     variantes,
     gerados: (existente && existente.gerados) || {},
     proximo: (existente && existente.proximo) || 0
