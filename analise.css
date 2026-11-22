@@ -201,6 +201,9 @@ body[data-tab="academia"] main, body[data-tab="sorveteria"] main, body[data-tab=
 .prog-opcao { border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; background: var(--s1); }
 .prog-opcao-cab { display: flex; justify-content: space-between; align-items: center; }
 .prog-feriados { margin-top: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--txt2); }
+.prog-linha { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
+.prog-linha > label { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--txt2); }
+@media (max-width: 680px) { .prog-linha { grid-template-columns: 1fr; } }
 @media (max-width: 680px) { .prog-form { grid-template-columns: 1fr; } }
 .pz-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
 .pz-form .pz-campo { flex: 1 1 200px; }

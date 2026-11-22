@@ -27058,6 +27058,7 @@ const PROG_KEY = 'programacao_v1';
 const PROG_EMPRESAS = [['academia', 'Academia'], ['sorveteria', 'Sorveteria'], ['gympulse', 'GympulsePro']];
 const PROG_DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const PROG_FORMATOS = ['Post', 'Story', 'Reel', 'Carrossel'];
+const PROG_IMAGEM_RE = /^https:\/\/\S+\.(jpe?g|png|webp)(\?\S*)?$/i;
 let PROG = { regras: [], feriadosExtras: [] };
 let progEditando = null; // regra em edição (cópia) ou null
 let progOpcoes = [];     // opções do formulário em edição
@@ -27066,6 +27067,7 @@ function progEsc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 function progNovoId() { return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function progOpcaoVazia() { return { id: progNovoId(), titulo: '', texto: '', imagem: '', hora: '' }; }
 
 // Lê a programação do banco (painel_gilson_state); se não der, usa a cópia deste navegador.
 async function progCarregar() {
@@ -27101,15 +27103,17 @@ async function progPersistir() {
 }
 
 // Cria o card no calendário pelo mesmo caminho dos posts da Nova Postagem.
+// Horário: o da opção, se tiver; senão o padrão da programação. Imagem: o link colado, como imagem pronta para publicar.
 function progCriarCard(regra, novo) {
-  const hora = String(regra.hora || '09:00').replace(':', 'h');
+  const v = novo.variante || {};
+  const hora = String(v.hora || regra.hora || '09:00').replace(':', 'h');
   const card = {
     id: novo.cardId,
     date: novo.data,
     time: hora,
     format: regra.formato || 'Post',
-    title: (novo.variante && novo.variante.titulo) || regra.nome,
-    texto: (novo.variante && novo.variante.texto) || '',
+    title: v.titulo || regra.nome,
+    texto: v.texto || '',
     secoes: [
       { num: '01', cor: '#e63900', titulo: 'FORMATO E ESPECIFICAÇÕES', conteudo: formatSpec(regra.formato || 'Post') },
       { num: '02', cor: '#f5a623', titulo: 'INTENÇÃO DA POSTAGEM', conteudo: 'Programação: ' + regra.nome + '. Opção escolhida automaticamente.' },
@@ -27121,6 +27125,13 @@ function progCriarCard(regra, novo) {
     date: card.date, time: card.time, format: card.format, title: card.title, texto: card.texto, secoes: card.secoes
   }));
   PENDING.edits.add(card.id);
+  if (v.imagem) {
+    const agora = new Date().toISOString();
+    setImageData(card.id, {
+      status: 'ok', viewUrl: v.imagem, zernioUrl: v.imagem, zernioStatus: 'ok', zernioAt: agora,
+      fileName: 'imagem-programada', isVideo: false, uploadedAt: agora
+    });
+  }
 }
 
 // Cria os posts das próximas datas que ainda não existem. Idempotente: pode rodar sempre.
@@ -27169,8 +27180,7 @@ function closeProgramacao() {
 
 function progResumo(r) {
   const dias = (r.dias || []).slice().sort().map(d => PROG_DIAS[d]).join(', ');
-  const hora = String(r.hora || '');
-  return dias + ' · ' + hora + ' · ' + (r.formato || 'Post') + ' · ' + (r.variantes || []).length + ' opção(ões)';
+  return dias + ' · ' + String(r.hora || '') + ' · ' + (r.formato || 'Post') + ' · ' + (r.variantes || []).length + ' opção(ões)';
 }
 
 function progRender() {
@@ -27206,16 +27216,22 @@ function progFormHtml() {
   const opcoes = progOpcoes.map((o, i) => '<div class="prog-opcao">'
     + '<div class="prog-opcao-cab"><b>Opção ' + (i + 1) + '</b><button type="button" class="pz-btn fantasma sm" onclick="progRemoverOpcao(' + i + ')">Remover</button></div>'
     + '<input class="field-input" id="prog-op-titulo-' + i + '" placeholder="Título (aparece no calendário)" value="' + progEsc(o.titulo) + '">'
-    + '<textarea class="field-input" id="prog-op-texto-' + i + '" rows="3" placeholder="Texto da postagem">' + progEsc(o.texto) + '</textarea></div>').join('');
+    + '<textarea class="field-input" id="prog-op-texto-' + i + '" rows="3" placeholder="Texto da postagem">' + progEsc(o.texto) + '</textarea>'
+    + '<div class="prog-linha">'
+    + '<label>Link da imagem<input class="field-input" id="prog-op-imagem-' + i + '" placeholder="https://... (.jpg, .png ou .webp)" value="' + progEsc(o.imagem || '') + '"></label>'
+    + '<label>Horário desta opção<input class="field-input" id="prog-op-hora-' + i + '" type="time" value="' + progEsc(o.hora || '') + '"></label>'
+    + '</div>'
+    + '<div class="muted" style="font-size:12px">O link precisa ser direto para a imagem e publicamente acessível. Links de página do Google Drive normalmente não funcionam. Horário vazio = horário padrão da programação.</div>'
+    + '</div>').join('');
   return '<div class="prog-form">'
     + '<label>Nome<input class="field-input" id="prog-nome" value="' + progEsc(r.nome) + '" placeholder="Ex.: Promoção de segunda"></label>'
     + '<label>Empresa<select class="field-input" id="prog-empresa">' + empresas + '</select></label>'
-    + '<label>Horário<input class="field-input" id="prog-hora" type="time" value="' + progEsc(r.hora || '09:00') + '"></label>'
+    + '<label>Horário padrão de publicação<input class="field-input" id="prog-hora" type="time" value="' + progEsc(r.hora || '09:00') + '"></label>'
     + '<label>Formato<select class="field-input" id="prog-formato">' + formatos + '</select></label>'
     + '<div class="prog-dias"><span>Dias da semana</span><div>' + dias + '</div></div>'
     + '<label class="prog-ativa"><input type="checkbox" id="prog-pular"' + (r.pularFeriados ? ' checked' : '') + '> Pular feriados</label>'
     + '</div>'
-    + '<div class="prog-opcoes-titulo"><b>Opções de texto</b> <span class="muted" style="font-size:12px">Recomendado: 3. A cada semana o sistema escolhe uma que não saiu nas semanas anteriores.</span></div>'
+    + '<div class="prog-opcoes-titulo"><b>Opções de post</b> <span class="muted" style="font-size:12px">Recomendado: 3. A cada semana o sistema escolhe uma que não saiu nas semanas anteriores.</span></div>'
     + opcoes
     + '<button type="button" class="pz-btn fantasma sm" onclick="progAdicionarOpcao()">+ Adicionar opção</button>'
     + '<div class="prog-acoes" style="margin-top:14px"><button class="pz-btn primario" onclick="progSalvarRegra()">Salvar programação</button>'
@@ -27236,13 +27252,15 @@ function progLerFormulario() {
   progOpcoes = progOpcoes.map((o, i) => ({
     id: o.id,
     titulo: (v('prog-op-titulo-' + i) || '').trim(),
-    texto: (v('prog-op-texto-' + i) || '').trim()
+    texto: (v('prog-op-texto-' + i) || '').trim(),
+    imagem: (v('prog-op-imagem-' + i) || '').trim(),
+    hora: (v('prog-op-hora-' + i) || '').trim()
   }));
 }
 
 function progNovaRegra() {
   progEditando = { id: null, nome: '', empresa: 'academia', dias: [1], hora: '09:00', formato: 'Post', pularFeriados: true, ativa: true };
-  progOpcoes = [{ id: progNovoId(), titulo: '', texto: '' }, { id: progNovoId(), titulo: '', texto: '' }, { id: progNovoId(), titulo: '', texto: '' }];
+  progOpcoes = [progOpcaoVazia(), progOpcaoVazia(), progOpcaoVazia()];
   progRender();
 }
 
@@ -27250,13 +27268,13 @@ function progEditarRegra(id) {
   const r = PROG.regras.find(x => x.id === id);
   if (!r) return;
   progEditando = JSON.parse(JSON.stringify(r));
-  progOpcoes = (r.variantes || []).map(o => ({ id: o.id, titulo: o.titulo || '', texto: o.texto || '' }));
+  progOpcoes = (r.variantes || []).map(o => ({ id: o.id, titulo: o.titulo || '', texto: o.texto || '', imagem: o.imagem || '', hora: o.hora || '' }));
   progRender();
 }
 
 function progAdicionarOpcao() {
   progLerFormulario();
-  progOpcoes.push({ id: progNovoId(), titulo: '', texto: '' });
+  progOpcoes.push(progOpcaoVazia());
   progRender();
 }
 
@@ -27276,13 +27294,18 @@ async function progSalvarRegra() {
   const r = progEditando;
   if (!r.nome) { showToast('⚠️ Dê um nome à programação'); return; }
   if (!r.dias || !r.dias.length) { showToast('⚠️ Escolha pelo menos um dia da semana'); return; }
-  const variantes = progOpcoes.filter(o => o.texto).map(o => ({ id: o.id, titulo: o.titulo || r.nome, texto: o.texto }));
-  if (!variantes.length) { showToast('⚠️ Escreva o texto de pelo menos uma opção'); return; }
-  const existente = r.id ? PROG.regras.find(x => x.id === r.id) : null;
+  const preenchidas = progOpcoes.filter(o => o.texto);
+  if (!preenchidas.length) { showToast('⚠️ Escreva o texto de pelo menos uma opção'); return; }
+  const ruim = preenchidas.find(o => o.imagem && !PROG_IMAGEM_RE.test(o.imagem));
+  if (ruim) { showToast('⚠️ O link da imagem precisa começar com https:// e terminar em .jpg, .png ou .webp'); return; }
+  const variantes = preenchidas.map(o => ({
+    id: o.id, titulo: o.titulo || r.nome, texto: o.texto, imagem: o.imagem || '', hora: o.hora || ''
+  }));
   const ids = new Set(variantes.map(x => x.id));
+  const existente = r.id ? PROG.regras.find(x => x.id === r.id) : null;
   const nova = Object.assign({}, existente || {}, {
     id: r.id || progNovoId(),
-    nome: r.nome, empresa: r.empresa, dias: r.dias, hora: r.hora, formato: r.formato,
+    nome: r.nome, empresa: r.empresa, dias: r.dias, hora: r.hora || '09:00', formato: r.formato,
     pularFeriados: !!r.pularFeriados, ativa: r.ativa !== false,
     variantes,
     gerados: (existente && existente.gerados) || {},
