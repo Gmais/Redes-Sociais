@@ -27169,7 +27169,8 @@ function ensureProgModal() {
 
 function openProgramacao() {
   ensureProgModal().classList.add('on');
-  progNovaRegra();
+  progEditando = null;
+  progRender();
   progCarregar().then(() => progRender());
 }
 function closeProgramacao() {
@@ -27179,20 +27180,11 @@ function closeProgramacao() {
 function progRender() {
   const body = document.getElementById('prog-body');
   if (!body) return;
-  if (!progEditando) progNovaRegra();
-  body.innerHTML = progFormHtml();
-}
-// Troca a programação mostrada: vazio = nova; um ID = editar essa programação
-function progEscolher(id) {
-  if (!id) progNovaRegra();
-  else progEditarRegra(id);
+  body.innerHTML = progEditando ? progFormHtml() : progListaHtml();
 }
 function progFormHtml() {
   const r = progEditando;
-  const escolha = '<label>Programação<select class="field-input" id="prog-escolha" onchange="progEscolher(this.value)">'
-    + '<option value="">+ Nova programação</option>'
-    + PROG.regras.map(x => '<option value="' + x.id + '"' + (r.id === x.id ? ' selected' : '') + '>' + progEsc(x.nome) + '</option>').join('')
-    + '</select></label>';
+  const voltar = '<button type="button" class="pz-btn fantasma sm" onclick="progVoltar()">← Voltar às programações</button>';
   const empresas = PROG_EMPRESAS.map(([v, t]) => '<option value="' + v + '"' + (r.empresa === v ? ' selected' : '') + '>' + t + '</option>').join('');
   const formatos = PROG_FORMATOS.map(f => '<option' + (r.formato === f ? ' selected' : '') + '>' + f + '</option>').join('');
   const dias = PROG_DIAS.map((d, i) => '<label class="prog-dia"><input type="checkbox" name="prog-dia" value="' + i + '"' + ((r.dias || []).includes(i) ? ' checked' : '') + '> ' + d + '</label>').join('');
@@ -27212,8 +27204,7 @@ function progFormHtml() {
     + '</div>'
     + '<div class="muted" style="font-size:12px">Envie a imagem, busque no Drive ou cole um link direto (https, .jpg, .png ou .webp). Horário vazio = horário padrão.</div>'
     + '</div>').join('');
-  return '<div class="prog-form">'
-    + escolha
+  return voltar + '<div class="prog-form">'
     + '<label>Nome<input class="field-input" id="prog-nome" value="' + progEsc(r.nome) + '" placeholder="Ex.: Promoção de segunda"></label>'
     + '<label>Empresa<select class="field-input" id="prog-empresa">' + empresas + '</select></label>'
     + '<label>Horário padrão de publicação<input class="field-input" id="prog-hora" type="time" value="' + progEsc(r.hora || '09:00') + '"></label>'
@@ -27364,7 +27355,40 @@ async function progSalvarRegra() {
   PROG.regras = existente ? PROG.regras.map(x => x.id === nova.id ? nova : x) : PROG.regras.concat([nova]);
   await progPersistir();
   progGerarJanela(21);
-  progEditarRegra(nova.id);
+  progEditando = null;
+  progRender();
+}
+
+function progResumo(r) {
+  const dias = (r.dias || []).slice().sort().map(d => PROG_DIAS[d]).join(', ');
+  return dias + ' · ' + String(r.hora || '') + ' · ' + (r.formato || 'Post') + ' · ' + (r.variantes || []).length + ' opção(ões)';
+}
+
+function progListaHtml() {
+  const nomeEmpresa = e => (PROG_EMPRESAS.find(x => x[0] === e) || [null, e])[1];
+  const lista = PROG.regras.length
+    ? PROG.regras.map(r => '<div class="prog-regra">'
+      + '<div class="prog-regra-topo"><div><b>' + progEsc(r.nome) + '</b> <span class="prog-pill">' + progEsc(nomeEmpresa(r.empresa)) + '</span></div>'
+      + '<label class="prog-ativa"><input type="checkbox" ' + (r.ativa !== false ? 'checked ' : '') + 'onchange="progAlternar(\'' + r.id + '\')"> ' + (r.ativa !== false ? 'Ativa' : 'Pausada') + '</label></div>'
+      + '<div class="prog-resumo">' + progEsc(progResumo(r)) + (r.pularFeriados ? ' · pula feriados' : '') + '</div>'
+      + '<div class="prog-acoes"><button class="pz-btn fantasma sm" onclick="progEditarRegra(\'' + r.id + '\')">Editar</button>'
+      + '<button class="pz-btn fantasma sm" onclick="progExcluirRegra(\'' + r.id + '\')">Excluir</button></div></div>').join('')
+    : '<div class="muted" style="font-size:13px">Nenhuma programação ainda. Crie uma, por exemplo "Promoção" toda segunda, e adicione as opções de post.</div>';
+  return '<div class="prog-topo"><button class="pz-btn primario" onclick="progNovaRegra()">+ Nova programação</button></div>' + lista;
+}
+
+function progVoltar() {
+  progEditando = null;
+  progRender();
+}
+
+async function progAlternar(id) {
+  const r = PROG.regras.find(x => x.id === id);
+  if (!r) return;
+  r.ativa = r.ativa === false;
+  await progPersistir();
+  if (r.ativa) progGerarJanela(21);
+  progRender();
 }
 
 async function progExcluirRegra(id) {
@@ -27372,7 +27396,8 @@ async function progExcluirRegra(id) {
   if (!r || !confirm('Excluir a programação "' + r.nome + '"? Os posts já criados continuam no calendário.')) return;
   PROG.regras = PROG.regras.filter(x => x.id !== id);
   await progPersistir();
-  progNovaRegra();
+  progEditando = null;
+  progRender();
 }
 
 async function progSalvarFeriados(valor) {
