@@ -27218,10 +27218,16 @@ function progFormHtml() {
     + '<input class="field-input" id="prog-op-titulo-' + i + '" placeholder="Título (aparece no calendário)" value="' + progEsc(o.titulo) + '">'
     + '<textarea class="field-input" id="prog-op-texto-' + i + '" rows="3" placeholder="Texto da postagem">' + progEsc(o.texto) + '</textarea>'
     + '<div class="prog-linha">'
-    + '<label>Link da imagem<input class="field-input" id="prog-op-imagem-' + i + '" placeholder="https://... (.jpg, .png ou .webp)" value="' + progEsc(o.imagem || '') + '"></label>'
+    + '<label>Imagem (link direto)<input class="field-input" id="prog-op-imagem-' + i + '" placeholder="https://... ou use os botões abaixo" value="' + progEsc(o.imagem || '') + '"></label>'
     + '<label>Horário desta opção<input class="field-input" id="prog-op-hora-' + i + '" type="time" value="' + progEsc(o.hora || '') + '"></label>'
     + '</div>'
-    + '<div class="muted" style="font-size:12px">O link precisa ser direto para a imagem e publicamente acessível. Links de página do Google Drive normalmente não funcionam. Horário vazio = horário padrão da programação.</div>'
+    + '<div class="prog-imagem-acoes">'
+    + '<button type="button" class="pz-btn fantasma sm" onclick="progEscolherArquivo(' + i + ')">📁 Enviar imagem</button>'
+    + '<button type="button" class="pz-btn fantasma sm" onclick="progBuscarDrive(' + i + ')">🔎 Buscar no Drive</button>'
+    + '<input type="file" id="prog-file-' + i + '" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="progArquivoEscolhido(' + i + ', this)">'
+    + '<span class="muted" style="font-size:12px" id="prog-op-imagem-nome-' + i + '">' + progEsc(o.imagemNome || '') + '</span>'
+    + '</div>'
+    + '<div class="muted" style="font-size:12px">Envie a imagem, busque no Drive ou cole um link direto (https, .jpg, .png ou .webp). Horário vazio = horário padrão.</div>'
     + '</div>').join('');
   return '<div class="prog-form">'
     + '<label>Nome<input class="field-input" id="prog-nome" value="' + progEsc(r.nome) + '" placeholder="Ex.: Promoção de segunda"></label>'
@@ -27249,13 +27255,19 @@ function progLerFormulario() {
   const pular = document.getElementById('prog-pular');
   if (pular) progEditando.pularFeriados = pular.checked;
   progEditando.dias = Array.from(document.querySelectorAll('input[name="prog-dia"]:checked')).map(c => Number(c.value));
-  progOpcoes = progOpcoes.map((o, i) => ({
-    id: o.id,
-    titulo: (v('prog-op-titulo-' + i) || '').trim(),
-    texto: (v('prog-op-texto-' + i) || '').trim(),
-    imagem: (v('prog-op-imagem-' + i) || '').trim(),
-    hora: (v('prog-op-hora-' + i) || '').trim()
-  }));
+  progOpcoes = progOpcoes.map((o, i) => {
+    const imagemDigitada = (v('prog-op-imagem-' + i) || '').trim();
+    const veioDeArquivo = !!o.imagemEnviada && imagemDigitada === o.imagem;
+    return {
+      id: o.id,
+      titulo: (v('prog-op-titulo-' + i) || '').trim(),
+      texto: (v('prog-op-texto-' + i) || '').trim(),
+      imagem: imagemDigitada,
+      hora: (v('prog-op-hora-' + i) || '').trim(),
+      imagemEnviada: veioDeArquivo,
+      imagemNome: veioDeArquivo ? (o.imagemNome || '') : ''
+    };
+  });
 }
 
 function progNovaRegra() {
@@ -27268,7 +27280,7 @@ function progEditarRegra(id) {
   const r = PROG.regras.find(x => x.id === id);
   if (!r) return;
   progEditando = JSON.parse(JSON.stringify(r));
-  progOpcoes = (r.variantes || []).map(o => ({ id: o.id, titulo: o.titulo || '', texto: o.texto || '', imagem: o.imagem || '', hora: o.hora || '' }));
+  progOpcoes = (r.variantes || []).map(o => ({ id: o.id, titulo: o.titulo || '', texto: o.texto || '', imagem: o.imagem || '', hora: o.hora || '', imagemEnviada: !!o.imagemEnviada, imagemNome: o.imagemNome || '' }));
   progRender();
 }
 
@@ -27289,6 +27301,58 @@ function progCancelar() {
   progRender();
 }
 
+// Imagem por arquivo ou pelo Drive: vai para a Zernio e volta com um endereço público, que o publicador usa.
+function progEscolherArquivo(i) {
+  const campo = document.getElementById('prog-file-' + i);
+  if (campo) campo.click();
+}
+
+async function progArquivoEscolhido(i, input) {
+  const arquivo = input.files && input.files[0];
+  input.value = '';
+  if (!arquivo) return;
+  if (!/^image\/(jpeg|png|webp)$/.test(arquivo.type)) { showToast('⚠️ Escolha uma imagem .jpg, .png ou .webp'); return; }
+  progLerFormulario();
+  const alvo = progOpcoes[i];
+  if (!alvo) return;
+  showToast('📤 Enviando imagem...');
+  try {
+    const url = await uploadMediaToZernio(normalizeMediaFile(arquivo), progEditando.empresa);
+    alvo.imagem = url;
+    alvo.imagemEnviada = true;
+    alvo.imagemNome = arquivo.name;
+    progRender();
+    showToast('✅ Imagem pronta');
+  } catch (e) {
+    showToast('⚠️ Não foi possível enviar a imagem: ' + (e.message || 'erro'));
+  }
+}
+
+// Busca no Drive: baixa o arquivo escolhido, envia para a Zernio e guarda o endereço público.
+function progBuscarDrive(i) {
+  progLerFormulario();
+  const empresa = progEditando.empresa;
+  openDrivePicker(empresa, async (files) => {
+    const f = (files || [])[0];
+    if (!f) return;
+    const alvo = progOpcoes[i];
+    if (!alvo) return;
+    showToast('📤 Preparando imagem do Drive...');
+    try {
+      const blob = await downloadDriveFile(f.fileId);
+      const tipo = f.fileType || blob.type || 'image/jpeg';
+      const url = await uploadMediaToZernio(new File([blob], f.fileName, { type: tipo }), empresa);
+      alvo.imagem = url;
+      alvo.imagemEnviada = true;
+      alvo.imagemNome = f.fileName;
+      progRender();
+      showToast('✅ Imagem do Drive pronta');
+    } catch (e) {
+      showToast('⚠️ Não foi possível usar a imagem do Drive: ' + (e.message || 'erro'));
+    }
+  });
+}
+
 async function progSalvarRegra() {
   progLerFormulario();
   const r = progEditando;
@@ -27296,10 +27360,10 @@ async function progSalvarRegra() {
   if (!r.dias || !r.dias.length) { showToast('⚠️ Escolha pelo menos um dia da semana'); return; }
   const preenchidas = progOpcoes.filter(o => o.texto);
   if (!preenchidas.length) { showToast('⚠️ Escreva o texto de pelo menos uma opção'); return; }
-  const ruim = preenchidas.find(o => o.imagem && !PROG_IMAGEM_RE.test(o.imagem));
+  const ruim = preenchidas.find(o => o.imagem && !o.imagemEnviada && !PROG_IMAGEM_RE.test(o.imagem));
   if (ruim) { showToast('⚠️ O link da imagem precisa começar com https:// e terminar em .jpg, .png ou .webp'); return; }
   const variantes = preenchidas.map(o => ({
-    id: o.id, titulo: o.titulo || r.nome, texto: o.texto, imagem: o.imagem || '', hora: o.hora || ''
+    id: o.id, titulo: o.titulo || r.nome, texto: o.texto, imagem: o.imagem || '', hora: o.hora || '', imagemEnviada: !!o.imagemEnviada, imagemNome: o.imagemNome || ''
   }));
   const ids = new Set(variantes.map(x => x.id));
   const existente = r.id ? PROG.regras.find(x => x.id === r.id) : null;
