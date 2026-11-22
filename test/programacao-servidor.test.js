@@ -51,7 +51,7 @@ const DOMINGO = Date.parse('2026-11-22T11:30:00Z'); // 22/11, 08:30 em Brasília
 const SEGUNDA = Date.parse('2026-11-23T11:30:00Z'); // 23/11, 08:30 em Brasília
 const SEGUNDA_30 = Date.parse('2026-11-30T11:30:00Z');
 const VARIANTE = { id: 'a', titulo: 'Semana 1', texto: 'Texto da semana 1', imagem: 'https://img.exemplo.com/a.jpg' };
-const SEM_CRIAR = { criados: 0, agendados: 0, erros: 0, sem_dados: 0, sem_chave: 0, pendentes_proxima_execucao: 0 };
+const SEM_CRIAR = { criados: 0, agendados: 0, erros: 0, sem_dados: 0, sem_chave: 0, pendentes_proxima_execucao: 0, aguardando: 0 };
 
 function regra(extra = {}) {
   return Object.assign({
@@ -193,6 +193,24 @@ assert.strictEqual(S.hojeBR(Date.parse('2026-11-23T02:30:00Z')), '2026-11-22', '
   });
   assert.strictEqual(banco.zernio[0].headers.Authorization, 'Bearer chave-gympulse');
   assert.strictEqual(banco.zernio[0].corpo.scheduledFor, '2026-11-23T13:00:00.000Z');
+}
+
+// 13. Só agenda hoje e amanhã: card de 29/11 espera até 28/11 (dia anterior)
+{
+  const ID29 = 'ac_prog_promo_20261129';
+  const card29 = { date: '2026-11-29', time: '09h00', format: 'Post', title: 'Dom', texto: 'Texto', secoes: [] };
+  const banco = criarBanco({
+    programacao: { regras: [], feriadosExtras: [] },
+    edits: { [ID29]: card29 },
+    images: { [ID29]: { status: 'ok', zernioUrl: 'https://img.exemplo.com/c.jpg', zernioStatus: 'ok' } }
+  });
+  const r1 = await S.gerarEAgendar({ env: ENV, f: banco.f, agora: DOMINGO, pausa: 0 });
+  assert.strictEqual(r1.aguardando, 1, 'card de 29/11 ainda não é agendado no dia 22');
+  assert.strictEqual(banco.zernio.length, 0);
+  const r2 = await S.gerarEAgendar({ env: ENV, f: banco.f, agora: Date.parse('2026-11-28T11:30:00Z'), pausa: 0 });
+  assert.strictEqual(r2.agendados, 1, 'no dia 28 (sábado) o card de 29/11 é agendado');
+  assert.strictEqual(banco.zernio.length, 1);
+  assert.strictEqual(banco.zernio[0].corpo.scheduledFor, '2026-11-29T12:00:00.000Z');
 }
 
 console.log('programacao-servidor: ok');
