@@ -24,7 +24,10 @@ function readBody(req) {
   });
 }
 
+const { exigirLogin } = require('../lib/zernio-login');
+
 module.exports = async (req, res) => {
+  if (!(await exigirLogin(req, res))) return;
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Método não permitido' });
     return;
