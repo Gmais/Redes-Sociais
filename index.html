@@ -27169,47 +27169,30 @@ function ensureProgModal() {
 
 function openProgramacao() {
   ensureProgModal().classList.add('on');
-  progEditando = null;
-  progRender();
+  progNovaRegra();
   progCarregar().then(() => progRender());
 }
 function closeProgramacao() {
   const el = document.getElementById('progModal');
   if (el) el.classList.remove('on');
 }
-
-function progResumo(r) {
-  const dias = (r.dias || []).slice().sort().map(d => PROG_DIAS[d]).join(', ');
-  return dias + ' · ' + String(r.hora || '') + ' · ' + (r.formato || 'Post') + ' · ' + (r.variantes || []).length + ' opção(ões)';
-}
-
 function progRender() {
   const body = document.getElementById('prog-body');
   if (!body) return;
-  body.innerHTML = progEditando ? progFormHtml() : progListaHtml();
+  if (!progEditando) progNovaRegra();
+  body.innerHTML = progFormHtml();
 }
-
-function progListaHtml() {
-  const nomeEmpresa = e => (PROG_EMPRESAS.find(x => x[0] === e) || [null, e])[1];
-  const regras = PROG.regras.length
-    ? PROG.regras.map(r => '<div class="prog-regra">'
-      + '<div class="prog-regra-topo"><div><b>' + progEsc(r.nome) + '</b> <span class="prog-pill">' + progEsc(nomeEmpresa(r.empresa)) + '</span></div>'
-      + '<label class="prog-ativa"><input type="checkbox" ' + (r.ativa ? 'checked' : '') + ' onchange="progAlternar(\'' + r.id + '\')"> ' + (r.ativa ? 'Ativa' : 'Pausada') + '</label></div>'
-      + '<div class="prog-resumo">' + progEsc(progResumo(r)) + (r.pularFeriados ? ' · pula feriados' : '') + '</div>'
-      + '<div class="prog-acoes"><button class="pz-btn fantasma sm" onclick="progEditarRegra(\'' + r.id + '\')">Editar</button>'
-      + '<button class="pz-btn fantasma sm" onclick="progExcluirRegra(\'' + r.id + '\')">Excluir</button></div></div>').join('')
-    : '<div class="muted" style="font-size:13px">Nenhuma programação ainda. Crie uma regra, por exemplo "Promoção" toda segunda, com 3 opções. O sistema escolhe uma diferente a cada semana.</div>';
-  return '<div class="prog-topo">'
-    + '<button class="pz-btn primario" onclick="progNovaRegra()">+ Nova programação</button>'
-    + '<button class="pz-btn fantasma" onclick="progGerarAgora()">Gerar próximas 3 semanas</button></div>'
-    + regras
-    + '<div class="prog-feriados"><label>Dias sem postagem (AAAA-MM-DD, separados por vírgula)'
-    + '<input class="field-input" id="prog-feriados" value="' + progEsc((PROG.feriadosExtras || []).join(', ')) + '" onchange="progSalvarFeriados(this.value)"></label>'
-    + '<div class="muted" style="font-size:12px">Feriados nacionais já são pulados quando a regra pede. Use esta lista para dias locais, como feriado da sua cidade.</div></div>';
+// Troca a programação mostrada: vazio = nova; um ID = editar essa programação
+function progEscolher(id) {
+  if (!id) progNovaRegra();
+  else progEditarRegra(id);
 }
-
 function progFormHtml() {
   const r = progEditando;
+  const escolha = '<label>Programação<select class="field-input" id="prog-escolha" onchange="progEscolher(this.value)">'
+    + '<option value="">+ Nova programação</option>'
+    + PROG.regras.map(x => '<option value="' + x.id + '"' + (r.id === x.id ? ' selected' : '') + '>' + progEsc(x.nome) + '</option>').join('')
+    + '</select></label>';
   const empresas = PROG_EMPRESAS.map(([v, t]) => '<option value="' + v + '"' + (r.empresa === v ? ' selected' : '') + '>' + t + '</option>').join('');
   const formatos = PROG_FORMATOS.map(f => '<option' + (r.formato === f ? ' selected' : '') + '>' + f + '</option>').join('');
   const dias = PROG_DIAS.map((d, i) => '<label class="prog-dia"><input type="checkbox" name="prog-dia" value="' + i + '"' + ((r.dias || []).includes(i) ? ' checked' : '') + '> ' + d + '</label>').join('');
@@ -27230,18 +27213,24 @@ function progFormHtml() {
     + '<div class="muted" style="font-size:12px">Envie a imagem, busque no Drive ou cole um link direto (https, .jpg, .png ou .webp). Horário vazio = horário padrão.</div>'
     + '</div>').join('');
   return '<div class="prog-form">'
+    + escolha
     + '<label>Nome<input class="field-input" id="prog-nome" value="' + progEsc(r.nome) + '" placeholder="Ex.: Promoção de segunda"></label>'
     + '<label>Empresa<select class="field-input" id="prog-empresa">' + empresas + '</select></label>'
     + '<label>Horário padrão de publicação<input class="field-input" id="prog-hora" type="time" value="' + progEsc(r.hora || '09:00') + '"></label>'
     + '<label>Formato<select class="field-input" id="prog-formato">' + formatos + '</select></label>'
     + '<div class="prog-dias"><span>Dias da semana</span><div>' + dias + '</div></div>'
     + '<label class="prog-ativa"><input type="checkbox" id="prog-pular"' + (r.pularFeriados ? ' checked' : '') + '> Pular feriados</label>'
+    + '<label class="prog-ativa"><input type="checkbox" id="prog-ativa-campo"' + (r.ativa !== false ? ' checked' : '') + '> Ativa</label>'
     + '</div>'
     + '<div class="prog-opcoes-titulo"><b>Opções de post</b> <span class="muted" style="font-size:12px">Com uma opção, o mesmo post se repete. Adicione mais opções para o sistema alternar entre elas a cada semana.</span></div>'
     + opcoes
     + '<button type="button" class="pz-btn fantasma sm" onclick="progAdicionarOpcao()">+ Adicionar opção</button>'
     + '<div class="prog-acoes" style="margin-top:14px"><button class="pz-btn primario" onclick="progSalvarRegra()">Salvar programação</button>'
-    + '<button class="pz-btn fantasma" onclick="progCancelar()">Cancelar</button></div>';
+    + (r.id ? '<button class="pz-btn fantasma" onclick="progExcluirRegra(\'' + r.id + '\')">Excluir programação</button>' : '')
+    + '</div>'
+    + '<div class="prog-feriados"><label>Dias sem postagem (AAAA-MM-DD, separados por vírgula)'
+    + '<input class="field-input" id="prog-feriados" value="' + progEsc((PROG.feriadosExtras || []).join(', ')) + '" onchange="progSalvarFeriados(this.value)"></label>'
+    + '<div class="muted" style="font-size:12px">Feriados nacionais já são pulados. Use este campo para dias locais, como feriado da sua cidade.</div></div>';
 }
 
 // Guarda o que está digitado no formulário antes de mudar a tela
@@ -27254,6 +27243,8 @@ function progLerFormulario() {
   progEditando.formato = v('prog-formato') || progEditando.formato;
   const pular = document.getElementById('prog-pular');
   if (pular) progEditando.pularFeriados = pular.checked;
+  const ativa = document.getElementById('prog-ativa-campo');
+  if (ativa) progEditando.ativa = ativa.checked;
   progEditando.dias = Array.from(document.querySelectorAll('input[name="prog-dia"]:checked')).map(c => Number(c.value));
   progOpcoes = progOpcoes.map((o, i) => {
     const imagemDigitada = (v('prog-op-imagem-' + i) || '').trim();
@@ -27293,11 +27284,6 @@ function progAdicionarOpcao() {
 function progRemoverOpcao(i) {
   progLerFormulario();
   progOpcoes.splice(i, 1);
-  progRender();
-}
-
-function progCancelar() {
-  progEditando = null;
   progRender();
 }
 
@@ -27376,10 +27362,9 @@ async function progSalvarRegra() {
     recentes: ((existente && existente.recentes) || []).filter(x => ids.has(x))
   });
   PROG.regras = existente ? PROG.regras.map(x => x.id === nova.id ? nova : x) : PROG.regras.concat([nova]);
-  progEditando = null;
   await progPersistir();
   progGerarJanela(21);
-  progRender();
+  progEditarRegra(nova.id);
 }
 
 async function progExcluirRegra(id) {
@@ -27387,22 +27372,7 @@ async function progExcluirRegra(id) {
   if (!r || !confirm('Excluir a programação "' + r.nome + '"? Os posts já criados continuam no calendário.')) return;
   PROG.regras = PROG.regras.filter(x => x.id !== id);
   await progPersistir();
-  progRender();
-}
-
-async function progAlternar(id) {
-  const r = PROG.regras.find(x => x.id === id);
-  if (!r) return;
-  r.ativa = !r.ativa;
-  await progPersistir();
-  if (r.ativa) progGerarJanela(21);
-  progRender();
-}
-
-function progGerarAgora() {
-  const n = progGerarJanela(21);
-  if (!n) showToast('Tudo em dia: as próximas 3 semanas já estão programadas.');
-  progRender();
+  progNovaRegra();
 }
 
 async function progSalvarFeriados(valor) {
