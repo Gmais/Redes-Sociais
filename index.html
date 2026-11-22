@@ -27107,7 +27107,7 @@ async function progPersistir() {
 // Horário: o da opção, se tiver; senão o padrão da programação. Imagem: o link colado, como imagem pronta para publicar.
 function progCriarCard(regra, novo) {
   const v = novo.variante || {};
-  const hora = String(v.hora || regra.hora || '09:00').replace(':', 'h');
+  const hora = String(regra.hora || '09:00').replace(':', 'h');
   const card = {
     id: novo.cardId,
     date: novo.data,
@@ -27203,7 +27203,7 @@ function progFormHtml() {
     + '<textarea class="field-input" id="prog-op-texto-' + i + '" rows="3" placeholder="Texto da postagem (opcional)">' + progEsc(o.texto) + '</textarea>'
     + '<div class="prog-linha">'
     + '<label>Imagem (link direto)<input class="field-input" id="prog-op-imagem-' + i + '" placeholder="https://... ou use os botões abaixo" value="' + progEsc(o.imagem || '') + '"></label>'
-    + '<label>Horário desta opção<input class="field-input" id="prog-op-hora-' + i + '" type="time" value="' + progEsc(o.hora || '') + '"></label>'
+    + '<label>Fixar dia da semana<select class="field-input" id="prog-op-dia-' + i + '"><option value="">Sem fixar (rodízio)</option>' + PROG_DIAS.map((d, k) => '<option value="' + k + '"' + (o.dia === k ? ' selected' : '') + '>' + d + '</option>').join('') + '</select></label>'
     + '</div>'
     + '<div class="prog-imagem-acoes">'
     + '<button type="button" class="pz-btn fantasma sm" onclick="progEscolherArquivo(' + i + ')">📁 Enviar imagem</button>'
@@ -27211,7 +27211,7 @@ function progFormHtml() {
     + '<input type="file" id="prog-file-' + i + '" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="progArquivoEscolhido(' + i + ', this)">'
     + '<span class="muted" style="font-size:12px" id="prog-op-imagem-nome-' + i + '">' + progEsc(o.imagemNome || '') + '</span>'
     + '</div>'
-    + '<div class="muted" style="font-size:12px">Envie a imagem, busque no Drive ou cole um link direto (https, .jpg, .png ou .webp). Horário vazio = horário padrão.</div>'
+    + '<div class="muted" style="font-size:12px">Envie a imagem, busque no Drive ou cole um link direto (https, .jpg, .png ou .webp). Sem fixar, a opção entra no rodízio dos dias que não têm opção fixa.</div>'
     + '</div>').join('');
   return voltar + progDriveHtml() + '<div class="prog-form">'
     + '<label>Nome<input class="field-input" id="prog-nome" value="' + progEsc(r.nome) + '" placeholder="Ex.: Promoção de segunda"></label>'
@@ -27257,7 +27257,7 @@ function progLerFormulario() {
       titulo: (v('prog-op-titulo-' + i) || '').trim(),
       texto: (v('prog-op-texto-' + i) || '').trim(),
       imagem: imagemDigitada,
-      hora: (v('prog-op-hora-' + i) || '').trim(),
+      dia: (v('prog-op-dia-' + i) || '') === '' ? null : Number(v('prog-op-dia-' + i)),
       imagemEnviada: veioDeArquivo,
       imagemNome: veioDeArquivo ? (o.imagemNome || '') : ''
     };
@@ -27274,7 +27274,7 @@ function progEditarRegra(id) {
   const r = PROG.regras.find(x => x.id === id);
   if (!r) return;
   progEditando = JSON.parse(JSON.stringify(r));
-  progOpcoes = (r.variantes || []).map(o => ({ id: o.id, titulo: o.titulo || '', texto: o.texto || '', imagem: o.imagem || '', hora: o.hora || '', imagemEnviada: !!o.imagemEnviada, imagemNome: o.imagemNome || '' }));
+  progOpcoes = (r.variantes || []).map(o => ({ id: o.id, titulo: o.titulo || '', texto: o.texto || '', imagem: o.imagem || '', dia: o.dia == null ? null : o.dia, imagemEnviada: !!o.imagemEnviada, imagemNome: o.imagemNome || '' }));
   progRender();
 }
 
@@ -27357,7 +27357,7 @@ async function progSalvarRegra() {
   const ruim = preenchidas.find(o => o.imagem && !o.imagemEnviada && !PROG_IMAGEM_RE.test(o.imagem));
   if (ruim) { showToast('⚠️ O link da imagem precisa começar com https:// e terminar em .jpg, .png ou .webp'); return; }
   const variantes = preenchidas.map(o => ({
-    id: o.id, titulo: o.titulo || r.nome, texto: o.texto, imagem: o.imagem || '', hora: o.hora || '', imagemEnviada: !!o.imagemEnviada, imagemNome: o.imagemNome || ''
+    id: o.id, titulo: o.titulo || r.nome, texto: o.texto, imagem: o.imagem || '', dia: o.dia == null ? null : o.dia, imagemEnviada: !!o.imagemEnviada, imagemNome: o.imagemNome || ''
   }));
   const ids = new Set(variantes.map(x => x.id));
   const existente = r.id ? PROG.regras.find(x => x.id === r.id) : null;

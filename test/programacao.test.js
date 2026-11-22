@@ -114,4 +114,25 @@ const tresOpcoes = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
   assert.deepStrictEqual(com.novos.map((n) => n.data), ['2026-11-30', '2026-12-07'], 'com início em 30/11, a 23/11 não entra');
 }
 
+// ── Opção fixada em um dia da semana ───────────────────────────────────────────
+{
+  // Opção 'm' fixada na segunda; 'u1' e 'u2' sem fixar, alternando nas quartas
+  const r = Object.assign({}, base, {
+    dias: [1, 3], variantes: [{ id: 'm', dia: 1 }, { id: 'u1', dia: null }, { id: 'u2' }]
+  });
+  const { novos } = P.planejarRegra(r, '2026-11-22', 21, []);
+  assert.deepStrictEqual(novos.map((n) => n.variante.id), ['m', 'u1', 'm', 'u2', 'm', 'u1'],
+    'segundas sempre com a fixada; quartas alternam entre as livres');
+}
+{
+  // Duas opções fixadas no mesmo dia: alternam entre elas
+  const { novos } = P.planejarRegra(Object.assign({}, base, { dias: [1], variantes: [{ id: 'a', dia: 1 }, { id: 'b', dia: 1 }] }), '2026-11-22', 28, []);
+  assert.deepStrictEqual(novos.map((n) => n.variante.id), ['a', 'b', 'a', 'b']);
+}
+{
+  // Opção fixada em um dia que não está marcado nos dias da semana nunca entra
+  const { novos } = P.planejarRegra(Object.assign({}, base, { dias: [1], variantes: [{ id: 'x', dia: 5 }] }), '2026-11-22', 21, []);
+  assert.strictEqual(novos.length, 0, 'opção fixada em dia não marcado não gera post');
+}
+
 console.log('programacao: ok');

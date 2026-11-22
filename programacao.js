@@ -93,7 +93,8 @@
   function planejarRegra(regra, hojeIso, dias, extras) {
     const r = Object.assign({}, regra, {
       gerados: Object.assign({}, regra.gerados || {}),
-      proximo: Number(regra.proximo) || 0
+      proximo: Number(regra.proximo) || 0,
+      contadores: Object.assign({}, regra.contadores || {})
     });
     const novos = [];
     if (!r.ativa || !Array.isArray(r.variantes) || !r.variantes.length) return { regra: r, novos };
@@ -104,8 +105,21 @@
       if (r.inicio && data < r.inicio) continue; // só gera a partir da data de início, se houver
       if (r.gerados[data]) continue;
       if (r.pularFeriados && ehFeriado(data, extras)) continue;
-      const variante = escolherPelaOrdem(r.variantes, r.proximo);
-      r.proximo += 1;
+      // Opção fixada no dia da semana tem prioridade nesse dia. Sem fixa, entra o rodízio das livres.
+      const dia = diaSemana(data);
+      const fixadas = r.variantes.filter((v) => v.dia === dia);
+      const livres = r.variantes.filter((v) => v.dia == null);
+      const candidatas = fixadas.length ? fixadas : livres;
+      if (!candidatas.length) continue;
+      let n;
+      if (fixadas.length) {
+        n = r.contadores[dia] || 0;
+        r.contadores[dia] = n + 1;
+      } else {
+        n = r.proximo;
+        r.proximo += 1;
+      }
+      const variante = escolherPelaOrdem(candidatas, n);
       const cardId = `${prefixo}_prog_${r.id}_${data.replace(/-/g, '')}`;
       r.gerados[data] = cardId;
       novos.push({ data, variante, cardId });
