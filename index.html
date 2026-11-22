@@ -27191,7 +27191,7 @@ function progFormHtml() {
   const opcoes = progOpcoes.map((o, i) => '<div class="prog-opcao">'
     + '<div class="prog-opcao-cab"><b>Opção ' + (i + 1) + '</b><button type="button" class="pz-btn fantasma sm" onclick="progRemoverOpcao(' + i + ')">Remover</button></div>'
     + '<input class="field-input" id="prog-op-titulo-' + i + '" placeholder="Título (aparece no calendário)" value="' + progEsc(o.titulo) + '">'
-    + '<textarea class="field-input" id="prog-op-texto-' + i + '" rows="3" placeholder="Texto da postagem">' + progEsc(o.texto) + '</textarea>'
+    + '<textarea class="field-input" id="prog-op-texto-' + i + '" rows="3" placeholder="Texto da postagem (opcional)">' + progEsc(o.texto) + '</textarea>'
     + '<div class="prog-linha">'
     + '<label>Imagem (link direto)<input class="field-input" id="prog-op-imagem-' + i + '" placeholder="https://... ou use os botões abaixo" value="' + progEsc(o.imagem || '') + '"></label>'
     + '<label>Horário desta opção<input class="field-input" id="prog-op-hora-' + i + '" type="time" value="' + progEsc(o.hora || '') + '"></label>'
@@ -27335,8 +27335,8 @@ async function progSalvarRegra() {
   const r = progEditando;
   if (!r.nome) { showToast('⚠️ Dê um nome à programação'); return; }
   if (!r.dias || !r.dias.length) { showToast('⚠️ Escolha pelo menos um dia da semana'); return; }
-  const preenchidas = progOpcoes.filter(o => o.texto);
-  if (!preenchidas.length) { showToast('⚠️ Escreva o texto de pelo menos uma opção'); return; }
+  const preenchidas = progOpcoes.filter(o => o.texto || o.titulo || o.imagem);
+  if (!preenchidas.length) { showToast('⚠️ Preencha pelo menos uma opção (título, texto ou imagem)'); return; }
   const ruim = preenchidas.find(o => o.imagem && !o.imagemEnviada && !PROG_IMAGEM_RE.test(o.imagem));
   if (ruim) { showToast('⚠️ O link da imagem precisa começar com https:// e terminar em .jpg, .png ou .webp'); return; }
   const variantes = preenchidas.map(o => ({

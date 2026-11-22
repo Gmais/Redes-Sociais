@@ -205,6 +205,13 @@ body[data-tab="academia"] main, body[data-tab="sorveteria"] main, body[data-tab=
 .prog-linha > label { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--txt2); }
 .prog-imagem-acoes { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 @media (max-width: 680px) { .prog-linha { grid-template-columns: 1fr; } }
+/* Botões da janela de Programação: ficam fora da área de Publicar, então têm cores próprias */
+#progModal .pz-btn { display: inline-flex; align-items: center; gap: 6px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; border-radius: 10px; padding: 10px 16px; cursor: pointer; }
+#progModal .pz-btn.sm { padding: 7px 12px; font-size: 12.5px; }
+#progModal .pz-btn.primario { background: #7C3AED; color: #FFFFFF; border: none; }
+#progModal .pz-btn.primario:hover { background: #6D28D9; }
+#progModal .pz-btn.fantasma { background: #FFFFFF; color: #0F1222; border: 1px solid #C9CDDD; }
+#progModal .pz-btn.fantasma:hover { background: #F6F7FB; }
 @media (max-width: 680px) { .prog-form { grid-template-columns: 1fr; } }
 .pz-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
 .pz-form .pz-campo { flex: 1 1 200px; }
