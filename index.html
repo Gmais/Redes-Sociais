@@ -27182,6 +27182,13 @@ function progRender() {
   if (!body) return;
   body.innerHTML = progEditando ? progFormHtml() : progListaHtml();
 }
+// Status do Google Drive, com o botão para conectar (a faixa do topo fica oculta nas abas de empresa)
+function progDriveHtml() {
+  const ok = hasValidDriveToken();
+  return '<div class="prog-drive"><span>Google Drive: <b>' + (ok ? 'conectado' : 'não conectado') + '</b></span>'
+    + (ok ? '' : '<button type="button" class="pz-btn fantasma sm" onclick="connectGoogleDrive()">Conectar Google Drive</button>') + '</div>';
+}
+
 function progFormHtml() {
   const r = progEditando;
   const voltar = '<button type="button" class="pz-btn fantasma sm" onclick="progVoltar()">← Voltar às programações</button>';
@@ -27204,7 +27211,7 @@ function progFormHtml() {
     + '</div>'
     + '<div class="muted" style="font-size:12px">Envie a imagem, busque no Drive ou cole um link direto (https, .jpg, .png ou .webp). Horário vazio = horário padrão.</div>'
     + '</div>').join('');
-  return voltar + '<div class="prog-form">'
+  return voltar + progDriveHtml() + '<div class="prog-form">'
     + '<label>Nome<input class="field-input" id="prog-nome" value="' + progEsc(r.nome) + '" placeholder="Ex.: Promoção de segunda"></label>'
     + '<label>Empresa<select class="field-input" id="prog-empresa">' + empresas + '</select></label>'
     + '<label>Horário padrão de publicação<input class="field-input" id="prog-hora" type="time" value="' + progEsc(r.hora || '09:00') + '"></label>'
@@ -27309,6 +27316,11 @@ async function progArquivoEscolhido(i, input) {
 function progBuscarDrive(i) {
   progLerFormulario();
   const empresa = progEditando.empresa;
+  if (!hasValidDriveToken()) {
+    showToast('🔗 Autorize o Google Drive na janela que vai abrir e clique em Buscar no Drive de novo');
+    connectGoogleDrive();
+    return;
+  }
   openDrivePicker(empresa, async (files) => {
     const f = (files || [])[0];
     if (!f) return;
