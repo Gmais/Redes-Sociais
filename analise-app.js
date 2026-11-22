@@ -207,17 +207,6 @@ function pzTrocarOrg(id) {
   pzRender();
 }
 
-async function pzEnviarLink(ev) {
-  ev.preventDefault();
-  const email = document.getElementById('pz-email').value.trim();
-  const msg = document.getElementById('pz-login-msg');
-  const { error } = await PZ.sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + '/?analise=1' } });
-  if (msg) {
-    msg.textContent = error ? 'Não foi possível enviar o link: ' + error.message : 'Link enviado. Abra o e-mail neste mesmo navegador.';
-    msg.style.color = error ? '#B42318' : '#067647';
-  }
-}
-
 async function pzCriarOrg(ev) {
   ev.preventDefault();
   const nome = document.getElementById('pz-org-nome').value.trim();
@@ -410,15 +399,8 @@ function pzOpcoes(extra = {}) {
 function pzHtmlLogin() {
   return `<div class="pz"><div class="pz-login"><div class="pz-login-card">
       <div class="pz-login-logo" aria-hidden="true">A</div>
-      <h1>Análise das redes</h1>
-      <p>Acompanhe o Instagram das suas empresas. Entre com seu e-mail: enviamos um link de acesso. Nenhuma senha de rede social é pedida.</p>
-      <form class="pz-form" onsubmit="pzEnviarLink(event)">
-        <label class="pz-rotulo">E-mail
-          <input class="pz-campo" type="email" id="pz-email" required placeholder="voce@empresa.com" autocomplete="email">
-        </label>
-        <button class="pz-btn primario" type="submit">Enviar link de acesso</button>
-      </form>
-      <div class="pz-login-nota" id="pz-login-msg" role="status"></div>
+      <h1>Entre para ver a análise</h1>
+      <p>Use o botão <b>Entrar</b> no canto inferior esquerdo da tela.</p>
     </div></div></div>`;
 }
 
