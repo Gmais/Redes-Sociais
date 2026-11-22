@@ -167,6 +167,16 @@ body[data-tab="academia"] main, body[data-tab="sorveteria"] main, body[data-tab=
 /* Calendário de publicações: abre sobre a folha, com as mesmas cores claras */
 #calModal { --bg: #F5F6FB; --s1: #FFFFFF; --s2: #F6F7FB; --border: #E7E9F2; --txt: #0F1222; --txt2: #4A4F6A; --txt3: #8A90AB; background: rgba(15,18,34,.45); }
 .pz-publicar-slot { margin-top: 6px; color: var(--ink); --bg: #F5F6FB; --s1: #FFFFFF; --s2: #F6F7FB; --border: #E7E9F2; --txt: #0F1222; --txt2: #4A4F6A; --txt3: #8A90AB; }
+/* Contraste da aba Publicar: textos e selos legíveis sobre a folha clara (mínimo 4,5:1 nos textos pequenos) */
+.pz-publicar-slot { --txt2: #3F4460; --txt3: #5B6079; }
+.pz-publicar-slot .card[data-p="academia"] .ctag { color: #B32800; background: rgba(230, 57, 0, 0.10); }
+.pz-publicar-slot .card[data-p="sorveteria"] .ctag { color: #7A5C00; background: rgba(245, 200, 0, 0.18); }
+.pz-publicar-slot .card[data-p="gympulse"] .ctag { color: #6B4F00; background: rgba(245, 194, 0, 0.18); }
+.pz-publicar-slot .auto-bar { background: #FFFFFF; border-color: #D8DBE8; color: #0F1222; }
+.pz-publicar-slot .auto-info { color: #4A4F6A; }
+.pz-publicar-slot .auto-btn { background: #FFFFFF; color: #0F1222; border-color: #C9CDDD; }
+.pz-publicar-slot .auto-btn.on { color: #15803D; border-color: #15803D; }
+.pz-publicar-slot .auto-btn.on .auto-sw { background: #15803D; }
 .pz-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
 .pz-form .pz-campo { flex: 1 1 200px; }
 .pz-chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
