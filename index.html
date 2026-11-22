@@ -27135,7 +27135,7 @@ function progCriarCard(regra, novo) {
 }
 
 // Cria os posts das próximas datas que ainda não existem. Idempotente: pode rodar sempre.
-function progGerarJanela(dias) {
+function progGerarJanela(dias, silencioso) {
   const hoje = todayBR();
   let total = 0;
   const empresas = new Set();
@@ -27147,7 +27147,7 @@ function progGerarJanela(dias) {
   if (total) {
     progPersistir();
     empresas.forEach((e) => renderPanel(e));
-    showToast('🗓️ ' + total + ' post(s) programado(s)');
+    if (!silencioso) showToast('🗓️ ' + total + ' post(s) criado(s) no calendário');
   }
   return total;
 }
@@ -27354,9 +27354,10 @@ async function progSalvarRegra() {
   });
   PROG.regras = existente ? PROG.regras.map(x => x.id === nova.id ? nova : x) : PROG.regras.concat([nova]);
   await progPersistir();
-  progGerarJanela(21);
+  const criados = progGerarJanela(21, true);
   progEditando = null;
   progRender();
+  showToast('✅ Programação salva' + (criados ? ': ' + criados + ' post(s) criado(s) no calendário nas próximas 3 semanas' : '. Nenhum post novo: as próximas 3 semanas já estão criadas.'));
 }
 
 function progResumo(r) {
@@ -27387,7 +27388,7 @@ async function progAlternar(id) {
   if (!r) return;
   r.ativa = r.ativa === false;
   await progPersistir();
-  if (r.ativa) progGerarJanela(21);
+  if (r.ativa) progGerarJanela(21, true);
   progRender();
 }
 
@@ -27407,7 +27408,7 @@ async function progSalvarFeriados(valor) {
 }
 
 // Ao abrir o painel: carrega a programação e completa as próximas 3 semanas (sem duplicar)
-progCarregar().then(() => setTimeout(() => progGerarJanela(21), 3000));
+progCarregar().then(() => setTimeout(() => progGerarJanela(21, true), 3000));
 
 function openNewPostModal() {
   const modal = document.getElementById('newPostModal');
