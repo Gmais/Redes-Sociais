@@ -99,4 +99,11 @@ const tresOpcoes = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
   assert.strictEqual(P.planejarRegra(Object.assign({}, base, { variantes: tresOpcoes, empresa: 'outra' }), '2026-11-22', 21, []).novos.length, 0);
 }
 
+// ── Horário de Brasília (agendamento na Zernio) ──
+{
+  assert.strictEqual(P.dataHoraMs('2026-11-23', '10h00'), Date.parse('2026-11-23T13:00:00Z'), '10h00 de Brasília é 13h UTC');
+  assert.strictEqual(P.dataHoraMs('2026-11-23', '09:30'), Date.parse('2026-11-23T12:30:00Z'), 'aceita 09:30');
+  assert.ok(Number.isNaN(P.dataHoraMs('2026-11-23', 'xx')), 'hora inválida não agenda');
+}
+
 console.log('programacao: ok');

@@ -27149,6 +27149,7 @@ function progGerarJanela(dias, silencioso) {
     empresas.forEach((e) => renderPanel(e));
     if (!silencioso) showToast('🗓️ ' + total + ' post(s) criado(s) no calendário');
   }
+  progAgendarPendentes();
   return total;
 }
 
@@ -27417,6 +27418,39 @@ async function progSalvarFeriados(valor) {
   PROG.feriadosExtras = String(valor || '').split(',').map(s => s.trim()).filter(s => /^\d{4}-\d{2}-\d{2}$/.test(s));
   await progPersistir();
   showToast('Dias sem postagem salvos');
+}
+
+// Agenda na Zernio os posts da programação que já têm imagem e texto: a Zernio publica no horário, sozinha.
+// Não repete o que já foi enviado, publicado ou deu erro, e não agenda horário que já passou.
+let progAgendando = false;
+async function progAgendarPendentes() {
+  if (progAgendando) return;
+  progAgendando = true;
+  let agendados = 0;
+  let falhas = 0;
+  try {
+    const agora = Date.now();
+    const cards = [];
+    ['academia', 'sorveteria', 'gympulse'].forEach(p => CONTENT[p].forEach(c => { if (String(c.id).includes('_prog_')) cards.push(c); }));
+    for (const card of cards) {
+      const pub = getPublishData(card.id);
+      if (pub && pub.status) continue;
+      const ms = Programacao.dataHoraMs(card.date, card.time);
+      if (!(ms > agora + 60000)) continue;
+      if (!hasValidImage(card.id) || !String(card.texto || '').trim()) continue;
+      await publishToInstagram(card.id, new Date(ms).toISOString());
+      const depois = getPublishData(card.id);
+      if (depois && depois.status === 'sent') agendados++; else falhas++;
+      await new Promise(r => setTimeout(r, 1500));
+    }
+  } catch (e) {
+    falhas++;
+  } finally {
+    progAgendando = false;
+  }
+  if (agendados || falhas) {
+    showToast('📅 Programação: ' + agendados + ' agendado(s) na Zernio' + (falhas ? ', ' + falhas + ' com erro (veja o card)' : ''));
+  }
 }
 
 // Ao abrir o painel: carrega a programação e completa as próximas 3 semanas (sem duplicar)

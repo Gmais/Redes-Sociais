@@ -112,9 +112,16 @@
     return { regra: r, novos };
   }
 
+  // Horário de Brasília em milissegundos (sem horário de verão desde 2019). Aceita "10h00" e "10:00".
+  function dataHoraMs(dataIso, hora) {
+    const m = String(hora || '').match(/^(\d{1,2})[h:](\d{2})$/i);
+    if (!m || !/^\d{4}-\d{2}-\d{2}$/.test(String(dataIso || ''))) return NaN;
+    return Date.parse(`${dataIso}T${pad(Number(m[1]))}:${m[2]}:00-03:00`);
+  }
+
   const api = {
     PREFIXO, iso, deslocar, diaSemana, pascoa, feriadosNacionais, ehFeriado,
-    proximasDatas, escolherPelaOrdem, planejarRegra
+    proximasDatas, escolherPelaOrdem, planejarRegra, dataHoraMs
   };
   raiz.Programacao = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
