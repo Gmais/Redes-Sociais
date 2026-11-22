@@ -27231,7 +27231,7 @@ function progFormHtml() {
     + '<div class="prog-dias"><span>Dias da semana</span><div>' + dias + '</div></div>'
     + '<label class="prog-ativa"><input type="checkbox" id="prog-pular"' + (r.pularFeriados ? ' checked' : '') + '> Pular feriados</label>'
     + '</div>'
-    + '<div class="prog-opcoes-titulo"><b>Opções de post</b> <span class="muted" style="font-size:12px">Recomendado: 3. A cada semana o sistema escolhe uma que não saiu nas semanas anteriores.</span></div>'
+    + '<div class="prog-opcoes-titulo"><b>Opções de post</b> <span class="muted" style="font-size:12px">Com uma opção, o mesmo post se repete. Adicione mais opções para o sistema alternar entre elas a cada semana.</span></div>'
     + opcoes
     + '<button type="button" class="pz-btn fantasma sm" onclick="progAdicionarOpcao()">+ Adicionar opção</button>'
     + '<div class="prog-acoes" style="margin-top:14px"><button class="pz-btn primario" onclick="progSalvarRegra()">Salvar programação</button>'
@@ -27260,7 +27260,7 @@ function progLerFormulario() {
 
 function progNovaRegra() {
   progEditando = { id: null, nome: '', empresa: 'academia', dias: [1], hora: '09:00', formato: 'Post', pularFeriados: true, ativa: true };
-  progOpcoes = [progOpcaoVazia(), progOpcaoVazia(), progOpcaoVazia()];
+  progOpcoes = [progOpcaoVazia()];
   progRender();
 }
 
