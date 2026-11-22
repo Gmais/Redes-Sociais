@@ -1,0 +1,25 @@
+name: Programação automática (gerar e agendar na Zernio)
+
+# Todo dia cria a semana seguinte das programações e agenda na Zernio os posts que têm imagem e texto.
+# Roda no servidor: funciona com o painel fechado. É idempotente: rodar de novo não repete post.
+# O horário do GitHub Actions pode atrasar um pouco; isso não causa problema.
+
+on:
+  schedule:
+    - cron: '30 11 * * *' # 11:30 UTC = 08:30 em Brasília
+  workflow_dispatch: {}
+
+concurrency:
+  group: programacao
+  cancel-in-progress: false
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Gerar a semana e agendar na Zernio
+        run: |
+          curl -sS --fail --max-time 90 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://redes-sociais-gilt-alpha.vercel.app/api/analise?acao=programacao-cron"
