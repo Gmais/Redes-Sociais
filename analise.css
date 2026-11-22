@@ -177,6 +177,31 @@ body[data-tab="academia"] main, body[data-tab="sorveteria"] main, body[data-tab=
 .pz-publicar-slot .auto-btn { background: #FFFFFF; color: #0F1222; border-color: #C9CDDD; }
 .pz-publicar-slot .auto-btn.on { color: #15803D; border-color: #15803D; }
 .pz-publicar-slot .auto-btn.on .auto-sw { background: #15803D; }
+
+/* Botão Programação, na barra da aba Publicar */
+.prog-open-btn { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #FFFFFF; background: #7C3AED; border: none; border-radius: 10px; padding: 10px 16px; cursor: pointer; font-family: 'Inter', sans-serif; }
+.prog-open-btn:hover { background: #6D28D9; }
+
+/* Janela da Programação: mesma folha clara do calendário */
+#progModal { --bg: #F5F6FB; --s1: #FFFFFF; --s2: #F6F7FB; --border: #E7E9F2; --txt: #0F1222; --txt2: #3F4460; --txt3: #5B6079; background: rgba(15, 18, 34, 0.45); }
+#progModal .sx-box { color: var(--txt); }
+.prog-topo { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.prog-regra { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; background: var(--s1); }
+.prog-regra-topo { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.prog-resumo { font-size: 12.5px; color: var(--txt2); margin-top: 4px; }
+.prog-acoes { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.prog-pill { font-size: 11px; font-weight: 700; background: #EFEAFF; color: #5B34E8; padding: 2px 8px; border-radius: 999px; }
+.prog-ativa { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--txt2); }
+.prog-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+.prog-form > label { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--txt2); }
+.prog-dias { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--txt2); }
+.prog-dias > div { display: flex; gap: 10px; flex-wrap: wrap; }
+.prog-dia { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--txt); font-weight: 600; }
+.prog-opcoes-titulo { margin: 18px 0 8px; }
+.prog-opcao { border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; background: var(--s1); }
+.prog-opcao-cab { display: flex; justify-content: space-between; align-items: center; }
+.prog-feriados { margin-top: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--txt2); }
+@media (max-width: 680px) { .prog-form { grid-template-columns: 1fr; } }
 .pz-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
 .pz-form .pz-campo { flex: 1 1 200px; }
 .pz-chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }

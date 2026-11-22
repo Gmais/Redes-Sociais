@@ -894,6 +894,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
 <script src="analise-demo.js"></script>
 <link rel="stylesheet" href="analise.css">
 <script src="analise-insights.js" defer></script>
+<script src="programacao.js" defer></script>
 <script src="analise-app.js" defer></script>
 <script src="analise-paginas.js" defer></script>
 </head>
@@ -937,6 +938,7 @@ main { max-width:800px; margin:0 auto; padding:28px 20px 100px; }
         <span class="hide-done-label">Esconder ações já realizadas</span>
       </label>
       <button class="cal-open-btn so-conteudo" id="calOpenBtn" onclick="openCalendar()">📅 Calendário</button>
+      <button class="prog-open-btn so-conteudo" id="progOpenBtn" onclick="openProgramacao()">🗓️ Programação</button>
       <button class="new-post-btn so-conteudo" id="newPostBtn" onclick="openNewPostModal()">＋ Nova Postagem</button>
     </div>
     <div class="panel" id="p-academia"></div>
@@ -27049,6 +27051,281 @@ function deleteCard(id, profile) {
 // ── NOVA POSTAGEM ──────────────────────────────────────────────────────────
 let npSelectedFiles = [];
 let npDriveFiles = []; // arquivos importados do Drive (já no Drive, não precisam de upload)
+
+// ── Programação: postagens que se repetem (ex.: "Promoção" toda segunda) ───────
+// Lógica de datas e escolha de opção: programacao.js (Programacao). Aqui fica a tela e a gravação.
+const PROG_KEY = 'programacao_v1';
+const PROG_EMPRESAS = [['academia', 'Academia'], ['sorveteria', 'Sorveteria'], ['gympulse', 'GympulsePro']];
+const PROG_DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const PROG_FORMATOS = ['Post', 'Story', 'Reel', 'Carrossel'];
+let PROG = { regras: [], feriadosExtras: [] };
+let progEditando = null; // regra em edição (cópia) ou null
+let progOpcoes = [];     // opções do formulário em edição
+
+function progEsc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function progNovoId() { return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+// Lê a programação do banco (painel_gilson_state); se não der, usa a cópia deste navegador.
+async function progCarregar() {
+  try {
+    const r = await supabaseFetch('painel_gilson_state?key=eq.programacao&select=value');
+    if (r.ok) {
+      const rows = await r.json();
+      if (rows[0] && rows[0].value) {
+        PROG = rows[0].value;
+        localStorage.setItem(PROG_KEY, JSON.stringify(PROG));
+      }
+    }
+  } catch (e) { /* sem rede: usa a cópia local abaixo */ }
+  if (!PROG.regras || !PROG.regras.length) {
+    try { const local = JSON.parse(localStorage.getItem(PROG_KEY) || 'null'); if (local) PROG = local; } catch (e) {}
+  }
+  PROG.regras = PROG.regras || [];
+  PROG.feriadosExtras = PROG.feriadosExtras || [];
+}
+
+async function progPersistir() {
+  localStorage.setItem(PROG_KEY, JSON.stringify(PROG));
+  try {
+    const w = await supabaseFetch('painel_gilson_state', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify([{ key: 'programacao', value: PROG, updated_at: new Date().toISOString() }])
+    });
+    if (!w.ok) throw new Error('status ' + w.status);
+  } catch (e) {
+    showToast('⚠️ Programação guardada só neste navegador (' + e.message + ')');
+  }
+}
+
+// Cria o card no calendário pelo mesmo caminho dos posts da Nova Postagem.
+function progCriarCard(regra, novo) {
+  const hora = String(regra.hora || '09:00').replace(':', 'h');
+  const card = {
+    id: novo.cardId,
+    date: novo.data,
+    time: hora,
+    format: regra.formato || 'Post',
+    title: (novo.variante && novo.variante.titulo) || regra.nome,
+    texto: (novo.variante && novo.variante.texto) || '',
+    secoes: [
+      { num: '01', cor: '#e63900', titulo: 'FORMATO E ESPECIFICAÇÕES', conteudo: formatSpec(regra.formato || 'Post') },
+      { num: '02', cor: '#f5a623', titulo: 'INTENÇÃO DA POSTAGEM', conteudo: 'Programação: ' + regra.nome + '. Opção escolhida automaticamente.' },
+      { num: '03', cor: '#4ade80', titulo: 'BRIEFING CRIATIVO DETALHADO', conteudo: 'A preencher' }
+    ]
+  };
+  CONTENT[regra.empresa].push(card);
+  localStorage.setItem('edits_' + card.id, JSON.stringify({
+    date: card.date, time: card.time, format: card.format, title: card.title, texto: card.texto, secoes: card.secoes
+  }));
+  PENDING.edits.add(card.id);
+}
+
+// Cria os posts das próximas datas que ainda não existem. Idempotente: pode rodar sempre.
+function progGerarJanela(dias) {
+  const hoje = todayBR();
+  let total = 0;
+  const empresas = new Set();
+  PROG.regras = PROG.regras.map((regra) => {
+    const plano = Programacao.planejarRegra(regra, hoje, dias || 21, PROG.feriadosExtras, Math.random);
+    plano.novos.forEach((n) => { progCriarCard(plano.regra, n); total++; empresas.add(plano.regra.empresa); });
+    return plano.regra;
+  });
+  if (total) {
+    progPersistir();
+    empresas.forEach((e) => renderPanel(e));
+    showToast('🗓️ ' + total + ' post(s) programado(s)');
+  }
+  return total;
+}
+
+function ensureProgModal() {
+  let el = document.getElementById('progModal');
+  if (el) return el;
+  el = document.createElement('div');
+  el.className = 'sx-overlay';
+  el.id = 'progModal';
+  el.onclick = (e) => { if (e.target === el) closeProgramacao(); };
+  el.innerHTML = '<div class="sx-box" style="max-width:920px" onclick="event.stopPropagation()">'
+    + '<div class="sx-head"><div class="sx-title">🗓️ Programação de postagens</div>'
+    + '<button class="sx-close" onclick="closeProgramacao()">✕</button></div>'
+    + '<div class="sx-body" id="prog-body"></div></div>';
+  document.body.appendChild(el);
+  return el;
+}
+
+function openProgramacao() {
+  ensureProgModal().classList.add('on');
+  progEditando = null;
+  progRender();
+  progCarregar().then(() => progRender());
+}
+function closeProgramacao() {
+  const el = document.getElementById('progModal');
+  if (el) el.classList.remove('on');
+}
+
+function progResumo(r) {
+  const dias = (r.dias || []).slice().sort().map(d => PROG_DIAS[d]).join(', ');
+  const hora = String(r.hora || '');
+  return dias + ' · ' + hora + ' · ' + (r.formato || 'Post') + ' · ' + (r.variantes || []).length + ' opção(ões)';
+}
+
+function progRender() {
+  const body = document.getElementById('prog-body');
+  if (!body) return;
+  body.innerHTML = progEditando ? progFormHtml() : progListaHtml();
+}
+
+function progListaHtml() {
+  const nomeEmpresa = e => (PROG_EMPRESAS.find(x => x[0] === e) || [null, e])[1];
+  const regras = PROG.regras.length
+    ? PROG.regras.map(r => '<div class="prog-regra">'
+      + '<div class="prog-regra-topo"><div><b>' + progEsc(r.nome) + '</b> <span class="prog-pill">' + progEsc(nomeEmpresa(r.empresa)) + '</span></div>'
+      + '<label class="prog-ativa"><input type="checkbox" ' + (r.ativa ? 'checked' : '') + ' onchange="progAlternar(\'' + r.id + '\')"> ' + (r.ativa ? 'Ativa' : 'Pausada') + '</label></div>'
+      + '<div class="prog-resumo">' + progEsc(progResumo(r)) + (r.pularFeriados ? ' · pula feriados' : '') + '</div>'
+      + '<div class="prog-acoes"><button class="pz-btn fantasma sm" onclick="progEditarRegra(\'' + r.id + '\')">Editar</button>'
+      + '<button class="pz-btn fantasma sm" onclick="progExcluirRegra(\'' + r.id + '\')">Excluir</button></div></div>').join('')
+    : '<div class="muted" style="font-size:13px">Nenhuma programação ainda. Crie uma regra, por exemplo "Promoção" toda segunda, com 3 opções. O sistema escolhe uma diferente a cada semana.</div>';
+  return '<div class="prog-topo">'
+    + '<button class="pz-btn primario" onclick="progNovaRegra()">+ Nova programação</button>'
+    + '<button class="pz-btn fantasma" onclick="progGerarAgora()">Gerar próximas 3 semanas</button></div>'
+    + regras
+    + '<div class="prog-feriados"><label>Dias sem postagem (AAAA-MM-DD, separados por vírgula)'
+    + '<input class="field-input" id="prog-feriados" value="' + progEsc((PROG.feriadosExtras || []).join(', ')) + '" onchange="progSalvarFeriados(this.value)"></label>'
+    + '<div class="muted" style="font-size:12px">Feriados nacionais já são pulados quando a regra pede. Use esta lista para dias locais, como feriado da sua cidade.</div></div>';
+}
+
+function progFormHtml() {
+  const r = progEditando;
+  const empresas = PROG_EMPRESAS.map(([v, t]) => '<option value="' + v + '"' + (r.empresa === v ? ' selected' : '') + '>' + t + '</option>').join('');
+  const formatos = PROG_FORMATOS.map(f => '<option' + (r.formato === f ? ' selected' : '') + '>' + f + '</option>').join('');
+  const dias = PROG_DIAS.map((d, i) => '<label class="prog-dia"><input type="checkbox" name="prog-dia" value="' + i + '"' + ((r.dias || []).includes(i) ? ' checked' : '') + '> ' + d + '</label>').join('');
+  const opcoes = progOpcoes.map((o, i) => '<div class="prog-opcao">'
+    + '<div class="prog-opcao-cab"><b>Opção ' + (i + 1) + '</b><button type="button" class="pz-btn fantasma sm" onclick="progRemoverOpcao(' + i + ')">Remover</button></div>'
+    + '<input class="field-input" id="prog-op-titulo-' + i + '" placeholder="Título (aparece no calendário)" value="' + progEsc(o.titulo) + '">'
+    + '<textarea class="field-input" id="prog-op-texto-' + i + '" rows="3" placeholder="Texto da postagem">' + progEsc(o.texto) + '</textarea></div>').join('');
+  return '<div class="prog-form">'
+    + '<label>Nome<input class="field-input" id="prog-nome" value="' + progEsc(r.nome) + '" placeholder="Ex.: Promoção de segunda"></label>'
+    + '<label>Empresa<select class="field-input" id="prog-empresa">' + empresas + '</select></label>'
+    + '<label>Horário<input class="field-input" id="prog-hora" type="time" value="' + progEsc(r.hora || '09:00') + '"></label>'
+    + '<label>Formato<select class="field-input" id="prog-formato">' + formatos + '</select></label>'
+    + '<div class="prog-dias"><span>Dias da semana</span><div>' + dias + '</div></div>'
+    + '<label class="prog-ativa"><input type="checkbox" id="prog-pular"' + (r.pularFeriados ? ' checked' : '') + '> Pular feriados</label>'
+    + '</div>'
+    + '<div class="prog-opcoes-titulo"><b>Opções de texto</b> <span class="muted" style="font-size:12px">Recomendado: 3. A cada semana o sistema escolhe uma que não saiu nas semanas anteriores.</span></div>'
+    + opcoes
+    + '<button type="button" class="pz-btn fantasma sm" onclick="progAdicionarOpcao()">+ Adicionar opção</button>'
+    + '<div class="prog-acoes" style="margin-top:14px"><button class="pz-btn primario" onclick="progSalvarRegra()">Salvar programação</button>'
+    + '<button class="pz-btn fantasma" onclick="progCancelar()">Cancelar</button></div>';
+}
+
+// Guarda o que está digitado no formulário antes de mudar a tela
+function progLerFormulario() {
+  if (!progEditando) return;
+  const v = id => (document.getElementById(id) || {}).value;
+  progEditando.nome = (v('prog-nome') || '').trim();
+  progEditando.empresa = v('prog-empresa') || progEditando.empresa;
+  progEditando.hora = v('prog-hora') || progEditando.hora;
+  progEditando.formato = v('prog-formato') || progEditando.formato;
+  const pular = document.getElementById('prog-pular');
+  if (pular) progEditando.pularFeriados = pular.checked;
+  progEditando.dias = Array.from(document.querySelectorAll('input[name="prog-dia"]:checked')).map(c => Number(c.value));
+  progOpcoes = progOpcoes.map((o, i) => ({
+    id: o.id,
+    titulo: (v('prog-op-titulo-' + i) || '').trim(),
+    texto: (v('prog-op-texto-' + i) || '').trim()
+  }));
+}
+
+function progNovaRegra() {
+  progEditando = { id: null, nome: '', empresa: 'academia', dias: [1], hora: '09:00', formato: 'Post', pularFeriados: true, ativa: true };
+  progOpcoes = [{ id: progNovoId(), titulo: '', texto: '' }, { id: progNovoId(), titulo: '', texto: '' }, { id: progNovoId(), titulo: '', texto: '' }];
+  progRender();
+}
+
+function progEditarRegra(id) {
+  const r = PROG.regras.find(x => x.id === id);
+  if (!r) return;
+  progEditando = JSON.parse(JSON.stringify(r));
+  progOpcoes = (r.variantes || []).map(o => ({ id: o.id, titulo: o.titulo || '', texto: o.texto || '' }));
+  progRender();
+}
+
+function progAdicionarOpcao() {
+  progLerFormulario();
+  progOpcoes.push({ id: progNovoId(), titulo: '', texto: '' });
+  progRender();
+}
+
+function progRemoverOpcao(i) {
+  progLerFormulario();
+  progOpcoes.splice(i, 1);
+  progRender();
+}
+
+function progCancelar() {
+  progEditando = null;
+  progRender();
+}
+
+async function progSalvarRegra() {
+  progLerFormulario();
+  const r = progEditando;
+  if (!r.nome) { showToast('⚠️ Dê um nome à programação'); return; }
+  if (!r.dias || !r.dias.length) { showToast('⚠️ Escolha pelo menos um dia da semana'); return; }
+  const variantes = progOpcoes.filter(o => o.texto).map(o => ({ id: o.id, titulo: o.titulo || r.nome, texto: o.texto }));
+  if (!variantes.length) { showToast('⚠️ Escreva o texto de pelo menos uma opção'); return; }
+  const existente = r.id ? PROG.regras.find(x => x.id === r.id) : null;
+  const ids = new Set(variantes.map(x => x.id));
+  const nova = Object.assign({}, existente || {}, {
+    id: r.id || progNovoId(),
+    nome: r.nome, empresa: r.empresa, dias: r.dias, hora: r.hora, formato: r.formato,
+    pularFeriados: !!r.pularFeriados, ativa: r.ativa !== false,
+    variantes,
+    gerados: (existente && existente.gerados) || {},
+    recentes: ((existente && existente.recentes) || []).filter(x => ids.has(x))
+  });
+  PROG.regras = existente ? PROG.regras.map(x => x.id === nova.id ? nova : x) : PROG.regras.concat([nova]);
+  progEditando = null;
+  await progPersistir();
+  progGerarJanela(21);
+  progRender();
+}
+
+async function progExcluirRegra(id) {
+  const r = PROG.regras.find(x => x.id === id);
+  if (!r || !confirm('Excluir a programação "' + r.nome + '"? Os posts já criados continuam no calendário.')) return;
+  PROG.regras = PROG.regras.filter(x => x.id !== id);
+  await progPersistir();
+  progRender();
+}
+
+async function progAlternar(id) {
+  const r = PROG.regras.find(x => x.id === id);
+  if (!r) return;
+  r.ativa = !r.ativa;
+  await progPersistir();
+  if (r.ativa) progGerarJanela(21);
+  progRender();
+}
+
+function progGerarAgora() {
+  const n = progGerarJanela(21);
+  if (!n) showToast('Tudo em dia: as próximas 3 semanas já estão programadas.');
+  progRender();
+}
+
+async function progSalvarFeriados(valor) {
+  PROG.feriadosExtras = String(valor || '').split(',').map(s => s.trim()).filter(s => /^\d{4}-\d{2}-\d{2}$/.test(s));
+  await progPersistir();
+  showToast('Dias sem postagem salvos');
+}
+
+// Ao abrir o painel: carrega a programação e completa as próximas 3 semanas (sem duplicar)
+progCarregar().then(() => setTimeout(() => progGerarJanela(21), 3000));
 
 function openNewPostModal() {
   const modal = document.getElementById('newPostModal');
