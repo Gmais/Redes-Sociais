@@ -27140,7 +27140,7 @@ function progGerarJanela(dias, silencioso) {
   let total = 0;
   const empresas = new Set();
   PROG.regras = PROG.regras.map((regra) => {
-    const plano = Programacao.planejarRegra(regra, hoje, dias || 21, PROG.feriadosExtras, Math.random);
+    const plano = Programacao.planejarRegra(regra, hoje, dias || 7, PROG.feriadosExtras, Math.random);
     plano.novos.forEach((n) => { progCriarCard(plano.regra, n); total++; empresas.add(plano.regra.empresa); });
     return plano.regra;
   });
@@ -27367,10 +27367,10 @@ async function progSalvarRegra() {
   });
   PROG.regras = existente ? PROG.regras.map(x => x.id === nova.id ? nova : x) : PROG.regras.concat([nova]);
   await progPersistir();
-  const criados = progGerarJanela(21, true);
+  const criados = progGerarJanela(7, true);
   progEditando = null;
   progRender();
-  showToast('✅ Programação salva' + (criados ? ': ' + criados + ' post(s) criado(s) no calendário nas próximas 3 semanas' : '. Nenhum post novo: as próximas 3 semanas já estão criadas.'));
+  showToast('✅ Programação salva' + (criados ? ': ' + criados + ' post(s) criado(s) no calendário para a próxima semana' : '. Nenhum post novo: a próxima semana já está criada.'));
 }
 
 function progResumo(r) {
@@ -27401,7 +27401,7 @@ async function progAlternar(id) {
   if (!r) return;
   r.ativa = r.ativa === false;
   await progPersistir();
-  if (r.ativa) progGerarJanela(21, true);
+  if (r.ativa) progGerarJanela(7, true);
   progRender();
 }
 
@@ -27454,7 +27454,7 @@ async function progAgendarPendentes() {
 }
 
 // Ao abrir o painel: carrega a programação e completa as próximas 3 semanas (sem duplicar)
-progCarregar().then(() => setTimeout(() => progGerarJanela(21, true), 3000));
+progCarregar().then(() => setTimeout(() => progGerarJanela(7, true), 3000));
 
 function openNewPostModal() {
   const modal = document.getElementById('newPostModal');
