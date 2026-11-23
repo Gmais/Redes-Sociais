@@ -4,7 +4,8 @@
 (function () {
   'use strict';
 
-  var ROTAS_PROTEGIDAS = ['/api/publish-zernio', '/api/zernio?acao='];
+  // /api/auto-content: o "Gerar nova postagem" (acao tema) usa o mesmo login; o Modo Automático ignora o token.
+  var ROTAS_PROTEGIDAS = ['/api/publish-zernio', '/api/zernio?acao=', '/api/auto-content'];
   var cliente = null;
   var botao = null;
 
@@ -52,7 +53,7 @@
       if (t) cabecalhos.set('Authorization', 'Bearer ' + t);
       return fetchNativo(entrada, Object.assign({}, init || {}, { headers: cabecalhos }));
     }).then(function (resp) {
-      if (resp.status === 401) abrirLogin('Entre para publicar no Instagram.');
+      if (resp.status === 401) abrirLogin(url.indexOf('/api/auto-content') === 0 ? 'Entre para gerar postagens com IA.' : 'Entre para publicar no Instagram.');
       return resp;
     });
   };

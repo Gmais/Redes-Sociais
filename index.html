@@ -26589,9 +26589,86 @@ function openEdit(id) {
   document.getElementById('edit-sec01').value = secs[0] ? secs[0].conteudo : '';
   document.getElementById('edit-sec02').value = secs[1] ? secs[1].conteudo : '';
   document.getElementById('edit-sec03').value = secs[2] ? secs[2].conteudo : '';
+  const iaNota = document.getElementById('edit-ia-nota');
+  if (iaNota) { iaNota.style.display = 'none'; iaNota.textContent = ''; }
 
   document.getElementById('editModal').classList.add('on');
   document.body.style.overflow = 'hidden';
+}
+
+// ── GERAR NOVA POSTAGEM COM IA (botão no rodapé do editor) ──
+// O servidor (api/auto-content.js, acao 'tema') usa o mesmo gerador do Modo Automático:
+// CONTEXTO.md + voz da marca + dados reais. O resultado só preenche o editor; salvar continua
+// sendo o botão "Salvar alterações" (Cancelar descarta).
+const TEMA_MARCAS = { academia: 'Academia', sorveteria: 'Sorveteria', gympulse: 'GympulsePro' };
+let temaGerando = false;
+
+function abrirTemaModal() {
+  if (!editingId || !editingProfile) return;
+  document.getElementById('tema-status').textContent = '';
+  temaAtualizar();
+  document.getElementById('temaModal').classList.add('on');
+  setTimeout(() => document.getElementById('tema-input').focus(), 50);
+}
+
+function fecharTemaModal() {
+  document.getElementById('temaModal').classList.remove('on');
+}
+
+function temaAtualizar() {
+  const tema = document.getElementById('tema-input').value.trim();
+  const btn = document.getElementById('tema-gerar');
+  btn.style.display = tema ? '' : 'none';
+  btn.textContent = '✨ Gerar nova postagem sobre "' + (tema.length > 70 ? tema.slice(0, 70) + '…' : tema) + '"';
+  const fmt = document.getElementById('edit-format').value;
+  const hora = document.getElementById('edit-time').value.trim();
+  document.getElementById('tema-info').textContent = (TEMA_MARCAS[editingProfile] || '') + ' · ' + fmt + (hora ? ' · ' + hora : '') +
+    ' — a IA escreve o prompt, o formato, a intenção e o briefing e coloca no editor. Confira e clique em Salvar alterações.';
+}
+
+async function temaGerar() {
+  if (temaGerando) return;
+  const tema = document.getElementById('tema-input').value.trim();
+  const status = document.getElementById('tema-status');
+  if (!tema) { status.textContent = 'Escreva o tema da postagem.'; return; }
+  const id = editingId, profile = editingProfile;
+  const found = id && findItem(id);
+  if (!found) { fecharTemaModal(); return; }
+  const btn = document.getElementById('tema-gerar');
+  const format = document.getElementById('edit-format').value;
+  temaGerando = true;
+  btn.disabled = true;
+  status.style.color = 'var(--txt3)';
+  status.textContent = '⏳ Gerando com IA... (leva uns 15 a 40 segundos)';
+  try {
+    const r = await fetch('/api/auto-content', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'tema', profile, id, tema, format, date: found.item.date, time: document.getElementById('edit-time').value })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 401) throw new Error('Entre no painel (botão Entrar, no canto de baixo) e tente de novo.');
+    if (!r.ok || !d.post) throw new Error(d.error || ('Falha ao gerar (' + r.status + ')'));
+    if (editingId !== id) return; // o editor foi fechado ou trocou de card enquanto gerava
+    const p = d.post;
+    document.getElementById('edit-title').value = p.title || '';
+    document.getElementById('edit-texto').value = p.texto || '';
+    document.getElementById('edit-sec01').value = p.secoes[0] || '';
+    document.getElementById('edit-sec02').value = p.secoes[1] || '';
+    document.getElementById('edit-sec03').value = p.secoes[2] || '';
+    const nota = document.getElementById('edit-ia-nota');
+    nota.textContent = p.nota ? '🤖 A IA avisou: ' + p.nota : '';
+    nota.style.display = p.nota ? '' : 'none';
+    status.textContent = '';
+    document.getElementById('tema-input').value = '';
+    fecharTemaModal();
+    showToast('✨ Nova postagem gerada — confira e clique em Salvar alterações');
+  } catch (e) {
+    status.style.color = '#ff6b6b';
+    status.textContent = '❌ ' + e.message;
+  } finally {
+    temaGerando = false;
+    btn.disabled = false;
+  }
 }
 
 function closeModal(e) {
@@ -29634,6 +29711,7 @@ if (!localStorage.getItem('lastCleanup') || new Date(localStorage.getItem('lastC
         <div class="field-label" style="color:#f5a623">📋 Prompt da postagem</div>
         <textarea class="field-input" id="edit-texto" rows="6" placeholder="Cole o prompt completo aqui — o sistema vai separar automaticamente nos painéis abaixo..." onpaste="setTimeout(()=>parseAndFillPrompt('edit'),0)"></textarea>
         <div class="field-hint" style="color:#f5a623">💡 Cole o prompt completo — ele será separado em: Texto, Formato, Intenção e Briefing</div>
+        <div class="field-hint" id="edit-ia-nota" style="display:none;color:#a78bfa;white-space:pre-line"></div>
       </div>
 
       <div class="field-group">
@@ -29656,6 +29734,26 @@ if (!localStorage.getItem('lastCleanup') || new Date(localStorage.getItem('lastC
     <div class="modal-footer">
       <button class="edit-btn" onclick="closeModalDirect()">Cancelar</button>
       <button class="edit-btn edit-btn-primary" onclick="saveEdit()">💾 Salvar alterações</button>
+      <button class="edit-btn" onclick="abrirTemaModal()" style="color:#a78bfa;border-color:#a78bfa">✨ Gerar nova postagem</button>
+    </div>
+  </div>
+</div>
+
+<!-- GERAR NOVA POSTAGEM COM IA (aberto pelo editor de card) -->
+<div class="modal-overlay" id="temaModal" style="z-index:1100" onclick="if(event.target===this)fecharTemaModal()">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div class="modal-title">✨ Gerar nova postagem</div>
+      <button class="modal-close" onclick="fecharTemaModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-group">
+        <div class="field-label" style="color:#a78bfa">💡 Tema da postagem</div>
+        <textarea class="field-input" id="tema-input" rows="3" maxlength="400" placeholder="ex: benefícios da musculação para mulheres depois dos 40" oninput="temaAtualizar()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();temaGerar();}"></textarea>
+        <div class="field-hint" id="tema-info"></div>
+      </div>
+      <button class="edit-btn edit-btn-primary" id="tema-gerar" onclick="temaGerar()" style="display:none;text-transform:none;letter-spacing:0;font-size:13px;padding:12px 14px;text-align:left;white-space:normal;line-height:1.4;background:#a78bfa;border-color:#a78bfa"></button>
+      <div class="field-hint" id="tema-status" style="white-space:pre-line"></div>
     </div>
   </div>
 </div>

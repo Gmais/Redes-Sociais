@@ -11,11 +11,16 @@
 //   auto_mode            { academia: bool, sorveteria: bool, gympulse: bool }
 //   auto_cards_<marca>   [ card, ... ]  (o painel injeta no CONTENT ao sincronizar)
 //   auto_state           { <marca>: { lastRun: ISO } }
+//
+// "Gerar nova postagem" do editor de card (POST { acao: 'tema', profile, tema, format, date, time, id }):
+// mesmo gerador (CONTEXTO.md + voz + dados reais), 1 post sobre o tema pedido. Só devolve o texto;
+// não grava nada — o painel preenche o editor e o Gilson decide se salva.
 
 const fs = require('fs');
 const path = require('path');
 const sim = require('../lib/caption-similarity');
 const guri = require('../lib/guri-catalog');
+const { exigirLogin } = require('../lib/zernio-login');
 
 const SUPABASE_URL = 'https://ggphrgfgckpsspbsguhp.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGhyZ2ZnY2twc3NwYnNndWhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3NzE2NDUsImV4cCI6MjEwNDM0NzY0NX0.t_dF5I6c0wCBqOnJd6ko6Jpu_ZQyQ5ulA8buRYLAMMk';
@@ -42,9 +47,13 @@ const VOICE_FILES = {
 };
 const VOICE_DIRS = { academia: 'planeta-corpo', sorveteria: 'sorveteria-guri', gympulse: 'gympulse' };
 
+// O Modo Automático só usa Story e Post; Carrossel e Reel existem para o "Gerar nova postagem",
+// que respeita o formato que o card já tem no editor.
 const FORMAT_SPECS = {
   Story: { tipo: 'Story Instagram', dimensoes: '1080 × 1920px (9:16)' },
-  Post: { tipo: 'Post Feed Instagram', dimensoes: '1080 × 1350px (4:5)' }
+  Post: { tipo: 'Post Feed Instagram', dimensoes: '1080 × 1350px (4:5)' },
+  Carrossel: { tipo: 'Carrossel Instagram', dimensoes: '1080 × 1350px (4:5) por slide' },
+  Reel: { tipo: 'Reel Instagram', dimensoes: '1080 × 1920px (9:16)' }
 };
 
 function supabase(p, options = {}) {
@@ -164,7 +173,17 @@ function loadVoice(profile) {
   return '';
 }
 
-function systemPrompt(profile, context, voice, extra) {
+const AUTO_OUTPUT_RULES = `Regras de saída:
+- Story: 0 hashtags. Post: exatamente 5 hashtags no final da legenda.
+- Sem Reel e sem Carrossel.
+- A legenda ("texto") deve estar pronta para publicar, com emojis do jeito que a voz da marca pede, tom de voz da marca e CTA coerente.
+- Sem travessão (— ou –) nas legendas: use vírgula, ponto ou dois-pontos.
+- Story não pode ser salvo: em Story, nunca peça para salvar; "salve este post" só em Post.
+- "briefing_visual" descreve a imagem (cena, elementos, cores, estilo) SEM texto sobreposto na imagem.
+- Varie ângulo e pilar entre os posts; não repita o que já existe (lista fornecida).
+- Responda SOMENTE JSON: {"posts":[{"title":"","pilar":"","objetivo":"","publico":"","tom":"","cta":"","texto":"","briefing_visual":"","produto":""}]} com um item por slot, na mesma ordem dos slots. "produto" = nome EXATO de um item do CATÁLOGO REAL quando o post é sobre esse item; vazio nos demais.`;
+
+function systemPrompt(profile, context, voice, extra, outputRules = AUTO_OUTPUT_RULES) {
   const rules = PROFILE_RULES[profile];
   const extraBlock = extra ? '\n\n' + extra : '';
   const voiceBlock = voice ? `
@@ -176,15 +195,7 @@ ${voice}` : '';
 
 Abaixo está o CONTEXTO.md do projeto. Ele é a fonte da verdade: siga TODAS as regras fixas (volume, formatos, hashtags, sem texto sobreposto na imagem, dimensões), a seção "${rules.section}", a campanha/promoção ATIVA na data do post (e o calendário dela), as listas de produtos, a equipe para humanização e as regras de sensibilidade (ex.: Outubro Rosa, dia 19/10 institucional sem oferta). Nunca invente preço, condição, prazo, sabor, funcionalidade ou dado que não esteja no contexto; sem preço confirmado, escreva sem valor. Nunca cite concorrentes. Campanhas marcadas como ENCERRADAS não podem ser anunciadas.${voice ? '\n\nDepois do CONTEXTO.md vem a VOZ DA MARCA: siga-a no tom, nas palavras, nos emojis e no CTA de cada legenda.' : ''}
 
-Regras de saída:
-- Story: 0 hashtags. Post: exatamente 5 hashtags no final da legenda.
-- Sem Reel e sem Carrossel.
-- A legenda ("texto") deve estar pronta para publicar, com emojis do jeito que a voz da marca pede, tom de voz da marca e CTA coerente.
-- Sem travessão (— ou –) nas legendas: use vírgula, ponto ou dois-pontos.
-- Story não pode ser salvo: em Story, nunca peça para salvar; "salve este post" só em Post.
-- "briefing_visual" descreve a imagem (cena, elementos, cores, estilo) SEM texto sobreposto na imagem.
-- Varie ângulo e pilar entre os posts; não repita o que já existe (lista fornecida).
-- Responda SOMENTE JSON: {"posts":[{"title":"","pilar":"","objetivo":"","publico":"","tom":"","cta":"","texto":"","briefing_visual":"","produto":""}]} com um item por slot, na mesma ordem dos slots. "produto" = nome EXATO de um item do CATÁLOGO REAL quando o post é sobre esse item; vazio nos demais.
+${outputRules}
 
 ===== CONTEXTO.md =====
 ${context}${voiceBlock}${extraBlock}`;
@@ -283,8 +294,17 @@ const LONE_SURROGATE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[
 const wellFormed = (s) => String(s).replace(LONE_SURROGATE, '');
 const cut = (s, n) => wellFormed(String(s == null ? '' : s).slice(0, n));
 
+// Conteúdo das 3 seções do card (o editor do painel mostra cada uma num campo).
+// Tipo/Dimensões nas 2 primeiras linhas da 01: o applyFormatSpec() do painel reescreve só essas.
+function secaoFormato(format) {
+  const spec = FORMAT_SPECS[format];
+  return `Tipo: ${spec.tipo}\nDimensões: ${spec.dimensoes}\nSem texto sobreposto na imagem (todo copy vai na legenda).`;
+}
+function secaoIntencao(p) {
+  return `Pilar: ${clean(p.pilar)}\nObjetivo: ${clean(p.objetivo)}\nPúblico-alvo: ${clean(p.publico)}\nTom de voz: ${clean(p.tom)}\nCTA: ${clean(p.cta)}`;
+}
+
 function buildCard(profile, date, slot, n, p) {
-  const spec = FORMAT_SPECS[slot.format];
   const compact = date.replace(/-/g, '');
   const id = `au_${profile}_${compact}_${n}`;
   return {
@@ -296,14 +316,92 @@ function buildCard(profile, date, slot, n, p) {
     texto: noDash(clean(p.texto)),
     auto: true,
     secoes: [
-      { num: '01', cor: '#e63900', titulo: 'FORMATO E ESPECIFICAÇÕES',
-        conteudo: `Tipo: ${spec.tipo}\nDimensões: ${spec.dimensoes}\nSem texto sobreposto na imagem (todo copy vai na legenda).` },
-      { num: '02', cor: '#f5a623', titulo: 'INTENÇÃO DA POSTAGEM',
-        conteudo: `Pilar: ${clean(p.pilar)}\nObjetivo: ${clean(p.objetivo)}\nPúblico-alvo: ${clean(p.publico)}\nTom de voz: ${clean(p.tom)}\nCTA: ${clean(p.cta)}` },
+      { num: '01', cor: '#e63900', titulo: 'FORMATO E ESPECIFICAÇÕES', conteudo: secaoFormato(slot.format) },
+      { num: '02', cor: '#f5a623', titulo: 'INTENÇÃO DA POSTAGEM', conteudo: secaoIntencao(p) },
       { num: '03', cor: '#4ade80', titulo: 'BRIEFING CRIATIVO DETALHADO',
         conteudo: clean(p.briefing_visual) }
     ]
   };
+}
+
+// ── "Gerar nova postagem" a partir de um tema (botão no editor de card) ───────
+const TEMA_MAX = 400;
+
+function temaOutputRules(format) {
+  const hashtags = (format === 'Post' || format === 'Reel') ? 'exatamente 5 hashtags no final da legenda' : '0 hashtags';
+  const visual = format === 'Reel' ? 'o vídeo, cena a cena (enquadramento, ação, cores da marca, ritmo)'
+    : format === 'Carrossel' ? 'cada slide (Slide 1, Slide 2, ...: cena, elementos, cores da marca, estilo)'
+    : 'a imagem (cena, elementos, cores da marca, estilo, composição)';
+  return `Regras de saída:
+- Formato: ${format}. Hashtags: ${hashtags}.
+- A legenda ("texto") deve estar pronta para publicar, com emojis do jeito que a voz da marca pede, tom de voz da marca e CTA coerente.
+- Sem travessão (— ou –) nas legendas: use vírgula, ponto ou dois-pontos.${format === 'Story' ? '\n- Story não pode ser salvo: nunca peça para salvar.' : ''}
+- "briefing_visual" descreve ${visual}, SEM texto sobreposto na imagem.
+- O post é sobre o TEMA pedido. Se o tema pedir algo que o CONTEXTO.md proíbe ou não confirma (preço, prazo, campanha encerrada, número inventado), escreva sem isso e explique em "nota".
+- Não repita frase nem ângulo dos posts recentes (lista fornecida).
+- Responda SOMENTE JSON: {"posts":[{"title":"","pilar":"","objetivo":"","publico":"","tom":"","cta":"","texto":"","briefing_visual":"","nota":""}]} com exatamente 1 item. "title" = título curto do card. "nota" fica vazia quando não houver o que avisar.`;
+}
+
+// Posts da marca perto da data (painel + automáticos), sem o card que está sendo reescrito.
+function recentForTema(profile, rows, date, skipId) {
+  const items = [];
+  const man = rows.manifest || {};
+  Object.keys(man).forEach((id) => {
+    const m = man[id];
+    if (m && m.profile === profile && m.date && m.caption) items.push({ id, date: m.date, time: m.time, format: m.format, caption: m.caption });
+  });
+  (Array.isArray(rows['auto_cards_' + profile]) ? rows['auto_cards_' + profile] : []).forEach((c) => {
+    if (c && c.date && c.texto && !items.some((i) => i.id === c.id)) items.push({ id: c.id, date: c.date, time: c.time, format: c.format, caption: c.texto });
+  });
+  return items.filter((i) => i.id !== skipId && Math.abs(epochDay(i.date) - epochDay(date)) <= 7)
+    .sort((a, b) => Math.abs(epochDay(a.date) - epochDay(date)) - Math.abs(epochDay(b.date) - epochDay(date))).slice(0, 20);
+}
+
+function temaUserPrompt(date, time, format, tema, recent) {
+  const jaExiste = recent.length
+    ? recent.map(e => `- ${e.date} ${e.time || ''} ${e.format || ''}: ${cut(String(e.caption || '').replace(/\s+/g, ' '), 140)}`).join('\n')
+    : '(nada próximo)';
+  return `Data: ${date} (${WEEKDAYS[weekdayOf(date)]})${time ? ', ' + time : ''}. Formato: ${format}.
+TEMA pedido pelo Gilson: "${tema}"
+
+Gere 1 post sobre esse tema.
+
+Posts recentes desta marca (não repetir frase nem ângulo):
+${jaExiste}`;
+}
+
+// O que o editor do painel preenche: título, legenda e as 3 seções (na ordem 01, 02, 03).
+function temaFields(format, p) {
+  return {
+    title: cut(clean(p.title), 90) || 'Nova postagem',
+    texto: noDash(clean(p.texto)),
+    secoes: [secaoFormato(format), secaoIntencao(p), clean(p.briefing_visual)],
+    nota: cut(clean(p.nota), 400)
+  };
+}
+
+async function temaHandler(req, res, body) {
+  // Mesmo login das rotas da Zernio: só exige quando EXIGIR_LOGIN_ZERNIO=1 no Vercel.
+  if (!(await exigirLogin(req, res))) return;
+  const profile = body.profile;
+  const tema = String(body.tema || '').replace(/[<>]/g, '').trim();
+  const format = FORMAT_SPECS[body.format] ? body.format : 'Story';
+  if (!PROFILES.includes(profile)) { res.status(400).json({ error: 'profile inválido' }); return; }
+  if (tema.length < 3) { res.status(400).json({ error: 'Escreva o tema da postagem.' }); return; }
+  if (tema.length > TEMA_MAX) { res.status(400).json({ error: `Tema longo demais (máx. ${TEMA_MAX} caracteres).` }); return; }
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(String(body.date || '')) ? body.date : todayBR();
+  const time = cut(clean(body.time), 12);
+
+  // Sem o Supabase, gera do mesmo jeito (sem dados reais e sem a lista de recentes).
+  let rows = {};
+  try { rows = await readRows(); } catch (e) { rows = {}; }
+  const extra = profile === 'sorveteria' ? await sorveteriaExtra() : { block: '' };
+  const system = systemPrompt(profile, loadContext(), loadVoice(profile),
+    [extra.block, liveDataBlock(profile, rows)].filter(Boolean).join('\n\n'), temaOutputRules(format));
+  const posts = await callOpenAI(system, temaUserPrompt(date, time, format, wellFormed(tema), recentForTema(profile, rows, date, body.id)));
+  const p = posts[0];
+  if (!p || !clean(p.texto)) { res.status(502).json({ error: 'A IA não devolveu a legenda. Tente de novo.' }); return; }
+  res.status(200).json({ ok: true, post: temaFields(format, p) });
 }
 
 // ── Anti-repetição ────────────────────────────────────────────────────────
@@ -510,6 +608,8 @@ module.exports = async (req, res) => {
     let body = req.body || {};
     if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = {}; } }
 
+    if (req.method === 'POST' && body.acao === 'tema') { await temaHandler(req, res, body); return; }
+
     let targets;
     if (req.method === 'POST' && !isCron) {
       if (!PROFILES.includes(body.profile)) { res.status(400).json({ error: 'profile inválido' }); return; }
@@ -542,3 +642,6 @@ module.exports = async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 };
+
+// Para os testes (test/tema-post.test.js).
+module.exports._tema = { temaHandler, temaOutputRules, temaFields, recentForTema, systemPrompt, AUTO_OUTPUT_RULES };
